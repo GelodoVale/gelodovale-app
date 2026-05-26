@@ -366,7 +366,8 @@ export function renderApp() {
     // Atualizar versão no rodapé lateral
     const versionEl = document.getElementById("app-sidebar-version");
     if (versionEl) {
-        versionEl.innerText = "Gelo do Vale v" + (state.backupSettings?.currentVersion || "2.5");
+        const ver = state.backupSettings?.currentVersion || "2.7";
+        versionEl.innerText = `Gelo do Vale v${ver} (26/05/2026 20:42)`;
     }
     
     // Atualizar dropdowns
