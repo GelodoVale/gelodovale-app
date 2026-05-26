@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.initUtilityPanel) window.initUtilityPanel();
     
     // 9. Inicializar controle de acesso e tela de login
+    if (window.initUserAccessControl) window.initUserAccessControl();
     if (window.initLoginScreen) window.initLoginScreen();
 
     // 10. Inicializar QR Code do GitHub
