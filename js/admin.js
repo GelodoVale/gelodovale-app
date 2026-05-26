@@ -2221,3 +2221,165 @@ window.renderPackaging = renderPackaging;
 window.openPackagingEntryModal = openPackagingEntryModal;
 window.savePackagingEntry = savePackagingEntry;
 window.renderPackagingTransactions = renderPackagingTransactions;
+
+// Bind missing product catalog functions to window
+window.renderProductsCatalog = renderProductsCatalog;
+window.toggleFlavoredPackageUnits = toggleFlavoredPackageUnits;
+window.toggleProductSubfields = toggleProductSubfields;
+window.openProductModal = openProductModal;
+window.deleteProduct = deleteProduct;
+
+// --- SISTEMA DINÂMICO DE CATÁLOGO E PREÇOS ---
+export function renderProductsCatalog() {
+    const tbody = document.getElementById("catalog-products-tbody");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    
+    if (!state.products || state.products.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
+                    Nenhum produto cadastrado no catálogo.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    state.products.forEach(p => {
+        const badge = p.active 
+            ? `<span class="status-badge completed" style="background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.15);">Ativo</span>`
+            : `<span class="status-badge pending" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-muted); border: 1px solid rgba(255, 255, 255, 0.08);">Inativo</span>`;
+        
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.03);">
+                <td style="padding: 10px; font-weight: 600; color: var(--color-text-main);">${p.name}</td>
+                <td style="padding: 10px; color: var(--color-text-muted);">${p.type}</td>
+                <td style="padding: 10px; color: var(--color-text-muted);">${p.subtype || '-'}</td>
+                <td style="padding: 10px; text-align: center; color: var(--color-text-main);">${p.weight || '0'} kg</td>
+                <td style="padding: 10px; text-align: right; font-weight: 700; color: var(--color-primary);">R$ ${(p.defaultPrice || 0).toFixed(2)}</td>
+                <td style="padding: 10px; text-align: center;">${badge}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <div style="display: inline-flex; gap: 6px;">
+                        <button class="btn btn-secondary btn-icon-only" onclick="openProductModal('${p.id}')" title="Editar Item" style="padding: 4px 6px; display: inline-flex; align-items: center; justify-content: center;">
+                            <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i>
+                        </button>
+                        <button class="btn btn-danger btn-icon-only" onclick="deleteProduct('${p.id}')" title="Desativar Item" style="padding: 4px 6px; display: inline-flex; align-items: center; justify-content: center;">
+                            <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+export function toggleFlavoredPackageUnits() {
+    const packageType = document.getElementById("prod-package-type").value;
+    const unitsGroup = document.getElementById("group-prod-units-per-pack");
+    const unitsInput = document.getElementById("prod-units-per-pack");
+    if (packageType === "varejo") {
+        unitsGroup.style.display = "none";
+        unitsInput.value = 1;
+        unitsInput.removeAttribute("required");
+    } else {
+        unitsGroup.style.display = "block";
+        unitsInput.setAttribute("required", "required");
+    }
+}
+
+export function toggleProductSubfields() {
+    const type = document.getElementById("prod-type").value;
+    const weightGroup = document.getElementById("group-prod-weight");
+    const weightInput = document.getElementById("prod-weight");
+    const flavoredGroup = document.getElementById("group-flavored-ice-fields");
+    const flavorInput = document.getElementById("prod-flavor");
+    const weightGInput = document.getElementById("prod-unit-weight-g");
+    const unitsInput = document.getElementById("prod-units-per-pack");
+    
+    if (type === "Gelo") {
+        weightGroup.style.display = "block";
+        weightInput.setAttribute("required", "required");
+        
+        flavoredGroup.style.display = "none";
+        flavorInput.removeAttribute("required");
+        weightGInput.removeAttribute("required");
+        unitsInput.removeAttribute("required");
+    } else if (type === "Gelo Saborizado") {
+        weightGroup.style.display = "none";
+        weightInput.removeAttribute("required");
+        weightInput.value = "";
+        
+        flavoredGroup.style.display = "block";
+        flavorInput.setAttribute("required", "required");
+        weightGInput.setAttribute("required", "required");
+        toggleFlavoredPackageUnits();
+    } else {
+        weightGroup.style.display = "none";
+        weightInput.removeAttribute("required");
+        weightInput.value = "";
+        
+        flavoredGroup.style.display = "none";
+        flavorInput.removeAttribute("required");
+        weightGInput.removeAttribute("required");
+        unitsInput.removeAttribute("required");
+    }
+}
+
+export function openProductModal(productId = null) {
+    const modal = document.getElementById("modal-product-mgmt");
+    const title = document.getElementById("product-modal-title");
+    const form = document.getElementById("product-mgmt-form");
+    
+    form.reset();
+    document.getElementById("form-product-id").value = "";
+    document.getElementById("prod-active").checked = true;
+    
+    // Defaults para Gelo Saborizado
+    document.getElementById("prod-flavor").value = "";
+    document.getElementById("prod-package-type").value = "pacote";
+    document.getElementById("prod-units-per-pack").value = "12";
+    document.getElementById("prod-unit-weight-g").value = "200";
+    
+    if (productId) {
+        title.innerText = "Editar Produto / Item";
+        const p = state.products.find(item => item.id === productId);
+        if (p) {
+            document.getElementById("form-product-id").value = p.id;
+            document.getElementById("prod-name").value = p.name;
+            document.getElementById("prod-type").value = p.type;
+            document.getElementById("prod-subtype-text").value = p.subtype || "";
+            document.getElementById("prod-weight").value = p.weight !== undefined ? p.weight : "";
+            document.getElementById("prod-price").value = p.defaultPrice || 0;
+            document.getElementById("prod-active").checked = p.active !== false;
+            
+            // Novos campos de gelo saborizado
+            document.getElementById("prod-flavor").value = p.flavor || "";
+            document.getElementById("prod-package-type").value = p.packageType || "pacote";
+            document.getElementById("prod-units-per-pack").value = p.unitsPerPack !== undefined ? p.unitsPerPack : "12";
+            document.getElementById("prod-unit-weight-g").value = p.unitWeightGrams !== undefined ? p.unitWeightGrams : "200";
+        }
+    } else {
+        title.innerText = "Novo Produto / Item";
+    }
+    
+    toggleProductSubfields();
+    modal.classList.add("active");
+}
+
+export function deleteProduct(productId) {
+    const p = state.products.find(item => item.id === productId);
+    if (!p) return;
+    
+    if (confirm(`Deseja realmente desativar o item "${p.name}"? Ele continuará no histórico, mas não estará disponível para novas operações.`)) {
+        p.active = false;
+        saveState();
+        renderProductsCatalog();
+        renderPrecos();
+        if (window.renderApp) window.renderApp();
+    }
+}
+
