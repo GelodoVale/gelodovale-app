@@ -43,9 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 1. Carregar dados do localStorage
-    if (window.loadState) window.loadState();
-    if (window.applyAppearanceTheme) window.applyAppearanceTheme();
-    if (window.initFirebase) window.initFirebase();
+    loadState();
+    applyAppearanceTheme();
+    initFirebase();
 
     // Inicializar o modo Sol Forte (Alto Contraste) se salvo
     const savedContrast = localStorage.getItem("highContrastTheme");
@@ -97,8 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.initUtilityPanel) window.initUtilityPanel();
     
     // 9. Inicializar controle de acesso e tela de login
-    if (window.initUserAccessControl) window.initUserAccessControl();
-    if (window.initLoginScreen) window.initLoginScreen();
+    initUserAccessControl();
+    initLoginScreen();
 
     // 10. Inicializar QR Code do GitHub
     if (window.initGitHubQRCode) window.initGitHubQRCode();
