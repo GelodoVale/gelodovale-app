@@ -1,11 +1,24 @@
-const CACHE_NAME = 'gelodovale-v33';
+const CACHE_NAME = 'gelodovale-v34';
 const ASSETS = [
   'index.html',
-  'app.js',
   'styles.css',
   'manifest.json',
   'logo_vertical.png',
-  'logo_horizontal.jpg'
+  'logo_horizontal.jpg',
+  'js/app.js',
+  'js/state.js',
+  'js/auth.js',
+  'js/dashboard.js',
+  'js/clientes.js',
+  'js/inventario.js',
+  'js/rentals.js',
+  'js/documents.js',
+  'js/logistics.js',
+  'js/comodatos.js',
+  'js/admin.js',
+  'js/sync.js',
+  'js/utils.js',
+  'js/storage.js'
 ];
 
 self.addEventListener('install', (e) => {
