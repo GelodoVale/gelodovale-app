@@ -2228,6 +2228,7 @@ window.toggleFlavoredPackageUnits = toggleFlavoredPackageUnits;
 window.toggleProductSubfields = toggleProductSubfields;
 window.openProductModal = openProductModal;
 window.deleteProduct = deleteProduct;
+window.autoFillFactorySettings = autoFillFactorySettings;
 
 // --- SISTEMA DINÂMICO DE CATÁLOGO E PREÇOS ---
 export function renderProductsCatalog() {
@@ -2381,5 +2382,43 @@ export function deleteProduct(productId) {
         renderPrecos();
         if (window.renderApp) window.renderApp();
     }
+}
+
+export function autoFillFactorySettings() {
+    if (!state.factorySettings) {
+        state.factorySettings = {};
+    }
+    state.factorySettings.name = "GELO DO VALE INDÚSTRIA DE GELO LTDA.";
+    state.factorySettings.cnpj = "65.007.307/0001-60";
+    state.factorySettings.phone = "(12) 99887-6655";
+    state.factorySettings.address = "Vale do Paraíba, São José dos Campos - SP";
+    state.factorySettings.email = "contato@gelodovale.com.br";
+    state.factorySettings.pixKey = "65.007.307/0001-60";
+    state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
+
+    // Update form elements
+    const nameEl = document.getElementById("cfg-factory-name");
+    if (nameEl) nameEl.value = state.factorySettings.name;
+    
+    const cnpjEl = document.getElementById("cfg-factory-cnpj");
+    if (cnpjEl) cnpjEl.value = state.factorySettings.cnpj;
+    
+    const phoneEl = document.getElementById("cfg-factory-phone");
+    if (phoneEl) phoneEl.value = state.factorySettings.phone;
+    
+    const addressEl = document.getElementById("cfg-factory-address");
+    if (addressEl) addressEl.value = state.factorySettings.address;
+    
+    const emailEl = document.getElementById("cfg-factory-email");
+    if (emailEl) emailEl.value = state.factorySettings.email;
+    
+    const pixEl = document.getElementById("cfg-factory-pix");
+    if (pixEl) pixEl.value = state.factorySettings.pixKey;
+    
+    const rentalTermsEl = document.getElementById("cfg-factory-rental-terms");
+    if (rentalTermsEl) rentalTermsEl.value = state.factorySettings.rentalTerms;
+    
+    saveState();
+    alert("Dados comerciais oficiais da Gelo do Vale preenchidos com sucesso!");
 }
 
