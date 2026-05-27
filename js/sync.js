@@ -103,6 +103,11 @@ function aplicarDadosRemoto(remoteData) {
 
     saveStateLocalOnly();
     renderApp();
+    
+    // Atualizar visual (Aparência) e campos de configurações se estiverem abertos
+    if (window.applyAppearanceTheme) window.applyAppearanceTheme();
+    if (window.renderPrecos) window.renderPrecos();
+
     updateSyncStatusUI('success');
 
     // Mostrar notificação visual discreta
@@ -126,6 +131,13 @@ export function pushToFirebase() {
 // Envio imediato (sem debounce) — usado internamente
 function pushToFirebaseImediato() {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) return;
+
+    // SAFEGUARD: Não enviar para a nuvem se o estado local for um estado virgem/vazio (ex: primeira abertura no PC novo)
+    // para não correr o risco de zerar os dados que já estão salvos lá.
+    if (!state.lastUpdated || state.lastUpdated === 0) {
+        console.warn('[Sync] Abortado: estado local parece virgem (sem lastUpdated). Não vamos sobrescrever a nuvem com dados vazios.');
+        return;
+    }
 
     if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
         initFirebase();

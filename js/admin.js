@@ -2396,6 +2396,16 @@ export function autoFillFactorySettings() {
     state.factorySettings.pixKey = "65.007.307/0001-60";
     state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
 
+    // Restore appearance settings
+    state.appearance = {
+        themeName: "ciano",
+        primaryColor: "#00f0ff",
+        backgroundStyle: "darkSpace",
+        customBgColor: "#090d16",
+        panelStyle: "glassmorphism",
+        glowIntensity: "high"
+    };
+
     // Update form elements
     const nameEl = document.getElementById("cfg-factory-name");
     if (nameEl) nameEl.value = state.factorySettings.name;
@@ -2417,8 +2427,17 @@ export function autoFillFactorySettings() {
     
     const rentalTermsEl = document.getElementById("cfg-factory-rental-terms");
     if (rentalTermsEl) rentalTermsEl.value = state.factorySettings.rentalTerms;
+
+    if (window.applyAppearanceTheme) {
+        window.applyAppearanceTheme();
+    }
+    
+    // Atualizar UI de configurações
+    if (window.renderPrecos) {
+        window.renderPrecos();
+    }
     
     saveState();
-    alert("Dados comerciais oficiais da Gelo do Vale preenchidos com sucesso!");
+    alert("Dados da Gelo do Vale e aparência original preenchidos com sucesso!");
 }
 
