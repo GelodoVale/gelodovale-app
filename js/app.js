@@ -2313,3 +2313,56 @@ window.copyGitHubLink = copyGitHubLink;
 window.initGitHubQRCode = initGitHubQRCode;
 window.autoFillFirebaseSettings = autoFillFirebaseSettings;
 window.goToGitHubConfig = goToGitHubConfig;
+
+// ==========================================
+// MERCADO PAGO INTEGRATION
+// ==========================================
+export async function generateMercadoPagoLink(title, amount) {
+    if (!state.mercadoPago || !state.mercadoPago.enabled || !state.mercadoPago.accessToken) {
+        alert("A integração do Mercado Pago não está configurada ou ativada nas Configurações.");
+        return null;
+    }
+    
+    const token = state.mercadoPago.accessToken;
+    const body = {
+        items: [
+            {
+                title: title,
+                quantity: 1,
+                currency_id: "BRL",
+                unit_price: Number(amount)
+            }
+        ],
+        back_urls: {
+            success: window.location.href,
+            failure: window.location.href,
+            pending: window.location.href
+        },
+        auto_return: "approved"
+    };
+    
+    try {
+        const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        if (data.init_point) {
+            return data.init_point; // URL de checkout (Pix, Boleto, Cartão)
+        } else {
+            console.error("Erro MP:", data);
+            alert("Erro ao gerar link do Mercado Pago. Verifique se o Token é válido (Credenciais de Produção).");
+            return null;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erro de conexão com o Mercado Pago.");
+        return null;
+    }
+}
+window.generateMercadoPagoLink = generateMercadoPagoLink;

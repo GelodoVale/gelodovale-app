@@ -369,7 +369,17 @@ export function openDocumentPrint(docId) {
     if (printableEl) printableEl.innerHTML = docHTML;
     
     const modalEl = document.getElementById("modal-document-print");
-    if (modalEl) modalEl.classList.add("active");
+    if (modalEl) {
+        modalEl.classList.add("active");
+        const btnMp = document.getElementById("btn-mp-doc");
+        if (btnMp) {
+            if (state.mercadoPago && state.mercadoPago.enabled) {
+                btnMp.style.display = "inline-flex";
+            } else {
+                btnMp.style.display = "none";
+            }
+        }
+    }
 }
 
 export function printTestReceipt() {
@@ -838,3 +848,49 @@ window.clearSignatureCanvas = clearSignatureCanvas;
 window.openSignatureModal = openSignatureModal;
 window.saveSignature = saveSignature;
 window.closeSignatureModal = closeSignatureModal;
+
+// MP Integration from Document Modal
+export async function generateMpFromDocument() {
+    const activeDocId = window.currentPrintDocId || currentPrintDocId;
+    if (!activeDocId) return;
+    
+    let d = state.documents.find(item => item.id === activeDocId);
+    if (!d) {
+        if (activeDocId === "TEST-0000") {
+            d = { id: "TEST", total: 55.00, clientName: "Teste", phone: "" };
+        } else {
+            return;
+        }
+    }
+    
+    if (d.total <= 0) {
+        alert("O valor do documento deve ser maior que zero para gerar cobrança no Mercado Pago.");
+        return;
+    }
+    
+    const btnIcon = document.getElementById("btn-mp-doc").querySelector("i");
+    if (btnIcon) {
+        btnIcon.setAttribute('data-lucide', 'loader');
+        if (window.lucide) lucide.createIcons();
+    }
+    
+    try {
+        const link = await window.generateMercadoPagoLink(`Recibo - ${d.clientName}`, d.total);
+        if (link) {
+            const phone = d.phone ? d.phone.replace(/\D/g, '') : '';
+            const msg = `Olá! Segue o link de pagamento do Mercado Pago (R$ ${d.total.toFixed(2).replace('.', ',')}) referente ao seu recibo.\nVocê pode escolher pagar via PIX ou Boleto clicando aqui:\n${link}`;
+            
+            if (phone.length >= 10) {
+                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                alert(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`);
+            }
+        }
+    } finally {
+        if (btnIcon) {
+            btnIcon.setAttribute('data-lucide', 'link');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+window.generateMpFromDocument = generateMpFromDocument;

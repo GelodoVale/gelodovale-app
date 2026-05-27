@@ -1659,13 +1659,18 @@ export function renderAccountsReceivable() {
                         <td style="padding: 10px; color: var(--color-text-muted);">${c.phone || 'Sem telefone'}</td>
                         <td style="padding: 10px; text-align: right; color: var(--color-danger); font-weight: 700;">R$ ${c.outstandingDebt.toFixed(2).replace(".", ",")}</td>
                         <td style="padding: 10px; text-align: center;">
-                            <div style="display: inline-flex; gap: 6px;">
+                            <div style="display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
                                 <button type="button" class="btn btn-primary" onclick="openReceivePaymentModal('${c.id}')" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px;">
                                     <i data-lucide="dollar-sign" style="width: 12px; height: 12px;"></i> Receber
                                 </button>
                                 <button type="button" class="btn" onclick="sendWhatsAppBilling('${c.id}')" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #25D366; border: 1px solid #25D366; color: #fff;">
                                     <i data-lucide="message-square" style="width: 12px; height: 12px;"></i> Cobrar
                                 </button>
+                                ${state.mercadoPago && state.mercadoPago.enabled ? `
+                                <button type="button" class="btn" onclick="generateAndSendMP('${c.id}', ${c.outstandingDebt})" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
+                                    <i data-lucide="link" style="width: 12px; height: 12px;"></i> MP (Pix/Boleto)
+                                </button>
+                                ` : ''}
                             </div>
                         </td>
                     </tr>
@@ -2644,6 +2649,40 @@ export function saveMercadoPagoSettings() {
 
 window.toggleMpFields = toggleMpFields;
 window.saveMercadoPagoSettings = saveMercadoPagoSettings;
+
+export async function generateAndSendMP(clientId, amount) {
+    const client = state.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    // Mostra um aviso carregando
+    const btnIcon = event.currentTarget.querySelector('i');
+    if (btnIcon) {
+        btnIcon.setAttribute('data-lucide', 'loader');
+        if (window.lucide) lucide.createIcons();
+    }
+    
+    try {
+        const link = await window.generateMercadoPagoLink(`Acerto de Dívida - ${client.name}`, amount);
+        if (link) {
+            // Abre o WhatsApp com o link
+            const phone = client.phone ? client.phone.replace(/\D/g, '') : '';
+            const msg = `Olá! Segue o link de pagamento do Mercado Pago referente ao acerto pendente (R$ ${amount.toFixed(2).replace('.', ',')}).\nVocê pode escolher pagar via PIX ou Boleto:\n${link}`;
+            
+            if (phone.length >= 10) {
+                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                // Se não tem telefone, apenas copia pro clipboard ou mostra na tela
+                alert(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`);
+            }
+        }
+    } finally {
+        if (btnIcon) {
+            btnIcon.setAttribute('data-lucide', 'link');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+window.generateAndSendMP = generateAndSendMP;
 
 
 
