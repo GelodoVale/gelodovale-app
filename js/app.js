@@ -105,6 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- PERSISTÊNCIA DE DADOS (RETROCOMPATIBILIDADE E LOGICA AUXILIAR) ---
+
+// Credenciais oficiais da Gelo do Vale (sempre usadas)
+const FIREBASE_CONFIG_OFICIAL = {
+    enabled: true,
+    apiKey: 'AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE',
+    projectId: 'gelo-do-vale',
+    databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
+    deviceKey: 'gelodovale_oficial'
+};
+
 export function loadState() {
     const saved = localStorage.getItem("gelcontrol_state");
     if (saved) {
@@ -124,16 +134,8 @@ export function loadState() {
             if (!parsed.backupSettings) parsed.backupSettings = {};
             if (!parsed.appearance) parsed.appearance = {};
             
-            // Retrocompatibilidade para Firebase
-            if (!parsed.firebaseConfig || !parsed.firebaseConfig.apiKey) {
-                parsed.firebaseConfig = {
-                    enabled: false,
-                    apiKey: 'AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE',
-                    projectId: 'gelo-do-vale',
-                    databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
-                    deviceKey: 'gelodovale_oficial'
-                };
-            }
+            // Firebase: SEMPRE ativo com credenciais oficiais
+            parsed.firebaseConfig = { ...FIREBASE_CONFIG_OFICIAL };
             
             // Retrocompatibilidade para catálogo dinâmico de produtos
             if (!parsed.products) {
@@ -153,8 +155,13 @@ export function loadState() {
         } catch (e) {
             console.error("Erro ao carregar estado do localStorage:", e);
         }
+    } else {
+        // Primeiro acesso (localStorage vazio): ativar Firebase para baixar dados da nuvem
+        state.firebaseConfig = { ...FIREBASE_CONFIG_OFICIAL };
+        console.log("Primeiro acesso detectado — Firebase ativado para sincronizar dados da nuvem.");
     }
 }
+
 
 // --- CONTROLE DE NAVEGAÇÃO ENTRE ABAS ---
 export function initNavigation() {
