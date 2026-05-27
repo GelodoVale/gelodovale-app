@@ -1782,6 +1782,19 @@
                     <!-- Gerado dinamicamente via JS baseando-se nos produtos tipo Gelo -->
                 </div>
 
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 1rem;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-primary);">Rastreabilidade e Trocas (Opcional)</h4>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="order-lot">Lote / Data de Fabricação do Gelo Entregue</label>
+                        <input type="text" id="order-lot" class="form-control" placeholder="Ex: Lote 045 ou 27/05">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="order-exchange-qty">Quantidade de Sacos Trocados (Quebra no Cliente)</label>
+                        <input type="number" id="order-exchange-qty" class="form-control" min="0" placeholder="Ex: 2">
+                        <small style="color: var(--color-text-muted);">Sacos estourados que o motorista precisou recolher no cliente.</small>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-order')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Registrar na Fila</button>

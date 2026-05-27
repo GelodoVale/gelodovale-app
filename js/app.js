@@ -768,7 +768,9 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
         items: { ...order.items },
         revenue: revenue,
         paymentMethod: paymentMethod,
-        gps: gps
+        gps: gps,
+        lotNumber: order.lotNumber || "",
+        exchangeQty: order.exchangeQty || 0
     };
     
     state.deliveries.push(newDelivery);
@@ -834,6 +836,12 @@ export function renderHistorico() {
             }
         });
         
+        let extraInfo = "";
+        if (del.lotNumber) extraInfo += ` | Lote: ${del.lotNumber}`;
+        if (del.exchangeQty > 0) extraInfo += ` | <span style="color:var(--color-danger)">Troca: ${del.exchangeQty}</span>`;
+        
+        const finalItemsText = itemsText.join(", ") + extraInfo;
+        
         let gpsButton = '';
         if (del.gps && del.gps.lat && del.gps.lng) {
             gpsButton = `
@@ -847,7 +855,7 @@ export function renderHistorico() {
             <tr>
                 <td style="font-weight: 500;">${dateFormatted}</td>
                 <td><strong>${del.clientName}</strong></td>
-                <td>${itemsText.join("<br>")}</td>
+                <td>${itemsText.join("<br>")} ${extraInfo !== "" ? "<br><span style='font-size:0.75rem; color:var(--color-text-muted);'>" + extraInfo + "</span>" : ""}</td>
                 <td style="color: var(--color-primary); font-weight: 700;">R$ ${del.revenue.toFixed(2)}</td>
                 <td>
                     <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
@@ -1078,12 +1086,17 @@ export function initForms() {
                 return;
             }
             
+            const lotNumber = document.getElementById("order-lot") ? document.getElementById("order-lot").value : "";
+            const exchangeQty = document.getElementById("order-exchange-qty") ? parseInt(document.getElementById("order-exchange-qty").value) || 0 : 0;
+            
             const newOrder = {
                 id: "o-" + Date.now(),
                 clientId: clientId,
                 date: new Date().toISOString(),
                 status: "pending",
-                items: items
+                items: items,
+                lotNumber: lotNumber,
+                exchangeQty: exchangeQty
             };
             
             state.orders.push(newOrder);
