@@ -20,8 +20,8 @@ import {
 } from './logistics.js';
 import { migrateLegacyComodatos, initClientSigningPortal } from './comodatos.js';
 import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal } from './admin.js';
-import { initFirebase } from './sync.js';
-import { initUtilityPanel } from './utils.js';
+import { initFirebase, checkOneDriveSync } from './sync.js';
+import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil } from './utils.js';
 
 // --- SISTEMA DE INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadState();
     applyAppearanceTheme();
     initFirebase();
+    checkOneDriveSync();
 
     // Inicializar o modo Sol Forte (Alto Contraste) se salvo
     const savedContrast = localStorage.getItem("highContrastTheme");
@@ -413,7 +414,7 @@ export function renderPedidos() {
     pendingOrders.forEach(o => {
         const client = state.clients.find(c => c.id === o.clientId);
         const clientName = client ? client.name : "Cliente Excluído";
-        const dateFormatted = new Date(o.date).toLocaleString('pt-BR');
+        const dateFormatted = formatDateBrazil(o.date);
         
         let tagsHTML = '';
         let totalVal = 0;
@@ -637,7 +638,7 @@ export function deductPackagingStock(productId, qtyFardos, qtyUnits, ref) {
                 type: "saida",
                 quantity: deduction,
                 balanceAfter: pkg.currentStock,
-                date: new Date().toISOString(),
+                date: getBrazilTimeISO(),
                 observation: `Baixa automática: ${ref} (${product.name})`
             });
         }
@@ -764,7 +765,7 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
         id: deliveryId,
         clientId: client.id,
         clientName: client.name,
-        date: new Date().toISOString(),
+        date: getBrazilTimeISO(),
         items: { ...order.items },
         revenue: revenue,
         paymentMethod: paymentMethod,
@@ -819,7 +820,7 @@ export function renderHistorico() {
     }
     
     filteredDeliveries.forEach(del => {
-        const dateFormatted = new Date(del.date).toLocaleString('pt-BR');
+        const dateFormatted = formatDateBrazil(del.date);
         
         let itemsText = [];
         state.products.forEach(p => {
@@ -974,7 +975,7 @@ export function initForms() {
                 oldFreezer.clientId = "";
                 oldFreezer.clientName = "";
                 oldFreezer.movementHistory.push({
-                    date: new Date().toLocaleDateString('pt-BR'),
+                    date: formatDateBrazil(getBrazilTimeISO()),
                     from: name,
                     to: "Fábrica",
                     reason: "Desvinculado devido à alteração no cadastro do cliente"
@@ -983,7 +984,7 @@ export function initForms() {
                     state.comodatos.forEach(com => {
                         if (com.clientId === targetClientId && com.freezerCode === oldFreezer.code && com.status !== 'retirado') {
                             com.status = 'retirado';
-                            com.returnDate = new Date().toISOString().split('T')[0];
+                            com.returnDate = getBrazilTimeISO().split('T')[0];
                             com.returnNotes = "Desvinculado no cadastro do cliente";
                         }
                     });
@@ -997,7 +998,7 @@ export function initForms() {
                 
                 if (!oldFreezer || oldFreezer.id !== selectedFreezer.id) {
                     selectedFreezer.movementHistory.push({
-                        date: new Date().toLocaleDateString('pt-BR'),
+                        date: formatDateBrazil(getBrazilTimeISO()),
                         from: "Fábrica",
                         to: name,
                         reason: "Alocação em regime de comodato"
@@ -1008,7 +1009,7 @@ export function initForms() {
                     const jaExiste = selectedFreezer.maintenanceLogs.some(log => log.note === maintenanceNotes);
                     if (!jaExiste) {
                         selectedFreezer.maintenanceLogs.push({
-                            date: new Date().toLocaleDateString('pt-BR'),
+                            date: formatDateBrazil(getBrazilTimeISO()),
                             note: maintenanceNotes
                         });
                     }
@@ -1092,7 +1093,7 @@ export function initForms() {
             const newOrder = {
                 id: "o-" + Date.now(),
                 clientId: clientId,
-                date: new Date().toISOString(),
+                date: getBrazilTimeISO(),
                 status: "pending",
                 items: items,
                 lotNumber: lotNumber,
@@ -1251,7 +1252,7 @@ export function initForms() {
                             if (status === 'inativo') destName = "Inativo";
                             
                             state.freezers[idx].movementHistory.push({
-                                date: new Date().toLocaleDateString('pt-BR'),
+                                date: formatDateBrazil(getBrazilTimeISO()),
                                 from: "Alocação",
                                 to: destName,
                                 reason: "Alteração manual de status no cadastro"
@@ -1272,7 +1273,7 @@ export function initForms() {
                     maintenanceLogs: [],
                     movementHistory: [
                         {
-                            date: new Date().toLocaleDateString('pt-BR'),
+                            date: formatDateBrazil(getBrazilTimeISO()),
                             from: "Aquisição",
                             to: "Fábrica",
                             reason: "Cadastro inicial do equipamento"
@@ -1320,7 +1321,7 @@ export function initForms() {
                     clientHasFreezer.clientId = "";
                     clientHasFreezer.clientName = "";
                     clientHasFreezer.movementHistory.push({
-                        date: new Date().toLocaleDateString('pt-BR'),
+                        date: formatDateBrazil(getBrazilTimeISO()),
                         from: client.name,
                         to: "Fábrica",
                         reason: "Substituído por outro freezer no cliente"
@@ -1345,10 +1346,10 @@ export function initForms() {
                 client.freezerBrand = freezer.brand;
                 client.freezerVoltage = freezer.voltage;
                 client.freezerCapacity = freezer.capacity;
-                client.deliveryDate = new Date().toISOString().split('T')[0];
+                client.deliveryDate = getBrazilTimeISO().split('T')[0];
                 
                 freezer.movementHistory.push({
-                    date: new Date().toLocaleDateString('pt-BR'),
+                    date: formatDateBrazil(getBrazilTimeISO()),
                     from: oldLocationName,
                     to: client.name,
                     reason: reason
@@ -1374,7 +1375,7 @@ export function initForms() {
                 if (destiny === 'inativo') destName = "Inativo";
                 
                 freezer.movementHistory.push({
-                    date: new Date().toLocaleDateString('pt-BR'),
+                    date: formatDateBrazil(getBrazilTimeISO()),
                     from: oldLocationName,
                     to: destName,
                     reason: reason
@@ -1404,7 +1405,7 @@ export function initForms() {
             const freezer = state.freezers.find(f => f.id === freezerId);
             if (freezer) {
                 freezer.maintenanceLogs.push({
-                    date: new Date().toLocaleDateString('pt-BR'),
+                    date: formatDateBrazil(getBrazilTimeISO()),
                     type: maintType,
                     technician: maintTech,
                     cost: maintCost,

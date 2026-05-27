@@ -236,7 +236,7 @@ export function deleteClient(clientId) {
             linkedFreezer.clientId = "";
             linkedFreezer.clientName = "";
             linkedFreezer.movementHistory.push({
-                date: new Date().toLocaleDateString('pt-BR'),
+                date: window.formatDateBrazil(window.getBrazilTimeISO()),
                 from: "Cliente Removido",
                 to: "Fábrica",
                 reason: "Desvinculado devido à remoção do cliente"

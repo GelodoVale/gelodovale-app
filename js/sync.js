@@ -305,6 +305,108 @@ function mostrarToastSync() {
     }, 3500);
 }
 
+// ─── SINCRONIZAÇÃO ONEDRIVE LOCAL ──────────────────────────────────────────
+export function updateOneDriveStatusUI(status) {
+    const indicator = document.getElementById("onedrive-sync-status");
+    if (!indicator) return;
+    if (status === "connected") {
+        indicator.title = "OneDrive: Conectado (Sincronizado localmente)";
+        indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
+        indicator.style.background = "rgba(0, 240, 255, 0.05)";
+        indicator.innerHTML = `<i data-lucide="cloud" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
+    } else {
+        indicator.title = "OneDrive Desconectado";
+        indicator.style.borderColor = "rgba(255, 255, 255, 0.08)";
+        indicator.style.background = "rgba(255, 255, 255, 0.03)";
+        indicator.innerHTML = `<i data-lucide="cloud-off" style="width: 18px; height: 18px; color: var(--color-text-muted);"></i>`;
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+export async function checkOneDriveSync() {
+    const isOneDrivePath = window.location.pathname.includes("OneDrive") || window.location.pathname.includes("GelodoVale-system");
+    if (isOneDrivePath) {
+        updateOneDriveStatusUI("connected");
+    }
+
+    try {
+        const response = await fetch("../state_backup.json");
+        if (response.ok) {
+            const payload = await response.json();
+            const actualData = payload.data ? payload.data : payload;
+            
+            if (actualData && (actualData.clients || actualData.freezers || actualData.prices)) {
+                updateOneDriveStatusUI("connected");
+                
+                const backupLastUpdated = actualData.lastUpdated || 0;
+                const localLastUpdated = state.lastUpdated || 0;
+                const hasLocalStorage = !!localStorage.getItem("gelcontrol_state");
+                
+                if (!hasLocalStorage || backupLastUpdated > localLastUpdated) {
+                    console.log("OneDrive backup is newer. Restoring data automatically...");
+                    updateState(actualData);
+                    saveStateLocalOnly();
+                    renderApp();
+                    showOneDriveToast("Dados do OneDrive carregados automaticamente!");
+                }
+            }
+        }
+    } catch (err) {
+        console.log("OneDrive local backup not loaded automatically via fetch:", err);
+    }
+}
+
+export function saveStateToOneDrive() {
+    try {
+        state.lastUpdated = Date.now();
+        saveStateLocalOnly();
+        
+        const backupPayload = {
+            version: state.backupSettings?.currentVersion || "2.7",
+            date: window.getBrazilTimeISO(),
+            data: state
+        };
+        
+        const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", jsonString);
+        downloadAnchor.setAttribute("download", "state_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        
+        showOneDriveToast("Backup baixado! Substitua na pasta GelodoVale-system do OneDrive.");
+    } catch (e) {
+        alert("Erro ao salvar no OneDrive: " + e.message);
+    }
+}
+
+function showOneDriveToast(msg) {
+    const existing = document.getElementById('onedrive-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'onedrive-toast';
+    toast.style.cssText = `
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,114,255,0.15); border: 1px solid rgba(0,114,255,0.35);
+        color: #00f0ff; padding: 10px 20px; border-radius: 12px; font-size: 0.85rem;
+        font-weight: 600; backdrop-filter: blur(12px); z-index: 99999;
+        display: flex; align-items: center; gap: 8px;
+        animation: fadeIn 0.3s ease-out;
+        box-shadow: 0 4px 20px rgba(0,114,255,0.2);
+    `;
+    toast.innerHTML = `<i data-lucide="cloud" style="width:15px;height:15px;"></i> ${msg}`;
+    document.body.appendChild(toast);
+    if (window.lucide) lucide.createIcons();
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(() => toast.remove(), 500);
+    }, 3500);
+}
+
 // ─── EXPORTS GLOBAIS ───────────────────────────────────────────────────────
 window.toggleFirebaseSync   = toggleFirebaseSync;
 window.saveFirebaseSettings = saveFirebaseSettings;
@@ -312,3 +414,6 @@ window.forceManualSync      = forceManualSync;
 window.updateSyncStatusUI   = updateSyncStatusUI;
 window.pushToFirebase       = pushToFirebase;
 window.initFirebase         = initFirebase;
+window.updateOneDriveStatusUI = updateOneDriveStatusUI;
+window.checkOneDriveSync     = checkOneDriveSync;
+window.saveStateToOneDrive   = saveStateToOneDrive;

@@ -5,6 +5,22 @@ export let currentCalendarYear = new Date().getFullYear();
 export let currentCalendarMonth = new Date().getMonth();
 export let selectedCalendarDateStr = "";
 
+// Helper de Fuso Horário (Registro/SP)
+export function getBrazilTimeISO() {
+    const brTime = new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"});
+    const d = new Date(brTime);
+    // Cria formato ISO manual com base no fuso SP para evitar a conversão do toISOString para UTC
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000-03:00`;
+}
+
+export function formatDateBrazil(dateStr) {
+    if (!dateStr) return "";
+    const options = { timeZone: 'America/Sao_Paulo' };
+    const dateObj = new Date(dateStr);
+    return dateObj.toLocaleDateString('pt-BR', options);
+}
+
 const WEATHER_CONDITIONS = {
     sun: { desc: "Ensolarado", icon: "sun", color: "#eab308" },
     cloud: { desc: "Nublado", icon: "cloud", color: "#94a3b8" },
@@ -842,3 +858,6 @@ window.changeMonth = changeMonth;
 window.selectCalendarDay = selectCalendarDay;
 window.saveDayNote = saveDayNote;
 window.clearDayNote = clearDayNote;
+
+window.getBrazilTimeISO = getBrazilTimeISO;
+window.formatDateBrazil = formatDateBrazil;

@@ -322,7 +322,7 @@ export function openRentalModal(rentalId = null) {
     }
 
     // Datas padrão
-    const today = new Date().toISOString().split('T')[0];
+    const today = window.getBrazilTimeISO().split('T')[0];
     const deliveryDateEl = document.getElementById("rental-delivery-date");
     if (deliveryDateEl) deliveryDateEl.value = today;
     
@@ -495,7 +495,7 @@ export function returnRental(rentalId) {
     const rental = state.rentals.find(r => r.id === rentalId);
     if (!rental) return;
     
-    const returnDateStr = new Date().toISOString().split('T')[0];
+    const returnDateStr = window.getBrazilTimeISO().split('T')[0];
     const expectedDate = new Date(rental.expectedReturnDate + 'T00:00:00');
     const returnDate = new Date(returnDateStr + 'T00:00:00');
     

@@ -257,7 +257,7 @@ export function renderPrecos() {
         document.getElementById("cfg-app-version").value = state.backupSettings.currentVersion || "1.0";
         document.getElementById("cfg-backup-frequency").value = state.backupSettings.frequencyDays !== undefined ? state.backupSettings.frequencyDays : 7;
         document.getElementById("lbl-last-backup-date").innerText = state.backupSettings.lastBackupDate 
-            ? new Date(state.backupSettings.lastBackupDate).toLocaleString('pt-BR') 
+            ? window.formatDateBrazil(state.backupSettings.lastBackupDate) 
             : "Nenhum backup realizado";
     }
 
@@ -279,7 +279,7 @@ export function renderPrecos() {
             // Mostrar backups ordenados por data decrescente
             const sortedBackups = [...backups].sort((a, b) => new Date(b.date) - new Date(a.date));
             sortedBackups.forEach(b => {
-                const dateStr = new Date(b.date).toLocaleString('pt-BR');
+                const dateStr = window.formatDateBrazil(b.date);
                 backupsTbody.innerHTML += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <td style="padding: 8px 6px; font-weight: 600; color: var(--color-primary);">v${b.version}</td>
@@ -460,7 +460,7 @@ export function clearClientPrices(clientId) {
 // 4. Sistema de Backup
 export function generateBackup(isAuto = false) {
     const version = (state.backupSettings && state.backupSettings.currentVersion) || "1.0";
-    const backupDate = new Date().toISOString();
+    const backupDate = window.getBrazilTimeISO();
     
     // Payload do backup: dados operacionais sem o histórico de backups locais para não estourar o tamanho
     const backupPayload = {
@@ -528,7 +528,7 @@ export function restoreLocalBackup(backupId) {
         return;
     }
 
-    if (confirm(`ATENÇÃO: Deseja realmente restaurar o backup da versão ${backup.version} criado em ${new Date(backup.date).toLocaleString('pt-BR')}?\n\nIsso substituirá TODOS os clientes, equipamentos, aluguéis, recibos e configurações atuais.`)) {
+    if (confirm(`ATENÇÃO: Deseja realmente restaurar o backup da versão ${backup.version} criado em ${window.formatDateBrazil(backup.date)}?\n\nIsso substituirá TODOS os clientes, equipamentos, aluguéis, recibos e configurações atuais.`)) {
         applyBackupData(backup.payload);
     }
 }
@@ -594,7 +594,7 @@ export function importBackupFromFile(event) {
                 alert("Erro: O arquivo selecionado não é um backup válido do Gelo do Vale!");
                 return;
             }
-            if (confirm(`Deseja realmente restaurar o backup físico da versão ${payload.version} criado em ${new Date(payload.date || Date.now()).toLocaleString('pt-BR')}?`)) {
+            if (confirm(`Deseja realmente restaurar o backup físico da versão ${payload.version} criado em ${window.formatDateBrazil(payload.date || Date.now())}?`)) {
                 applyBackupData(payload);
             }
         } catch (err) {
@@ -960,7 +960,7 @@ export function renderCargoStockInputs() {
 }
 
 export function loadTodaySalesData() {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = window.getBrazilTimeISO().split('T')[0];
     const activeProds = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Carvão' || p.type === 'Gelo Saborizado'));
     
     const salesMap = {};
@@ -1086,7 +1086,7 @@ export function calculateCargoSettlement() {
     
     const totalReceived = cashReceived + pixReceived + cardReceived;
     
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = window.getBrazilTimeISO().split('T')[0];
     let actualRegisteredRevenue = 0;
     state.deliveries.forEach(del => {
         if (del.date.startsWith(todayStr)) {
@@ -1256,7 +1256,7 @@ export function saveCargoSettlement() {
         });
     });
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = window.getBrazilTimeISO().split('T')[0];
     let actualRegisteredRevenue = 0;
     state.deliveries.forEach(del => {
         if (del.date.startsWith(todayStr)) {
@@ -1284,7 +1284,7 @@ export function saveCargoSettlement() {
 
     const settlement = {
         id: "settle_" + Date.now(),
-        date: new Date().toISOString(),
+        date: window.getBrazilTimeISO(),
         kmInitial,
         kmFinal,
         kmDriven,
@@ -1362,8 +1362,8 @@ export function calculateProductPackagingCost(productId, qtyFardos, qtyUnits = 0
 }
 
 export function renderFinancialDashboard() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const currentMonthStr = new Date().toISOString().substring(0, 7);
+    const todayStr = window.getBrazilTimeISO().split('T')[0];
+    const currentMonthStr = window.getBrazilTimeISO().substring(0, 7);
     
     let revToday = 0;
     let revMonth = 0;
@@ -1617,7 +1617,7 @@ export function processReceivePayment(event) {
             clientName: client.name,
             amount: amount,
             paymentMethod: method,
-            date: new Date().toISOString(),
+            date: window.getBrazilTimeISO(),
             gps: gps
         };
         
@@ -1695,7 +1695,7 @@ export function renderAccountsReceivable() {
         } else {
             const sortedPayments = [...payments].sort((a, b) => new Date(b.date) - new Date(a.date));
             sortedPayments.forEach(p => {
-                const dateFormatted = new Date(p.date).toLocaleString('pt-BR');
+                const dateFormatted = window.formatDateBrazil(p.date);
                 
                 let gpsButton = '';
                 if (p.gps && p.gps.lat && p.gps.lng) {
@@ -2015,7 +2015,7 @@ export function savePackaging(event) {
                 type: "entrada",
                 quantity: initialStock,
                 balanceAfter: initialStock,
-                date: new Date().toISOString(),
+                date: window.getBrazilTimeISO(),
                 observation: "Estoque Inicial no cadastro"
             });
         }
@@ -2140,7 +2140,7 @@ export function savePackagingEntry(event) {
         type: "entrada",
         quantity: qty,
         balanceAfter: pkg.currentStock,
-        date: new Date().toISOString(),
+        date: window.getBrazilTimeISO(),
         observation: obs || "Entrada manual de estoque"
     });
     
@@ -2169,7 +2169,7 @@ export function renderPackagingTransactions() {
     const sortedTxs = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
     
     sortedTxs.forEach(tx => {
-        const dateFormatted = new Date(tx.date).toLocaleString('pt-BR');
+        const dateFormatted = window.formatDateBrazil(tx.date);
         const typeBadge = tx.type === "entrada" 
             ? `<span style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); color: var(--color-success); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">Entrada</span>`
             : `<span style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">Saída</span>`;
@@ -2490,7 +2490,7 @@ export function shareAcertoWhatsApp() {
     const totalExpenses = expFuel + expMeal + expOthers;
 
     let text = `*COMPROVANTE DE ACERTO DE CARGA*\n\n`;
-    text += `*Data:* ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+    text += `*Data:* ${window.formatDateBrazil(window.getBrazilTimeISO())}\n\n`;
     
     text += `*Resumo Financeiro*\n`;
     text += `- Dinheiro: R$ ${cashReceived.toFixed(2)}\n`;
@@ -2577,7 +2577,7 @@ export function saveProduction() {
     
     state.packagingTransactions.push({
         id: 'tx-' + Date.now(),
-        date: new Date().toISOString(),
+        date: window.getBrazilTimeISO(),
         packagingId: pkgId,
         packagingName: pkg.name,
         type: 'out',

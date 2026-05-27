@@ -102,7 +102,7 @@ export function openDocModal(docId = null) {
     // Data Padrão
     const dateInput = document.getElementById("doc-date");
     if (dateInput) {
-        dateInput.value = new Date().toISOString().split('T')[0];
+        dateInput.value = window.getBrazilTimeISO().split('T')[0];
     }
 
     // Resetar/Inicializar calculadora com configurações salvas
@@ -234,7 +234,7 @@ export function openDocumentPrint(docId) {
         d = {
             id: "TEST-0000",
             type: "recibo",
-            date: new Date().toISOString().split('T')[0],
+            date: window.getBrazilTimeISO().split('T')[0],
             clientName: "CLIENTE TESTE DA SILVA",
             address: "AV. PAULISTA, 1000 - SÃO PAULO/SP",
             phone: "(11) 99999-9999",
@@ -474,7 +474,7 @@ export function downloadDocumentPDF() {
         d = {
             id: "TEST-0000",
             type: "recibo",
-            date: new Date().toISOString().split('T')[0],
+            date: window.getBrazilTimeISO().split('T')[0],
             clientName: "CLIENTE TESTE DA SILVA",
             address: "AV. PAULISTA, 1000 - SÃO PAULO/SP",
             phone: "(11) 99999-9999",
@@ -541,7 +541,7 @@ export function shareDocumentWhatsApp() {
         d = {
             id: "TEST-0000",
             type: "recibo",
-            date: new Date().toISOString().split('T')[0],
+            date: window.getBrazilTimeISO().split('T')[0],
             clientName: "CLIENTE TESTE DA SILVA",
             address: "AV. PAULISTA, 1000 - SÃO PAULO/SP",
             phone: "(11) 99999-9999",
@@ -602,7 +602,7 @@ export function shareDocumentEmail() {
         d = {
             id: "TEST-0000",
             type: "recibo",
-            date: new Date().toISOString().split('T')[0],
+            date: window.getBrazilTimeISO().split('T')[0],
             clientName: "CLIENTE TESTE DA SILVA",
             address: "AV. PAULISTA, 1000 - SÃO PAULO/SP",
             phone: "(11) 99999-9999",
@@ -780,7 +780,7 @@ export function saveSignature() {
         if (comodato) {
             comodato.signatureBase64 = dataUrl;
             comodato.status = 'ativo';
-            comodato.signatureDate = new Date().toISOString();
+            comodato.signatureDate = window.getBrazilTimeISO();
             comodato.signatureMethod = 'local';
             
             const client = state.clients.find(c => c.id === comodato.clientId);

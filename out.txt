@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelo do Vale - Fábrica de Gelo e Controle Patrimonial</title>
+    <!-- Metas PWA e Mobile -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gelo do Vale">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/neon/192/snowflake.png">
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Scripts de Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+    <div id="app-container">
+        
+        <!-- SIDEBAR DE NAVEGAÇÃO -->
+        <aside class="sidebar">
+            <div class="logo-container" style="justify-content: center; padding: 0.75rem 0.5rem; background: #ffffff; border-radius: var(--radius-md); margin: 0.75rem; border: 1px solid rgba(255,255,255,0.05); display: flex;">
+                <img src="logo_horizontal.jpg" alt="Gelo do Vale" style="max-height: 42px; max-width: 100%; object-fit: contain;">
+            </div>
+            
+            <nav class="nav-menu">
+                <a class="nav-item" data-tab="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="layout-dashboard" aria-hidden="true" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" data-tab="clientes">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" aria-hidden="true" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                    <span>Clientes &amp; Freezers</span>
+                </a>
+                <a class="nav-item" data-tab="inventario">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="box" aria-hidden="true" class="lucide lucide-box"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+                    <span>Inventário de Freezers</span>
+                </a>
+                <a class="nav-item" data-tab="tinas">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="archive" aria-hidden="true" class="lucide lucide-archive"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>
+                    <span>Aluguel de Equipamentos</span>
+                </a>
+                <a class="nav-item active" data-tab="documentos">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                    <span>Recibos &amp; Orçamentos</span>
+                </a>
+                <a class="nav-item" data-tab="pedidos">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shopping-cart" aria-hidden="true" class="lucide lucide-shopping-cart"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                    <span>Pedidos Pendentes</span>
+                </a>
+                <a class="nav-item" data-tab="historico">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="history" aria-hidden="true" class="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>
+                    <span>Histórico de Entregas</span>
+                </a>
+                <a class="nav-item" data-tab="precos" id="nav-precos">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="settings" aria-hidden="true" class="lucide lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <span>Configurações &amp; Preços</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>Gelo do Vale v1.0</p>
+                <p>Painel de Distribuição</p>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="main-content">
+            
+            <!-- CABEÇALHO SUPERIOR -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="page-title">Recibos &amp; Orçamentos</h1>
+                    <p id="page-subtitle">Emita recibos de entrega ou orçamentos comerciais em PDF/A4</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btn-mock-data">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="database" aria-hidden="true" class="lucide lucide-database"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg> Carregar Dados Demo
+                    </button>
+                    <button class="btn btn-primary" id="btn-global-action" style="display: inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" aria-hidden="true" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Novo Documento</button>
+                </div>
+            </header>
+
+            <!-- ================= TELA: DASHBOARD ================= -->
+            <section id="dashboard" class="tab-content">
+                
+                <!-- Grade de KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-info">
+                            <h3>Clientes / Freezers</h3>
+                            <div class="kpi-value" id="kpi-freezers">
+        <span style="font-size: 1.1rem; display: block; line-height: 1.2;">
+            Cli: 4 | Frz: 4
+        </span>
+        <span style="font-size: 0.75rem; color: var(--color-primary); display: block; margin-top: 4px; font-weight: 600;">
+            Tinas: 2 ativas
+        </span>
+    </div>
+                        </div>
+                        <div class="kpi-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="thermometer" aria-hidden="true" class="lucide lucide-thermometer"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-info">
+                            <h3>Gelo Entregue (Mês)</h3>
+                            <div class="kpi-value" id="kpi-delivered">1.640 kg</div>
+                        </div>
+                        <div class="kpi-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="package" aria-hidden="true" class="lucide lucide-package"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-info">
+                            <h3>Pedidos Pendentes</h3>
+                            <div class="kpi-value" id="kpi-pending-orders">2</div>
+                        </div>
+                        <div class="kpi-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" aria-hidden="true" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <div class="kpi-info">
+                            <h3>Faturamento Mensal</h3>
+                            <div class="kpi-value" id="kpi-revenue">R$ 3.822,50</div>
+                        </div>
+                        <div class="kpi-icon-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="dollar-sign" aria-hidden="true" class="lucide lucide-dollar-sign"><line x1="12" x2="12" y1="2" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painéis do Dashboard (Gráfico e Alertas) -->
+                <div class="dashboard-row">
+                    <!-- Painel do Gráfico -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h2>Entregas Recentes (Saco de Gelo/Kg)</h2>
+                            <div style="font-size: 0.8rem; color: var(--color-text-muted);">Últimas 7 Entregas</div>
+                        </div>
+                        <div class="chart-container" id="dashboard-chart">
+        <svg class="chart-svg" viewBox="0 0 500 220">
+            <defs>
+                <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00f0ff"></stop>
+                    <stop offset="100%" stop-color="#0072ff" stop-opacity="0.3"></stop>
+                </linearGradient>
+                <linearGradient id="barGradHover" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00f0ff"></stop>
+                    <stop offset="100%" stop-color="#00f0ff" stop-opacity="0.6"></stop>
+                </linearGradient>
+            </defs>
+            
+            <!-- Linhas de grade horizontais -->
+            <line x1="45" y1="20" x2="485" y2="20" class="chart-grid-line"></line>
+            <line x1="45" y1="105" x2="485" y2="105" class="chart-grid-line"></line>
+            <line x1="45" y1="190" x2="485" y2="190" class="chart-axis-line"></line>
+            
+            <!-- Eixo X Labels (Datas) e Barras -->
+    
+        <text x="35" y="24" class="chart-text" text-anchor="end">R$1075</text>
+        <text x="35" y="109" class="chart-text" text-anchor="end">R$538</text>
+        <text x="35" y="194" class="chart-text" text-anchor="end">R$0</text>
+    
+            <rect class="chart-bar" x="59.666666666666664" y="84.83720930232558" width="43.99999999999999" height="105.16279069767442"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="81.66666666666666" y="78.83720930232558" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$665</text>
+        
+            <text x="81.66666666666666" y="208" class="chart-text" text-anchor="middle">13/5</text>
+        
+            <rect class="chart-bar" x="133" y="130.69767441860466" width="43.99999999999999" height="59.30232558139535"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="155" y="124.69767441860466" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$375</text>
+        
+            <text x="155" y="208" class="chart-text" text-anchor="middle">14/5</text>
+        
+            <rect class="chart-bar" x="206.33333333333331" y="61.51162790697674" width="43.99999999999999" height="128.48837209302326"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="228.33333333333331" y="55.51162790697674" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$813</text>
+        
+            <text x="228.33333333333331" y="208" class="chart-text" text-anchor="middle">15/5</text>
+        
+            <rect class="chart-bar" x="279.6666666666667" y="110.53488372093024" width="43.99999999999999" height="79.46511627906976"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="301.6666666666667" y="104.53488372093024" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$503</text>
+        
+            <text x="301.6666666666667" y="208" class="chart-text" text-anchor="middle">16/5</text>
+        
+            <rect class="chart-bar" x="353" y="20" width="43.99999999999999" height="170"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="375" y="14" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$1075</text>
+        
+            <text x="375" y="208" class="chart-text" text-anchor="middle">17/5</text>
+        
+            <rect class="chart-bar" x="426.3333333333333" y="146.11627906976744" width="43.99999999999999" height="43.883720930232556"></rect>
+            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
+            <text x="448.3333333333333" y="140.11627906976744" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$278</text>
+        
+            <text x="448.3333333333333" y="208" class="chart-text" text-anchor="middle">18/5</text>
+        </svg></div>
+                    </div>
+
+                    <!-- Painel de Alertas de Reabastecimento -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h2>Alertas de Reposição</h2>
+                            <span class="status-badge pending" id="alert-count">4 Alertas</span>
+                        </div>
+                        <div class="alerts-list" id="alerts-list-container">
+                <div class="alert-item ">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" aria-hidden="true" class="lucide lucide-alert-triangle alert-icon"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <div class="alert-details">
+                        <h4>Supermercado Rondon</h4>
+                        <p>Estoque crítico de <strong>Gelo Triturado 20kg</strong>: 1/10 pacotes (10%)</p>
+                    </div>
+                </div>
+            
+                <div class="alert-item warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" aria-hidden="true" class="lucide lucide-alert-triangle alert-icon"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <div class="alert-details">
+                        <h4>Supermercado Rondon</h4>
+                        <p>Estoque crítico de <strong>Pacote Gelo 5kg</strong>: 12/60 pacotes (20%)</p>
+                    </div>
+                </div>
+            
+                <div class="alert-item warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" aria-hidden="true" class="lucide lucide-alert-triangle alert-icon"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <div class="alert-details">
+                        <h4>Quiosque Beira Mar</h4>
+                        <p>Estoque crítico de <strong>Pacote Gelo 2kg</strong>: 8/40 pacotes (20%)</p>
+                    </div>
+                </div>
+            
+                <div class="alert-item warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" aria-hidden="true" class="lucide lucide-alert-triangle alert-icon"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                    <div class="alert-details">
+                        <h4>Restaurante Estrela do Mar</h4>
+                        <p>Estoque crítico de <strong>Pacote Gelo 5kg</strong>: 4/20 pacotes (20%)</p>
+                    </div>
+                </div>
+            </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TELA: CLIENTES & FREEZERS ================= -->
+            <section id="clientes" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>Lista de Clientes e Status de Estoque</h2>
+                    <button class="btn btn-primary" id="btn-add-client">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user-plus" aria-hidden="true" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg> Adicionar Cliente
+                    </button>
+                </div>
+                
+                <div class="clients-grid" id="clients-grid-container">
+            <div class="client-card">
+                <div class="client-card-header">
+                    <div class="client-name-details">
+                        <h3>Supermercado Rondon</h3>
+                        <p>Freezer: <strong>FRZ-RO-01</strong></p>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(239,68,68,0.15); color: var(--color-danger);">Estoque Crítico</span>
+                </div>
+                
+                <div class="client-contacts">
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span>Rua das Palmeiras, 1024 - Centro</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone" aria-hidden="true" class="lucide lucide-phone"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                        <span>(18) 99123-4567</span>
+                    </div>
+                </div>
+
+                
+                <div class="freezer-specs-box" style="margin: 0.75rem 0; padding: 0.6rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Equipamento:</strong> Metalfrio 500L</span>
+                        <span><strong>Voltagem:</strong> 220V</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Data Entrega:</strong> 15/10/2025</span>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.4rem; padding-top: 0.3rem; color: var(--color-text-muted); line-height: 1.3;">
+                        <strong>Obs/Manut:</strong> Borracha da porta revisada e preventiva feita em 12/03/2026.
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="freezer-info-section">
+                    <div class="freezer-title">
+                        <span>Estoque do Freezer</span>
+                        
+                            <button class="btn btn-secondary btn-icon-only" style="padding: 2px 6px; font-size: 0.75rem;" onclick="openSalesModal('c-1')" title="Registrar Consumo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="minus-circle" aria-hidden="true" style="width: 14px; height: 14px; color: var(--color-danger)" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path></svg> Consumo
+                            </button>
+                        
+                    </div>
+                    <div class="freezer-stocks">
+                        
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 5kg</span>
+                                <span class="stock-numbers">12 / 60</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill low-stock" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 2kg</span>
+                                <span class="stock-numbers">35 / 40</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 87.5%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Gelo Triturado 20kg</span>
+                                <span class="stock-numbers">1 / 10</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill low-stock" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    
+                    </div>
+                </div>
+                
+                <div class="client-actions" style="margin-top: 1.5rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    
+                    <button class="btn btn-secondary" onclick="openComodato('c-1')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> Contrato
+                    </button>
+                    
+                    <button class="btn btn-secondary btn-icon-only" onclick="editClient('c-1')" title="Editar Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteClient('c-1')" title="Remover Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="client-card">
+                <div class="client-card-header">
+                    <div class="client-name-details">
+                        <h3>Quiosque Beira Mar</h3>
+                        <p>Freezer: <strong>FRZ-BM-05</strong></p>
+                    </div>
+                    <span class="status-badge pending">Atenção</span>
+                </div>
+                
+                <div class="client-contacts">
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span>Av. Beira Mar, S/N - Praia Grande</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone" aria-hidden="true" class="lucide lucide-phone"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                        <span>(13) 98111-2233</span>
+                    </div>
+                </div>
+
+                
+                <div class="freezer-specs-box" style="margin: 0.75rem 0; padding: 0.6rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Equipamento:</strong> Gelopar 400L</span>
+                        <span><strong>Voltagem:</strong> 110V</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Data Entrega:</strong> 20/11/2025</span>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.4rem; padding-top: 0.3rem; color: var(--color-text-muted); line-height: 1.3;">
+                        <strong>Obs/Manut:</strong> Termostato regulado em 05/04/2026.
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="freezer-info-section">
+                    <div class="freezer-title">
+                        <span>Estoque do Freezer</span>
+                        
+                            <button class="btn btn-secondary btn-icon-only" style="padding: 2px 6px; font-size: 0.75rem;" onclick="openSalesModal('c-2')" title="Registrar Consumo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="minus-circle" aria-hidden="true" style="width: 14px; height: 14px; color: var(--color-danger)" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path></svg> Consumo
+                            </button>
+                        
+                    </div>
+                    <div class="freezer-stocks">
+                        
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 5kg</span>
+                                <span class="stock-numbers">32 / 40</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 80%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 2kg</span>
+                                <span class="stock-numbers">8 / 40</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill low-stock" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Gelo Triturado 20kg</span>
+                                <span class="stock-numbers">4 / 5</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 80%"></div>
+                            </div>
+                        </div>
+                    
+                    </div>
+                </div>
+                
+                <div class="client-actions" style="margin-top: 1.5rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    
+                    <button class="btn btn-secondary" onclick="openComodato('c-2')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> Contrato
+                    </button>
+                    
+                    <button class="btn btn-secondary btn-icon-only" onclick="editClient('c-2')" title="Editar Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteClient('c-2')" title="Remover Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="client-card">
+                <div class="client-card-header">
+                    <div class="client-name-details">
+                        <h3>Posto Portal da Cidade</h3>
+                        <p>Freezer: <strong>FRZ-PT-12</strong></p>
+                    </div>
+                    <span class="status-badge completed">OK</span>
+                </div>
+                
+                <div class="client-contacts">
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span>Rodovia SP-270, Km 450</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone" aria-hidden="true" class="lucide lucide-phone"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                        <span>(11) 97555-8899</span>
+                    </div>
+                </div>
+
+                
+                <div class="freezer-specs-box" style="margin: 0.75rem 0; padding: 0.6rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Equipamento:</strong> Fricon 600L</span>
+                        <span><strong>Voltagem:</strong> 220V</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Data Entrega:</strong> 10/05/2024</span>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.4rem; padding-top: 0.3rem; color: var(--color-text-muted); line-height: 1.3;">
+                        <strong>Obs/Manut:</strong> Limpeza da condensadora feita em 02/05/2026.
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="freezer-info-section">
+                    <div class="freezer-title">
+                        <span>Estoque do Freezer</span>
+                        
+                            <button class="btn btn-secondary btn-icon-only" style="padding: 2px 6px; font-size: 0.75rem;" onclick="openSalesModal('c-3')" title="Registrar Consumo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="minus-circle" aria-hidden="true" style="width: 14px; height: 14px; color: var(--color-danger)" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path></svg> Consumo
+                            </button>
+                        
+                    </div>
+                    <div class="freezer-stocks">
+                        
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 5kg</span>
+                                <span class="stock-numbers">65 / 80</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 81.25%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 2kg</span>
+                                <span class="stock-numbers">42 / 50</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 84%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Gelo Triturado 20kg</span>
+                                <span class="stock-numbers">12 / 15</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 80%"></div>
+                            </div>
+                        </div>
+                    
+                    </div>
+                </div>
+                
+                <div class="client-actions" style="margin-top: 1.5rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    
+                    <button class="btn btn-secondary" onclick="openComodato('c-3')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> Contrato
+                    </button>
+                    
+                    <button class="btn btn-secondary btn-icon-only" onclick="editClient('c-3')" title="Editar Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteClient('c-3')" title="Remover Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="client-card">
+                <div class="client-card-header">
+                    <div class="client-name-details">
+                        <h3>Restaurante Estrela do Mar</h3>
+                        <p>Freezer: <strong>FRZ-EM-02</strong></p>
+                    </div>
+                    <span class="status-badge pending">Atenção</span>
+                </div>
+                
+                <div class="client-contacts">
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span>Rua dos Pescadores, 85</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone" aria-hidden="true" class="lucide lucide-phone"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                        <span>(11) 3456-7890</span>
+                    </div>
+                </div>
+
+                
+                <div class="freezer-specs-box" style="margin: 0.75rem 0; padding: 0.6rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Equipamento:</strong> Metalfrio 300L</span>
+                        <span><strong>Voltagem:</strong> 110V</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span><strong>Data Entrega:</strong> 08/01/2026</span>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.4rem; padding-top: 0.3rem; color: var(--color-text-muted); line-height: 1.3;">
+                        <strong>Obs/Manut:</strong> Entrega inicial do equipamento nova.
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="freezer-info-section">
+                    <div class="freezer-title">
+                        <span>Estoque do Freezer</span>
+                        
+                            <button class="btn btn-secondary btn-icon-only" style="padding: 2px 6px; font-size: 0.75rem;" onclick="openSalesModal('c-4')" title="Registrar Consumo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="minus-circle" aria-hidden="true" style="width: 14px; height: 14px; color: var(--color-danger)" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path></svg> Consumo
+                            </button>
+                        
+                    </div>
+                    <div class="freezer-stocks">
+                        
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 5kg</span>
+                                <span class="stock-numbers">4 / 20</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill low-stock" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Pacote Gelo 2kg</span>
+                                <span class="stock-numbers">12 / 20</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 60%"></div>
+                            </div>
+                        </div>
+                    
+                        <div class="stock-progress-bar">
+                            <div class="stock-label">
+                                <span>Gelo Triturado 20kg</span>
+                                <span class="stock-numbers">18 / 20</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill " style="width: 90%"></div>
+                            </div>
+                        </div>
+                    
+                    </div>
+                </div>
+                
+                <div class="client-actions" style="margin-top: 1.5rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    
+                    <button class="btn btn-secondary" onclick="openComodato('c-4')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> Contrato
+                    </button>
+                    
+                    <button class="btn btn-secondary btn-icon-only" onclick="editClient('c-4')" title="Editar Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteClient('c-4')" title="Remover Cliente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 16px; height: 16px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+            </section>
+
+            <!-- ================= TELA: INVENTÁRIO DE FREEZERS ================= -->
+            <section id="inventario" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>Controle Patrimonial de Equipamentos</h2>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary" id="btn-scan-qr">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="qr-code" aria-hidden="true" class="lucide lucide-qr-code"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg> Ler QR Code
+                        </button>
+                        <button class="btn btn-primary" id="btn-add-freezer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" aria-hidden="true" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Cadastrar Freezer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="filter-bar">
+                    <div class="filter-group" style="flex: 1; min-width: 200px;">
+                        <label for="search-freezer">Buscar por Código ou Modelo</label>
+                        <input type="text" id="search-freezer" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-freezer-status">Filtrar por Status</label>
+                        <select class="filter-input" id="filter-freezer-status">
+                            <option value="">Todos os Status</option>
+                            <option value="disponivel">Disponível / Fábrica</option>
+                            <option value="alocado">Alocado (Em Cliente)</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="inativo">Inativo / Descartado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="freezer-grid" id="freezer-grid-container">
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-RO-01</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Metalfrio 500L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(0,114,255,0.15); color: var(--color-primary);">Alocado</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>220V</strong></span>
+                        <span>Aquisição: <strong>15/10/2025</strong></span>
+                    </div>
+                    <span class="warranty-badge active">Em Garantia (~17 meses rest.)</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> Alocado em: <strong>Supermercado Rondon</strong></div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-1')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-1')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-1')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-BM-05</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Gelopar 400L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(0,114,255,0.15); color: var(--color-primary);">Alocado</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>110V</strong></span>
+                        <span>Aquisição: <strong>20/11/2025</strong></span>
+                    </div>
+                    <span class="warranty-badge active">Em Garantia (~7 meses rest.)</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> Alocado em: <strong>Quiosque Beira Mar</strong></div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-2')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-2')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-2')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-PT-12</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Fricon 600L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(0,114,255,0.15); color: var(--color-primary);">Alocado</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>220V</strong></span>
+                        <span>Aquisição: <strong>10/05/2024</strong></span>
+                    </div>
+                    <span class="warranty-badge expired">Garantia Expirada</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> Alocado em: <strong>Posto Portal da Cidade</strong></div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-3')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-3')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-3')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-EM-02</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Metalfrio 300L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(0,114,255,0.15); color: var(--color-primary);">Alocado</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>110V</strong></span>
+                        <span>Aquisição: <strong>08/01/2026</strong></span>
+                    </div>
+                    <span class="warranty-badge active">Em Garantia (~8 meses rest.)</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> Alocado em: <strong>Restaurante Estrela do Mar</strong></div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-4')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-4')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-4')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-NEW-01</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Metalfrio 500L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge completed" style="background: rgba(16,185,129,0.15); color: #10b981;">Disponível</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>220V</strong></span>
+                        <span>Aquisição: <strong>10/05/2026</strong></span>
+                    </div>
+                    <span class="warranty-badge active">Em Garantia (~24 meses rest.)</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem; color: #10b981;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="home" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-home"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> Local: Fábrica (Disponível)</div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-5')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-5')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-5')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-NEW-02</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Gelopar 400L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge completed" style="background: rgba(16,185,129,0.15); color: #10b981;">Disponível</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>Bivolt</strong></span>
+                        <span>Aquisição: <strong>10/05/2026</strong></span>
+                    </div>
+                    <span class="warranty-badge active">Em Garantia (~12 meses rest.)</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem; color: #10b981;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="home" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-home"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> Local: Fábrica (Disponível)</div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-6')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-6')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-6')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="freezer-img-thumbnail-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.3;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">FRZ-MNT-03</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">Consul 400L</p>
+                        </div>
+                    </div>
+                    <span class="status-badge pending" style="background: rgba(245,158,11,0.15); color: #f59e0b;">Em Manutenção</span>
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Voltagem: <strong>220V</strong></span>
+                        <span>Aquisição: <strong>15/02/2023</strong></span>
+                    </div>
+                    <span class="warranty-badge expired">Garantia Expirada</span>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        <div style="margin-bottom: 0.5rem; color: #f59e0b;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wrench" aria-hidden="true" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;" class="lucide lucide-wrench"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path></svg> Local: Oficina / Assistência</div>
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openFreezerDetail('f-7')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eye" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg> Detalhes
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('f-7')" title="Editar Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="edit-3" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-edit-3"><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteFreezer('f-7')" title="Remover Freezer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trash-2" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-trash-2"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+            </section>
+
+            <!-- ================= TELA: ALUGUEL DE TINAS ================= -->
+            <section id="tinas" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>Aluguel de Equipamentos &amp; Mobiliário</h2>
+                    <button class="btn btn-primary" id="btn-add-rental">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" aria-hidden="true" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Novo Aluguel
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="filter-bar">
+                    <div class="filter-group" style="flex: 1; min-width: 200px;">
+                        <label for="search-rental">Buscar por Cliente, Tina ou Conjunto de Mesas</label>
+                        <input type="text" id="search-rental" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-rental-status">Filtrar por Status</label>
+                        <select class="filter-input" id="filter-rental-status">
+                            <option value="">Todos os Status</option>
+                            <option value="active">Em Andamento</option>
+                            <option value="returned">Devolvido</option>
+                            <option value="overdue">Atrasado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="freezer-grid" id="rental-grid-container">
+            <div class="empty-state" style="grid-column: 1/-1; padding: 3rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="help-circle" aria-hidden="true" style="width:48px; height:48px; margin-bottom:1rem; opacity:0.3;" class="lucide lucide-help-circle"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+                <p>Nenhum aluguel de equipamento ou mobiliário encontrado com os filtros selecionados.</p>
+            </div>
+        </div>
+            </section>
+
+            <!-- ================= TELA: RECIBOS & ORÇAMENTOS ================= -->
+            <section id="documentos" class="tab-content active">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>Emissão de Recibos &amp; Orçamentos</h2>
+                    <button class="btn btn-primary" id="btn-add-document">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" aria-hidden="true" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> Novo Documento
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="filter-bar">
+                    <div class="filter-group" style="flex: 1; min-width: 200px;">
+                        <label for="search-document">Buscar por Cliente</label>
+                        <input type="text" id="search-document" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-document-type">Filtrar por Tipo</label>
+                        <select class="filter-input" id="filter-document-type">
+                            <option value="">Todos os Tipos</option>
+                            <option value="orcamento">Orçamento</option>
+                            <option value="recibo">Recibo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="freezer-grid" id="document-grid-container">
+            <div class="empty-state" style="padding: 3rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-text" aria-hidden="true" style="width:48px; height:48px; margin-bottom:1rem; opacity:0.3;" class="lucide lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                <p>Nenhum recibo ou orçamento comercial gerado.</p>
+            </div>
+        </div>
+            </section>
+
+            <!-- ================= TELA: PEDIDOS PENDENTES ================= -->
+            <section id="pedidos" class="tab-content">
+                <div class="pedidos-layout">
+                    <!-- Fila de Pedidos -->
+                    <div class="pedidos-panel">
+                        <div class="panel-header">
+                            <h2>Fila de Espera por Reabastecimento</h2>
+                        </div>
+                        <div class="pedidos-list" id="pedidos-list-container">
+                            <!-- Pedidos inseridos dinamicamente via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Configuração de Preços (Restrita) -->
+                    <div class="pedidos-panel" style="height: fit-content; border: 1px solid rgba(239, 68, 68, 0.15); background: rgba(9, 13, 22, 0.4);">
+                        <div class="panel-header">
+                            <h2>Preços e Configurações</h2>
+                        </div>
+                        <div style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                            <div style="background: rgba(239, 68, 68, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.25);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="lock" aria-hidden="true" style="width: 22px; height: 22px; color: var(--color-danger);" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; line-height: 1.45; color: var(--color-text-muted); margin: 0;">
+                                A tabela de preços padrão de venda, preços promocionais e preços por cliente foi movida para a nova seção restrita com senha.
+                            </p>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('nav-precos').click()" style="font-size: 0.8rem; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="settings" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"></path><circle cx="12" cy="12" r="3"></circle></svg> Acessar Configurações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TELA: HISTÓRICO DE ENTREGAS ================= -->
+            <section id="historico" class="tab-content">
+                <!-- Barra de Filtros -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filter-client">Filtrar por Cliente</label>
+                        <select class="filter-input" id="filter-client"><option value="">Todos os Clientes</option><option value="c-1">Supermercado Rondon</option><option value="c-2">Quiosque Beira Mar</option><option value="c-3">Posto Portal da Cidade</option><option value="c-4">Restaurante Estrela do Mar</option></select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-product">Filtrar por Produto</label>
+                        <select class="filter-input" id="filter-product">
+                            <option value="">Todos os Produtos</option>
+                            <option value="gelo5kg">Pacote de Gelo 5kg</option>
+                            <option value="gelo2kg">Pacote de Gelo 2kg</option>
+                            <option value="triturado20kg">Gelo Triturado 20kg</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group" style="margin-left: auto;">
+                        <button class="btn btn-secondary" id="btn-clear-filters">Limpar Filtros</button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Histórico -->
+                <div class="dashboard-panel" style="padding: 0; overflow: hidden;">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Cliente</th>
+                                    <th>Gelo Entregue</th>
+                                    <th>Faturamento</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Linhas inseridas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <!-- ================= TELA: CONFIGURAÇÕES & PREÇOS (RESTRITO) ================= -->
+            <section id="precos" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h2>Configurações Gerais de Preços e Acesso</h2>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie preços de fábrica, preços especiais para clientes parceiros e segurança.</p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="lockAdminAccess()" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="lock" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Bloquear Painel
+                    </button>
+                </div>
+                
+                <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+                    <!-- Preços Gerais da Fábrica -->
+                    <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                            <h2>Preços Padrão de Venda &amp; Aluguel</h2>
+                        </div>
+                        <form id="factory-prices-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="form-row-grid">
+                                <div class="form-group">
+                                    <label>Gelo Pacote 5kg (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-5kg" class="form-control" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label>Gelo Pacote 2kg (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-2kg" class="form-control" required="">
+                                </div>
+                            </div>
+                            <div class="form-row-grid">
+                                <div class="form-group">
+                                    <label>Gelo Triturado 20kg (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-20kg" class="form-control" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label>Saco de Carvão (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-carvao" class="form-control" required="">
+                                </div>
+                            </div>
+                            <div class="form-row-grid">
+                                <div class="form-group">
+                                    <label>Aluguel de Tina 360L (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-tina" class="form-control" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label>Aluguel Mesa + 4 Cad. (R$)</label>
+                                    <input type="number" step="0.01" min="0" id="cfg-price-mesa" class="form-control" required="">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="align-self: flex-end; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="save" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg> Salvar Preços Gerais
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Alteração de Senha de Administrador -->
+                    <div class="dashboard-panel" style="flex: 1; min-width: 320px;">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                            <h2>Segurança do Administrador</h2>
+                        </div>
+                        <form id="admin-password-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Senha Atual</label>
+                                <input type="password" id="cfg-current-pwd" class="form-control" required="" placeholder="Digite a senha atual">
+                            </div>
+                            <div class="form-group">
+                                <label>Nova Senha</label>
+                                <input type="password" id="cfg-new-pwd" class="form-control" required="" placeholder="Mínimo 4 caracteres">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="align-self: flex-end; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="key" aria-hidden="true" style="width: 15px; height: 15px;" class="lucide lucide-key"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"></path><path d="m21 2-9.6 9.6"></path><circle cx="7.5" cy="15.5" r="5.5"></circle></svg> Atualizar Senha
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- NOVO: Seção de Backup & Gestão de Versões -->
+                <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+                    <!-- Configurações de Backup e Versão -->
+                    <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                            <h2>Backup &amp; Versão do Aplicativo</h2>
+                        </div>
+                        <form id="backup-settings-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="form-row-grid">
+                                <div class="form-group">
+                                    <label for="cfg-app-version">Versão do Aplicativo</label>
+                                    <input type="text" id="cfg-app-version" class="form-control" placeholder="Ex: 1.0" required="">
+                                    <small style="display: block; margin-top: 4px; font-size: 0.7rem; color: var(--color-text-muted);">Mudar a versão cria novos arquivos de backup e preserva os antigos.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cfg-backup-frequency">Frequência de Backup Automático</label>
+                                    <select id="cfg-backup-frequency" class="form-control">
+                                        <option value="0">Manual / Nunca</option>
+                                        <option value="1">Diário (A cada 1 dia)</option>
+                                        <option value="3">A cada 3 dias</option>
+                                        <option value="7">Semanal (A cada 7 dias)</option>
+                                        <option value="15">Quinzenal (A cada 15 dias)</option>
+                                        <option value="30">Mensal (A cada 30 dias)</option>
+                                    </select>
+                                    <small style="display: block; margin-top: 4px; font-size: 0.7rem; color: var(--color-text-muted);">Disparará um alerta de download automático na inicialização.</small>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
+                                <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="importBackupFromFile(event)">
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('backup-file-input').click()" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="upload" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-upload"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg> Restaurar de Arquivo JSON
+                                </button>
+                                <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="save" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg> Salvar Configurações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Histórico de Backups Locais -->
+                    <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                            <h2>Histórico de Backups Internos (Navegador)</h2>
+                        </div>
+                        <div style="padding: 1rem 0 0 0; overflow-x: auto; max-height: 250px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;" class="data-table">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left;">
+                                        <th style="padding: 6px;">Versão</th>
+                                        <th style="padding: 6px;">Data / Hora</th>
+                                        <th style="padding: 6px; text-align: right;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="local-backups-tbody">
+                                    <!-- Preenchido via Javascript -->
+                                </tbody>
+                            </table>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.7rem; color: var(--color-text-muted);">
+                                    Último Backup: <strong id="lbl-last-backup-date">-</strong>
+                                </span>
+                                <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" aria-hidden="true" style="width: 13px; height: 13px;" class="lucide lucide-download"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg> Fazer Backup Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Clientes para Preços Específicos -->
+                <div class="dashboard-panel" style="width: 100%;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                        <div>
+                            <h2>Tabela de Preços Específicos / Promoções por Cliente</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Defina valores diferenciados para clientes parceiros. Se um produto não tiver preço customizado, será utilizado o preço padrão da fábrica.</p>
+                        </div>
+                    </div>
+                    <div style="padding: 1rem 0 0 0; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
+                            <thead>
+                                <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left;">
+                                    <th style="padding: 10px;">Cliente</th>
+                                    <th style="padding: 10px; text-align: center;">Gelo 5kg</th>
+                                    <th style="padding: 10px; text-align: center;">Gelo 2kg</th>
+                                    <th style="padding: 10px; text-align: center;">Triturado 20kg</th>
+                                    <th style="padding: 10px; text-align: center;">Carvão</th>
+                                    <th style="padding: 10px; text-align: center;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pricing-clients-tbody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ================= MODAIS DO SISTEMA ================= -->
+
+    <!-- 1. Modal de Cadastro de Cliente/Freezer -->
+    <div class="modal-backdrop" id="modal-client">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="client-modal-title">Novo Cliente &amp; Freezer</h3>
+                <button class="close-btn" onclick="closeModal('modal-client')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="client-form">
+                <input type="hidden" id="form-client-id" value="">
+                
+                <!-- Informações Básicas -->
+                <div class="form-group">
+                    <label for="client-name">Nome do Cliente / Ponto de Venda *</label>
+                    <input type="text" id="client-name" class="form-control" placeholder="Ex: Mercearia do Zé" required="">
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-address">Endereço</label>
+                    <input type="text" id="client-address" class="form-control" placeholder="Ex: Av. Principal, 123">
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-phone">Telefone / Contato</label>
+                    <input type="text" id="client-phone" class="form-control" placeholder="Ex: (11) 98765-4321">
+                </div>
+
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.5rem 0; padding-top: 1rem;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary);">Dados do Freezer Vinculado</h4>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-freezer-id-select">Vincular Freezer do Inventário</label>
+                    <select id="client-freezer-id-select" class="form-control" onchange="autoPopulateFreezerDetailsInClientForm()"><option value="">Nenhum freezer alocado</option><option value="f-5">FRZ-NEW-01 - Metalfrio 500L</option><option value="f-6">FRZ-NEW-02 - Gelopar 400L</option></select>
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="freezer-code">Código / Serial do Freezer</label>
+                        <input type="text" id="freezer-code" class="form-control" placeholder="Vinculado automaticamente..." readonly="" style="background: rgba(255,255,255,0.02); opacity: 0.8; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="alert-threshold">Limiar de Alerta (%)</label>
+                        <input type="number" id="alert-threshold" class="form-control" min="5" max="50" value="20">
+                    </div>
+                </div>
+
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="freezer-brand">Marca / Modelo</label>
+                        <input type="text" id="freezer-brand" class="form-control" placeholder="Ex: Metalfrio 500L">
+                    </div>
+                    <div class="form-group">
+                        <label for="freezer-voltage">Voltagem</label>
+                        <select id="freezer-voltage" class="form-control">
+                            <option value="">Selecione...</option>
+                            <option value="110V">110V</option>
+                            <option value="220V">220V</option>
+                            <option value="Bivolt">Bivolt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="freezer-delivery-date">Data de Entrega</label>
+                        <input type="date" id="freezer-delivery-date" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="freezer-maintenance">Observações / Histórico de Manutenção</label>
+                    <textarea id="freezer-maintenance" class="form-control" placeholder="Ex: Borracha trocada em 10/04/2026. Próxima limpeza em 10/10/2026." rows="2" style="font-family: inherit; font-size: 0.85rem; padding: 0.5rem;"></textarea>
+                </div>
+
+                <!-- Capacidades Máximas dos Produtos -->
+                <div class="form-group">
+                    <label style="margin-bottom: 0.25rem;">Capacidade Máxima de Armazenamento (Pacotes)</label>
+                    <div class="form-row-three">
+                        <div>
+                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Gelo 5kg</span>
+                            <input type="number" id="cap-5kg" class="form-control" min="0" value="50" required="">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Gelo 2kg</span>
+                            <input type="number" id="cap-2kg" class="form-control" min="0" value="50" required="">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Triturado 20kg</span>
+                            <input type="number" id="cap-20kg" class="form-control" min="0" value="10" required="">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estoque Inicial dos Produtos -->
+                <div class="form-group">
+                    <label style="margin-bottom: 0.25rem;">Estoque Inicial Atual (Pacotes)</label>
+                    <div class="form-row-three">
+                        <div>
+                            <input type="number" id="stock-5kg" class="form-control" min="0" value="0" required="">
+                        </div>
+                        <div>
+                            <input type="number" id="stock-2kg" class="form-control" min="0" value="0" required="">
+                        </div>
+                        <div>
+                            <input type="number" id="stock-20kg" class="form-control" min="0" value="0" required="">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Cadastro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Modal de Novo Pedido (Fila de Reabastecimento) -->
+    <div class="modal-backdrop" id="modal-order">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Criar Pedido de Reabastecimento</h3>
+                <button class="close-btn" onclick="closeModal('modal-order')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="order-client-id">Selecione o Cliente *</label>
+                    <select id="order-client-id" class="form-control" required=""><option value="">Selecione...</option><option value="c-1">Supermercado Rondon</option><option value="c-2">Quiosque Beira Mar</option><option value="c-3">Posto Portal da Cidade</option><option value="c-4">Restaurante Estrela do Mar</option></select>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 1rem;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-primary);">Quantidade de Pacotes Solicitada</h4>
+                </div>
+
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="req-5kg">Gelo 5kg</label>
+                        <input type="number" id="req-5kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="req-2kg">Gelo 2kg</label>
+                        <input type="number" id="req-2kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="req-20kg">Triturado 20kg</label>
+                        <input type="number" id="req-20kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-order')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar na Fila</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Modal de Registrar Baixa de Estoque (Cliente vendeu gelo) -->
+    <div class="modal-backdrop" id="modal-sales">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registrar Consumo / Vendas</h3>
+                <button class="close-btn" onclick="closeModal('modal-sales')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="sales-form">
+                <input type="hidden" id="sales-client-id">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="sales-client-name" class="form-control" readonly="" style="background: rgba(255,255,255,0.02); border-color: transparent;">
+                </div>
+
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 1rem;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--color-danger);">Pacotes Retirados (Vendidos) do Freezer</h4>
+                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">Essas quantidades serão subtraídas do estoque atual do freezer.</p>
+                </div>
+
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="sale-5kg" id="label-sale-5kg">Gelo 5kg (Est: 0)</label>
+                        <input type="number" id="sale-5kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-2kg" id="label-sale-2kg">Gelo 2kg (Est: 0)</label>
+                        <input type="number" id="sale-2kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-20kg" id="label-sale-20kg">Trit. 20kg (Est: 0)</label>
+                        <input type="number" id="sale-20kg" class="form-control" min="0" value="0" required="">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-sales')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--color-danger), #ff8a8a); color: #fff; box-shadow: none;">Registrar Saídas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Modal de Termo de Comodato -->
+    <div class="modal-backdrop" id="modal-comodato">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Termo de Comodato de Equipamento</h3>
+                <button class="close-btn" onclick="closeModal('modal-comodato')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="comodato-content" style="max-height: 450px; overflow-y: auto; padding: 1.5rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); color: var(--color-text-muted); font-size: 0.85rem; line-height: 1.6; text-align: justify; font-family: 'Courier New', Courier, monospace;">
+                <!-- Preenchido via JS -->
+            </div>
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-comodato')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="printComodato()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="printer" aria-hidden="true" class="lucide lucide-printer"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> Imprimir Contrato
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Modal de Cadastro/Edição de Freezer -->
+    <div class="modal-backdrop" id="modal-freezer">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="freezer-modal-title">Novo Equipamento</h3>
+                <button class="close-btn" onclick="closeModal('modal-freezer')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="freezer-form">
+                <input type="hidden" id="form-freezer-id" value="">
+                <input type="hidden" id="photo-freezer-data" value="">
+                <input type="hidden" id="photo-invoice-data" value="">
+                
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="freezer-code-input">Código Único (Patrimônio) *</label>
+                        <input type="text" id="freezer-code-input" class="form-control" placeholder="Ex: GEL-001" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="freezer-status-select">Status Inicial *</label>
+                        <select id="freezer-status-select" class="form-control" required="">
+                            <option value="disponivel">Disponível / Fábrica</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="inativo">Inativo / Descartado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="freezer-brand-input">Marca / Modelo</label>
+                        <input type="text" id="freezer-brand-input" class="form-control" placeholder="Ex: Metalfrio 500L">
+                    </div>
+                    <div class="form-group">
+                        <label for="freezer-voltage-select">Voltagem</label>
+                        <select id="freezer-voltage-select" class="form-control">
+                            <option value="">Selecione...</option>
+                            <option value="110V">110V</option>
+                            <option value="220V">220V</option>
+                            <option value="Bivolt">Bivolt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="freezer-purchase-date">Data da Compra</label>
+                        <input type="date" id="freezer-purchase-date" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="freezer-warranty">Meses de Garantia (Fabricante)</label>
+                    <input type="number" id="freezer-warranty" class="form-control" min="0" placeholder="Ex: 12" value="12">
+                </div>
+
+                <!-- Fotos -->
+                <div class="form-row-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Foto do Freezer</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-freezer').click()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="image" aria-hidden="true" style="width: 20px; height: 20px;" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            <p>Selecionar Foto</p>
+                            <input type="file" id="input-photo-freezer" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-freezer')">
+                        </div>
+                        <div class="preview-box-container" id="preview-freezer"><p style="font-size: 0.75rem; color: var(--color-text-muted);">Nenhuma foto carregada</p></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Foto da Nota Fiscal</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-invoice').click()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file" aria-hidden="true" style="width: 20px; height: 20px;" class="lucide lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path></svg>
+                            <p>Selecionar Nota</p>
+                            <input type="file" id="input-photo-invoice" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-invoice')">
+                        </div>
+                        <div class="preview-box-container" id="preview-invoice"><p style="font-size: 0.75rem; color: var(--color-text-muted);">Nenhuma nota carregada</p></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-freezer')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Equipamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. Modal Detalhado do Freezer -->
+    <div class="modal-backdrop" id="modal-freezer-detail">
+        <div class="modal-content" style="max-width: 750px;">
+            <div class="modal-header">
+                <h3 id="detail-code" style="color: var(--color-primary);">FZ-100</h3>
+                <button class="close-btn" onclick="closeModal('modal-freezer-detail')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="freezer-detail-grid">
+                <!-- Informações do Freezer -->
+                <div>
+                    <div class="detail-section-title">Especificações</div>
+                    <div class="freezer-specs-inline" style="grid-template-columns: 1fr; margin-bottom: 1.5rem; gap: 0.75rem; padding: 1rem;">
+                        <div><strong>Marca/Modelo:</strong> <span id="detail-brand">Metalfrio</span></div>
+                        <div><strong>Voltagem:</strong> <span id="detail-voltage">220V</span></div>
+                        <div><strong>Data Compra:</strong> <span id="detail-purchase-date">01/01/2024</span></div>
+                        <div><strong>Garantia:</strong> <span id="detail-warranty">12 meses</span> <div id="detail-warranty-badge" style="display: inline-block; margin-left: 5px;" class="warranty-badge expired">Garantia Expirada</div></div>
+                        <div><strong>Localização Atual:</strong> <span id="detail-location" style="font-weight: 700; color: #fff;">📍 Fábrica (Disponível)</span></div>
+                    </div>
+
+                    <div class="detail-section-title">Anexos / Imagens</div>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;" id="detail-photos-gallery"><p style="font-size: 0.8rem; color: var(--color-text-muted); width: 100%; text-align: center; padding: 1rem;">Nenhuma foto ou nota fiscal anexada a este freezer.</p></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-primary" id="btn-transferir-freezer" style="width: 100%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="move" aria-hidden="true" class="lucide lucide-move"><path d="M12 2v20"></path><path d="m15 19-3 3-3-3"></path><path d="m19 9 3 3-3 3"></path><path d="M2 12h20"></path><path d="m5 9-3 3 3 3"></path><path d="m9 5 3-3 3 3"></path></svg> Transferir / Mover Freezer
+                        </button>
+                        <button class="btn btn-secondary" id="btn-gerar-etiqueta" style="width: 100%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="printer" aria-hidden="true" class="lucide lucide-printer"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> Gerar Etiqueta de Identificação
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Histórico e Manutenções -->
+                <div style="border-left: 1px solid rgba(255,255,255,0.05); padding-left: 1.5rem;">
+                    <div class="detail-section-title">Histórico de Movimentação</div>
+                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem; padding-right: 0.5rem;">
+                        <div class="movement-timeline" id="movement-timeline"><p style="font-size: 0.8rem; color: var(--color-text-muted); padding: 0.5rem;">Sem histórico registrado.</p></div>
+                    </div>
+
+                    <div class="detail-section-title">Notas de Manutenção</div>
+                    <div style="max-height: 120px; overflow-y: auto; margin-bottom: 1rem; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);" id="maintenance-notes-list"><p style="font-size: 0.8rem; color: var(--color-text-muted); padding: 0.5rem;">Nenhuma manutenção registrada.</p></div>
+                    <form id="note-form" style="display: flex; gap: 0.5rem;">
+                        <input type="hidden" id="note-freezer-id" value="f-1">
+                        <input type="text" id="note-text" class="form-control" placeholder="Escrever nota de conserto..." style="font-size: 0.8rem; padding: 0.4rem 0.6rem;" required="">
+                        <button type="submit" class="btn btn-primary btn-icon-only" style="padding: 0.4rem 0.8rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="plus" aria-hidden="true" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Modal de Movimentação do Freezer -->
+    <div class="modal-backdrop" id="modal-move-freezer">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Movimentar Freezer</h3>
+                <button class="close-btn" onclick="closeModal('modal-move-freezer')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="move-freezer-form">
+                <input type="hidden" id="move-freezer-id" value="f-1">
+                <input type="hidden" id="move-freezer-code" value="FZ-100">
+                
+                <div class="form-group">
+                    <label for="move-destiny">Destino da Movimentação *</label>
+                    <select id="move-destiny" class="form-control" required="" onchange="toggleMoveClientSelect()">
+                        <option value="disponivel">Voltar para a Fábrica (Disponível)</option>
+                        <option value="alocado">Alocar para um Cliente</option>
+                        <option value="manutencao">Enviar para Manutenção</option>
+                        <option value="inativo">Desativar Freezer (Inativo)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="move-client-container" style="display: none;">
+                    <label for="move-client-id">Selecione o Cliente *</label>
+                    <select id="move-client-id" class="form-control"><option value="">Selecione o Cliente...</option><option value="c-1">Supermercado Rondon</option><option value="c-2">Quiosque Beira Mar</option><option value="c-3">Posto Portal da Cidade</option><option value="c-4">Restaurante Estrela do Mar</option></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="move-reason">Motivo / Descrição *</label>
+                    <input type="text" id="move-reason" class="form-control" placeholder="Ex: Instalação Inicial, Defeito no Motor, Fim do Contrato..." required="">
+                </div>
+
+                <div class="form-group">
+                    <label for="move-date">Data da Movimentação</label>
+                    <input type="date" id="move-date" class="form-control" required="">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-move-freezer')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Movimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 8. Modal do Visualizador de Etiqueta QR -->
+    <div class="modal-backdrop" id="modal-sticker">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Etiqueta Patrimonial</h3>
+                <button class="close-btn" onclick="closeModal('modal-sticker')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="sticker-preview-box">
+                <div class="physical-sticker-layout" id="printable-sticker-content">
+        <div class="sticker-header">
+            <span class="sticker-logo-text">❄️ Gelo do Vale</span>
+            <span style="font-size: 0.75rem; font-weight: bold; border: 1px solid #000; padding: 2px 5px; border-radius: 3px; background: #fff; color: #000;">220V</span>
+        </div>
+        <div class="sticker-body" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 8px;">
+            <div class="sticker-specs" style="font-size: 0.75rem; line-height: 1.4; color: #000; text-align: left;">
+                <div style="font-size: 1rem; font-weight: 900; margin-bottom: 4px; color: #000;">CÓD: FZ-100</div>
+                <div><strong>Equipamento:</strong> Metalfrio</div>
+                <div><strong>Propriedade de:</strong> Gelo do Vale</div>
+                <div style="font-size: 0.55rem; font-weight: bold; margin-top: 5px; color: #ef4444; border: 1px dashed #ef4444; padding: 1px 3px; display: inline-block;">⚠️ Cuidado com a voltagem!</div>
+            </div>
+            <div class="sticker-qrcode" id="sticker-qrcode-render" style="padding: 4px; background: #fff; border: 1px solid #000; display: flex; align-items: center; justify-content: center;"></div>
+        </div>
+        <div class="sticker-footer" style="margin-top: 8px; border-top: 1px solid #000; padding-top: 4px; font-size: 0.6rem; font-weight: bold; text-align: center; color: #000;">
+            SUPORTE OU ASSISTÊNCIA TÉCNICA: (12) 99887-6655
+        </div>
+    </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-sticker')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="printSticker()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="printer" aria-hidden="true" class="lucide lucide-printer"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> Imprimir Etiqueta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Modal do Leitor de QR Code -->
+    <div class="modal-backdrop" id="modal-scanner">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Escanear QR Code do Freezer</h3>
+                <button class="close-btn" onclick="closeQRScannerModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div style="padding: 1.5rem 0; text-align: center;">
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem;">Aponte a câmera do seu dispositivo para o QR Code colado no freezer.</p>
+                <div class="scanner-viewport" id="qr-reader-container"></div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 0;">
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="closeQRScannerModal()">Cancelar Leitura</button>
+            </div>
+        </div>
+    <!-- 10. Modal de Aluguel de Tina -->
+    <div class="modal-backdrop" id="modal-rental">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="rental-modal-title">Novo Aluguel</h3>
+                <button class="close-btn" onclick="closeModal('modal-rental')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="rental-form">
+                <input type="hidden" id="form-rental-id" value="">
+                
+                <div class="form-group">
+                    <label for="rental-client-select">Vincular a Cliente Existente</label>
+                    <select id="rental-client-select" class="form-control" onchange="populateRentalClientDetails()"><option value="">-- Cliente Avulso (Preencher Manualmente) --</option><option value="c-1">Supermercado Rondon</option><option value="c-2">Quiosque Beira Mar</option><option value="c-3">Posto Portal da Cidade</option><option value="c-4">Restaurante Estrela do Mar</option></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="rental-client-name">Nome do Cliente *</label>
+                    <input type="text" id="rental-client-name" class="form-control" placeholder="Ex: João da Silva" required="">
+                </div>
+
+                <div class="form-group">
+                    <label for="rental-address">Endereço de Entrega *</label>
+                    <input type="text" id="rental-address" class="form-control" placeholder="Ex: Rua das Palmeiras, 45 - Centro" required="">
+                </div>
+
+                <div class="form-group">
+                    <label for="rental-phone">Telefone de Contato</label>
+                    <input type="text" id="rental-phone" class="form-control" placeholder="Ex: (12) 99887-6655">
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="rental-item-type">Item Alugado *</label>
+                        <select id="rental-item-type" class="form-control" required="">
+                            <option value="tina">Tina 360L (Cores Variadas)</option>
+                            <option value="mesa_cadeiras">Conjunto 1 Mesa + 4 Cadeiras</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rental-tina-code">Código / Identificação *</label>
+                        <input type="text" id="rental-tina-code" class="form-control" placeholder="Ex: Tina #03 / Conjunto #10" required="">
+                    </div>
+                </div>
+
+                <div class="form-row-grid" id="rental-row-tina-details">
+                    <div class="form-group">
+                        <label for="rental-tina-color">Cor da Tina *</label>
+                        <select id="rental-tina-color" class="form-control">
+                            <option value="Azul">Azul</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Vermelha">Vermelha</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Preta">Preta</option>
+                            <option value="Cinza">Cinza</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <!-- Espaço reservado -->
+                    </div>
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="rental-fee">Valor do Aluguel (R$)</label>
+                        <input type="number" step="0.01" min="0" id="rental-fee" class="form-control" value="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="rental-delivery-fee">Taxa de Entrega (R$)</label>
+                        <input type="number" step="0.01" min="0" id="rental-delivery-fee" class="form-control" value="0.00">
+                    </div>
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="rental-delivery-date">Data de Entrega</label>
+                        <input type="date" id="rental-delivery-date" class="form-control" required="">
+                    </div>
+                    <div class="form-group">
+                        <label for="rental-expected-return">Previsão de Devolução</label>
+                        <input type="date" id="rental-expected-return" class="form-control" required="">
+                    </div>
+                </div>
+
+                <!-- Venda de Produtos Junto com o Aluguel -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; margin-top: 12px; margin-bottom: 12px;">
+                    <h4 style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: var(--color-primary);">Venda de Produtos Junto (Opcional)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem;">Gelo 5kg (Qtd)</label>
+                            <input type="number" min="0" step="1" id="rental-qty-5kg" class="form-control" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem;">Gelo 2kg (Qtd)</label>
+                            <input type="number" min="0" step="1" id="rental-qty-2kg" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem;">Triturado 20kg (Qtd)</label>
+                            <input type="number" min="0" step="1" id="rental-qty-20kg" class="form-control" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.75rem;">Saco de Carvão (Qtd)</label>
+                            <input type="number" min="0" step="1" id="rental-qty-carvao" class="form-control" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rental-notes">Observações</label>
+                    <textarea id="rental-notes" class="form-control" placeholder="Ex: Deixar na área da piscina. Levar gelo solicitado." rows="2"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-rental')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Aluguel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 11. Modal de Novo Recibo ou Orçamento -->
+    <div class="modal-backdrop" id="modal-document">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="document-modal-title">Novo Recibo ou Orçamento</h3>
+                <button class="close-btn" onclick="closeModal('modal-document')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="document-form">
+                <input type="hidden" id="form-document-id" value="">
+                
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="doc-type">Tipo de Documento *</label>
+                        <select id="doc-type" class="form-control" required="">
+                            <option value="orcamento">Orçamento</option>
+                            <option value="recibo">Recibo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-date">Data do Documento</label>
+                        <input type="date" id="doc-date" class="form-control" required="">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="doc-client-select">Vincular a Cliente Existente</label>
+                    <select id="doc-client-select" class="form-control" onchange="populateDocClientDetails()"><option value="">-- Cliente Avulso (Preencher Manualmente) --</option><option value="c-1">Supermercado Rondon</option><option value="c-2">Quiosque Beira Mar</option><option value="c-3">Posto Portal da Cidade</option><option value="c-4">Restaurante Estrela do Mar</option></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="doc-client-name">Nome do Cliente *</label>
+                    <input type="text" id="doc-client-name" class="form-control" placeholder="Ex: Mercado do Vale" required="">
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="doc-address">Endereço</label>
+                        <input type="text" id="doc-address" class="form-control" placeholder="Ex: Av. Principal, 120">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="doc-phone">Telefone / Contato</label>
+                        <input type="text" id="doc-phone" class="form-control" placeholder="Ex: (12) 99887-6655">
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 0.75rem;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-primary);">Itens do Documento</h4>
+                </div>
+
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Produto / Serviço</span>
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Qtd</span>
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Preço Unit. (R$)</span>
+                </div>
+
+                <!-- Produtos Padrão -->
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Gelo Pacote 5kg</span>
+                    <input type="number" min="0" id="doc-qty-5kg" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-5kg" class="form-control" value="0.00">
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Gelo Pacote 2kg</span>
+                    <input type="number" min="0" id="doc-qty-2kg" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-2kg" class="form-control" value="0.00">
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Gelo Triturado 20kg</span>
+                    <input type="number" min="0" id="doc-qty-20kg" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-20kg" class="form-control" value="0.00">
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Aluguel Tina 360L</span>
+                    <input type="number" min="0" id="doc-qty-tina" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-tina" class="form-control" value="50.00">
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Aluguel Mesa + 4 Cad.</span>
+                    <input type="number" min="0" id="doc-qty-mesa" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-mesa" class="form-control" value="30.00">
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; padding: 0.5rem 0;">Pacote de Carvão</span>
+                    <input type="number" min="0" id="doc-qty-carvao" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-price-carvao" class="form-control" value="15.00">
+                </div>
+
+                <!-- Item Customizado -->
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.02); margin: 0.5rem 0; padding-top: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600; display: block; margin-bottom: 0.5rem;">Item Customizado Adicional (Opcional)</span>
+                </div>
+                <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <input type="text" id="doc-custom-name" class="form-control" placeholder="Ex: Sacos de carvão">
+                    <input type="number" min="0" id="doc-custom-qty" class="form-control" value="0">
+                    <input type="number" step="0.01" min="0" id="doc-custom-price" class="form-control" value="0.00">
+                </div>
+
+                <div class="form-row-grid" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem;">
+                    <div class="form-group">
+                        <label for="doc-delivery-fee">Taxa de Entrega / Frete (R$)</label>
+                        <input type="number" step="0.01" min="0" id="doc-delivery-fee" class="form-control" value="0.00">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-document')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Gerar Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 12. Modal do Visualizador de Recibo/Orçamento Comercial -->
+    <div class="modal-backdrop" id="modal-document-print">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3>Visualizador de Documento</h3>
+                <button class="close-btn" onclick="closeModal('modal-document-print')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div style="background: #ffffff; color: #000000; padding: 2rem; border-radius: 6px; border: 1px solid #ddd; max-height: 450px; overflow-y: auto; font-family: Arial, sans-serif;" id="printable-document-content">
+                <!-- Preenchido dinamicamente via JS -->
+            </div>
+
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-document-print')">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="printDocument()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="printer" aria-hidden="true" class="lucide lucide-printer"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg> Imprimir Documento
+                </button>
+            </div>
+        </div>
+    <!-- 13. Modal de Preço Específico por Cliente -->
+    <div class="modal-backdrop" id="modal-client-prices">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Preços Customizados: <span id="custom-price-client-name" style="color: var(--color-primary);">Cliente</span></h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-client-prices')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <form id="client-prices-form">
+                <input type="hidden" id="form-client-prices-id">
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">Digite valores específicos para este cliente. Deixe em branco ou zero para usar o preço padrão da fábrica.</p>
+                
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label>Gelo Pacote 5kg (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-5kg" class="form-control" placeholder="Padrão">
+                    </div>
+                    <div class="form-group">
+                        <label>Gelo Pacote 2kg (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-2kg" class="form-control" placeholder="Padrão">
+                    </div>
+                </div>
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label>Gelo Triturado 20kg (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-20kg" class="form-control" placeholder="Padrão">
+                    </div>
+                    <div class="form-group">
+                        <label>Saco de Carvão (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-carvao" class="form-control" placeholder="Padrão">
+                    </div>
+                </div>
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label>Aluguel de Tina 360L (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-tina" class="form-control" placeholder="Padrão">
+                    </div>
+                    <div class="form-group">
+                        <label>Aluguel Mesa + 4 Cad. (R$)</label>
+                        <input type="number" step="0.01" min="0" id="cust-price-mesa" class="form-control" placeholder="Padrão">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client-prices')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="save" aria-hidden="true" style="width: 14px; height: 14px;" class="lucide lucide-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg> Salvar Preços Customizados
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 14. Modal de Autenticação do Administrador -->
+    <div class="modal-backdrop" id="modal-admin-auth">
+        <div class="modal-content" style="max-width: 360px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0.5rem;">
+                <div style="background: rgba(0, 240, 255, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 240, 255, 0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="lock" aria-hidden="true" style="width: 26px; height: 26px; color: var(--color-primary);" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+            </div>
+            <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff;">Acesso Restrito</h3>
+            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">Esta área é exclusiva para o administrador principal. Digite a senha para acessar.</p>
+            
+            <form id="admin-auth-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group" style="text-align: left;">
+                    <label for="auth-password" style="font-size: 0.75rem;">Senha de Administrador</label>
+                    <input type="password" id="auth-password" class="form-control" placeholder="Digite a senha" required="" style="text-align: center; letter-spacing: 4px; font-size: 1.1rem; padding: 10px;">
+                </div>
+                <div id="auth-error-msg" style="color: var(--color-danger); font-size: 0.8rem; display: none; font-weight: bold; margin-bottom: 0.5rem;">
+                    Senha incorreta! Tente novamente.
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="cancelAdminAuth()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Principal -->
+    <div id="test-log" style="background: black; color: green; font-family: monospace; padding: 20px; font-size: 14px; position: fixed; bottom: 0; right: 0; z-index: 999999; max-height: 300px; overflow-y: auto; width: 400px;"><div>TESTING INTERNAL btn-add-client</div><div>modal-client active: true</div><div>TESTING INTERNAL btn-add-freezer</div><div>modal-freezer active: true</div><div>TESTING INTERNAL btn-scan-qr</div><div>modal-scanner active: true</div><div>modal-scanner closed: true</div><div>TESTING INTERNAL btn-add-rental</div><div>modal-rental active: true</div><div>TESTING INTERNAL btn-add-document</div><div>modal-document active: true</div><div>TESTING FREEZER DETAIL ACTIONS</div><div>modal-freezer-detail active: true</div><div>modal-move-freezer active: true</div><div>modal-sticker active: true</div></div>
+    <script>
+        function logTest(msg) {
+            const d = document.getElementById("test-log");
+            d.innerHTML += "<div>" + msg + "</div>";
+            console.log(msg);
+        }
+
+        window.onerror = function(message, source, lineno, colno, error) {
+            logTest("JS ERROR: " + message + " at line " + lineno + ":" + colno);
+            const errDiv = document.createElement('div');
+            errDiv.className = 'js-click-error-log';
+            errDiv.style.color = 'red';
+            errDiv.style.background = 'white';
+            errDiv.style.fontSize = '20px';
+            errDiv.style.fontWeight = 'bold';
+            errDiv.style.padding = '15px';
+            errDiv.style.position = 'fixed';
+            errDiv.style.top = '0';
+            errDiv.style.left = '0';
+            errDiv.style.width = '100%';
+            errDiv.style.zIndex = '999999';
+            errDiv.innerText = "JS ERROR: " + message + " at " + source + ":" + lineno;
+            document.body.appendChild(errDiv);
+        };
+    </script>
+    <script src="app.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const navItems = document.querySelectorAll(".nav-item");
+
+            // 1. Clientes Tab: btn-add-client -> modal-client
+            logTest("TESTING INTERNAL btn-add-client");
+            try {
+                const tabClientes = Array.from(navItems).find(n => n.getAttribute("data-tab") === "clientes");
+                if (tabClientes) tabClientes.click();
+                const btn = document.getElementById("btn-add-client");
+                btn.click();
+                logTest("modal-client active: " + document.getElementById("modal-client").classList.contains("active"));
+                closeModal("modal-client");
+            } catch(e) {
+                logTest("btn-add-client error: " + e.message);
+            }
+
+            // 2. Inventario Tab: btn-add-freezer -> modal-freezer
+            logTest("TESTING INTERNAL btn-add-freezer");
+            try {
+                const tabInventario = Array.from(navItems).find(n => n.getAttribute("data-tab") === "inventario");
+                if (tabInventario) tabInventario.click();
+                const btn = document.getElementById("btn-add-freezer");
+                btn.click();
+                logTest("modal-freezer active: " + document.getElementById("modal-freezer").classList.contains("active"));
+                closeModal("modal-freezer");
+            } catch(e) {
+                logTest("btn-add-freezer error: " + e.message);
+            }
+
+            // 3. Inventario Tab: btn-scan-qr -> modal-scanner
+            logTest("TESTING INTERNAL btn-scan-qr");
+            try {
+                const btn = document.getElementById("btn-scan-qr");
+                btn.click();
+                logTest("modal-scanner active: " + document.getElementById("modal-scanner").classList.contains("active"));
+                closeQRScannerModal();
+                logTest("modal-scanner closed: " + !document.getElementById("modal-scanner").classList.contains("active"));
+            } catch(e) {
+                logTest("btn-scan-qr error: " + e.message);
+            }
+
+            // 4. Tinas Tab: btn-add-rental -> modal-rental
+            logTest("TESTING INTERNAL btn-add-rental");
+            try {
+                const tabTinas = Array.from(navItems).find(n => n.getAttribute("data-tab") === "tinas");
+                if (tabTinas) tabTinas.click();
+                const btn = document.getElementById("btn-add-rental");
+                btn.click();
+                logTest("modal-rental active: " + document.getElementById("modal-rental").classList.contains("active"));
+                closeModal("modal-rental");
+            } catch(e) {
+                logTest("btn-add-rental error: " + e.message);
+            }
+
+            // 5. Documentos Tab: btn-add-document -> modal-document
+            logTest("TESTING INTERNAL btn-add-document");
+            try {
+                const tabDocs = Array.from(navItems).find(n => n.getAttribute("data-tab") === "documentos");
+                if (tabDocs) tabDocs.click();
+                const btn = document.getElementById("btn-add-document");
+                btn.click();
+                logTest("modal-document active: " + document.getElementById("modal-document").classList.contains("active"));
+                closeModal("modal-document");
+            } catch(e) {
+                logTest("btn-add-document error: " + e.message);
+            }
+
+            // 6. Freezer Detail: btn-transferir-freezer & btn-gerar-etiqueta
+            logTest("TESTING FREEZER DETAIL ACTIONS");
+            try {
+                state.freezers = [{ id: 'f-1', code: 'FZ-100', status: 'disponivel', brand: 'Metalfrio', voltage: '220V', purchaseDate: '2024-01-01', warrantyMonths: 12 }];
+                openFreezerDetail('f-1');
+                logTest("modal-freezer-detail active: " + document.getElementById("modal-freezer-detail").classList.contains("active"));
+                
+                // Click transfer
+                document.getElementById("btn-transferir-freezer").click();
+                logTest("modal-move-freezer active: " + document.getElementById("modal-move-freezer").classList.contains("active"));
+                closeModal("modal-move-freezer");
+
+                // Click label
+                document.getElementById("btn-gerar-etiqueta").click();
+                logTest("modal-sticker active: " + document.getElementById("modal-sticker").classList.contains("active"));
+                closeModal("modal-sticker");
+                
+                closeModal("modal-freezer-detail");
+            } catch(e) {
+                logTest("Freezer detail error: " + e.message);
+            }
+        });
+    </script>
+
+
+</div></div></body></html>

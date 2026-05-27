@@ -19,7 +19,7 @@ export function migrateLegacyComodatos() {
                     freezerBrand: client.freezerBrand || (freezer ? freezer.brand : '') || 'Não informado',
                     freezerVoltage: client.freezerVoltage || (freezer ? freezer.voltage : '') || 'Não informado',
                     freezerCapacity: client.freezerCapacity || (freezer ? freezer.capacity : '') || '',
-                    startDate: client.deliveryDate || new Date().toISOString().split('T')[0],
+                    startDate: client.deliveryDate || window.getBrazilTimeISO().split('T')[0],
                     status: 'ativo',
                     signatureBase64: '',
                     signatureDate: '',
@@ -127,7 +127,7 @@ export function openNewComodatoModal() {
     clientSelect.innerHTML = '<option value="">Selecione um cliente...</option>';
     freezerSelect.innerHTML = '<option value="">Selecione um freezer...</option>';
     document.getElementById("comodato-notes").value = "";
-    document.getElementById("comodato-start-date").value = new Date().toISOString().split('T')[0];
+    document.getElementById("comodato-start-date").value = window.getBrazilTimeISO().split('T')[0];
     
     const clients = [...(state.clients || [])].sort((a,b) => a.name.localeCompare(b.name));
     clients.forEach(c => {
@@ -250,7 +250,7 @@ export function renderComodatoDetail(comId) {
         document.getElementById("comodato-withdrawal-section").style.display = "block";
         document.getElementById("comodato-withdrawn-history").style.display = "none";
         
-        document.getElementById("comodato-withdrawal-date").value = new Date().toISOString().split('T')[0];
+        document.getElementById("comodato-withdrawal-date").value = window.getBrazilTimeISO().split('T')[0];
         document.getElementById("comodato-withdrawal-notes").value = "";
     } else if (comodato.status === 'pendente') {
         badge.innerText = "Pendente Assinatura";
@@ -262,7 +262,7 @@ export function renderComodatoDetail(comId) {
         document.getElementById("comodato-withdrawal-section").style.display = "block";
         document.getElementById("comodato-withdrawn-history").style.display = "none";
         
-        document.getElementById("comodato-withdrawal-date").value = new Date().toISOString().split('T')[0];
+        document.getElementById("comodato-withdrawal-date").value = window.getBrazilTimeISO().split('T')[0];
         document.getElementById("comodato-withdrawal-notes").value = "";
     } else if (comodato.status === 'retirado') {
         badge.innerText = "Retirado / Finalizado";
@@ -325,7 +325,7 @@ export function renderComodatoDetail(comId) {
         sigPending.style.display = "none";
         sigSigned.style.display = "flex";
         document.getElementById("comodato-sig-preview-img").src = comodato.signatureBase64;
-        document.getElementById("comodato-sig-date-text").innerText = "Data: " + new Date(comodato.signatureDate).toLocaleString('pt-BR');
+        document.getElementById("comodato-sig-date-text").innerText = "Data: " + window.formatDateBrazil(comodato.signatureDate);
         
         let method = "Assinatura Local";
         if (comodato.signatureMethod === 'remote') method = "Assinatura Remota (Cliente)";
@@ -831,7 +831,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
         if (targetComodato) {
             targetComodato.signatureBase64 = dataUrl;
             targetComodato.status = 'ativo';
-            targetComodato.signatureDate = new Date().toISOString();
+            targetComodato.signatureDate = window.getBrazilTimeISO();
             targetComodato.signatureMethod = 'remote';
             targetComodato.clientPhone = phoneVal;
             targetComodato.clientAddress = addressVal;
@@ -935,7 +935,7 @@ export function renderPortalContractTerms(comodato, client, remoteState) {
     const clientPhone = client ? (client.phone || 'Não informado') : (comodato.clientPhone || 'Não informado');
     const clientAddress = client ? (client.address || 'Não informado') : (comodato.clientAddress || 'Não informado');
     const dataEntrega = comodato.startDate ? new Date(comodato.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    const dataAtual = window.formatDateBrazil(window.getBrazilTimeISO());
     
     const facName = remoteState.factorySettings && remoteState.factorySettings.name ? remoteState.factorySettings.name : "GELO DO VALE";
     const facCnpj = remoteState.factorySettings && remoteState.factorySettings.cnpj ? remoteState.factorySettings.cnpj : "00.000.000/0000-00";
@@ -1002,7 +1002,7 @@ export function openComodato(comId) {
 
     if (!client) return;
 
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    const dataAtual = window.formatDateBrazil(window.getBrazilTimeISO());
     const showSignatures = (state.printSettings && state.printSettings.showSignatures !== undefined) ? state.printSettings.showSignatures : true;
     
     let signatureHTML = '';
@@ -1176,7 +1176,7 @@ export function updateRentalContractPreview(rentalId) {
 
     const dataEntrega = rental.deliveryDate ? new Date(rental.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
     const dataPrevisaoRetirada = rental.expectedReturnDate ? new Date(rental.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    const dataAtual = window.formatDateBrazil(window.getBrazilTimeISO());
 
     const matchingProd = state.products.find(p => p.id === rental.itemType);
     const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
