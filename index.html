@@ -1077,8 +1077,11 @@
 
                                 <!-- Personalização da Aparência -->
                                 <div class="dashboard-panel" style="flex: 1; min-width: 320px;">
-                                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2>Aparência do Aplicativo</h2>
+                                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                        <h2 style="margin: 0;">Aparência do Aplicativo</h2>
+                                        <button type="button" class="btn btn-secondary" onclick="autoFillAppearanceSettings()" style="font-size: 0.75rem; padding: 5px 10px; height: auto; background: rgba(0, 240, 255, 0.1); border-color: var(--color-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;" title="Restaurar aparência padrão (Ciano Neon)">
+                                            <i data-lucide="palette" style="width: 12px; height: 12px; color: var(--color-primary);"></i> ✨ Restaurar Padrão
+                                        </button>
                                     </div>
                                     <form id="appearance-settings-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1.25rem;">
                                         <input type="hidden" id="cfg-theme-preset" value="ciano">
