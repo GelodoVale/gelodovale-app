@@ -43,6 +43,11 @@ export function switchAdminSubTab(subTabId) {
         window.renderUsersTable();
     }
     
+    // Carregar configurações do Mercado Pago
+    if (subTabId === "tab-integracoes" && typeof window.loadMercadoPagoSettings === "function") {
+        window.loadMercadoPagoSettings();
+    }
+    
     // Força a renderização dos ícones Lucide recém-exibidos
     if (window.lucide) {
         window.lucide.createIcons();
@@ -2591,5 +2596,54 @@ export function saveProduction() {
 window.openProductionModal = openProductionModal;
 window.updateProductionInfo = updateProductionInfo;
 window.saveProduction = saveProduction;
+
+// ==========================================
+// CONFIGURAÇÕES DO MERCADO PAGO
+// ==========================================
+
+export function loadMercadoPagoSettings() {
+    if (!state.mercadoPago) {
+        state.mercadoPago = { enabled: false, accessToken: "" };
+    }
+    
+    const mpEnabled = document.getElementById("mp-enabled");
+    const mpToken = document.getElementById("mp-access-token");
+    
+    if (mpEnabled && mpToken) {
+        mpEnabled.checked = state.mercadoPago.enabled;
+        mpToken.value = state.mercadoPago.accessToken || "";
+        toggleMpFields();
+    }
+}
+
+export function toggleMpFields() {
+    const isEnabled = document.getElementById("mp-enabled").checked;
+    const box = document.getElementById("mp-credentials-box");
+    if (box) {
+        box.style.display = isEnabled ? "block" : "none";
+    }
+}
+
+export function saveMercadoPagoSettings() {
+    const isEnabled = document.getElementById("mp-enabled").checked;
+    const token = document.getElementById("mp-access-token").value.trim();
+    
+    if (isEnabled && !token) {
+        alert("Para ativar a integração, é obrigatório informar o Access Token.");
+        return;
+    }
+    
+    if (!state.mercadoPago) state.mercadoPago = {};
+    
+    state.mercadoPago.enabled = isEnabled;
+    state.mercadoPago.accessToken = token;
+    
+    saveState();
+    alert("Configurações do Mercado Pago salvas com sucesso!");
+}
+
+window.toggleMpFields = toggleMpFields;
+window.saveMercadoPagoSettings = saveMercadoPagoSettings;
+
 
 

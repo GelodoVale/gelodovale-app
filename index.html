@@ -531,6 +531,10 @@
                                     <i data-lucide="shield-check"></i>
                                     <span>Níveis de Acesso</span>
                                 </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-integracoes')">
+                                    <i data-lucide="credit-card"></i>
+                                    <span>Integração Pix (M. Pago)</span>
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -1618,6 +1622,49 @@
                                             <!-- Linhas inseridas via JS -->
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: INTEGRAÇÃO MERCADO PAGO -->
+                        <div id="tab-integracoes" class="admin-subtab-content">
+                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                                    <h2>Integração Mercado Pago (PIX Automático)</h2>
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure as credenciais para emitir QR Codes PIX dinâmicos diretamente no fechamento do pedido.</p>
+                                </div>
+                                <div style="padding: 1.5rem 0 0 0;">
+                                    <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                        <h4 style="color: #ffaa00; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i> Aviso Legal sobre Conta Física (CPF)
+                                        </h4>
+                                        <p style="font-size: 0.85rem; color: #fff; line-height: 1.4;">
+                                            Como sua conta no Mercado Pago está vinculada a um CPF, os QR Codes gerados aparecerão com o <strong>seu nome pessoal</strong> para o cliente na hora do pagamento, em vez do nome da fábrica (Gelo do Vale). <br><br>
+                                            Você tem certeza que deseja prosseguir e habilitar esta integração na sua conta física?
+                                        </p>
+                                    </div>
+                                    
+                                    <form id="form-mp-integration" onsubmit="event.preventDefault(); saveMercadoPagoSettings();">
+                                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="mp-enabled" onchange="toggleMpFields()">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <span style="font-weight: bold; color: var(--color-text-light);">Ativar Integração Mercado Pago</span>
+                                        </div>
+
+                                        <div id="mp-credentials-box" style="display: none; padding: 1rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(0,0,0,0.2); margin-top: 1rem;">
+                                            <div class="form-group">
+                                                <label for="mp-access-token">Access Token (Produção) *</label>
+                                                <input type="password" id="mp-access-token" class="form-control" placeholder="APP_USR-123456789-XXXXXX">
+                                                <small style="color: var(--color-text-muted);">Acesse o <a href="https://www.mercadopago.com.br/developers/panel" target="_blank" style="color: var(--color-primary);">Painel de Desenvolvedores do Mercado Pago</a> para gerar esta chave.</small>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                                                <i data-lucide="save"></i> Salvar Credenciais
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
