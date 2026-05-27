@@ -931,17 +931,21 @@ export function renderCargoStockInputs() {
         container.innerHTML += `
             <div style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 8px; margin-bottom: 8px;">
                 <h4 style="font-size: 0.85rem; color: #fff; margin-bottom: 4px;">${p.name}</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
                     <div>
-                        <label style="font-size: 0.7rem; color: var(--color-text-muted);">Saída (Fardos)</label>
+                        <label style="font-size: 0.65rem; color: var(--color-text-muted);">Saída</label>
                         <input type="number" min="0" id="cargo-out-${p.id}" class="form-control" style="padding: 4px 8px; font-size: 0.8rem;" value="0" oninput="window.calculateCargoSettlement()">
                     </div>
                     <div>
-                        <label style="font-size: 0.7rem; color: var(--color-text-muted);">Retorno (Fardos)</label>
+                        <label style="font-size: 0.65rem; color: var(--color-text-muted);">Retorno</label>
                         <input type="number" min="0" id="cargo-return-${p.id}" class="form-control" style="padding: 4px 8px; font-size: 0.8rem;" value="0" oninput="window.calculateCargoSettlement()">
                     </div>
                     <div>
-                        <label style="font-size: 0.7rem; color: var(--color-text-muted);">Vendas (Hoje)</label>
+                        <label style="font-size: 0.65rem; color: var(--color-text-muted);">Quebra</label>
+                        <input type="number" min="0" id="cargo-loss-${p.id}" class="form-control" style="padding: 4px 8px; font-size: 0.8rem; border-color: rgba(239, 68, 68, 0.4);" value="0" oninput="window.calculateCargoSettlement()">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.65rem; color: var(--color-text-muted);">Vendas</label>
                         <input type="number" min="0" id="cargo-sales-${p.id}" class="form-control" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.2); color: #fff;" value="0" readonly>
                     </div>
                 </div>
@@ -1036,13 +1040,14 @@ export function calculateCargoSettlement() {
     activeProds.forEach(p => {
         const outQty = parseInt(document.getElementById(`cargo-out-${p.id}`).value) || 0;
         const returnQty = parseInt(document.getElementById(`cargo-return-${p.id}`).value) || 0;
+        const lossQty = parseInt(document.getElementById(`cargo-loss-${p.id}`).value) || 0;
         const salesQty = parseInt(document.getElementById(`cargo-sales-${p.id}`).value) || 0;
         
-        const theoreticalReturn = outQty - salesQty;
+        const theoreticalReturn = outQty - salesQty - lossQty;
         const diff = returnQty - theoreticalReturn;
         
         const price = p.defaultPrice || 0;
-        const soldQty = outQty - returnQty;
+        const soldQty = outQty - returnQty - lossQty;
         totalFardosSold += Math.max(0, soldQty);
         const expectedRevenue = Math.max(0, soldQty) * price;
         totalExpectedRevenue += expectedRevenue;
@@ -1227,11 +1232,12 @@ export function saveCargoSettlement() {
     activeProds.forEach(p => {
         const outQty = parseInt(document.getElementById(`cargo-out-${p.id}`).value) || 0;
         const returnQty = parseInt(document.getElementById(`cargo-return-${p.id}`).value) || 0;
+        const lossQty = parseInt(document.getElementById(`cargo-loss-${p.id}`).value) || 0;
         const salesQty = parseInt(document.getElementById(`cargo-sales-${p.id}`).value) || 0;
-        const soldQty = Math.max(0, outQty - returnQty);
+        const soldQty = Math.max(0, outQty - returnQty - lossQty);
         totalFardosSold += soldQty;
 
-        const theoreticalReturn = outQty - salesQty;
+        const theoreticalReturn = outQty - salesQty - lossQty;
         const diff = returnQty - theoreticalReturn;
 
         cargoDetails.push({
@@ -1240,6 +1246,7 @@ export function saveCargoSettlement() {
             outQty,
             salesQty,
             returnQty,
+            lossQty,
             diff
         });
     });
@@ -1313,9 +1320,11 @@ export function saveCargoSettlement() {
     activeProds.forEach(p => {
         const outEl = document.getElementById(`cargo-out-${p.id}`);
         const returnEl = document.getElementById(`cargo-return-${p.id}`);
+        const lossEl = document.getElementById(`cargo-loss-${p.id}`);
         const salesEl = document.getElementById(`cargo-sales-${p.id}`);
         if (outEl) outEl.value = "0";
         if (returnEl) returnEl.value = "0";
+        if (lossEl) lossEl.value = "0";
         if (salesEl) salesEl.value = "0";
     });
 
