@@ -1634,14 +1634,20 @@
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure as credenciais para emitir QR Codes PIX dinâmicos diretamente no fechamento do pedido.</p>
                                 </div>
                                 <div style="padding: 1.5rem 0 0 0;">
-                                    <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-                                        <h4 style="color: #ffaa00; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                                            <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i> Aviso Legal sobre Conta Física (CPF)
+                                    <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); padding: 1.25rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                        <h4 style="color: var(--color-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="info" style="width: 18px; height: 18px;"></i> Instruções de Configuração
                                         </h4>
-                                        <p style="font-size: 0.85rem; color: #fff; line-height: 1.4;">
-                                            Como sua conta no Mercado Pago está vinculada a um CPF, os QR Codes gerados aparecerão com o <strong>seu nome pessoal</strong> para o cliente na hora do pagamento, em vez do nome da fábrica (Gelo do Vale). <br><br>
-                                            Você tem certeza que deseja prosseguir e habilitar esta integração na sua conta física?
-                                        </p>
+                                        <div style="font-size: 0.85rem; color: var(--color-text-light); line-height: 1.6;">
+                                            <p style="margin-bottom: 8px;">Recomendamos utilizar uma conta <strong>Mercado Pago empresarial (CNPJ)</strong> para que o nome "Gelo do Vale" apareça corretamente no comprovante do cliente.</p>
+                                            <ol style="padding-left: 1.5rem; margin-bottom: 0;">
+                                                <li style="margin-bottom: 4px;">Acesse o site: <a href="https://www.mercadopago.com.br/developers/panel" target="_blank" style="color: var(--color-primary); text-decoration: underline;">Painel de Desenvolvedores do Mercado Pago</a>.</li>
+                                                <li style="margin-bottom: 4px;">Faça login com a sua conta do CNPJ.</li>
+                                                <li style="margin-bottom: 4px;">Crie uma nova "Aplicação" do tipo <strong>Pagamentos Online</strong>.</li>
+                                                <li style="margin-bottom: 4px;">Vá em <strong>Credenciais de Produção</strong> na barra lateral esquerda.</li>
+                                                <li>Copie a chave <strong>Access Token</strong> (normalmente começa com <code>APP_USR-</code>) e cole no campo abaixo.</li>
+                                            </ol>
+                                        </div>
                                     </div>
                                     
                                     <form id="form-mp-integration" onsubmit="event.preventDefault(); saveMercadoPagoSettings();">
