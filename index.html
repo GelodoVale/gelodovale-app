@@ -920,9 +920,14 @@
                                             <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
                                                 <i data-lucide="package" style="width: 16px; height: 16px;"></i> Controle de Estoque de Embalagens
                                             </h3>
-                                            <button type="button" class="btn btn-primary" onclick="openPackagingModal()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
-                                                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Nova Embalagem
-                                            </button>
+                                            <div style="display: flex; gap: 8px;">
+                                                <button type="button" class="btn btn-secondary" onclick="openProductionModal()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
+                                                    <i data-lucide="package-minus" style="width: 12px; height: 12px;"></i> Registrar Produção
+                                                </button>
+                                                <button type="button" class="btn btn-primary" onclick="openPackagingModal()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
+                                                    <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Nova Embalagem
+                                                </button>
+                                            </div>
                                         </div>
                                         <div style="overflow-x: auto;">
                                             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
@@ -3361,9 +3366,44 @@
         </div>
     </div>
 
+    <!-- Modal de Produção (Consumo de Embalagens) -->
+    <div class="modal-backdrop" id="modal-production">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Registrar Produção de Gelo</h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-production')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="form-production" onsubmit="event.preventDefault(); saveProduction();">
+                <div class="form-group">
+                    <label for="prod-packaging-id">Embalagem Utilizada *</label>
+                    <select id="prod-packaging-id" class="form-control" required onchange="updateProductionInfo()">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 4px;">
+                    Estoque Atual da Embalagem: <strong id="prod-packaging-current" style="color: #fff;">0</strong> unidades
+                </div>
+                <div class="form-group">
+                    <label for="prod-qty">Quantidade Produzida (Sacos Gastos) *</label>
+                    <input type="number" id="prod-qty" class="form-control" required min="1" placeholder="Ex: 200">
+                    <small style="color: var(--color-text-muted);">Essa quantidade será subtraída do estoque da embalagem.</small>
+                </div>
+                <div class="form-group">
+                    <label for="prod-obs">Observação</label>
+                    <input type="text" id="prod-obs" class="form-control" placeholder="Ex: Produção do turno da manhã">
+                </div>
 
-
-    <!-- 21. Modal de Cadastro/Edição de Usuário e Níveis de Acesso -->
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-production')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="package-minus" style="width: 14px; height: 14px;"></i> Registrar e Dar Baixa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>    <!-- 21. Modal de Cadastro/Edição de Usuário e Níveis de Acesso -->
     <div class="modal-backdrop" id="modal-user-form">
         <div class="modal-content" style="width: 750px; max-width: 95vw;">
             <div class="modal-header">

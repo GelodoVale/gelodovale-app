@@ -2506,3 +2506,90 @@ export function shareAcertoWhatsApp() {
 
 window.shareAcertoWhatsApp = shareAcertoWhatsApp;
 
+// ==========================================
+// CONTROLE DE PRODUÇÃO (BAIXA DE EMBALAGENS)
+// ==========================================
+
+export function openProductionModal() {
+    const pkgSelect = document.getElementById("prod-packaging-id");
+    pkgSelect.innerHTML = `<option value="">Selecione a embalagem...</option>`;
+    
+    if (state.packaging && state.packaging.length > 0) {
+        state.packaging.forEach(p => {
+            pkgSelect.innerHTML += `<option value="${p.id}">${p.name} (Estoque: ${p.stock})</option>`;
+        });
+    }
+
+    document.getElementById("prod-qty").value = "";
+    document.getElementById("prod-obs").value = "";
+    document.getElementById("prod-packaging-current").textContent = "0";
+
+    document.getElementById("modal-production").classList.add("active");
+}
+
+export function updateProductionInfo() {
+    const pkgId = document.getElementById("prod-packaging-id").value;
+    if (!pkgId) {
+        document.getElementById("prod-packaging-current").textContent = "0";
+        return;
+    }
+    const pkg = state.packaging.find(p => p.id === pkgId);
+    if (pkg) {
+        document.getElementById("prod-packaging-current").textContent = pkg.stock;
+    }
+}
+
+export function saveProduction() {
+    const pkgId = document.getElementById("prod-packaging-id").value;
+    const qty = parseInt(document.getElementById("prod-qty").value);
+    const obs = document.getElementById("prod-obs").value || "Produção Interna";
+
+    if (!pkgId || isNaN(qty) || qty <= 0) {
+        alert("Preencha a embalagem e a quantidade produzida válida.");
+        return;
+    }
+
+    const pkg = state.packaging.find(p => p.id === pkgId);
+    if (!pkg) {
+        alert("Embalagem não encontrada.");
+        return;
+    }
+
+    if (pkg.stock < qty) {
+        const confirmNegative = confirm(`Atenção: A embalagem tem apenas ${pkg.stock} unidades. Se continuar, o estoque ficará negativo. Deseja prosseguir?`);
+        if (!confirmNegative) return;
+    }
+
+    const previousStock = pkg.stock;
+    pkg.stock -= qty;
+
+    if (!state.packagingTransactions) state.packagingTransactions = [];
+    
+    state.packagingTransactions.push({
+        id: 'tx-' + Date.now(),
+        date: new Date().toISOString(),
+        packagingId: pkgId,
+        packagingName: pkg.name,
+        type: 'out',
+        qty: qty,
+        afterStock: pkg.stock,
+        obs: obs
+    });
+
+    saveState();
+    
+    alert(`Produção registrada! Foram consumidas ${qty} unidades de embalagem.`);
+    
+    if (window.closeModal) window.closeModal("modal-production");
+    renderPackaging();
+    renderPackagingTransactions();
+    
+    // Atualizar dashboard para mostrar alertas
+    if (window.renderDashboard) window.renderDashboard();
+}
+
+window.openProductionModal = openProductionModal;
+window.updateProductionInfo = updateProductionInfo;
+window.saveProduction = saveProduction;
+
+
