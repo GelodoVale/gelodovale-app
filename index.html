@@ -125,6 +125,60 @@
             </div>
         </aside>
 
+        <!-- BARRA DE NAVEGAÇÃO INFERIOR (apenas mobile) -->
+        <nav class="mobile-nav-bar" id="mobile-nav-bar">
+            <button class="mobile-nav-item active" data-tab="dashboard" id="mnav-dashboard" onclick="mobileNavClick('dashboard')">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="mobile-nav-item" data-tab="clientes" id="mnav-clientes" onclick="mobileNavClick('clientes')">
+                <i data-lucide="users"></i>
+                <span>Clientes</span>
+            </button>
+            <button class="mobile-nav-item" data-tab="pedidos" id="mnav-pedidos" onclick="mobileNavClick('pedidos')">
+                <i data-lucide="shopping-cart"></i>
+                <span>Pedidos</span>
+            </button>
+            <button class="mobile-nav-item" data-tab="historico" id="mnav-historico" onclick="mobileNavClick('historico')">
+                <i data-lucide="history"></i>
+                <span>Histórico</span>
+            </button>
+            <button class="mobile-nav-item" id="mnav-mais" onclick="toggleMobileMoreMenu()">
+                <i data-lucide="grid-3x3"></i>
+                <span>Mais</span>
+            </button>
+        </nav>
+
+        <!-- MENU "MAIS" EXPANDIDO (mobile) -->
+        <div class="mobile-nav-more-menu" id="mobile-more-menu">
+            <button class="mobile-menu-item" data-tab="inventario" onclick="mobileNavClick('inventario')">
+                <i data-lucide="box"></i>
+                <span>Inventário</span>
+            </button>
+            <button class="mobile-menu-item" data-tab="tinas" onclick="mobileNavClick('tinas')">
+                <i data-lucide="archive"></i>
+                <span>Equipamentos</span>
+            </button>
+            <button class="mobile-menu-item" data-tab="documentos" onclick="mobileNavClick('documentos')">
+                <i data-lucide="file-text"></i>
+                <span>Recibos</span>
+            </button>
+            <button class="mobile-menu-item" data-tab="rotas" onclick="mobileNavClick('rotas')">
+                <i data-lucide="map"></i>
+                <span>Rotas</span>
+            </button>
+            <button class="mobile-menu-item" data-tab="relatorios" onclick="mobileNavClick('relatorios')">
+                <i data-lucide="bar-chart-2"></i>
+                <span>Relatórios</span>
+            </button>
+            <button class="mobile-menu-item" data-tab="precos" onclick="mobileNavClick('precos')">
+                <i data-lucide="settings"></i>
+                <span>Config.</span>
+            </button>
+        </div>
+        <!-- Overlay para fechar menu "Mais" -->
+        <div class="mobile-overlay" id="mobile-overlay" onclick="closeMobileMoreMenu()"></div>
+
         <!-- CONTEÚDO PRINCIPAL -->
         <main class="main-content">
             
