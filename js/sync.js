@@ -1,123 +1,175 @@
-// --- SISTEMA DE SINCRONIZAÇÃO EM NUVEM (FIREBASE) ---
-import { state, updateState, saveStateLocalOnly, saveState } from './state.js';
+// --- SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE) ---
+import { state, updateState, saveStateLocalOnly } from './state.js';
 import { renderApp } from './app.js';
-import { migrateLegacyComodatos } from './comodatos.js';
-import { initUserAccessControl } from './auth.js';
 
 let firebaseSDKLoaded = false;
 let fbDatabaseRef = null;
+let isFirstLoad = true;        // Controla se é a primeira carga (não re-renderiza desnecessariamente)
+let isSyncing = false;         // Evita loop de sync (local→nuvem→local→nuvem...)
+let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada tecla
 
+// ─── CARREGAR SDK DO FIREBASE ──────────────────────────────────────────────
 export function loadFirebaseSDK(callback) {
     if (firebaseSDKLoaded || (window.firebase && window.firebase.database)) {
         firebaseSDKLoaded = true;
         if (callback) callback();
         return;
     }
-    
-    const scriptApp = document.createElement("script");
-    scriptApp.src = "https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js";
+
+    const scriptApp = document.createElement('script');
+    scriptApp.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     scriptApp.onload = () => {
-        const scriptDB = document.createElement("script");
-        scriptDB.src = "https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js";
+        const scriptDB = document.createElement('script');
+        scriptDB.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
         scriptDB.onload = () => {
             firebaseSDKLoaded = true;
             if (callback) callback();
         };
-        scriptDB.onerror = (err) => {
-            console.error("Erro ao carregar SDK de Banco de Dados do Firebase:", err);
-            updateSyncStatusUI("error");
-        };
+        scriptDB.onerror = () => updateSyncStatusUI('error');
         document.head.appendChild(scriptDB);
     };
-    scriptApp.onerror = (err) => {
-        console.error("Erro ao carregar SDK Base do Firebase:", err);
-        updateSyncStatusUI("error");
-    };
+    scriptApp.onerror = () => updateSyncStatusUI('error');
     document.head.appendChild(scriptApp);
 }
 
+// ─── LISTENER EM TEMPO REAL ────────────────────────────────────────────────
+// Fica "escutando" o Firebase 24/7. Quando qualquer dispositivo salvar algo,
+// todos os outros recebem a atualização automaticamente em 1-2 segundos.
 export function startSyncListener() {
     if (!state.firebaseConfig || !state.firebaseConfig.deviceKey) return;
-    
+
     const deviceKey = state.firebaseConfig.deviceKey;
     fbDatabaseRef = firebase.database().ref(`factories/${deviceKey}`);
-    
-    updateSyncStatusUI("syncing");
-    
+
+    updateSyncStatusUI('syncing');
+
+    // Remove listener anterior para não duplicar
     fbDatabaseRef.off();
-    
-    fbDatabaseRef.on("value", snapshot => {
+    isFirstLoad = true;
+
+    fbDatabaseRef.on('value', snapshot => {
+        // Ignorar atualizações que VIeram deste próprio dispositivo (evita loop)
+        if (isSyncing) return;
+
         const remoteData = snapshot.val();
+
+        // ── Sem dados na nuvem: este dispositivo envia os dados locais ──
         if (!remoteData) {
-            pushToFirebase();
+            console.log('[Sync] Nuvem vazia — enviando dados locais...');
+            pushToFirebaseImediato();
+            isFirstLoad = false;
             return;
         }
-        
-        const localLastUpdated = state.lastUpdated || 0;
-        const remoteLastUpdated = remoteData.lastUpdated || 0;
-        
-        if (remoteLastUpdated > localLastUpdated) {
-            console.log("Detectado dados mais recentes no Firebase. Sincronizando localmente...");
-            updateState(remoteData);
-            saveStateLocalOnly();
-            renderApp();
-            updateSyncStatusUI("success");
-        } else if (localLastUpdated > remoteLastUpdated) {
-            console.log("Local é mais recente. Enviando para o Firebase...");
-            pushToFirebase();
+
+        const localTs  = state.lastUpdated || 0;
+        const remoteTs = remoteData.lastUpdated || 0;
+
+        if (isFirstLoad) {
+            // ── Primeira carga: quem tiver timestamp mais recente ganha ──
+            isFirstLoad = false;
+            if (remoteTs > localTs) {
+                console.log('[Sync] Nuvem mais recente na abertura — aplicando dados da nuvem...');
+                aplicarDadosRemoto(remoteData);
+            } else if (localTs > remoteTs) {
+                console.log('[Sync] Local mais recente na abertura — enviando para nuvem...');
+                pushToFirebaseImediato();
+            } else {
+                updateSyncStatusUI('success');
+            }
         } else {
-            updateSyncStatusUI("success");
+            // ── Atualização em tempo real: outro dispositivo fez uma alteração ──
+            if (remoteTs > localTs) {
+                console.log('[Sync] ⚡ Atualização em tempo real recebida de outro dispositivo!');
+                aplicarDadosRemoto(remoteData);
+            } else {
+                updateSyncStatusUI('success');
+            }
         }
     }, error => {
-        console.error("Erro no listener do Firebase:", error);
-        updateSyncStatusUI("error");
+        console.error('[Sync] Erro no listener:', error);
+        updateSyncStatusUI('error');
     });
 }
 
+// ─── APLICAR DADOS RECEBIDOS DA NUVEM ─────────────────────────────────────
+function aplicarDadosRemoto(remoteData) {
+    // Preservar configuração Firebase local (não sobrescrever com a da nuvem)
+    const cfgLocal = state.firebaseConfig;
+
+    updateState(remoteData);
+
+    // Sempre manter Firebase ativo com credenciais corretas
+    state.firebaseConfig = cfgLocal;
+
+    saveStateLocalOnly();
+    renderApp();
+    updateSyncStatusUI('success');
+
+    // Mostrar notificação visual discreta
+    mostrarToastSync();
+}
+
+// ─── ENVIAR PARA O FIREBASE (COM DEBOUNCE) ─────────────────────────────────
+// Debounce de 1.5s: espera o usuário parar de digitar antes de enviar
 export function pushToFirebase() {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
-        updateSyncStatusUI("disabled");
+        updateSyncStatusUI('disabled');
         return;
     }
-    
+    clearTimeout(pushDebounceTimer);
+    updateSyncStatusUI('syncing');
+    pushDebounceTimer = setTimeout(() => {
+        pushToFirebaseImediato();
+    }, 1500);
+}
+
+// Envio imediato (sem debounce) — usado internamente
+function pushToFirebaseImediato() {
+    if (!state.firebaseConfig || !state.firebaseConfig.enabled) return;
+
     if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
         initFirebase();
         return;
     }
-    
+
     const deviceKey = state.firebaseConfig.deviceKey;
     if (!deviceKey) return;
-    
-    updateSyncStatusUI("syncing");
-    
+
+    isSyncing = true;
+    updateSyncStatusUI('syncing');
+
     firebase.database().ref(`factories/${deviceKey}`).set(state)
         .then(() => {
-            updateSyncStatusUI("success");
-            console.log("Estado sincronizado com o Firebase com sucesso!");
+            updateSyncStatusUI('success');
+            console.log('[Sync] ✅ Dados enviados para a nuvem com sucesso.');
         })
         .catch(err => {
-            console.error("Erro ao enviar dados para o Firebase:", err);
-            updateSyncStatusUI("error");
+            console.error('[Sync] Erro ao enviar:', err);
+            updateSyncStatusUI('error');
+        })
+        .finally(() => {
+            // Liberar flag após pequeno delay para não capturar o próprio evento
+            setTimeout(() => { isSyncing = false; }, 2000);
         });
 }
 
+// ─── INICIALIZAR FIREBASE ──────────────────────────────────────────────────
 export function initFirebase(callback) {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
-        updateSyncStatusUI("disabled");
+        updateSyncStatusUI('disabled');
         if (callback) callback();
         return;
     }
-    
+
     const { apiKey, projectId, databaseURL, deviceKey } = state.firebaseConfig;
     if (!apiKey || !projectId || !databaseURL || !deviceKey) {
-        console.warn("Configurações do Firebase incompletas.");
-        updateSyncStatusUI("error");
+        updateSyncStatusUI('error');
         if (callback) callback();
         return;
     }
-    
-    updateSyncStatusUI("syncing");
-    
+
+    updateSyncStatusUI('syncing');
+
     loadFirebaseSDK(() => {
         try {
             const config = { apiKey, projectId, databaseURL };
@@ -127,13 +179,30 @@ export function initFirebase(callback) {
             startSyncListener();
             if (callback) callback();
         } catch (error) {
-            console.error("Erro ao inicializar Firebase:", error);
-            updateSyncStatusUI("error");
+            console.error('[Sync] Erro ao inicializar Firebase:', error);
+            updateSyncStatusUI('error');
             if (callback) callback();
         }
     });
 }
 
+// ─── FORÇAR SINCRONIZAÇÃO MANUAL ──────────────────────────────────────────
+export function forceManualSync() {
+    if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
+        alert('Sincronização desativada. Ative nas configurações primeiro.');
+        return;
+    }
+    state.lastUpdated = Date.now();
+    saveStateLocalOnly();
+
+    if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
+        initFirebase(() => pushToFirebaseImediato());
+    } else {
+        pushToFirebaseImediato();
+    }
+}
+
+// ─── TOGGLE FIREBASE ON/OFF ────────────────────────────────────────────────
 export function toggleFirebaseSync(checked) {
     if (!state.firebaseConfig) {
         state.firebaseConfig = { enabled: false, apiKey: '', projectId: '', databaseURL: '', deviceKey: '' };
@@ -143,99 +212,91 @@ export function toggleFirebaseSync(checked) {
     if (checked) {
         initFirebase();
     } else {
-        if (fbDatabaseRef) {
-            fbDatabaseRef.off();
-        }
-        updateSyncStatusUI("disabled");
+        if (fbDatabaseRef) fbDatabaseRef.off();
+        updateSyncStatusUI('disabled');
     }
 }
 
+// ─── SALVAR CONFIGURAÇÕES FIREBASE DO PAINEL ADMIN ────────────────────────
 export function saveFirebaseSettings() {
-    const enabled = document.getElementById("cfg-fb-enabled").checked;
-    const apiKey = document.getElementById("cfg-fb-api-key").value.trim();
-    const projectId = document.getElementById("cfg-fb-project-id").value.trim();
-    const databaseURL = document.getElementById("cfg-fb-db-url").value.trim();
-    const deviceKey = document.getElementById("cfg-fb-device-key").value.trim();
-    
-    state.firebaseConfig = { enabled, apiKey, projectId, databaseURL, deviceKey };
-    saveState();
-    
-    alert("Configurações do Firebase salvas!");
-}
+    const enabled    = document.getElementById('cfg-fb-enabled').checked;
+    const apiKey     = document.getElementById('cfg-fb-api-key').value.trim();
+    const projectId  = document.getElementById('cfg-fb-project-id').value.trim();
+    const databaseURL= document.getElementById('cfg-fb-db-url').value.trim();
+    const deviceKey  = document.getElementById('cfg-fb-device-key').value.trim();
 
-export function forceManualSync() {
-    if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
-        alert("Sincronização desativada. Ative nas configurações primeiro.");
-        return;
-    }
-    
+    state.firebaseConfig = { enabled, apiKey, projectId, databaseURL, deviceKey };
+
+    // Usar pushToFirebaseImediato para não criar loop
     state.lastUpdated = Date.now();
     saveStateLocalOnly();
-    
-    if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
-        initFirebase(() => {
-            pushToFirebase();
-        });
-    } else {
-        pushToFirebase();
-    }
+    if (enabled) initFirebase();
+
+    alert('Configurações do Firebase salvas!');
 }
 
+// ─── INDICADOR DE STATUS NO CABEÇALHO ─────────────────────────────────────
 export function updateSyncStatusUI(status) {
-    const indicator = document.getElementById("cloud-sync-status");
+    const indicator = document.getElementById('cloud-sync-status');
     if (!indicator) return;
-    
-    let iconName = "cloud-off";
-    let iconColor = "var(--color-text-muted)";
-    let titleText = "Sincronização Desativada";
-    let isSpinning = false;
-    
-    switch (status) {
-        case "success":
-            iconName = "cloud";
-            iconColor = "#00ff64";
-            titleText = "Nuvem Ativa e Sincronizada";
-            break;
-        case "syncing":
-            iconName = "refresh-cw";
-            iconColor = "#ffaa00";
-            titleText = "Sincronizando com a Nuvem...";
-            isSpinning = true;
-            break;
-        case "error":
-            iconName = "alert-triangle";
-            iconColor = "#ff4d4d";
-            titleText = "Erro de Conexão/Sincronização";
-            break;
-        case "disabled":
-        default:
-            iconName = "cloud-off";
-            iconColor = "var(--color-text-muted)";
-            titleText = "Sincronização na Nuvem Desativada";
-            break;
-    }
-    
-    indicator.title = titleText;
-    indicator.innerHTML = `<i data-lucide="${iconName}" class="${isSpinning ? 'spin-anim' : ''}" style="width: 18px; height: 18px; color: ${iconColor};"></i>`;
-    
-    const btnSync = document.getElementById("btn-force-sync");
+
+    const MAP = {
+        success:  { icon: 'cloud',           color: '#00ff64', title: '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
+        syncing:  { icon: 'refresh-cw',       color: '#ffaa00', title: '🔄 Sincronizando com a Nuvem...', spin: true  },
+        error:    { icon: 'alert-triangle',   color: '#ff4d4d', title: '⚠️ Erro de Conexão com a Nuvem', spin: false },
+        disabled: { icon: 'cloud-off',        color: 'var(--color-text-muted)', title: 'Sincronização Desativada', spin: false }
+    };
+
+    const cfg = MAP[status] || MAP.disabled;
+    indicator.title = cfg.title;
+    indicator.innerHTML = `<i data-lucide="${cfg.icon}" class="${cfg.spin ? 'spin-anim' : ''}" style="width:18px;height:18px;color:${cfg.color};"></i>`;
+
+    const btnSync = document.getElementById('btn-force-sync');
     if (btnSync) {
-        if (status === "syncing") {
-            btnSync.innerHTML = `<i data-lucide="refresh-cw" class="spin-anim" style="width: 14px; height: 14px;"></i> Sincronizando...`;
+        if (status === 'syncing') {
+            btnSync.innerHTML = `<i data-lucide="refresh-cw" class="spin-anim" style="width:14px;height:14px;"></i> Sincronizando...`;
             btnSync.disabled = true;
         } else {
-            btnSync.innerHTML = `<i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Forçar Sincronização Agora`;
+            btnSync.innerHTML = `<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Forçar Sincronização Agora`;
             btnSync.disabled = false;
         }
     }
-    
-    lucide.createIcons();
+
+    if (window.lucide) lucide.createIcons();
 }
 
-// Bind global variables for HTML accessibility
-window.toggleFirebaseSync = toggleFirebaseSync;
+// ─── TOAST DE NOTIFICAÇÃO QUANDO RECEBE ATUALIZAÇÃO ──────────────────────
+function mostrarToastSync() {
+    // Não mostrar na primeira carga
+    const existing = document.getElementById('sync-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'sync-toast';
+    toast.style.cssText = `
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,255,100,0.15); border: 1px solid rgba(0,255,100,0.35);
+        color: #00ff64; padding: 10px 20px; border-radius: 12px; font-size: 0.85rem;
+        font-weight: 600; backdrop-filter: blur(12px); z-index: 99999;
+        display: flex; align-items: center; gap: 8px;
+        animation: fadeIn 0.3s ease-out;
+        box-shadow: 0 4px 20px rgba(0,255,100,0.2);
+    `;
+    toast.innerHTML = `<i data-lucide="zap" style="width:15px;height:15px;"></i> Atualização recebida de outro dispositivo!`;
+    document.body.appendChild(toast);
+    if (window.lucide) lucide.createIcons();
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(() => toast.remove(), 500);
+    }, 3500);
+}
+
+// ─── EXPORTS GLOBAIS ───────────────────────────────────────────────────────
+window.toggleFirebaseSync   = toggleFirebaseSync;
 window.saveFirebaseSettings = saveFirebaseSettings;
-window.forceManualSync = forceManualSync;
-window.updateSyncStatusUI = updateSyncStatusUI;
-window.pushToFirebase = pushToFirebase;
-window.initFirebase = initFirebase;
+window.forceManualSync      = forceManualSync;
+window.updateSyncStatusUI   = updateSyncStatusUI;
+window.pushToFirebase       = pushToFirebase;
+window.initFirebase         = initFirebase;
