@@ -147,100 +147,161 @@ export function renderDashboardAlerts() {
 }
 
 export function renderDashboardChart() {
-    const chartContainer = document.getElementById("dashboard-chart");
-    if (!chartContainer) return;
-    chartContainer.innerHTML = "";
+    const revCanvas = document.getElementById("revenueChart");
+    const prodCanvas = document.getElementById("productsChart");
     
-    // Obter últimas 7 entregas
-    const recentDeliveries = [...state.deliveries]
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .slice(-7);
-        
-    if (recentDeliveries.length === 0) {
-        chartContainer.innerHTML = `
-            <div class="empty-state">
-                <i data-lucide="bar-chart-2"></i>
-                <p>Nenhuma entrega registrada para gerar gráfico.</p>
-            </div>
-        `;
-        if (window.lucide) lucide.createIcons();
-        return;
+    if (!revCanvas || !prodCanvas) return;
+    
+    // Destroy existing charts to prevent "Canvas is already in use" errors
+    if (window.myRevChart) window.myRevChart.destroy();
+    if (window.myProdChart) window.myProdChart.destroy();
+
+    // 1. DADOS DE FATURAMENTO (Últimos 15 dias)
+    const now = new Date();
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(now.getDate() - 15);
+    
+    // Agrupar faturamento por dia (dd/mm)
+    const revenueByDay = {};
+    for (let i = 14; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        revenueByDay[label] = 0;
     }
-    
-    // Dados para desenhar
-    const labels = recentDeliveries.map(d => {
-        const dateObj = new Date(d.date);
-        return `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+
+    state.deliveries.forEach(del => {
+        const dDate = new Date(del.date);
+        if (dDate >= fifteenDaysAgo) {
+            const label = `${String(dDate.getDate()).padStart(2, '0')}/${String(dDate.getMonth() + 1).padStart(2, '0')}`;
+            if (revenueByDay[label] !== undefined) {
+                revenueByDay[label] += del.revenue || 0;
+            }
+        }
     });
-    
-    // Vamos mapear o faturamento como o valor do gráfico
-    const values = recentDeliveries.map(d => d.revenue);
-    const maxValue = Math.max(...values, 100); // Evitar divisão por zero e dar teto
-    
-    // Construir SVG
-    const width = 500;
-    const height = 220;
-    const paddingLeft = 45;
-    const paddingRight = 15;
-    const paddingTop = 20;
-    const paddingBottom = 30;
-    
-    const chartWidth = width - paddingLeft - paddingRight;
-    const chartHeight = height - paddingTop - paddingBottom;
-    const barWidth = (chartWidth / values.length) * 0.6;
-    const barSpacing = (chartWidth / values.length) * 0.4;
-    
-    let svgContent = `
-        <svg class="chart-svg" viewBox="0 0 ${width} ${height}">
-            <defs>
-                <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#00f0ff" />
-                    <stop offset="100%" stop-color="#0072ff" stop-opacity="0.3" />
-                </linearGradient>
-                <linearGradient id="barGradHover" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#00f0ff" />
-                    <stop offset="100%" stop-color="#00f0ff" stop-opacity="0.6" />
-                </linearGradient>
-            </defs>
-            
-            <!-- Linhas de grade horizontais -->
-            <line x1="${paddingLeft}" y1="${paddingTop}" x2="${width - paddingRight}" y2="${paddingTop}" class="chart-grid-line" />
-            <line x1="${paddingLeft}" y1="${paddingTop + chartHeight / 2}" x2="${width - paddingRight}" y2="${paddingTop + chartHeight / 2}" class="chart-grid-line" />
-            <line x1="${paddingLeft}" y1="${paddingTop + chartHeight}" x2="${width - paddingRight}" y2="${paddingTop + chartHeight}" class="chart-axis-line" />
-            
-            <!-- Eixo X Labels (Datas) e Barras -->
-    `;
-    
-    // Adicionar labels Y
-    svgContent += `
-        <text x="${paddingLeft - 10}" y="${paddingTop + 4}" class="chart-text" text-anchor="end">R$${Math.round(maxValue)}</text>
-        <text x="${paddingLeft - 10}" y="${paddingTop + chartHeight / 2 + 4}" class="chart-text" text-anchor="end">R$${Math.round(maxValue / 2)}</text>
-        <text x="${paddingLeft - 10}" y="${paddingTop + chartHeight + 4}" class="chart-text" text-anchor="end">R$0</text>
-    `;
-    
-    for (let i = 0; i < values.length; i++) {
-        const val = values[i];
-        const barHeight = (val / maxValue) * chartHeight;
-        const x = paddingLeft + (i * (barWidth + barSpacing)) + barSpacing / 2;
-        const y = paddingTop + chartHeight - barHeight;
-        
-        // Barra
-        svgContent += `
-            <rect class="chart-bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" />
-            <!-- Valor acima da barra ao passar mouse (ou permanente simples) -->
-            <text x="${x + barWidth / 2}" y="${y - 6}" class="chart-text" text-anchor="middle" font-size="9" fill="#fff">R$${Math.round(val)}</text>
-        `;
-        
-        // Eixo X
-        svgContent += `
-            <text x="${x + barWidth / 2}" y="${paddingTop + chartHeight + 18}" class="chart-text" text-anchor="middle">${labels[i]}</text>
-        `;
+
+    const revLabels = Object.keys(revenueByDay);
+    const revData = Object.values(revenueByDay);
+
+    // 2. DADOS DE PRODUTOS MAIS VENDIDOS (Geral)
+    const productSales = {};
+    state.products.forEach(p => productSales[p.name] = 0);
+
+    state.deliveries.forEach(del => {
+        if (!del.items) return;
+        state.products.forEach(p => {
+            const qtyFardo = del.items[p.id] || 0;
+            const qtyUnit = del.items[p.id + "_unit"] || 0;
+            // Somar pacotes equivalentes. (Se 1 fardo = 12 unidades, então 1 unidade = 1/12 fardo. Vamos somar em unidades totais ou fardos totais? Melhor unidades)
+            const unitsPerPack = p.unitsPerPack || (p.type.includes('Gelo') ? 1 : 1);
+            const totalUnits = (qtyFardo * unitsPerPack) + qtyUnit;
+            if (totalUnits > 0) {
+                productSales[p.name] += totalUnits;
+            }
+        });
+    });
+
+    // Filtrar produtos com vendas > 0
+    const soldProducts = Object.keys(productSales).filter(k => productSales[k] > 0);
+    const soldValues = soldProducts.map(k => productSales[k]);
+
+    // Configuração de Cores Premium (Neon/Dark Theme)
+    Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    const gradientBlue = revCanvas.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradientBlue.addColorStop(0, 'rgba(0, 240, 255, 0.8)');
+    gradientBlue.addColorStop(1, 'rgba(0, 114, 255, 0.2)');
+
+    // Render Revenue Bar Chart
+    window.myRevChart = new Chart(revCanvas, {
+        type: 'bar',
+        data: {
+            labels: revLabels,
+            datasets: [{
+                label: 'Faturamento Diário (R$)',
+                data: revData,
+                backgroundColor: gradientBlue,
+                borderRadius: 4,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 23, 0.9)',
+                    titleColor: '#00f0ff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        callback: function(value) { return 'R$ ' + value; }
+                    }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // Render Products Doughnut Chart
+    if (soldProducts.length > 0) {
+        window.myProdChart = new Chart(prodCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: soldProducts,
+                datasets: [{
+                    data: soldValues,
+                    backgroundColor: [
+                        '#00f0ff',
+                        '#ff0055',
+                        '#00ffaa',
+                        '#ffaa00',
+                        '#aa00ff'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#0a0e17'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#fff',
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Empty state for products
+        const ctx = prodCanvas.getContext('2d');
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.font = "12px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText("Sem vendas registradas", prodCanvas.width/2, prodCanvas.height/2);
     }
-    
-    svgContent += `</svg>`;
-    
-    chartContainer.innerHTML = svgContent;
-    if (window.lucide) lucide.createIcons();
 }
 
 // Bind to window for HTML accessibility

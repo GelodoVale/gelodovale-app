@@ -215,14 +215,19 @@
 
                 <!-- Painéis do Dashboard (Gráfico e Alertas) -->
                 <div class="dashboard-row">
-                    <!-- Painel do Gráfico -->
-                    <div class="dashboard-panel">
+                    <!-- Painel de Gráficos Analíticos -->
+                    <div class="dashboard-panel" style="grid-column: span 2;">
                         <div class="panel-header">
-                            <h2>Entregas Recentes (Saco de Gelo/Kg)</h2>
-                            <div style="font-size: 0.8rem; color: var(--color-text-muted);">Últimas 7 Entregas</div>
+                            <h2>Análise de Vendas</h2>
+                            <div style="font-size: 0.8rem; color: var(--color-text-muted);">Últimos 15 Dias</div>
                         </div>
-                        <div class="chart-container" id="dashboard-chart">
-                            <!-- Inserido dinamicamente via JS -->
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: center; margin-top: 1rem;">
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="productsChart"></canvas>
+                            </div>
                         </div>
                     </div>
 
@@ -3704,6 +3709,8 @@
         </a>
     </nav>
 
+    <!-- Biblioteca Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
