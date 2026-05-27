@@ -201,8 +201,12 @@ export function initNavigation() {
             }
             
             // Alterar navegação ativa
-            navItems.forEach(nav => nav.classList.remove("active"));
-            item.classList.add("active");
+            navItems.forEach(nav => {
+                nav.classList.remove("active");
+                if (nav.getAttribute("data-tab") === targetTab) {
+                    nav.classList.add("active");
+                }
+            });
             
             // Alterar abas visíveis
             tabContents.forEach(content => {
