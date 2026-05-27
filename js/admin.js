@@ -1193,6 +1193,9 @@ export function calculateCargoSettlement() {
         </div>
 
         <div style="margin-top: 1.5rem; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" class="btn btn-whatsapp" onclick="shareAcertoWhatsApp()" style="font-size: 0.85rem; padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px; background: #25D366; color: #fff; border-color: #25D366;">
+                <i data-lucide="send" style="width: 16px; height: 16px;"></i> WhatsApp
+            </button>
             <button type="button" class="btn btn-primary" onclick="saveCargoSettlement()" style="font-size: 0.85rem; padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> Salvar e Fechar Acerto
             </button>
@@ -2451,4 +2454,46 @@ export function autoFillAppearanceSettings() {
     saveState();
     alert("Aparência padrão (Ciano Neon) restaurada com sucesso!");
 }
+
+export function shareAcertoWhatsApp() {
+    const cashReceived = parseFloat(document.getElementById("settle-cash-received").value) || 0;
+    const pixReceived = parseFloat(document.getElementById("settle-pix-received").value) || 0;
+    const cardReceived = parseFloat(document.getElementById("settle-card-received").value) || 0;
+    const totalReceived = cashReceived + pixReceived + cardReceived;
+
+    const kmInitial = parseInt(document.getElementById("settle-km-initial").value) || 0;
+    const kmFinal = parseInt(document.getElementById("settle-km-final").value) || 0;
+    const distanceKm = Math.max(0, kmFinal - kmInitial);
+
+    const expFuel = parseFloat(document.getElementById("settle-exp-fuel").value) || 0;
+    const expMeal = parseFloat(document.getElementById("settle-exp-meal").value) || 0;
+    const expOthers = parseFloat(document.getElementById("settle-exp-others").value) || 0;
+    const totalExpenses = expFuel + expMeal + expOthers;
+
+    let text = `*COMPROVANTE DE ACERTO DE CARGA*\n\n`;
+    text += `*Data:* ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+    
+    text += `*Resumo Financeiro*\n`;
+    text += `- Dinheiro: R$ ${cashReceived.toFixed(2)}\n`;
+    text += `- Pix: R$ ${pixReceived.toFixed(2)}\n`;
+    text += `- Cartão: R$ ${cardReceived.toFixed(2)}\n`;
+    text += `*Total Recebido: R$ ${totalReceived.toFixed(2)}*\n\n`;
+    
+    text += `*Despesas de Viagem*\n`;
+    text += `- Combustível: R$ ${expFuel.toFixed(2)}\n`;
+    text += `- Alimentação: R$ ${expMeal.toFixed(2)}\n`;
+    text += `- Outros: R$ ${expOthers.toFixed(2)}\n`;
+    text += `*Total Despesas: R$ ${totalExpenses.toFixed(2)}*\n\n`;
+    
+    text += `*Quilometragem*\n`;
+    text += `- Distância Percorrida: ${distanceKm} km\n\n`;
+    
+    text += `_Acerto registrado via Gelo do Vale App_`;
+
+    const encodedText = encodeURIComponent(text);
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+    window.open(whatsappUrl, '_blank');
+}
+
+window.shareAcertoWhatsApp = shareAcertoWhatsApp;
 
