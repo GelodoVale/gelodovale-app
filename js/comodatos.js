@@ -529,6 +529,17 @@ export function sendComodatoWhatsAppLink(comId) {
     
     const message = `Olá, ${clientName}! Por favor, acesse o link abaixo para visualizar os termos e assinar digitalmente o Contrato de Comodato do freezer serial (${comodato.freezerCode}):\n\n${url}`;
     
+    if (!navigator.onLine) {
+        navigator.clipboard.writeText(message)
+            .then(() => {
+                alert("📶 Você está offline!\nO link de assinatura e mensagem do comodato foram copiados para a sua área de transferência para colar manualmente.");
+            })
+            .catch(() => {
+                alert("Erro ao copiar a mensagem.");
+            });
+        return;
+    }
+    
     const cleanPhone = clientPhone.replace(/\D/g, "");
     const formattedPhone = (cleanPhone.length === 10 || cleanPhone.length === 11) ? "55" + cleanPhone : cleanPhone;
     
@@ -546,10 +557,22 @@ export function sendComodatoEmailLink(comId) {
     const client = state.clients.find(c => c.id === comodato.clientId);
     const clientName = client ? client.name : comodato.clientName;
     
-    const subject = encodeURIComponent("Termo de Comodato de Equipamento - Gelo do Vale");
-    const body = encodeURIComponent(`Olá, ${clientName},\n\nEnviamos em anexo os dados do comodato do freezer (${comodato.freezerCode}).\n\nPor favor, acesse o link a seguir para ler o contrato e assinar digitalmente:\n${url}\n\nAtenciosamente,\nGelo do Vale`);
+    const subjectText = "Termo de Comodato de Equipamento - Gelo do Vale";
+    const bodyText = `Olá, ${clientName},\n\nEnviamos em anexo os dados do comodato do freezer (${comodato.freezerCode}).\n\nPor favor, acesse o link a seguir para ler o contrato e assinar digitalmente:\n${url}\n\nAtenciosamente,\nGelo do Vale`;
+
+    if (!navigator.onLine) {
+        const fullEmailText = `Assunto: ${subjectText}\n\n${bodyText}`;
+        navigator.clipboard.writeText(fullEmailText)
+            .then(() => {
+                alert("📶 Você está offline!\nO texto do e-mail de comodato foi copiado para a sua área de transferência.");
+            })
+            .catch(() => {
+                alert("Erro ao copiar o texto do e-mail.");
+            });
+        return;
+    }
     
-    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+    window.open(`mailto:?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(bodyText)}`, "_blank");
 }
 
 // Portal signature drawing state variables

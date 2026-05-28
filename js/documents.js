@@ -582,6 +582,17 @@ export function shareDocumentWhatsApp() {
     const encodedText = encodeURIComponent(text);
     const cleanPhone = d.phone ? d.phone.replace(/\D/g, '') : '';
     
+    if (!navigator.onLine) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert("📶 Você está offline!\nO texto do recibo foi copiado para a sua área de transferência para que você possa colar no WhatsApp manualmente.");
+            })
+            .catch(() => {
+                alert("Erro ao copiar o texto para a área de transferência.");
+            });
+        return;
+    }
+    
     let whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
     if (cleanPhone) {
         let phoneWithDDI = cleanPhone;
@@ -643,6 +654,17 @@ export function shareDocumentEmail() {
     
     body += `\nValor Total: R$ ${d.total.toFixed(2)}\n\n`;
     body += `Atenciosamente,\n${FACTORY_INFO.name}`;
+
+    if (!navigator.onLine) {
+        navigator.clipboard.writeText(body)
+            .then(() => {
+                alert("📶 Você está offline!\nO texto do e-mail foi copiado para a sua área de transferência.");
+            })
+            .catch(() => {
+                alert("Erro ao copiar o texto do e-mail.");
+            });
+        return;
+    }
 
     const mailtoUrl = `mailto:${d.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoUrl, '_self');

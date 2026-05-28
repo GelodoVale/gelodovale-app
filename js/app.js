@@ -2440,9 +2440,46 @@ export function initConnectionStatusMonitor() {
     
     function updateStatus() {
         if (navigator.onLine) {
-            banner.style.display = "none";
+            const hasOfflineChanges = state.offlineChangesQueue && state.offlineChangesQueue.length > 0;
+            if (hasOfflineChanges) {
+                // Estilizar o banner para o modo "Pronto para Sincronizar" (Ciano/Glow)
+                banner.style.background = "rgba(0, 240, 255, 0.15)";
+                banner.style.borderBottom = "1px solid rgba(0, 240, 255, 0.35)";
+                banner.style.color = "#00f0ff";
+                banner.style.boxShadow = "0 4px 15px rgba(0, 240, 255, 0.15)";
+                banner.style.display = "flex";
+                banner.style.cursor = "pointer";
+                
+                // Adicionar listener de clique para abrir o modal de confirmação
+                banner.onclick = () => window.openOfflineSyncModal();
+                
+                const count = state.offlineChangesQueue.length;
+                banner.innerHTML = `
+                    <i data-lucide="wifi" style="width: 16px; height: 16px; color: #00f0ff; filter: drop-shadow(0 0 4px #00f0ff);"></i>
+                    <span><strong>Conexão restabelecida!</strong> Você realizou ${count} ${count === 1 ? 'alteração' : 'alterações'} offline. <strong>Clique aqui para sincronizar com a nuvem</strong>.</span>
+                `;
+                if (window.lucide) window.lucide.createIcons();
+                
+                // Abrir o modal automaticamente para facilitar
+                window.openOfflineSyncModal();
+            } else {
+                banner.style.display = "none";
+                banner.onclick = null;
+            }
         } else {
+            // Estilo padrão offline (Vermelho/Glow)
+            banner.style.background = "rgba(239, 68, 68, 0.15)";
+            banner.style.borderBottom = "1px solid rgba(239, 68, 68, 0.3)";
+            banner.style.color = "#ff4d4d";
+            banner.style.boxShadow = "0 4px 15px rgba(239,68,68,0.15)";
             banner.style.display = "flex";
+            banner.style.cursor = "default";
+            banner.onclick = null;
+            
+            banner.innerHTML = `
+                <i data-lucide="wifi-off" style="width: 16px; height: 16px;"></i>
+                <span>Você está operando offline. Alterações serão salvas localmente e sincronizadas quando restabelecer a conexão.</span>
+            `;
             if (window.lucide) window.lucide.createIcons();
         }
     }
@@ -2452,3 +2489,67 @@ export function initConnectionStatusMonitor() {
     updateStatus();
 }
 window.initConnectionStatusMonitor = initConnectionStatusMonitor;
+
+window.openOfflineSyncModal = function() {
+    const modal = document.getElementById("modal-offline-sync");
+    const list = document.getElementById("offline-changes-list");
+    if (!modal || !list) return;
+    
+    const queue = state.offlineChangesQueue || [];
+    if (queue.length === 0) {
+        alert("Nenhuma alteração offline pendente de sincronização.");
+        return;
+    }
+    
+    list.innerHTML = queue.map(item => {
+        const timeStr = new Date(item.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        let iconName = "edit-3";
+        if (item.desc.includes("Pedido")) iconName = "shopping-cart";
+        else if (item.desc.includes("Entrega")) iconName = "truck";
+        else if (item.desc.includes("Cliente")) iconName = "user-plus";
+        else if (item.desc.includes("Tina") || item.desc.includes("Comodato")) iconName = "file-text";
+        else if (item.desc.includes("Documento")) iconName = "file-check";
+        else if (item.desc.includes("Freezer")) iconName = "box";
+        else if (item.desc.includes("Removido") || item.desc.includes("Excluída")) iconName = "trash-2";
+        
+        return `
+            <li style="display: flex; align-items: center; gap: 8px; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="${iconName}" style="width: 13px; height: 13px; color: var(--color-primary);"></i>
+                    <span style="color: #fff; font-size: 0.8rem;">${item.desc}</span>
+                </span>
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-family: monospace;">[${timeStr}]</span>
+            </li>
+        `;
+    }).join('');
+    
+    modal.style.display = "flex";
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.confirmOfflineSyncAll = function() {
+    if (!navigator.onLine) {
+        alert("Você ainda está offline. Conecte-se à internet para sincronizar!");
+        return;
+    }
+    
+    // Limpar fila e sincronizar
+    state.offlineChangesQueue = [];
+    saveState(); // Isso atualizará local e disparará pushToFirebase()
+    
+    // Fechar modal
+    closeModal("modal-offline-sync");
+    
+    // Ocultar banner
+    const banner = document.getElementById("offline-status-banner");
+    if (banner) {
+        banner.style.display = "none";
+        banner.onclick = null;
+    }
+    
+    // Feedback visual
+    alert("✅ Alterações offline sincronizadas com sucesso com o banco de dados Firebase!");
+    
+    // Re-render
+    renderApp();
+};

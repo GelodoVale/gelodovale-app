@@ -764,6 +764,30 @@ export function recalculateClientDebts() {
     }
 }
 
+function detectOfflineChangeType() {
+    try {
+        const lastSavedStr = localStorage.getItem("gelcontrol_state");
+        if (!lastSavedStr) return "Atualização Geral";
+        const last = JSON.parse(lastSavedStr);
+        
+        if ((state.orders || []).length > (last.orders || []).length) return "Novo Pedido Registrado";
+        if ((state.deliveries || []).length > (last.deliveries || []).length) return "Nova Entrega Realizada";
+        if ((state.clients || []).length > (last.clients || []).length) return "Novo Cliente Cadastrado";
+        if ((state.rentals || []).length > (last.rentals || []).length) return "Novo Aluguel de Tina";
+        if ((state.comodatos || []).length > (last.comodatos || []).length) return "Novo Contrato de Comodato";
+        if ((state.documents || []).length > (last.documents || []).length) return "Novo Documento Comercial";
+        if ((state.freezers || []).length > (last.freezers || []).length) return "Novo Freezer Cadastrado";
+        
+        if ((state.orders || []).length < (last.orders || []).length) return "Pedido Cancelado/Removido";
+        if ((state.clients || []).length < (last.clients || []).length) return "Cliente Removido";
+        if ((state.deliveries || []).length < (last.deliveries || []).length) return "Entrega Excluída";
+        
+        return "Edição de Dados / Atualização de Cadastro";
+    } catch (e) {
+        return "Alteração de Dados";
+    }
+}
+
 export function saveStateLocalOnly() {
     recalculateClientDebts();
     localStorage.setItem("gelcontrol_state", JSON.stringify(state));
@@ -771,6 +795,25 @@ export function saveStateLocalOnly() {
 
 export function saveState() {
     state.lastUpdated = Date.now();
+    
+    // Se estiver offline, registrar alteração na fila offline
+    if (!navigator.onLine) {
+        if (!state.offlineChangesQueue) state.offlineChangesQueue = [];
+        const changeDesc = detectOfflineChangeType();
+        const timestamp = Date.now();
+        
+        // Evitar registrar duplicatas idênticas em um curto período
+        const isDuplicate = state.offlineChangesQueue.some(
+            item => item.desc === changeDesc && Math.abs(item.timestamp - timestamp) < 2000
+        );
+        if (!isDuplicate) {
+            state.offlineChangesQueue.push({
+                desc: changeDesc,
+                timestamp: timestamp
+            });
+        }
+    }
+    
     saveStateLocalOnly();
     pushToFirebase();
 }

@@ -706,6 +706,17 @@ export function shareOptimizedRouteWhatsApp() {
     msg += `📍 *${clientDetails.length + 2}. Retorno:* Fábrica\n\n`;
     msg += `🗺️ *Link do Mapa Otimizado (Google Maps):*\n${routeUrl}`;
     
+    if (!navigator.onLine) {
+        navigator.clipboard.writeText(msg)
+            .then(() => {
+                alert("📶 Você está offline!\nO roteiro de entregas e link do Google Maps foram copiados para a sua área de transferência para colar manualmente.");
+            })
+            .catch(() => {
+                alert("Erro ao copiar o roteiro.");
+            });
+        return;
+    }
+    
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
     window.open(whatsappUrl, "_blank");
 }
