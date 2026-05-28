@@ -21,6 +21,10 @@ export function formatDateBrazil(dateStr) {
     return dateObj.toLocaleDateString('pt-BR', options);
 }
 
+export function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+}
+
 const WEATHER_CONDITIONS = {
     sun: { desc: "Ensolarado", icon: "sun", color: "#eab308" },
     cloud: { desc: "Nublado", icon: "cloud", color: "#94a3b8" },
