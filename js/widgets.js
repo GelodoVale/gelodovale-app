@@ -42,9 +42,10 @@ export function renderWidgetsSetupPanel() {
         <div class="widget-setup-item">
             <div class="widget-setup-info">
                 <span class="widget-setup-name">Clima</span>
-                <span class="widget-setup-desc">Temperatura local atual (usa cidade da fábrica).</span>
+                <span class="widget-setup-desc">Temperatura local. Digite sua cidade para forçar o local (Ex: São Paulo, SP).</span>
             </div>
             <div class="widget-setup-actions">
+                <input type="text" class="widget-style-select" style="width: 150px;" value="${state.widgets.weather.location || ''}" onchange="window.updateWidgetConfig('weather', 'location', this.value)" placeholder="Sua Cidade">
                 <button type="button" class="btn ${state.widgets.weather.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('weather')">
                     ${state.widgets.weather.enabled ? 'Desativar' : 'Ativar'}
                 </button>
@@ -255,6 +256,29 @@ async function initWeatherLogic() {
     const content = document.getElementById('widget-weather-content');
     if (!content) return;
     
+    const configuredCity = state.widgets.weather.location;
+    if (configuredCity && configuredCity.trim() !== '') {
+        try {
+            content.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 0.85rem; color: #888;">Buscando cidade...</div>';
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(configuredCity)}&count=1&language=pt&format=json`);
+            const geoData = await geoRes.json();
+            
+            if (geoData.results && geoData.results.length > 0) {
+                const lat = geoData.results[0].latitude;
+                const lon = geoData.results[0].longitude;
+                const resolvedName = geoData.results[0].name;
+                fetchWeatherData(lat, lon, resolvedName, content);
+                return; // done
+            } else {
+                content.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 0.85rem; color: #888;">Cidade não encontrada. Tente "Nome da Cidade, Sigla do Estado".</div>';
+                return;
+            }
+        } catch(e) {
+            console.error(e);
+            // fallback if geocoding fails
+        }
+    }
+    
     // Fallbacks to standard SP coords if factory settings not found or geolocation fails
     let lat = -23.1895; 
     let lon = -45.8841; // Sao Jose dos Campos SP
@@ -265,19 +289,19 @@ async function initWeatherLogic() {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
-                fetchWeatherData(lat, lon, content);
+                fetchWeatherData(lat, lon, "Auto (GPS)", content);
             }, () => {
-                fetchWeatherData(lat, lon, content); // fallback
+                fetchWeatherData(lat, lon, "São José dos Campos", content); // fallback
             });
         } else {
-            fetchWeatherData(lat, lon, content); // fallback
+            fetchWeatherData(lat, lon, "São José dos Campos", content); // fallback
         }
     } catch(e) {
         content.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar clima</div>';
     }
 }
 
-async function fetchWeatherData(lat, lon, contentDiv) {
+async function fetchWeatherData(lat, lon, locationName, contentDiv) {
     try {
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
         const data = await res.json();
@@ -309,7 +333,7 @@ async function fetchWeatherData(lat, lon, contentDiv) {
                 </div>
                 <div class="weather-grid-details">
                     <div class="weather-detail-item"><i data-lucide="wind" style="width:14px;"></i> Vento: <span>${wind} km/h</span></div>
-                    <div class="weather-detail-item"><i data-lucide="map-pin" style="width:14px;"></i> Local: <span>Auto</span></div>
+                    <div class="weather-detail-item" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${locationName}"><i data-lucide="map-pin" style="width:14px;"></i> Local: <span>${locationName}</span></div>
                 </div>
             `;
             if (window.lucide) window.lucide.createIcons();
