@@ -3,15 +3,12 @@ import { formatCurrency } from './utils.js';
 
 // Inicialização de Estado Padrão dos Widgets
 function initWidgetsState() {
-    if (!state.widgets) {
-        state.widgets = {
-            clock: { enabled: true, theme: 'analog-neon' }, // themes: analog-neon, analog-gold, analog-minimal, digital-neon, digital-retro
-            weather: { enabled: true, location: '' },
-            notepad: { enabled: true, theme: 'notepad-glass-sticky', text: '' }, // themes: notepad-glass-sticky, notepad-yellow-pad, notepad-terminal
-            salesCalc: { enabled: true },
-            salesGoal: { enabled: true, monthlyGoal: 10000 }
-        };
-    }
+    if (!state.widgets) state.widgets = {};
+    if (!state.widgets.clock) state.widgets.clock = { enabled: true, theme: 'analog-neon' };
+    if (!state.widgets.weather) state.widgets.weather = { enabled: true, location: '' };
+    if (!state.widgets.notepad) state.widgets.notepad = { enabled: true, theme: 'notepad-glass-sticky', text: '' };
+    if (!state.widgets.salesCalc) state.widgets.salesCalc = { enabled: true };
+    if (!state.widgets.salesGoal) state.widgets.salesGoal = { enabled: true, monthlyGoal: 10000 };
 }
 
 // ============================================================================
