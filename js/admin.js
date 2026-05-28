@@ -472,7 +472,18 @@ export function generateBackup(isAuto = false) {
             rentals: state.rentals || [],
             documents: state.documents || [],
             prices: state.prices || {},
-            history: state.history || []
+            history: state.history || [],
+            deliveries: state.deliveries || [],
+            products: state.products || [],
+            orders: state.orders || [],
+            payments: state.payments || [],
+            comodatos: state.comodatos || [],
+            cargoSettlements: state.cargoSettlements || [],
+            suppliers: state.suppliers || [],
+            packaging: state.packaging || [],
+            users: state.users || [],
+            factorySettings: state.factorySettings || {},
+            appearance: state.appearance || {}
         }
     };
 
@@ -546,6 +557,18 @@ export function applyBackupData(payload) {
         state.documents = d.documents || [];
         state.prices = d.prices || {};
         state.history = d.history || [];
+        state.deliveries = d.deliveries || [];
+        state.products = d.products || [];
+        state.orders = d.orders || [];
+        state.payments = d.payments || [];
+        state.comodatos = d.comodatos || [];
+        state.cargoSettlements = d.cargoSettlements || [];
+        state.suppliers = d.suppliers || [];
+        state.packaging = d.packaging || [];
+        state.users = d.users || [];
+        
+        if (d.factorySettings) state.factorySettings = d.factorySettings;
+        if (d.appearance) state.appearance = d.appearance;
 
         if (payload.version && state.backupSettings) {
             state.backupSettings.currentVersion = payload.version;
