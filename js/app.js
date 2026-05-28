@@ -135,6 +135,29 @@ export function loadState() {
             if (!parsed.backupSettings) parsed.backupSettings = {};
             if (!parsed.appearance) parsed.appearance = {};
             
+            // Garantir usuário Administrador Padrão caso não exista nenhum usuário
+            if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
+                parsed.users = [{
+                    id: "user_admin_001",
+                    name: "Administrador Sistema",
+                    username: "admin",
+                    password: parsed.adminPassword || "admin123", // fallback para a senha antiga
+                    role: "Master",
+                    permissions: {
+                        "admin-tab-dados-fabrica": true,
+                        "admin-tab-usuarios": true,
+                        "admin-tab-produtos": true,
+                        "admin-tab-clientes": true,
+                        "admin-tab-pedidos": true,
+                        "admin-tab-entregas": true,
+                        "admin-tab-financeiro": true,
+                        "admin-tab-relatorios": true,
+                        "admin-tab-integracoes": true,
+                        "admin-tab-seguranca-backup": true
+                    }
+                }];
+            }
+            
             // Firebase: SEMPRE ativo com credenciais oficiais
             parsed.firebaseConfig = { ...FIREBASE_CONFIG_OFICIAL };
             
@@ -159,6 +182,25 @@ export function loadState() {
     } else {
         // Primeiro acesso (localStorage vazio): ativar Firebase para baixar dados da nuvem
         state.firebaseConfig = { ...FIREBASE_CONFIG_OFICIAL };
+        state.users = [{
+            id: "user_admin_001",
+            name: "Administrador Sistema",
+            username: "admin",
+            password: "admin123",
+            role: "Master",
+            permissions: {
+                "admin-tab-dados-fabrica": true,
+                "admin-tab-usuarios": true,
+                "admin-tab-produtos": true,
+                "admin-tab-clientes": true,
+                "admin-tab-pedidos": true,
+                "admin-tab-entregas": true,
+                "admin-tab-financeiro": true,
+                "admin-tab-relatorios": true,
+                "admin-tab-integracoes": true,
+                "admin-tab-seguranca-backup": true
+            }
+        }];
         console.log("Primeiro acesso detectado — Firebase ativado para sincronizar dados da nuvem.");
     }
 }
