@@ -226,9 +226,9 @@ function initClockLogic(theme) {
             const mDeg = ((minutes + seconds/60) / 60) * 360;
             const hDeg = ((hours % 12 + minutes/60) / 12) * 360;
             
-            sEl.style.transform = \`translateX(-50%) rotate(\${sDeg}deg)\`;
-            mEl.style.transform = \`translateX(-50%) rotate(\${mDeg}deg)\`;
-            hEl.style.transform = \`translateX(-50%) rotate(\${hDeg}deg)\`;
+            sEl.style.transform = `translateX(-50%) rotate(${sDeg}deg)`;
+            mEl.style.transform = `translateX(-50%) rotate(${mDeg}deg)`;
+            hEl.style.transform = `translateX(-50%) rotate(${hDeg}deg)`;
         }
     }
     
@@ -279,7 +279,7 @@ async function initWeatherLogic() {
 
 async function fetchWeatherData(lat, lon, contentDiv) {
     try {
-        const res = await fetch(\`https://api.open-meteo.com/v1/forecast?latitude=\${lat}&longitude=\${lon}&current_weather=true\`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
         const data = await res.json();
         
         if (data && data.current_weather) {
@@ -300,15 +300,15 @@ async function fetchWeatherData(lat, lon, contentDiv) {
             contentDiv.innerHTML = `
                 <div class="weather-main-info">
                     <div style="display:flex; align-items:center; gap: 15px;">
-                        <i data-lucide="\${icon}" style="width: 42px; height: 42px; color: var(--color-primary);"></i>
+                        <i data-lucide="${icon}" style="width: 42px; height: 42px; color: var(--color-primary);"></i>
                         <div>
-                            <div style="font-size: 2.5rem; font-weight: bold; line-height: 1;">\${temp}°<span style="font-size: 1.2rem; color: #888;">C</span></div>
-                            <div style="font-size: 0.85rem; color: var(--color-text-muted);">\${condition}</div>
+                            <div style="font-size: 2.5rem; font-weight: bold; line-height: 1;">${temp}°<span style="font-size: 1.2rem; color: #888;">C</span></div>
+                            <div style="font-size: 0.85rem; color: var(--color-text-muted);">${condition}</div>
                         </div>
                     </div>
                 </div>
                 <div class="weather-grid-details">
-                    <div class="weather-detail-item"><i data-lucide="wind" style="width:14px;"></i> Vento: <span>\${wind} km/h</span></div>
+                    <div class="weather-detail-item"><i data-lucide="wind" style="width:14px;"></i> Vento: <span>${wind} km/h</span></div>
                     <div class="weather-detail-item"><i data-lucide="map-pin" style="width:14px;"></i> Local: <span>Auto</span></div>
                 </div>
             `;

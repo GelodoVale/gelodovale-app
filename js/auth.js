@@ -9,6 +9,9 @@ export function initUserAccessControl() {
         state.users = [];
     }
     
+    // Remove invalid entries
+    state.users = state.users.filter(u => u && typeof u === 'object' && u.username);
+    
     // Garantir que o admin existe
     let adminUser = state.users.find(u => u.username === "admin");
     if (!adminUser) {
