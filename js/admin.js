@@ -98,7 +98,7 @@ export function renderPrecos() {
         factoryContainer.innerHTML = "";
         state.products.forEach(p => {
             const hasWholesale = p.wholesalePrices || {};
-            const hasPromo = p.flashPromo || { active: false, price: 0, limit: 0 };
+            const hasPromo = p.flashPromo || { active: false, price: 0, limit: null };
             
             let advancedHTML = `
                 <div class="factory-price-row" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 12px;">
@@ -166,7 +166,7 @@ export function renderPrecos() {
                                     </div>
                                     <div>
                                         <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Qtd Limite de Vendas</span>
-                                        <input type="number" min="0" id="cfg-promo-limit-${p.id}" class="form-control factory-promo-limit-input" data-prod-id="${p.id}" value="${hasPromo.limit !== undefined ? hasPromo.limit : ''}" placeholder="Sem limite">
+                                        <input type="number" min="0" id="cfg-promo-limit-${p.id}" class="form-control factory-promo-limit-input" data-prod-id="${p.id}" value="${(hasPromo.limit !== undefined && hasPromo.limit !== null && hasPromo.limit !== Infinity) ? hasPromo.limit : ''}" placeholder="Sem limite">
                                     </div>
                                 </div>
                             </div>

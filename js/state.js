@@ -584,7 +584,7 @@ export function loadState() {
                     { id: "sab_abacaxi", name: "Gelo Saborizado Abacaxi (12 un)", type: "Gelo Saborizado", flavor: "Abacaxi", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true }
                 ];
                 state.products.push(...defaultFlavored);
-                saveState();
+                saveStateLocalOnly();
             }
         } catch (e) {
             console.error("Erro ao carregar dados salvos. Iniciando limpo.", e);
@@ -624,7 +624,7 @@ export function loadState() {
             tollReturn: true
         };
         state.localBackups = [];
-        saveState();
+        saveStateLocalOnly();
     }
 
     if (state.products) {
@@ -648,12 +648,12 @@ export function loadState() {
                 p.flashPromo = {
                     active: false,
                     price: 0,
-                    limit: 0
+                    limit: null
                 };
                 stateChanged = true;
             }
         });
-        if (stateChanged) saveState();
+        if (stateChanged) saveStateLocalOnly();
     }
 
     let utilityStateChanged = false;
@@ -670,7 +670,7 @@ export function loadState() {
         utilityStateChanged = true;
     }
     if (utilityStateChanged) {
-        saveState();
+        saveStateLocalOnly();
     }
 
     let newFieldsChanged = false;

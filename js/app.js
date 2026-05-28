@@ -622,7 +622,7 @@ export function calculateProductRevenue(client, p, qtyFardos, qtyUnits) {
         let remainingFardos = qtyFardos;
         
         if (p.flashPromo && p.flashPromo.active) {
-            const limit = p.flashPromo.limit !== undefined ? p.flashPromo.limit : Infinity;
+            const limit = (p.flashPromo.limit !== undefined && p.flashPromo.limit !== null) ? p.flashPromo.limit : Infinity;
             if (limit > 0) {
                 const promoAppliedQty = Math.min(remainingFardos, limit);
                 fardosRevenue += promoAppliedQty * p.flashPromo.price;
@@ -680,12 +680,7 @@ export function deductPackagingStock(productId, qtyFardos, qtyUnits, ref) {
     const linkedPacks = state.packaging ? state.packaging.filter(pkg => pkg.productId === productId) : [];
     linkedPacks.forEach(pkg => {
         const unitsPerPack = product.unitsPerPack || 12;
-        let deduction = 0;
-        if (product.type === "Gelo Saborizado") {
-            deduction = qtyFardos + (qtyUnits / unitsPerPack);
-        } else {
-            deduction = qtyFardos + (qtyUnits / unitsPerPack);
-        }
+        const deduction = qtyFardos + (qtyUnits / unitsPerPack);
         
         if (deduction > 0) {
             pkg.currentStock = (pkg.currentStock || 0) - deduction;
@@ -795,12 +790,14 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
             revenue += priceRes.totalRevenue;
             
             if (p.flashPromo && p.flashPromo.active && qtyFardos > 0) {
-                const limit = p.flashPromo.limit !== undefined ? p.flashPromo.limit : Infinity;
+                const limit = (p.flashPromo.limit !== undefined && p.flashPromo.limit !== null) ? p.flashPromo.limit : Infinity;
                 if (limit > 0) {
                     const promoAppliedQty = Math.min(qtyFardos, limit);
-                    p.flashPromo.limit = Math.max(0, limit - promoAppliedQty);
-                    if (p.flashPromo.limit === 0) {
-                        p.flashPromo.active = false;
+                    if (limit !== Infinity) {
+                        p.flashPromo.limit = Math.max(0, limit - promoAppliedQty);
+                        if (p.flashPromo.limit === 0) {
+                            p.flashPromo.active = false;
+                        }
                     }
                 }
             }
@@ -1845,7 +1842,7 @@ export function initForms() {
                     p.flashPromo = {
                         active: promoActive ? promoActive.checked : false,
                         price: promoPrice && promoPrice.value !== "" ? parseFloat(promoPrice.value) : 0,
-                        limit: promoLimit && promoLimit.value !== "" ? parseInt(promoLimit.value) : 0
+                        limit: promoLimit && promoLimit.value !== "" ? parseInt(promoLimit.value) : null
                     };
                 }
                 if (!state.prices) state.prices = {};
