@@ -313,13 +313,13 @@ async function initWeatherLogic() {
 
 async function fetchWeatherData(lat, lon, locationName, contentDiv) {
     try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,wind_speed_10m&timezone=auto`);
         const data = await res.json();
         
-        if (data && data.current_weather) {
-            const temp = Math.round(data.current_weather.temperature);
-            const wind = data.current_weather.windspeed;
-            const code = data.current_weather.weathercode;
+        if (data && data.current) {
+            const temp = Math.round(data.current.temperature_2m);
+            const wind = Math.round(data.current.wind_speed_10m);
+            const code = data.current.weather_code;
             
             // Simple logic for weather condition
             let condition = "Céu Limpo";
@@ -331,6 +331,16 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             else if (code >= 80 && code <= 82) { condition = "Pancadas de Chuva"; icon = "cloud-rain"; }
             else if (code >= 95) { condition = "Tempestade"; icon = "cloud-lightning"; }
             
+            // is_day specific icons
+            if (data.current.is_day === 0) {
+                if (icon === "sun") {
+                    icon = "moon";
+                    condition = "Noite Limpa";
+                } else if (icon === "cloud") {
+                    icon = "cloud-moon";
+                    condition = "Noite Nublada";
+                }
+            }
             contentDiv.innerHTML = `
                 <div class="weather-main-info">
                     <div style="display:flex; align-items:center; gap: 15px;">
