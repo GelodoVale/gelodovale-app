@@ -1,4 +1,4 @@
-import { state, saveState } from './state.js';
+import { state, saveState, saveStateLocalOnly } from './state.js';
 import { formatCurrency } from './utils.js';
 
 // Inicialização de Estado Padrão dos Widgets
@@ -357,6 +357,20 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
                 </div>
             `;
             if (window.lucide) window.lucide.createIcons();
+
+            // Sincronizar com o estado global para o painel de demanda do dashboard
+            if (!state.weatherConfig) state.weatherConfig = {};
+            state.weatherConfig.temp = temp;
+            state.weatherConfig.condition = icon;
+            state.weatherConfig.city = locationName;
+            saveStateLocalOnly();
+
+            // Atualizar o painel de alertas do dashboard em tempo real se a tela estiver aberta
+            const activeEl = document.querySelector(".nav-item.active");
+            const activeTab = activeEl ? activeEl.getAttribute("data-tab") : "dashboard";
+            if (activeTab === "dashboard" && window.renderDashboardAlerts) {
+                window.renderDashboardAlerts();
+            }
         }
     } catch(e) {
         contentDiv.innerHTML = '<div style="color:red; text-align:center;">Sem conexão para clima.</div>';

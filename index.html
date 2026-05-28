@@ -30,6 +30,11 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
+    <!-- BANNER DE STATUS CONEXÃO OFFLINE -->
+    <div id="offline-status-banner" style="display: none; background: rgba(239, 68, 68, 0.15); border-bottom: 1px solid rgba(239, 68, 68, 0.3); color: #ff4d4d; font-size: 0.8rem; font-weight: 600; text-align: center; padding: 10px; z-index: 10000; position: sticky; top: 0; backdrop-filter: blur(12px); align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(239,68,68,0.15);">
+        <i data-lucide="wifi-off" style="width: 16px; height: 16px;"></i>
+        <span>Você está operando offline. Alterações serão salvas localmente e sincronizadas quando restabelecer a conexão.</span>
+    </div>
 
     <!-- TELA DE LOGIN GLASSMORPHIC GERAL -->
     <div id="app-login-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(20px); z-index: 9999; display: flex; align-items: center; justify-content: center;">
@@ -222,6 +227,25 @@
                     </div>
                 </div>
                 
+                <!-- Painel de Ações Rápidas (Atalhos do Administrador) -->
+                <div class="dashboard-quick-actions" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(16px); box-shadow: 0 4px 30px rgba(0,0,0,0.2);">
+                    <div style="font-size: 0.75rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px; margin-right: 0.5rem;">
+                        <i data-lucide="zap" style="width: 16px; height: 16px; color: var(--color-primary); filter: drop-shadow(0 0 5px var(--color-primary));"></i> Atalhos Rápidos:
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="window.quickAction('nova-entrega')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                        <i data-lucide="truck" style="width: 14px; height: 14px;"></i> Registrar Pedido
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.quickAction('novo-contrato')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Novo Contrato
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.quickAction('novo-freezer')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                        <i data-lucide="box" style="width: 14px; height: 14px;"></i> Cadastrar Freezer
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.quickAction('novo-recibo')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                        <i data-lucide="file-check" style="width: 14px; height: 14px;"></i> Emitir Recibo
+                    </button>
+                </div>
+                
                 <!-- Grade de Widgets Customizáveis -->
                 <div class="widgets-board" id="widgets-container">
                     <!-- Widgets serão renderizados aqui dinamicamente -->
@@ -381,6 +405,9 @@
                             <div style="display: flex; gap: 8px;">
                                 <button type="button" class="btn btn-secondary" onclick="optimizeDeliveryRoute()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
                                     <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i> Otimizar Rota
+                                </button>
+                                <button type="button" class="btn" onclick="window.shareOptimizedRouteWhatsApp()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; background: #25D366; color: #fff; border-color: #25D366; cursor: pointer;">
+                                    <i data-lucide="send" style="width: 14px; height: 14px;"></i> Enviar Rota
                                 </button>
                                 <button type="button" class="btn btn-primary" onclick="openOrderModal()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
                                     <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Novo Pedido

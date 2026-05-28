@@ -89,6 +89,72 @@ export function renderDashboardAlerts() {
     if (!alertsContainer || !alertCountBadge) return;
     alertsContainer.innerHTML = "";
     
+    // 1. Obter dados climáticos do estado para projetar a demanda
+    const temp = (state.weatherConfig && state.weatherConfig.temp !== undefined) ? state.weatherConfig.temp : 24;
+    const locationName = (state.weatherConfig && state.weatherConfig.city) || "São José dos Campos";
+    
+    let demandLevel = "Normal";
+    let demandPct = 50;
+    let demandColor = "#00f0ff"; // ciano
+    let demandIcon = "thermometer";
+    let demandDesc = "Consumo padrão de clima ameno. Mantenha as entregas preventivas no cronograma regular.";
+    
+    if (temp < 20) {
+        demandLevel = "Baixa";
+        demandPct = 25;
+        demandColor = "var(--color-text-muted)";
+        demandDesc = "Clima frio. O consumo cai cerca de 20%. Reduza a frequência de entregas preventivas para evitar acúmulos.";
+        demandIcon = "thermometer-snowflake";
+    } else if (temp >= 20 && temp <= 26) {
+        demandLevel = "Normal";
+        demandPct = 50;
+        demandColor = "#00f0ff";
+        demandDesc = "Consumo padrão estável. Condições climáticas ideais. Abasteça os freezers conforme planejado.";
+        demandIcon = "thermometer";
+    } else if (temp >= 27 && temp <= 31) {
+        demandLevel = "Alta (Tempo Quente)";
+        demandPct = 75;
+        demandColor = "#ffb703"; // amarelo/laranja
+        demandDesc = "Calor em alta! Aumento estimado de 30% a 50% nas vendas. Mantenha os freezers mais abastecidos.";
+        demandIcon = "thermometer-sun";
+    } else if (temp >= 32) {
+        demandLevel = "Crítica (Onda de Calor)";
+        demandPct = 100;
+        demandColor = "#ff0055"; // neon pink
+        demandDesc = "Calor extremo! Consumo projetado de +70% a +90%. Abasteça no máximo e planeje produção extra de emergência!";
+        demandIcon = "zap";
+    }
+
+    let weatherSnippetHTML = `
+        <div class="weather-demand-panel" style="margin-bottom: 1.25rem; padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; box-shadow: inset 0 0 12px rgba(255,255,255,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--color-text-muted); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="brain" style="width:14px; height:14px; color: ${demandColor};"></i> Inteligência de Demanda
+                </span>
+                <span style="font-size: 0.75rem; color: #fff; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="map-pin" style="width:12px; height:12px; opacity:0.6;"></i> ${locationName}: <strong>${temp}°C</strong>
+                </span>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.1); border: 1px solid rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.25);">
+                    <i data-lucide="${demandIcon}" style="width: 20px; height: 20px; color: ${demandColor};"></i>
+                </div>
+                <div>
+                    <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; line-height: 1; margin-bottom: 3px;">Demanda Projetada</span>
+                    <span style="font-size: 1rem; font-weight: 800; color: ${demandColor}; text-shadow: 0 0 10px rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.3);">${demandLevel}</span>
+                </div>
+            </div>
+
+            <div class="progress-track" style="height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); margin-bottom: 8px; overflow: hidden; position: relative;">
+                <div class="progress-fill" style="width: ${demandPct}%; height: 100%; border-radius: 3px; background: ${demandColor}; box-shadow: 0 0 8px ${demandColor}; transition: width 0.8s ease-out;"></div>
+            </div>
+
+            <p style="font-size: 0.72rem; line-height: 1.4; color: var(--color-text-muted); margin: 0; font-weight: 500;">${demandDesc}</p>
+        </div>
+    `;
+    alertsContainer.innerHTML = weatherSnippetHTML;
+
     let alerts = [];
     
     (state.clients || []).forEach(client => {
@@ -124,8 +190,8 @@ export function renderDashboardAlerts() {
     
     // Renderizar alertas
     if (alerts.length === 0) {
-        alertsContainer.innerHTML = `
-            <div class="empty-alerts">
+        alertsContainer.innerHTML += `
+            <div class="empty-alerts" style="margin-top: 1rem;">
                 <i data-lucide="check-circle" style="color: var(--color-success); margin-bottom: 0.5rem; width: 32px; height: 32px;"></i>
                 <p>Todos os freezers abastecidos e saudáveis!</p>
             </div>
@@ -308,7 +374,20 @@ export function renderDashboardChart() {
     }
 }
 
+export function quickAction(type) {
+    if (type === 'nova-entrega') {
+        if (window.openOrderModal) window.openOrderModal();
+    } else if (type === 'novo-contrato') {
+        if (window.openNewComodatoModal) window.openNewComodatoModal();
+    } else if (type === 'novo-freezer') {
+        if (window.openFreezerModal) window.openFreezerModal();
+    } else if (type === 'novo-recibo') {
+        if (window.openDocModal) window.openDocModal();
+    }
+}
+
 // Bind to window for HTML accessibility
 window.renderDashboard = renderDashboard;
 window.renderDashboardAlerts = renderDashboardAlerts;
 window.renderDashboardChart = renderDashboardChart;
+window.quickAction = quickAction;

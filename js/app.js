@@ -101,6 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 10. Inicializar QR Code do GitHub
     if (window.initGitHubQRCode) window.initGitHubQRCode();
+    
+    // 11. Monitor de status de conexão offline
+    initConnectionStatusMonitor();
 });
 
 // --- PERSISTÊNCIA DE DADOS (RETROCOMPATIBILIDADE E LOGICA AUXILIAR) ---
@@ -2430,3 +2433,22 @@ export async function generateMercadoPagoLink(title, amount) {
     }
 }
 window.generateMercadoPagoLink = generateMercadoPagoLink;
+
+export function initConnectionStatusMonitor() {
+    const banner = document.getElementById("offline-status-banner");
+    if (!banner) return;
+    
+    function updateStatus() {
+        if (navigator.onLine) {
+            banner.style.display = "none";
+        } else {
+            banner.style.display = "flex";
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+    
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    updateStatus();
+}
+window.initConnectionStatusMonitor = initConnectionStatusMonitor;

@@ -644,7 +644,74 @@ export function optimizeDeliveryRoute() {
     window.open(routeUrl, "_blank");
 }
 
+export function shareOptimizedRouteWhatsApp() {
+    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+    
+    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
+        alert("Por favor, selecione pelo menos um pedido ou sugestão de visita para compartilhar a rota.");
+        return;
+    }
+    
+    const uniqueIntermediaries = [];
+    const clientDetails = [];
+    
+    orderCheckboxes.forEach(cb => {
+        const orderId = cb.getAttribute("data-order-id");
+        const order = state.orders.find(o => o.id === orderId);
+        if (order) {
+            const client = state.clients.find(c => c.id === order.clientId);
+            if (client && client.address && client.address.trim() !== "") {
+                const addr = client.address.trim();
+                if (!uniqueIntermediaries.includes(addr)) {
+                    uniqueIntermediaries.push(addr);
+                    clientDetails.push({ name: client.name, address: addr, type: "Pedido" });
+                }
+            }
+        }
+    });
+    
+    visitCheckboxes.forEach(cb => {
+        const clientId = cb.getAttribute("data-client-id");
+        const client = state.clients.find(c => c.id === clientId);
+        if (client && client.address && client.address.trim() !== "") {
+            const addr = client.address.trim();
+            if (!uniqueIntermediaries.includes(addr)) {
+                uniqueIntermediaries.push(addr);
+                clientDetails.push({ name: client.name, address: addr, type: "Visita" });
+            }
+        }
+    });
+    
+    if (uniqueIntermediaries.length === 0) {
+        alert("Nenhum endereço válido encontrado nos itens selecionados.");
+        return;
+    }
+    
+    const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
+    const addresses = [factoryAddress, ...uniqueIntermediaries, factoryAddress];
+    const baseUrl = "https://www.google.com/maps/dir/";
+    const routeUrl = baseUrl + addresses.map(addr => encodeURIComponent(addr)).join("/");
+    
+    // Montar texto WhatsApp
+    let msg = `❄️ *GELO DO VALE - ROTEIRO DE ENTREGAS* 🚚\n\n`;
+    msg += `Olá, segue a rota de entregas otimizada para o dia de hoje:\n\n`;
+    msg += `📍 *1. Partida:* Fábrica\n`;
+    
+    clientDetails.forEach((c, idx) => {
+        msg += `📦 *${idx + 2}. ${c.name}* (${c.type})\n`;
+        msg += `   └ Endereço: ${c.address}\n`;
+    });
+    
+    msg += `📍 *${clientDetails.length + 2}. Retorno:* Fábrica\n\n`;
+    msg += `🗺️ *Link do Mapa Otimizado (Google Maps):*\n${routeUrl}`;
+    
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(whatsappUrl, "_blank");
+}
+
 // Bind to window for HTML accessibility
+window.shareOptimizedRouteWhatsApp = shareOptimizedRouteWhatsApp;
 window.toggleRentalLogisticsCalc = toggleRentalLogisticsCalc;
 window.updateLogisticsTollMultiplier = updateLogisticsTollMultiplier;
 window.calculateRentalLogistics = calculateRentalLogistics;

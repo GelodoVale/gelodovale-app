@@ -2981,3 +2981,139 @@ body.theme-high-contrast .modal-backdrop {
     }
 }
 
+/* ==========================================================================
+   MELHORIAS FASE 2: ESTILOS PREMIUM (CONEXÃO, DEMANDA E AÇÕES RÁPIDAS)
+   ========================================================================== */
+
+/* Banner de Status Offline */
+#offline-status-banner {
+    animation: offlineSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes offlineSlideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Painel de Inteligência de Demanda */
+.weather-demand-panel {
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+}
+
+.weather-demand-panel:hover {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.01) !important;
+    transform: translateY(-2px);
+}
+
+.weather-demand-panel .progress-track {
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.weather-demand-panel .progress-fill {
+    position: relative;
+    overflow: hidden;
+}
+
+.weather-demand-panel .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: progressShimmer 2s infinite linear;
+}
+
+@keyframes progressShimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Painel de Ações Rápidas */
+.dashboard-quick-actions {
+    background: rgba(10, 15, 30, 0.6) !important;
+    border: 1px solid rgba(0, 240, 255, 0.1) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.02) !important;
+}
+
+.dashboard-quick-actions button {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-quick-actions button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(0, 240, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+    z-index: 0;
+}
+
+.dashboard-quick-actions button:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+.dashboard-quick-actions button:hover {
+    background: rgba(0, 240, 255, 0.08) !important;
+    border-color: rgba(0, 240, 255, 0.4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2) !important;
+    transform: translateY(-2px);
+}
+
+.dashboard-quick-actions button:active {
+    transform: translateY(1px);
+}
+
+.dashboard-quick-actions button span,
+.dashboard-quick-actions button i {
+    position: relative;
+    z-index: 1;
+}
+
+/* WhatsApp share button improvement */
+.btn-whatsapp-share {
+    transition: all 0.25s ease;
+    background: #25D366;
+    border-radius: 6px;
+}
+
+.btn-whatsapp-share:hover {
+    background: #20ba5a !important;
+    box-shadow: 0 0 12px rgba(37, 211, 102, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-whatsapp-share:active {
+    transform: translateY(0);
+}
+
+
