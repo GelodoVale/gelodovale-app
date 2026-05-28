@@ -235,6 +235,7 @@ export function deleteClient(clientId) {
             linkedFreezer.status = "disponivel";
             linkedFreezer.clientId = "";
             linkedFreezer.clientName = "";
+            if (!linkedFreezer.movementHistory) linkedFreezer.movementHistory = [];
             linkedFreezer.movementHistory.push({
                 date: window.formatDateBrazil(window.getBrazilTimeISO()),
                 from: "Cliente Removido",

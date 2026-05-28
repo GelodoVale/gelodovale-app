@@ -34,6 +34,22 @@ export function updateState(newState) {
     // evitando que módulos que já importaram 'state' fiquem com dados antigos
     Object.keys(state).forEach(k => delete state[k]);
     Object.assign(state, newState);
+    normalizeStateArrays();
+}
+
+export function normalizeStateArrays() {
+    const collections = [
+        'clients', 'products', 'orders', 'deliveries', 'freezers', 
+        'rentals', 'documents', 'payments', 'suppliers', 'packaging', 
+        'packagingTransactions', 'cargoSettlements', 'users'
+    ];
+    collections.forEach(col => {
+        if (state[col]) {
+            state[col] = Array.isArray(state[col]) ? state[col] : Object.values(state[col]);
+        } else {
+            state[col] = [];
+        }
+    });
 }
 
 export let currentPrintDocId = null;
@@ -474,6 +490,7 @@ export function loadState() {
     if (saved) {
         try {
             state = JSON.parse(saved);
+            normalizeStateArrays();
             // Retrocompatibilidade para arrays operacionais
             if (!state.clients) state.clients = [];
             if (!state.freezers) state.freezers = [];
