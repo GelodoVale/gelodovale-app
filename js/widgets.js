@@ -421,9 +421,15 @@ function initSalesGoalLogic() {
     
     if (state.payments) {
         state.payments.forEach(p => {
-            const [y, m] = p.date.split('-');
-            if (parseInt(y) === currYear && parseInt(m) === currMonth) {
-                totalRevenue += p.amount;
+            if (p.date) {
+                const parts = p.date.split('-');
+                if (parts.length >= 2) {
+                    const y = parts[0];
+                    const m = parts[1];
+                    if (parseInt(y) === currYear && parseInt(m) === currMonth) {
+                        totalRevenue += p.amount || 0;
+                    }
+                }
             }
         });
     }

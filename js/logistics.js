@@ -614,9 +614,9 @@ export function optimizeDeliveryRoute() {
     
     orderCheckboxes.forEach(cb => {
         const orderId = cb.getAttribute("data-order-id");
-        const order = state.orders.find(o => o.id === orderId);
+        const order = (state.orders || []).find(o => o.id === orderId);
         if (order) {
-            const client = state.clients.find(c => c.id === order.clientId);
+            const client = (state.clients || []).find(c => c.id === order.clientId);
             if (client && client.address && client.address.trim() !== "") {
                 uniqueIntermediaries.add(client.address.trim());
             }
@@ -625,7 +625,7 @@ export function optimizeDeliveryRoute() {
     
     visitCheckboxes.forEach(cb => {
         const clientId = cb.getAttribute("data-client-id");
-        const client = state.clients.find(c => c.id === clientId);
+        const client = (state.clients || []).find(c => c.id === clientId);
         if (client && client.address && client.address.trim() !== "") {
             uniqueIntermediaries.add(client.address.trim());
         }
@@ -658,9 +658,9 @@ export function shareOptimizedRouteWhatsApp() {
     
     orderCheckboxes.forEach(cb => {
         const orderId = cb.getAttribute("data-order-id");
-        const order = state.orders.find(o => o.id === orderId);
+        const order = (state.orders || []).find(o => o.id === orderId);
         if (order) {
-            const client = state.clients.find(c => c.id === order.clientId);
+            const client = (state.clients || []).find(c => c.id === order.clientId);
             if (client && client.address && client.address.trim() !== "") {
                 const addr = client.address.trim();
                 if (!uniqueIntermediaries.includes(addr)) {
@@ -673,7 +673,7 @@ export function shareOptimizedRouteWhatsApp() {
     
     visitCheckboxes.forEach(cb => {
         const clientId = cb.getAttribute("data-client-id");
-        const client = state.clients.find(c => c.id === clientId);
+        const client = (state.clients || []).find(c => c.id === clientId);
         if (client && client.address && client.address.trim() !== "") {
             const addr = client.address.trim();
             if (!uniqueIntermediaries.includes(addr)) {

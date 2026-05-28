@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v46';
+const CACHE_NAME = 'gelodovale-v47';
 const ASSETS = [
   'index.html',
   'styles.css',
@@ -18,7 +18,8 @@ const ASSETS = [
   'js/admin.js',
   'js/sync.js',
   'js/utils.js',
-  'js/storage.js'
+  'js/storage.js',
+  'js/widgets.js'
 ];
 
 self.addEventListener('install', (e) => {
