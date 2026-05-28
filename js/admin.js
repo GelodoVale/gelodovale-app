@@ -1,4 +1,5 @@
 import { state, saveState, FACTORY_INFO, recalculateClientDebts } from './state.js';
+import { renderWidgetsSetupPanel } from './widgets.js';
 
 // 1. Alternador de Sub-abas Administrativas
 export function switchAdminSubTab(subTabId) {
@@ -46,6 +47,11 @@ export function switchAdminSubTab(subTabId) {
     // Carregar configurações do Mercado Pago
     if (subTabId === "tab-integracoes" && typeof window.loadMercadoPagoSettings === "function") {
         window.loadMercadoPagoSettings();
+    }
+    
+    // Renderizar painel de widgets
+    if (subTabId === "tab-dados-fabrica") {
+        renderWidgetsSetupPanel();
     }
     
     // Força a renderização dos ícones Lucide recém-exibidos
@@ -483,7 +489,8 @@ export function generateBackup(isAuto = false) {
             packaging: state.packaging || [],
             users: state.users || [],
             factorySettings: state.factorySettings || {},
-            appearance: state.appearance || {}
+            appearance: state.appearance || {},
+            widgets: state.widgets || {}
         }
     };
 
@@ -569,6 +576,7 @@ export function applyBackupData(payload) {
         
         if (d.factorySettings) state.factorySettings = d.factorySettings;
         if (d.appearance) state.appearance = d.appearance;
+        if (d.widgets) state.widgets = d.widgets;
 
         if (payload.version && state.backupSettings) {
             state.backupSettings.currentVersion = payload.version;

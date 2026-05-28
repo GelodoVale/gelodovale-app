@@ -1,5 +1,6 @@
 // --- TELA 1: RENDERIZAÇÃO DO DASHBOARD E GRÁFICOS ---
 import { state } from './state.js';
+import { renderWidgets } from './widgets.js';
 
 export function renderDashboard() {
     // 1. Calcular indicadores KPIs
@@ -77,6 +78,9 @@ export function renderDashboard() {
 
     // 3. Renderizar gráfico estatístico SVG
     renderDashboardChart();
+
+    // 4. Renderizar Widgets Customizados
+    renderWidgets();
 }
 
 export function renderDashboardAlerts() {
