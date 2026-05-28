@@ -237,7 +237,7 @@ export function applyUserPermissions(user) {
     const adminMenuBtns = document.querySelectorAll(".admin-menu-btn");
     adminMenuBtns.forEach(btn => {
         const onclickAttr = btn.getAttribute("onclick") || "";
-        const match = onclickAttr.match(/switchAdminSubTab\('([^']+)'\)/);
+        const match = onclickAttr.match(new RegExp("switchAdminSubTab\\('([^']+)'\\)"));
         if (match && match[1]) {
             const subTabId = match[1];
             const hasPerm = user.permissions["admin-tab-" + subTabId.replace("tab-", "")];
@@ -272,7 +272,7 @@ export function applyUserPermissions(user) {
         if (activeBtn && activeBtn.style.display === "none") {
             const firstVisibleBtn = document.querySelector(".admin-menu-btn:not([style*='display: none'])");
             if (firstVisibleBtn) {
-                const match = firstVisibleBtn.getAttribute("onclick").match(/switchAdminSubTab\('([^']+)'\)/);
+                const match = firstVisibleBtn.getAttribute("onclick").match(new RegExp("switchAdminSubTab\\('([^']+)'\\)"));
                 if (match && match[1]) {
                     switchAdminSubTab(match[1]);
                 }
