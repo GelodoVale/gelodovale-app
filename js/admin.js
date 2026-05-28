@@ -1,4 +1,4 @@
-import { state, saveState, FACTORY_INFO, recalculateClientDebts } from './state.js';
+import { state, saveState, FACTORY_INFO, recalculateClientDebts, APP_VERSION } from './state.js';
 import { renderWidgetsSetupPanel } from './widgets.js';
 
 // 1. Alternador de Sub-abas Administrativas
@@ -10,7 +10,7 @@ export function switchAdminSubTab(subTabId) {
         if (currentUser) {
             const hasPerm = currentUser.permissions["admin-" + subTabId];
             if (hasPerm === false) {
-                alert("Você não possui permissão para acessar esta sub-aba administrativa.");
+                window.showToast("Você não possui permissão para acessar esta sub-aba administrativa.", "error");
                 return;
             }
         }
@@ -86,7 +86,7 @@ export function closeAdminAuthModal() {
 }
 
 export function lockAdminAccess() {
-    alert("Acesso restrito bloqueado. Efetuando logout do painel...");
+    window.showToast("Acesso restrito bloqueado. Efetuando logout do painel...", "error");
     if (window.logoutUser) window.logoutUser();
 }
 
@@ -456,11 +456,17 @@ export function clearClientPrices(clientId) {
     const client = state.clients.find(c => c.id === clientId);
     if (!client) return;
 
-    if (confirm(`Deseja realmente limpar todos os preços especiais de ${client.name}? Ele voltará a pagar os valores padrão da fábrica.`)) {
-        client.customPrices = {};
-        saveState();
-        renderPrecos();
-    }
+    window.showConfirm(
+        `Deseja realmente limpar todos os preços especiais de ${client.name}? Ele voltará a pagar os valores padrão da fábrica.`,
+        () => {
+            client.customPrices = {};
+            saveState();
+            renderPrecos();
+        },
+        null,
+        "Limpar Preços",
+        "Limpar"
+    );
 }
 
 // 4. Sistema de Backup
@@ -514,7 +520,7 @@ export function generateBackup(isAuto = false) {
     }
 
     if (!state.backupSettings) {
-        state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: "2.6" };
+        state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
     }
     state.backupSettings.lastBackupDate = backupDate;
 
@@ -533,22 +539,28 @@ export function generateBackup(isAuto = false) {
     downloadAnchor.remove();
 
     if (isAuto) {
-        alert(`[Backup Automático] Uma cópia de segurança (versão ${version}) foi gerada com sucesso e salva na sua pasta de Downloads.`);
+        window.showToast(`[Backup Automático] Uma cópia de segurança (versão ${version}) foi gerada com sucesso e salva na sua pasta de Downloads.`, "success");
     } else {
-        alert(`Backup versão ${version} realizado e baixado com sucesso!`);
+        window.showToast(`Backup versão ${version} realizado e baixado com sucesso!`, "success");
     }
 }
 
 export function restoreLocalBackup(backupId) {
     const backup = (state.localBackups || []).find(b => b.id === backupId);
     if (!backup) {
-        alert("Backup não encontrado!");
+        window.showToast("Backup não encontrado!", "error");
         return;
     }
 
-    if (confirm(`ATENÇÃO: Deseja realmente restaurar o backup da versão ${backup.version} criado em ${window.formatDateBrazil(backup.date)}?\n\nIsso substituirá TODOS os clientes, equipamentos, aluguéis, recibos e configurações atuais.`)) {
-        applyBackupData(backup.payload);
-    }
+    window.showConfirm(
+        `ATENÇÃO: Deseja realmente restaurar o backup da versão ${backup.version} criado em ${window.formatDateBrazil(backup.date)}?\n\nIsso substituirá TODOS os clientes, equipamentos, aluguéis, recibos e configurações atuais.`,
+        () => {
+            applyBackupData(backup.payload);
+        },
+        null,
+        "Restaurar Backup",
+        "Restaurar"
+    );
 }
 
 export function applyBackupData(payload) {
@@ -584,10 +596,10 @@ export function applyBackupData(payload) {
 
         saveState();
         if (window.renderApp) window.renderApp();
-        alert("Backup restaurado com sucesso! Os dados foram atualizados.");
+        window.showToast("Backup restaurado com sucesso! Os dados foram atualizados.", "success");
     } catch (e) {
         console.error(e);
-        alert("Falha ao restaurar o backup: " + e.message);
+        window.showToast("Falha ao restaurar o backup: " + e.message, "error");
     }
 }
 
@@ -606,11 +618,17 @@ export function downloadBackupJSON(backupId) {
 }
 
 export function deleteLocalBackup(backupId) {
-    if (confirm("Deseja realmente excluir este backup do histórico interno do navegador?")) {
-        state.localBackups = (state.localBackups || []).filter(b => b.id !== backupId);
-        saveState();
-        renderPrecos();
-    }
+    window.showConfirm(
+        "Deseja realmente excluir este backup do histórico interno do navegador?",
+        () => {
+            state.localBackups = (state.localBackups || []).filter(b => b.id !== backupId);
+            saveState();
+            renderPrecos();
+        },
+        null,
+        "Excluir Backup",
+        "Excluir"
+    );
 }
 
 export function importBackupFromFile(event) {
@@ -622,15 +640,21 @@ export function importBackupFromFile(event) {
         try {
             const payload = JSON.parse(e.target.result);
             if (!payload.data || !payload.version) {
-                alert("Erro: O arquivo selecionado não é um backup válido do Gelo do Vale!");
+                window.showToast("Erro: O arquivo selecionado não é um backup válido do Gelo do Vale!", "error");
                 return;
             }
-            if (confirm(`Deseja realmente restaurar o backup físico da versão ${payload.version} criado em ${window.formatDateBrazil(payload.date || Date.now())}?`)) {
-                applyBackupData(payload);
-            }
+            window.showConfirm(
+                `Deseja realmente restaurar o backup físico da versão ${payload.version} criado em ${window.formatDateBrazil(payload.date || Date.now())}?`,
+                () => {
+                    applyBackupData(payload);
+                },
+                null,
+                "Restaurar Backup",
+                "Restaurar"
+            );
         } catch (err) {
             console.error(err);
-            alert("Erro ao ler o arquivo JSON: " + err.message);
+            window.showToast("Erro ao ler o arquivo JSON: " + err.message, "error");
         }
         event.target.value = "";
     };
@@ -913,18 +937,24 @@ export function handleFactoryLogoUpload(event) {
 }
 
 export function removeFactoryLogo() {
-    if (confirm("Deseja realmente remover o logotipo atual?")) {
-        if (!state.factorySettings) state.factorySettings = {};
-        state.factorySettings.logo = "";
-        
-        const previewImg = document.getElementById("img-logo-preview");
-        if (previewImg) previewImg.src = "logo_horizontal.jpg";
-        
-        const logoImg = document.querySelector("aside.sidebar .logo-container img");
-        if (logoImg) logoImg.src = "logo_horizontal.jpg";
-        
-        saveState();
-    }
+    window.showConfirm(
+        "Deseja realmente remover o logotipo atual?",
+        () => {
+            if (!state.factorySettings) state.factorySettings = {};
+            state.factorySettings.logo = "";
+            
+            const previewImg = document.getElementById("img-logo-preview");
+            if (previewImg) previewImg.src = "logo_horizontal.jpg";
+            
+            const logoImg = document.querySelector("aside.sidebar .logo-container img");
+            if (logoImg) logoImg.src = "logo_horizontal.jpg";
+            
+            saveState();
+        },
+        null,
+        "Remover Logotipo",
+        "Remover"
+    );
 }
 
 export function selectThemeCard(themeName) {
@@ -1067,7 +1097,7 @@ export function loadTodaySalesData() {
     document.getElementById("settle-card-received").value = totalCard.toFixed(2);
     
     calculateCargoSettlement();
-    alert("Dados de vendas de hoje carregados com sucesso!");
+    window.showToast("Dados de vendas de hoje carregados com sucesso!", "success");
 }
 
 export function calculateCargoSettlement() {
@@ -1373,7 +1403,7 @@ export function saveCargoSettlement() {
     });
 
     saveState();
-    alert("Acerto de viagem salvo com sucesso no histórico!");
+    window.showToast("Acerto de viagem salvo com sucesso no histórico!", "success");
     
     const resultsDiv = document.getElementById("cargo-settlement-results");
     if (resultsDiv) resultsDiv.style.display = "none";
@@ -1655,7 +1685,7 @@ export function processReceivePayment(event) {
         
         const client = state.clients.find(c => c.id === clientId);
         if (!client) {
-            alert("Cliente não encontrado.");
+            window.showToast("Cliente não encontrado.", "error");
             return;
         }
         
@@ -1705,7 +1735,7 @@ export function renderAccountsReceivable() {
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <td style="padding: 10px; font-weight: 600; color: #fff;">${c.name}</td>
                         <td style="padding: 10px; color: var(--color-text-muted);">${c.phone || 'Sem telefone'}</td>
-                        <td style="padding: 10px; text-align: right; color: var(--color-danger); font-weight: 700;">R$ ${c.outstandingDebt.toFixed(2).replace(".", ",")}</td>
+                        <td style="padding: 10px; text-align: right; color: var(--color-danger); font-weight: 700;">R$ ${(parseFloat(c.outstandingDebt) || 0).toFixed(2).replace(".", ",")}</td>
                         <td style="padding: 10px; text-align: center;">
                             <div style="display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
                                 <button type="button" class="btn btn-primary" onclick="openReceivePaymentModal('${c.id}')" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px;">
@@ -1715,7 +1745,7 @@ export function renderAccountsReceivable() {
                                     <i data-lucide="message-square" style="width: 12px; height: 12px;"></i> Cobrar
                                 </button>
                                 ${state.mercadoPago && state.mercadoPago.enabled ? `
-                                <button type="button" class="btn" onclick="generateAndSendMP(event, '${c.id}', ${c.outstandingDebt})" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
+                                <button type="button" class="btn" onclick="generateAndSendMP(event, '${c.id}', ${parseFloat(c.outstandingDebt) || 0})" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
                                     <i data-lucide="link" style="width: 12px; height: 12px;"></i> MP (Pix/Boleto)
                                 </button>
                                 ` : ''}
@@ -1762,7 +1792,7 @@ export function renderAccountsReceivable() {
                         </td>
                         <td style="padding: 10px; font-weight: 600; color: #fff;">${p.clientName}</td>
                         <td style="padding: 10px; color: var(--color-text-muted);">${p.paymentMethod}</td>
-                        <td style="padding: 10px; text-align: right; color: var(--color-success); font-weight: 700;">R$ ${p.amount.toFixed(2).replace(".", ",")}</td>
+                        <td style="padding: 10px; text-align: right; color: var(--color-success); font-weight: 700;">R$ ${(parseFloat(p.amount) || 0).toFixed(2).replace(".", ",")}</td>
                     </tr>
                 `;
             });
@@ -1777,7 +1807,7 @@ export function saveCommissionSettings(event) {
     
     state.commissionSettings = { type, value };
     saveState();
-    alert("Configuração de comissão salva com sucesso!");
+    window.showToast("Configuração de comissão salva com sucesso!", "success");
     if (window.renderApp) window.renderApp();
 }
 
@@ -1808,17 +1838,17 @@ export function toggleCommissionValueLabel() {
 export function sendWhatsAppBilling(clientId) {
     const client = state.clients.find(c => c.id === clientId);
     if (!client) {
-        alert("Cliente não encontrado.");
+        window.showToast("Cliente não encontrado.", "error");
         return;
     }
     if (!client.phone) {
-        alert("Este cliente não possui telefone cadastrado.");
+        window.showToast("Este cliente não possui telefone cadastrado.", "warning");
         return;
     }
     
     let phoneDigits = client.phone.replace(/\D/g, "");
     if (phoneDigits.length === 0) {
-        alert("O telefone cadastrado é inválido.");
+        window.showToast("O telefone cadastrado é inválido.", "error");
         return;
     }
     
@@ -1826,7 +1856,7 @@ export function sendWhatsAppBilling(clientId) {
         phoneDigits = "55" + phoneDigits;
     }
     
-    const formattedDebt = client.outstandingDebt.toFixed(2).replace(".", ",");
+    const formattedDebt = (parseFloat(client.outstandingDebt) || 0).toFixed(2).replace(".", ",");
     const companyName = FACTORY_INFO.name;
     const pixKey = FACTORY_INFO.pixKey;
     
@@ -1873,7 +1903,7 @@ export function saveSupplier(event) {
     const address = document.getElementById("supplier-address").value.trim();
     
     if (!name) {
-        alert("O nome do fornecedor é obrigatório.");
+        window.showToast("O nome do fornecedor é obrigatório.", "warning");
         return;
     }
     
@@ -1906,15 +1936,21 @@ export function deleteSupplier(supplierId) {
     
     const linkedPacks = (state.packaging || []).filter(pkg => pkg.supplierId === supplierId);
     if (linkedPacks.length > 0) {
-        alert(`Não é possível excluir o fornecedor "${s.name}" pois ele possui embalagens vinculadas.`);
+        window.showToast(`Não é possível excluir o fornecedor "${s.name}" pois ele possui embalagens vinculadas.`, "error");
         return;
     }
     
-    if (confirm(`Deseja realmente excluir o fornecedor "${s.name}"?`)) {
-        state.suppliers = state.suppliers.filter(item => item.id !== supplierId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        `Deseja realmente excluir o fornecedor "${s.name}"?`,
+        () => {
+            state.suppliers = state.suppliers.filter(item => item.id !== supplierId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Excluir Fornecedor",
+        "Excluir"
+    );
 }
 
 export function renderSuppliers() {
@@ -2026,11 +2062,11 @@ export function savePackaging(event) {
     const minStock = parseInt(document.getElementById("pack-min-stock").value) || 0;
     
     if (!name) {
-        alert("O nome da embalagem é obrigatório.");
+        window.showToast("O nome da embalagem é obrigatório.", "warning");
         return;
     }
     if (!supplierId) {
-        alert("Selecione um fornecedor.");
+        window.showToast("Selecione um fornecedor.", "warning");
         return;
     }
     
@@ -2078,11 +2114,17 @@ export function deletePackaging(packagingId) {
     const pkg = state.packaging.find(p => p.id === packagingId);
     if (!pkg) return;
     
-    if (confirm(`Deseja realmente excluir a embalagem "${pkg.name}"?`)) {
-        state.packaging = state.packaging.filter(item => item.id !== packagingId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        `Deseja realmente excluir a embalagem "${pkg.name}"?`,
+        () => {
+            state.packaging = state.packaging.filter(item => item.id !== packagingId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Excluir Embalagem",
+        "Excluir"
+    );
 }
 
 export function renderPackaging() {
@@ -2167,13 +2209,13 @@ export function savePackagingEntry(event) {
     const obs = document.getElementById("entry-obs").value.trim();
     
     if (qty <= 0) {
-        alert("A quantidade deve ser maior que zero.");
+        window.showToast("A quantidade deve ser maior que zero.", "warning");
         return;
     }
     
     const pkg = state.packaging.find(p => p.id === packagingId);
     if (!pkg) {
-        alert("Embalagem não encontrada.");
+        window.showToast("Embalagem não encontrada.", "error");
         return;
     }
     
@@ -2222,7 +2264,7 @@ export function renderPackagingTransactions() {
             ? `<span style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); color: var(--color-success); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">Entrada</span>`
             : `<span style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: var(--color-danger); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">Saída</span>`;
             
-        const qtyFormatted = tx.type === "entrada" ? `+${tx.quantity}` : `-${tx.quantity.toFixed(1).replace(".0", "")}`;
+        const qtyFormatted = tx.type === "entrada" ? `+${tx.quantity}` : `-${(parseFloat(tx.quantity) || 0).toFixed(1).replace(".0", "")}`;
         const qtyColor = tx.type === "entrada" ? "var(--color-success)" : "var(--color-danger)";
         
         tableBody.innerHTML += `
@@ -2231,7 +2273,7 @@ export function renderPackagingTransactions() {
                 <td style="padding: 8px 10px; font-weight: 600; color: #fff;">${tx.packagingName}</td>
                 <td style="padding: 8px 10px; text-align: center;">${typeBadge}</td>
                 <td style="padding: 8px 10px; text-align: center; color: ${qtyColor}; font-weight: 700;">${qtyFormatted}</td>
-                <td style="padding: 8px 10px; text-align: center; color: #fff;">${tx.balanceAfter.toFixed(1).replace(".0", "")}</td>
+                <td style="padding: 8px 10px; text-align: center; color: #fff;">${(parseFloat(tx.balanceAfter) || 0).toFixed(1).replace(".0", "")}</td>
                 <td style="padding: 8px 10px; color: var(--color-text-main); font-size: 0.8rem;">${tx.observation || ''}</td>
             </tr>
         `;
@@ -2446,13 +2488,19 @@ export function deleteProduct(productId) {
     const p = state.products.find(item => item.id === productId);
     if (!p) return;
     
-    if (confirm(`Deseja realmente desativar o item "${p.name}"? Ele continuará no histórico, mas não estará disponível para novas operações.`)) {
-        p.active = false;
-        saveState();
-        renderProductsCatalog();
-        renderPrecos();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        `Deseja realmente desativar o item "${p.name}"? Ele continuará no histórico, mas não estará disponível para novas operações.`,
+        () => {
+            p.active = false;
+            saveState();
+            renderProductsCatalog();
+            renderPrecos();
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Desativar Item",
+        "Desativar"
+    );
 }
 
 export function autoFillFactorySettings() {
@@ -2495,7 +2543,7 @@ export function autoFillFactorySettings() {
     }
     
     saveState();
-    alert("Dados comerciais oficiais da Gelo do Vale preenchidos com sucesso!");
+    window.showToast("Dados comerciais oficiais da Gelo do Vale preenchidos com sucesso!", "success");
 }
 
 export function autoFillAppearanceSettings() {
@@ -2521,7 +2569,7 @@ export function autoFillAppearanceSettings() {
     }
     
     saveState();
-    alert("Aparência padrão (Ciano Neon) restaurada com sucesso!");
+    window.showToast("Aparência padrão (Ciano Neon) restaurada com sucesso!", "success");
 }
 
 export function shareAcertoWhatsApp() {
@@ -2605,47 +2653,56 @@ export function saveProduction() {
     const obs = document.getElementById("prod-obs").value || "Produção Interna";
 
     if (!pkgId || isNaN(qty) || qty <= 0) {
-        alert("Preencha a embalagem e a quantidade produzida válida.");
+        window.showToast("Preencha a embalagem e a quantidade produzida válida.", "warning");
         return;
     }
 
     const pkg = state.packaging.find(p => p.id === pkgId);
     if (!pkg) {
-        alert("Embalagem não encontrada.");
+        window.showToast("Embalagem não encontrada.", "error");
         return;
     }
 
+    const performSave = () => {
+        const previousStock = pkg.currentStock || 0;
+        pkg.currentStock = previousStock - qty;
+
+        if (!state.packagingTransactions) state.packagingTransactions = [];
+        
+        state.packagingTransactions.push({
+            id: 'tx-' + Date.now(),
+            date: window.getBrazilTimeISO(),
+            packagingId: pkgId,
+            packagingName: pkg.name,
+            type: 'out',
+            qty: qty,
+            afterStock: pkg.currentStock,
+            obs: obs
+        });
+
+        saveState();
+        
+        window.showToast(`Produção registrada! Foram consumidas ${qty} unidades de embalagem.`, "success");
+        
+        if (window.closeModal) window.closeModal("modal-production");
+        renderPackaging();
+        renderPackagingTransactions();
+        
+        // Atualizar dashboard para mostrar alertas
+        if (window.renderDashboard) window.renderDashboard();
+    };
+
     if ((pkg.currentStock || 0) < qty) {
-        const confirmNegative = confirm(`Atenção: A embalagem tem apenas ${pkg.currentStock || 0} unidades. Se continuar, o estoque ficará negativo. Deseja prosseguir?`);
-        if (!confirmNegative) return;
+        window.showConfirm(
+            `Atenção: A embalagem tem apenas ${pkg.currentStock || 0} unidades. Se continuar, o estoque ficará negativo. Deseja prosseguir?`,
+            performSave,
+            null,
+            "Estoque de Embalagem Baixo",
+            "Prosseguir"
+        );
+    } else {
+        performSave();
     }
-
-    const previousStock = pkg.currentStock || 0;
-    pkg.currentStock = previousStock - qty;
-
-    if (!state.packagingTransactions) state.packagingTransactions = [];
-    
-    state.packagingTransactions.push({
-        id: 'tx-' + Date.now(),
-        date: window.getBrazilTimeISO(),
-        packagingId: pkgId,
-        packagingName: pkg.name,
-        type: 'out',
-        qty: qty,
-        afterStock: pkg.currentStock,
-        obs: obs
-    });
-
-    saveState();
-    
-    alert(`Produção registrada! Foram consumidas ${qty} unidades de embalagem.`);
-    
-    if (window.closeModal) window.closeModal("modal-production");
-    renderPackaging();
-    renderPackagingTransactions();
-    
-    // Atualizar dashboard para mostrar alertas
-    if (window.renderDashboard) window.renderDashboard();
 }
 
 window.openProductionModal = openProductionModal;
@@ -2684,7 +2741,7 @@ export function saveMercadoPagoSettings() {
     const token = document.getElementById("mp-access-token").value.trim();
     
     if (isEnabled && !token) {
-        alert("Para ativar a integração, é obrigatório informar o Access Token.");
+        window.showToast("Para ativar a integração, é obrigatório informar o Access Token.", "warning");
         return;
     }
     
@@ -2694,7 +2751,7 @@ export function saveMercadoPagoSettings() {
     state.mercadoPago.accessToken = token;
     
     saveState();
-    alert("Configurações do Mercado Pago salvas com sucesso!");
+    window.showToast("Configurações do Mercado Pago salvas com sucesso!", "success");
 }
 
 window.toggleMpFields = toggleMpFields;
@@ -2728,7 +2785,7 @@ export async function generateAndSendMP(event, clientId, amount) {
                 window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
             } else {
                 // Se não tem telefone, apenas copia pro clipboard ou mostra na tela
-                alert(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`);
+                window.showToast(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`, "success");
             }
         }
     } finally {
@@ -2739,6 +2796,428 @@ export async function generateAndSendMP(event, clientId, amount) {
     }
 }
 window.generateAndSendMP = generateAndSendMP;
+
+export function generateMonthlyPDFReport() {
+    if (typeof html2pdf === "undefined") {
+        window.showToast("A biblioteca de geração de PDF ainda não foi carregada. Verifique sua conexão com a internet.", "warning");
+        return;
+    }
+
+    const currentMonthStr = window.getBrazilTimeISO().substring(0, 7);
+    const now = new Date();
+    const monthNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    const periodStr = `${monthNames[now.getMonth()]} de ${now.getFullYear()}`;
+
+    // Get Factory Settings
+    const factoryName = (state.factorySettings && state.factorySettings.name) || FACTORY_INFO.name;
+    const factoryCnpj = (state.factorySettings && state.factorySettings.cnpj) || FACTORY_INFO.cnpj;
+    const factoryPhone = (state.factorySettings && state.factorySettings.phone) || FACTORY_INFO.phone;
+
+    let revMonth = 0;
+    let cashMonth = 0;
+    let pixMonth = 0;
+    let cardMonth = 0;
+    let packagingCostMonth = 0;
+    let totalKgMonth = 0;
+
+    const productSalesCount = {};
+    const activeProds = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Carvão' || p.type === 'Gelo Saborizado'));
+
+    // 1. Somar de state.deliveries
+    state.deliveries.forEach(del => {
+        if (!del.date) return;
+        const delMonthStr = del.date.substring(0, 7);
+        
+        if (delMonthStr === currentMonthStr) {
+            revMonth += (del.revenue || 0);
+            const method = (del.paymentMethod || 'pix').toLowerCase();
+            const rev = del.revenue || 0;
+            if (method.includes('dinheiro') || method.includes('cash')) {
+                cashMonth += rev;
+            } else if (method.includes('cartão') || method.includes('cartao') || method.includes('card') || method.includes('débito') || method.includes('credito')) {
+                cardMonth += rev;
+            } else {
+                pixMonth += rev; // Padrão: Pix
+            }
+            
+            activeProds.forEach(p => {
+                const qtyFardos = del.items[p.id] || 0;
+                const qtyUnits = del.items[p.id + "_unit"] || 0;
+                if (qtyFardos > 0 || qtyUnits > 0) {
+                    const totalQty = qtyFardos + (qtyUnits / (p.unitsPerPack || 12));
+                    productSalesCount[p.name] = (productSalesCount[p.name] || 0) + totalQty;
+                }
+                
+                // Calcular kg
+                if (p.type === 'Gelo') {
+                    totalKgMonth += qtyFardos * (p.weight || 0);
+                } else if (p.type === 'Gelo Saborizado') {
+                    const unitWeightG = p.unitWeightGrams || 0;
+                    const unitsPerPack = p.unitsPerPack || 12;
+                    const packWeightKg = (unitWeightG * unitsPerPack) / 1000;
+                    totalKgMonth += qtyFardos * packWeightKg + qtyUnits * (unitWeightG / 1000);
+                }
+
+                packagingCostMonth += calculateProductPackagingCost(p.id, qtyFardos, qtyUnits);
+            });
+        }
+    });
+    
+    // 2. Somar de state.documents
+    state.documents.forEach(doc => {
+        if (doc.type === "recibo" || doc.type === "nota") {
+            if (doc.date && doc.date.startsWith(currentMonthStr)) {
+                revMonth += doc.total;
+                
+                const method = (doc.paymentMethod || "").toLowerCase();
+                if (method.includes("dinheiro")) {
+                    cashMonth += doc.total;
+                } else if (method.includes("pix")) {
+                    pixMonth += doc.total;
+                } else if (method.includes("cartão") || method.includes("cartao") || method.includes("crédito") || method.includes("débito")) {
+                    cardMonth += doc.total;
+                } else {
+                    cashMonth += doc.total;
+                }
+                
+                if (doc.items) {
+                    doc.items.forEach(it => {
+                        productSalesCount[it.name] = (productSalesCount[it.name] || 0) + it.qty;
+                        
+                        const prod = activeProds.find(p => p.name === it.name);
+                        if (prod) {
+                            const productId = it.prodId ? it.prodId.replace("_unit", "") : prod.id;
+                            const isUnit = it.prodId ? it.prodId.endsWith("_unit") : false;
+                            const qtyFardos = isUnit ? 0 : it.qty;
+                            const qtyUnits = isUnit ? it.qty : 0;
+                            
+                            // Calcular kg de gelo se for gelo em recibo/nota
+                            if (prod.type === 'Gelo') {
+                                totalKgMonth += qtyFardos * (prod.weight || 0);
+                            } else if (prod.type === 'Gelo Saborizado') {
+                                const unitWeightG = prod.unitWeightGrams || 0;
+                                const unitsPerPack = prod.unitsPerPack || 12;
+                                const packWeightKg = (unitWeightG * unitsPerPack) / 1000;
+                                totalKgMonth += qtyFardos * packWeightKg + qtyUnits * (unitWeightG / 1000);
+                            }
+
+                            packagingCostMonth += calculateProductPackagingCost(productId, qtyFardos, qtyUnits);
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    // 3. Somar despesas operacionais do mês a partir do histórico de acertos
+    let logisticsCostMonth = 0;
+    if (state.cargoSettlements) {
+        state.cargoSettlements.forEach(settle => {
+            if (settle.date && settle.date.substring(0, 7) === currentMonthStr) {
+                const expensesTotal = settle.expenses ? (settle.expenses.total || 0) : 0;
+                const commission = settle.financials ? (settle.financials.commission || 0) : 0;
+                logisticsCostMonth += expensesTotal + commission;
+            }
+        });
+    }
+
+    // Calcular Lucro Líquido Real (Mês)
+    const realProfitMonth = revMonth - packagingCostMonth - logisticsCostMonth;
+    const totalCostsMonth = packagingCostMonth + logisticsCostMonth;
+
+    // Calcular Clientes Top 10 por Receita
+    const clientRevenue = {};
+    (state.clients || []).forEach(c => {
+        clientRevenue[c.id] = { name: c.name, revenue: 0 };
+    });
+
+    state.deliveries.forEach(del => {
+        if (del.date && del.date.substring(0, 7) === currentMonthStr) {
+            if (clientRevenue[del.clientId]) {
+                clientRevenue[del.clientId].revenue += del.revenue || 0;
+            } else {
+                clientRevenue[del.clientId] = { name: del.clientName || "Cliente Removido", revenue: del.revenue || 0 };
+            }
+        }
+    });
+
+    state.documents.forEach(doc => {
+        if ((doc.type === "recibo" || doc.type === "nota") && doc.date && doc.date.startsWith(currentMonthStr)) {
+            if (clientRevenue[doc.clientId]) {
+                clientRevenue[doc.clientId].revenue += doc.total || 0;
+            } else {
+                clientRevenue[doc.clientId] = { name: doc.clientName || "Cliente Removido", revenue: doc.total || 0 };
+            }
+        }
+    });
+
+    const topClients = Object.values(clientRevenue)
+        .filter(c => c.revenue > 0)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+    let topClientsHTML = "";
+    if (topClients.length === 0) {
+        topClientsHTML = `<tr><td colspan="3" style="padding: 6px 0; text-align: center; color: #64748b;">Nenhuma receita registrada neste mês.</td></tr>`;
+    } else {
+        topClients.forEach((tc, idx) => {
+            topClientsHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 6px 0; color: #64748b;">#${idx + 1}</td>
+                    <td style="padding: 6px 0; font-weight: 600; color: #334155;">${tc.name}</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #0f172a;">R$ ${tc.revenue.toFixed(2).replace(".", ",")}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Top Products HTML
+    const sortedProds = Object.entries(productSalesCount).sort((a, b) => b[1] - a[1]);
+    let topProductsHTML = "";
+    if (sortedProds.length === 0) {
+        topProductsHTML = `<tr><td colspan="2" style="padding: 6px 0; text-align: center; color: #64748b;">Nenhum produto vendido neste mês.</td></tr>`;
+    } else {
+        sortedProds.forEach(([name, qty]) => {
+            topProductsHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 6px 0; color: #334155; font-weight: 500;">${name}</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #0f172a;">${Math.round(qty)} fardos</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Patrimônio
+    const activeFreezersCount = (state.clients || []).filter(c => c.freezerCode).length;
+    const activeRentalsCount = state.rentals ? (state.rentals || []).filter(r => r.status === "active" || r.status === "overdue").length : 0;
+
+    // Obter imagem dos gráficos se existirem
+    const revCanvas = document.getElementById("revenueChart");
+    const prodCanvas = document.getElementById("productsChart");
+    let revChartImg = "";
+    let prodChartImg = "";
+    if (revCanvas) {
+        try {
+            revChartImg = revCanvas.toDataURL("image/png");
+        } catch (e) {
+            console.error("Erro ao ler revenueChart:", e);
+        }
+    }
+    if (prodCanvas) {
+        try {
+            prodChartImg = prodCanvas.toDataURL("image/png");
+        } catch (e) {
+            console.error("Erro ao ler productsChart:", e);
+        }
+    }
+
+    // Format strings
+    const revMonthStr = revMonth.toFixed(2).replace(".", ",");
+    const costsMonthStr = totalCostsMonth.toFixed(2).replace(".", ",");
+    const realProfitMonthStr = realProfitMonth.toFixed(2).replace(".", ",");
+    const cashMonthStr = cashMonth.toFixed(2).replace(".", ",");
+    const pixMonthStr = pixMonth.toFixed(2).replace(".", ",");
+    const cardMonthStr = cardMonth.toFixed(2).replace(".", ",");
+    const packagingCostMonthStr = packagingCostMonth.toFixed(2).replace(".", ",");
+    const logisticsCostMonthStr = logisticsCostMonth.toFixed(2).replace(".", ",");
+
+    // Construir container HTML temporário
+    const reportWrapper = document.createElement("div");
+    reportWrapper.style.position = "absolute";
+    reportWrapper.style.left = "-9999px";
+    reportWrapper.style.top = "-9999px";
+    reportWrapper.style.width = "800px";
+
+    reportWrapper.innerHTML = `
+        <div id="monthly-pdf-report-content" style="color: #1e293b; font-family: Arial, sans-serif; padding: 30px; background: #ffffff; box-sizing: border-box;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px;">
+                <div>
+                    <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase;">Relatório Mensal de Gestão</h1>
+                    <p style="font-size: 14px; color: #64748b; margin: 5px 0 0 0;">Competência: ${periodStr}</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0;">${factoryName}</h2>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">CNPJ: ${factoryCnpj}</p>
+                    <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">Tel: ${factoryPhone}</p>
+                </div>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; text-align: center;">
+                    <span style="font-size: 10px; color: #64748b; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Faturamento Bruto</span>
+                    <strong style="font-size: 18px; color: #0f172a;">R$ ${revMonthStr}</strong>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; text-align: center;">
+                    <span style="font-size: 10px; color: #64748b; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Custos Operacionais</span>
+                    <strong style="font-size: 18px; color: #dc2626;">R$ ${costsMonthStr}</strong>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; text-align: center; border-left: 4px solid ${realProfitMonth >= 0 ? '#16a34a' : '#dc2626'};">
+                    <span style="font-size: 10px; color: #64748b; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Resultado Líquido</span>
+                    <strong style="font-size: 18px; color: ${realProfitMonth >= 0 ? '#16a34a' : '#dc2626'};">R$ ${realProfitMonthStr}</strong>
+                </div>
+            </div>
+
+            <!-- Secondary Info Rows -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <!-- Meios de Pagamento -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                    <h3 style="font-size: 12px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; text-transform: uppercase;">Receita por Meio de Pagamento</h3>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Dinheiro:</span>
+                            <strong style="color: #334155;">R$ ${cashMonthStr}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Pix:</span>
+                            <strong style="color: #334155;">R$ ${pixMonthStr}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Cartão:</span>
+                            <strong style="color: #334155;">R$ ${cardMonthStr}</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Detalhamento de Custos -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                    <h3 style="font-size: 12px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; text-transform: uppercase;">Detalhamento de Custos</h3>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Custo de Embalagens:</span>
+                            <strong style="color: #334155;">R$ ${packagingCostMonthStr}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Custos Logísticos & Comissões:</span>
+                            <strong style="color: #334155;">R$ ${logisticsCostMonthStr}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Gelo Total Entregue:</span>
+                            <strong style="color: #334155;">${totalKgMonth.toLocaleString('pt-BR')} kg</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            ${(revChartImg || prodChartImg) ? `
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; margin-bottom: 20px;">
+                ${revChartImg ? `
+                <div style="border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; text-align: center;">
+                    <h4 style="font-size: 10px; color: #64748b; margin: 0 0 8px 0; text-transform: uppercase;">Evolução de Vendas (Últimos 15 dias)</h4>
+                    <img src="${revChartImg}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+                </div>` : ''}
+                ${prodChartImg ? `
+                <div style="border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; text-align: center;">
+                    <h4 style="font-size: 10px; color: #64748b; margin: 0 0 8px 0; text-transform: uppercase;">Mix de Produtos Vendidos</h4>
+                    <img src="${prodChartImg}" style="max-width: 100%; height: auto; border-radius: 4px;" />
+                </div>` : ''}
+            </div>
+            ` : ''}
+
+            <!-- Top Clients and Top Products -->
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; margin-bottom: 20px; page-break-inside: avoid;">
+                <!-- Top 10 Clientes -->
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #ffffff;">
+                    <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Top 10 Clientes por Receita</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #cbd5e1; font-weight: bold;">
+                                <th style="padding: 4px 0; width: 40px;">Rank</th>
+                                <th style="padding: 4px 0;">Cliente</th>
+                                <th style="padding: 4px 0; text-align: right;">Receita</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topClientsHTML}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Mix de Produtos e Resumo de Aluguéis -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #ffffff;">
+                        <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Produtos Mais Vendidos</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #cbd5e1; font-weight: bold;">
+                                    <th style="padding: 4px 0;">Produto</th>
+                                    <th style="padding: 4px 0; text-align: right;">Qtd (Fdos)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${topProductsHTML}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Aluguéis Ativos no Mês -->
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #ffffff;">
+                        <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Resumo Patrimonial</h3>
+                        <div style="font-size: 10px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #64748b;">Freezers Alocados:</span>
+                                <strong style="color: #334155;">${activeFreezersCount} unidades</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #64748b;">Aluguéis Ativos de Tinas:</span>
+                                <strong style="color: #334155;">${activeRentalsCount} ativas</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer / Signatures -->
+            <div style="margin-top: 30px; display: flex; justify-content: space-between; font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                <div>Gerado automaticamente pelo sistema GelControl v${APP_VERSION}</div>
+                <div style="text-align: right;">Emissão: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}</div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(reportWrapper);
+
+    const filename = `relatorio_mensal_${currentMonthStr.replace("-", "_")}.pdf`;
+    const opt = {
+        margin:       10,
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const btn = document.querySelector('.btn-generate-report');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle;"></span> Gerando...';
+        btn.disabled = true;
+    }
+
+    html2pdf().set(opt).from(reportWrapper).save().then(() => {
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+        document.body.removeChild(reportWrapper);
+        window.showToast("Relatório mensal gerado com sucesso!", "success");
+    }).catch(err => {
+        console.error("Erro ao gerar PDF:", err);
+        window.showToast("Ocorreu um erro ao gerar o PDF.", "error");
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+        if (reportWrapper.parentNode) {
+            document.body.removeChild(reportWrapper);
+        }
+    });
+}
+
+window.generateMonthlyPDFReport = generateMonthlyPDFReport;
 
 
 

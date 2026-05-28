@@ -1,5 +1,5 @@
 // --- CENTRAL DE CONTROLE E BOOTSTRAPPER (GELO DO VALE) ---
-import { state, saveState, MOCK_DATA } from './state.js';
+import { state, saveState, MOCK_DATA, APP_VERSION } from './state.js';
 import { initLoginScreen, initUserAccessControl } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { renderClientes, openClientModal, populateClientDropdowns, openSalesModal, renderSalesModalProducts } from './clientes.js';
@@ -22,6 +22,117 @@ import { migrateLegacyComodatos, initClientSigningPortal } from './comodatos.js'
 import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal } from './admin.js';
 import { initFirebase, checkOneDriveSync } from './sync.js';
 import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil } from './utils.js';
+
+// ==========================================================================
+//  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
+// ==========================================================================
+
+const _TOAST_ICONS = {
+    success: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    error:   `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>`,
+    warning: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
+    info:    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`
+};
+
+const _TOAST_LABELS = {
+    success: 'Sucesso',
+    error:   'Erro',
+    warning: 'Atenção',
+    info:    'Informação'
+};
+
+/**
+ * Exibe uma notificação Toast.
+ * @param {string} message  Texto da notificação
+ * @param {'success'|'error'|'warning'|'info'} type  Tipo visual
+ * @param {number} duration Duração em ms (padrão: 3500. Erros: 5000)
+ */
+export function showToast(message, type = 'success', duration = null) {
+    const container = document.getElementById('toast-container');
+    if (!container) { console.warn('[Toast] Container não encontrado'); return; }
+
+    // Duração automática por tipo se não especificada
+    if (duration === null) {
+        duration = type === 'error' ? 5000 : type === 'warning' ? 4500 : 3500;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <span class="toast-icon">${_TOAST_ICONS[type] || _TOAST_ICONS.info}</span>
+        <div class="toast-body">
+            <div class="toast-title">${_TOAST_LABELS[type] || 'Notificação'}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" aria-label="Fechar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+        <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
+    `;
+
+    // Botão de fechar
+    toast.querySelector('.toast-close').addEventListener('click', () => _dismissToast(toast));
+
+    container.appendChild(toast);
+
+    // Auto-dismiss
+    const timer = setTimeout(() => _dismissToast(toast), duration);
+    toast._timer = timer;
+}
+
+function _dismissToast(toast) {
+    if (!toast || toast._dismissed) return;
+    toast._dismissed = true;
+    clearTimeout(toast._timer);
+    toast.classList.add('toast-hiding');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+}
+
+/**
+ * Substitui o confirm() nativo por um modal bonito e não-bloqueante.
+ * @param {string} message     Texto da pergunta
+ * @param {Function} onConfirm Callback se confirmar
+ * @param {Function} onCancel  Callback se cancelar (opcional)
+ * @param {string} title       Título do modal (opcional)
+ * @param {string} confirmText Texto do botão de confirmar (padrão: 'Confirmar')
+ */
+export function showConfirm(message, onConfirm, onCancel = null, title = 'Confirmar ação', confirmText = 'Confirmar') {
+    const overlay = document.getElementById('confirm-overlay');
+    if (!overlay) {
+        // Fallback para confirm() nativo se o modal não existir no DOM
+        if (window.confirm(message)) { if (onConfirm) onConfirm(); }
+        else { if (onCancel) onCancel(); }
+        return;
+    }
+
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-ok-btn').textContent = confirmText;
+
+    overlay.classList.remove('hidden');
+
+    const okBtn = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+    // Limpar listeners anteriores clonando os botões
+    const newOk = okBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    const close = () => overlay.classList.add('hidden');
+
+    newOk.addEventListener('click', () => { close(); if (onConfirm) onConfirm(); });
+    newCancel.addEventListener('click', () => { close(); if (onCancel) onCancel(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) { close(); if (onCancel) onCancel(); } }, { once: true });
+}
+
+// Expor globalmente para uso nos módulos sem import
+window.showToast   = showToast;
+window.showConfirm = showConfirm;
+
+
 
 // --- SISTEMA DE INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -79,16 +190,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnMock = document.getElementById("btn-mock-data");
     if (btnMock) {
         btnMock.addEventListener("click", () => {
-            if (confirm("Deseja carregar os dados de demonstração? Isso substituirá as informações atuais.")) {
-                // Atualizar estado global importado (atribuição por propriedades para manter a reatividade)
-                const mockCopy = JSON.parse(JSON.stringify(MOCK_DATA));
-                Object.keys(state).forEach(key => delete state[key]);
-                Object.assign(state, mockCopy);
-                
-                saveState();
-                renderApp();
-                alert("Dados de demonstração carregados com sucesso!");
-            }
+            window.showConfirm(
+                "Deseja carregar os dados de demonstração? Isso substituirá as informações atuais.",
+                () => {
+                    // Atualizar estado global importado (atribuição por propriedades para manter a reatividade)
+                    const mockCopy = JSON.parse(JSON.stringify(MOCK_DATA));
+                    Object.keys(state).forEach(key => delete state[key]);
+                    Object.assign(state, mockCopy);
+                    
+                    saveState();
+                    renderApp();
+                    window.showToast("Dados de demonstração carregados com sucesso!", "success");
+                },
+                null,
+                "Carregar Demonstração",
+                "Carregar"
+            );
         });
     }
 
@@ -226,13 +343,13 @@ export function initNavigation() {
                         if (currentUser.username === "admin") {
                             sessionStorage.setItem("admin_authenticated", "true");
                         } else if (!currentUser.permissions["tab-precos"]) {
-                            alert("Você não possui permissão para acessar esta aba.");
+                            showToast("Você não possui permissão para acessar esta aba.", "error");
                             return;
                         }
                     } else {
                         const hasPerm = currentUser.permissions["tab-" + targetTab];
                         if (hasPerm === false) {
-                            alert("Você não possui permissão para acessar esta aba.");
+                            showToast("Você não possui permissão para acessar esta aba.", "error");
                             return;
                         }
                     }
@@ -441,8 +558,8 @@ export function renderApp() {
     // Atualizar versão no rodapé lateral
     const versionEl = document.getElementById("app-sidebar-version");
     if (versionEl) {
-        const ver = state.backupSettings?.currentVersion || "2.7";
-        versionEl.innerText = `Gelo do Vale v${ver} (26/05/2026 20:42)`;
+        const ver = state.backupSettings?.currentVersion || APP_VERSION;
+        versionEl.innerText = `Gelo do Vale v${ver} (28/05/2026)`;
     }
     
     // Atualizar dropdowns
@@ -591,7 +708,7 @@ export function addSuggestedVisitsToRoute() {
 
 export function openOrderModal() {
     if (state.clients.length === 0) {
-        alert("Cadastre pelo menos um cliente antes de registrar pedidos!");
+        window.showToast("Cadastre pelo menos um cliente antes de registrar pedidos!", "warning");
         return;
     }
     const modal = document.getElementById("modal-order");
@@ -603,11 +720,18 @@ export function openOrderModal() {
 }
 
 export function cancelOrder(orderId) {
-    if (confirm("Deseja realmente cancelar este pedido?")) {
-        state.orders = state.orders.filter(o => o.id !== orderId);
-        saveState();
-        renderApp();
-    }
+    window.showConfirm(
+        "Deseja realmente cancelar este pedido?",
+        () => {
+            state.orders = state.orders.filter(o => o.id !== orderId);
+            saveState();
+            renderApp();
+            window.showToast("Pedido cancelado com sucesso!", "success");
+        },
+        null,
+        "Cancelar Pedido",
+        "Confirmar"
+    );
 }
 
 // --- CÁLCULO FINANCEIRO E GEOLOCALIZAÇÃO ---
@@ -710,7 +834,7 @@ export function deliverOrder(orderId) {
     
     const client = state.clients.find(c => c.id === order.clientId);
     if (!client) {
-        alert("Cliente não encontrado.");
+        showToast("Cliente não encontrado.", "error");
         return;
     }
     
@@ -777,7 +901,7 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
     
     const client = state.clients.find(c => c.id === order.clientId);
     if (!client) {
-        alert("Cliente não encontrado.");
+        showToast("Cliente não encontrado.", "error");
         return;
     }
     
@@ -844,7 +968,7 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
     
     saveState();
     renderApp();
-    alert(`Entrega efetuada com sucesso! R$ ${revenue.toFixed(2)} registrados (${paymentMethod}).`);
+    showToast(`Entrega efetuada com sucesso! R$ ${revenue.toFixed(2)} registrados (${paymentMethod}).`, "success");
 }
 
 // --- HISTÓRICO DE ENTREGAS ---
@@ -933,11 +1057,18 @@ export function renderHistorico() {
 }
 
 export function deleteDelivery(deliveryId) {
-    if (confirm("Excluir este registro apagará os dados de faturamento associados. O estoque do freezer do cliente não será alterado retroativamente. Confirmar?")) {
-        state.deliveries = state.deliveries.filter(d => d.id !== deliveryId);
-        saveState();
-        renderApp();
-    }
+    showConfirm(
+        "Excluir este registro apagará os dados de faturamento associados. O estoque do freezer do cliente não será alterado retroativamente. Confirmar?",
+        () => {
+            state.deliveries = state.deliveries.filter(d => d.id !== deliveryId);
+            saveState();
+            renderApp();
+            showToast("Registro de entrega removido com sucesso!", "success");
+        },
+        null,
+        "Excluir Registro de Entrega",
+        "Excluir"
+    );
 }
 
 // --- FILTROS DE HISTÓRICO E PESQUISAS ---
@@ -1068,6 +1199,7 @@ export function initForms() {
                 }
                 
                 if (maintenanceNotes) {
+                    if (!selectedFreezer.maintenanceLogs) selectedFreezer.maintenanceLogs = [];
                     const jaExiste = selectedFreezer.maintenanceLogs.some(log => log.note === maintenanceNotes);
                     if (!jaExiste) {
                         selectedFreezer.maintenanceLogs.push({
@@ -1117,7 +1249,7 @@ export function initForms() {
             
             const clientId = document.getElementById("order-client-id").value;
             if (!clientId) {
-                alert("Selecione um cliente.");
+                showToast("Selecione um cliente.", "warning");
                 return;
             }
 
@@ -1145,7 +1277,7 @@ export function initForms() {
             });
             
             if (totalItemsCount === 0) {
-                alert("O pedido deve conter pelo menos 1 item.");
+                showToast("O pedido deve conter pelo menos 1 item.", "warning");
                 return;
             }
             
@@ -1210,7 +1342,7 @@ export function initForms() {
             });
             
             if (hasExcess) {
-                alert(errorMessage);
+                showToast(errorMessage, "error");
                 return;
             }
             
@@ -1261,13 +1393,13 @@ export function initForms() {
             const photoEstablishment = document.getElementById("photo-establishment-data").value || "";
             
             if (!code) {
-                alert("Código do freezer é obrigatório!");
+                showToast("Código do freezer é obrigatório!", "warning");
                 return;
             }
             
             const codeExists = state.freezers.some(f => f.code.toUpperCase() === code.toUpperCase() && f.id !== freezerId);
             if (codeExists) {
-                alert(`Já existe um equipamento cadastrado com o código "${code}"!`);
+                showToast(`Já existe um equipamento cadastrado com o código "${code}"!`, "error");
                 return;
             }
             
@@ -1369,56 +1501,71 @@ export function initForms() {
             
             if (destiny === 'cliente') {
                 if (!clientId) {
-                    alert("Selecione o cliente de destino!");
+                    showToast("Selecione o cliente de destino!", "warning");
                     return;
                 }
                 const client = state.clients.find(c => c.id === clientId);
                 if (!client) return;
                 
                 const clientHasFreezer = state.freezers.find(f => f.clientId === clientId && f.id !== freezerId);
-                if (clientHasFreezer) {
-                    if (!confirm(`O cliente ${client.name} já possui o freezer ${clientHasFreezer.code} vinculado. Deseja liberar o anterior para a fábrica e alocar este?`)) {
-                        return;
+                
+                const executeMovement = () => {
+                    if (clientHasFreezer) {
+                        clientHasFreezer.status = "disponivel";
+                        clientHasFreezer.clientId = "";
+                        clientHasFreezer.clientName = "";
+                        if (!clientHasFreezer.movementHistory) clientHasFreezer.movementHistory = [];
+                        clientHasFreezer.movementHistory.push({
+                            date: formatDateBrazil(getBrazilTimeISO()),
+                            from: client.name,
+                            to: "Fábrica",
+                            reason: "Substituído por outro freezer no cliente"
+                        });
                     }
-                    clientHasFreezer.status = "disponivel";
-                    clientHasFreezer.clientId = "";
-                    clientHasFreezer.clientName = "";
-                    if (!clientHasFreezer.movementHistory) clientHasFreezer.movementHistory = [];
-                    clientHasFreezer.movementHistory.push({
+                    
+                    if (freezer.status === 'alocado' && freezer.clientId !== clientId) {
+                        const prevClient = state.clients.find(c => c.id === freezer.clientId);
+                        if (prevClient) {
+                            prevClient.freezerCode = "";
+                            prevClient.freezerBrand = "";
+                            prevClient.freezerVoltage = "";
+                            prevClient.freezerCapacity = "";
+                        }
+                    }
+                    
+                    freezer.status = "alocado";
+                    freezer.clientId = client.id;
+                    freezer.clientName = client.name;
+                    
+                    client.freezerCode = freezer.code;
+                    client.freezerBrand = freezer.brand;
+                    client.freezerVoltage = freezer.voltage;
+                    client.freezerCapacity = freezer.capacity;
+                    client.deliveryDate = getBrazilTimeISO().split('T')[0];
+                    
+                    if (!freezer.movementHistory) freezer.movementHistory = [];
+                    freezer.movementHistory.push({
                         date: formatDateBrazil(getBrazilTimeISO()),
-                        from: client.name,
-                        to: "Fábrica",
-                        reason: "Substituído por outro freezer no cliente"
+                        from: oldLocationName,
+                        to: client.name,
+                        reason: reason
                     });
+
+                    saveState();
+                    closeModal("modal-move-freezer");
+                    closeModal("modal-freezer-detail");
+                    renderApp();
+                    showToast("Movimentação de freezer realizada com sucesso!", "success");
+                };
+
+                if (clientHasFreezer) {
+                    showConfirm(
+                        `O cliente ${client.name} já possui o freezer ${clientHasFreezer.code} vinculado. Deseja liberar o anterior para a fábrica e alocar este?`,
+                        executeMovement
+                    );
+                } else {
+                    executeMovement();
                 }
-                
-                if (freezer.status === 'alocado' && freezer.clientId !== clientId) {
-                    const prevClient = state.clients.find(c => c.id === freezer.clientId);
-                    if (prevClient) {
-                        prevClient.freezerCode = "";
-                        prevClient.freezerBrand = "";
-                        prevClient.freezerVoltage = "";
-                        prevClient.freezerCapacity = "";
-                    }
-                }
-                
-                freezer.status = "alocado";
-                freezer.clientId = client.id;
-                freezer.clientName = client.name;
-                
-                client.freezerCode = freezer.code;
-                client.freezerBrand = freezer.brand;
-                client.freezerVoltage = freezer.voltage;
-                client.freezerCapacity = freezer.capacity;
-                client.deliveryDate = getBrazilTimeISO().split('T')[0];
-                
-                if (!freezer.movementHistory) freezer.movementHistory = [];
-                freezer.movementHistory.push({
-                    date: formatDateBrazil(getBrazilTimeISO()),
-                    from: oldLocationName,
-                    to: client.name,
-                    reason: reason
-                });
                 
             } else {
                 if (freezer.status === 'alocado') {
@@ -1446,12 +1593,13 @@ export function initForms() {
                     to: destName,
                     reason: reason
                 });
+
+                saveState();
+                closeModal("modal-move-freezer");
+                closeModal("modal-freezer-detail");
+                renderApp();
+                showToast("Movimentação de freezer realizada com sucesso!", "success");
             }
-            
-            saveState();
-            closeModal("modal-move-freezer");
-            closeModal("modal-freezer-detail");
-            renderApp();
         });
     }
 
@@ -1553,7 +1701,7 @@ export function initForms() {
             });
 
             if (!clientName || !tinaCode) {
-                alert("Nome do cliente e identificação do item são obrigatórios!");
+                showToast("Nome do cliente e identificação do item são obrigatórios!", "warning");
                 return;
             }
 
@@ -1618,7 +1766,7 @@ export function initForms() {
             const docLogisticsTollReturn = document.getElementById("doc-logistics-toll-return").checked;
 
             if (!clientName) {
-                alert("Nome do cliente é obrigatório!");
+                showToast("Nome do cliente é obrigatório!", "warning");
                 return;
             }
 
@@ -1665,7 +1813,7 @@ export function initForms() {
             }
 
             if (items.length === 0) {
-                alert("Adicione pelo menos um item com quantidade maior que zero para gerar o documento!");
+                showToast("Adicione pelo menos um item com quantidade maior que zero para gerar o documento!", "warning");
                 return;
             }
 
@@ -1784,12 +1932,12 @@ export function initForms() {
             const newPwd = document.getElementById("cfg-new-pwd").value;
 
             if (currentPwd !== state.adminPassword) {
-                alert("Senha atual incorreta!");
+                showToast("Senha atual incorreta!", "error");
                 return;
             }
 
             if (newPwd.length < 4) {
-                alert("A nova senha deve possuir pelo menos 4 caracteres!");
+                showToast("A nova senha deve possuir pelo menos 4 caracteres!", "warning");
                 return;
             }
 
@@ -1802,7 +1950,7 @@ export function initForms() {
             }
             saveState();
             adminPasswordForm.reset();
-            alert("Senha de administrador atualizada com sucesso!");
+            showToast("Senha de administrador atualizada com sucesso!", "success");
         });
     }
 
@@ -1853,7 +2001,7 @@ export function initForms() {
             });
             
             saveState();
-            alert("Preços padrão da fábrica e configurações avançadas atualizadas com sucesso!");
+            showToast("Preços padrão da fábrica e configurações avançadas atualizadas com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
         });
     }
@@ -1886,7 +2034,7 @@ export function initForms() {
             
             saveState();
             closeModal("modal-client-prices");
-            alert("Preços especiais salvos com sucesso!");
+            showToast("Preços especiais salvos com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
         });
     }
@@ -1904,7 +2052,7 @@ export function initForms() {
             state.backupSettings.frequencyDays = newFrequency;
             
             saveState();
-            alert("Configurações de backup e versão salvas com sucesso!");
+            showToast("Configurações de backup e versão salvas com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
         });
     }
@@ -1928,7 +2076,7 @@ export function initForms() {
             const unitWeightGrams = type === "Gelo Saborizado" ? (parseInt(document.getElementById("prod-unit-weight-g").value) || 0) : 0;
             
             if (!name) {
-                alert("O nome do item é obrigatório!");
+                showToast("O nome do item é obrigatório!", "warning");
                 return;
             }
             
@@ -1963,7 +2111,7 @@ export function initForms() {
                 if (window.renderRentalModalProducts) window.renderRentalModalProducts();
             }
             
-            alert("Item salvo com sucesso!");
+            showToast("Item salvo com sucesso!", "success");
         });
     }
 
@@ -1989,7 +2137,7 @@ export function initForms() {
             state.factorySettings.rentalTerms = (document.getElementById("cfg-factory-rental-terms") ? document.getElementById("cfg-factory-rental-terms").value.trim() : "");
             
             saveState();
-            alert("Dados comerciais atualizados com sucesso!");
+            showToast("Dados comerciais atualizados com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
             renderApp();
         });
@@ -2057,7 +2205,7 @@ export function initForms() {
             
             saveState();
             if (window.applyAppearanceTheme) window.applyAppearanceTheme();
-            alert("Configurações de tema e aparência salvas com sucesso!");
+            showToast("Configurações de tema e aparência salvas com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
             renderApp();
         });
@@ -2074,7 +2222,7 @@ export function initForms() {
             state.printSettings.showSignatures = document.getElementById("cfg-print-show-signatures").checked;
             
             saveState();
-            alert("Configurações de impressão salvas com sucesso!");
+            showToast("Configurações de impressão salvas com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();
         });
     }
@@ -2275,8 +2423,8 @@ export function copyGitHubLink() {
         urlInput.select();
         urlInput.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(urlInput.value)
-            .then(() => alert("Link copiado com sucesso!"))
-            .catch(() => alert("Falha ao copiar o link."));
+            .then(() => showToast("Link copiado com sucesso!", "success"))
+            .catch(() => showToast("Falha ao copiar o link.", "error"));
     }
 }
 
@@ -2329,10 +2477,10 @@ export function autoFillFirebaseSettings() {
     // Inicializar Firebase Sync
     if (window.initFirebase) {
         window.initFirebase(() => {
-            alert("Credenciais oficiais preenchidas e sincronização ativada com sucesso!");
+            showToast("Credenciais oficiais preenchidas e sincronização ativada com sucesso!", "success");
         });
     } else {
-        alert("Credenciais preenchidas e salvas! Recarregue a página para ativar.");
+        showToast("Credenciais preenchidas e salvas! Recarregue a página para ativar.", "info");
     }
 }
 
@@ -2386,7 +2534,7 @@ window.goToGitHubConfig = goToGitHubConfig;
 // ==========================================
 export async function generateMercadoPagoLink(title, amount) {
     if (!state.mercadoPago || !state.mercadoPago.enabled || !state.mercadoPago.accessToken) {
-        alert("A integração do Mercado Pago não está configurada ou ativada nas Configurações.");
+        showToast("A integração do Mercado Pago não está configurada ou ativada nas Configurações.", "warning");
         return null;
     }
     
@@ -2423,12 +2571,12 @@ export async function generateMercadoPagoLink(title, amount) {
             return data.init_point; // URL de checkout (Pix, Boleto, Cartão)
         } else {
             console.error("Erro MP:", data);
-            alert("Erro ao gerar link do Mercado Pago. Verifique se o Token é válido (Credenciais de Produção).");
+            showToast("Erro ao gerar link do Mercado Pago. Verifique se o Token é válido (Credenciais de Produção).", "error");
             return null;
         }
     } catch (err) {
         console.error(err);
-        alert("Erro de conexão com o Mercado Pago.");
+        showToast("Erro de conexão com o Mercado Pago.", "error");
         return null;
     }
 }
@@ -2497,7 +2645,7 @@ window.openOfflineSyncModal = function() {
     
     const queue = state.offlineChangesQueue || [];
     if (queue.length === 0) {
-        alert("Nenhuma alteração offline pendente de sincronização.");
+        showToast("Nenhuma alteração offline pendente de sincronização.", "warning");
         return;
     }
     
@@ -2529,7 +2677,7 @@ window.openOfflineSyncModal = function() {
 
 window.confirmOfflineSyncAll = function() {
     if (!navigator.onLine) {
-        alert("Você ainda está offline. Conecte-se à internet para sincronizar!");
+        showToast("Você ainda está offline. Conecte-se à internet para sincronizar!", "error");
         return;
     }
     
@@ -2548,7 +2696,7 @@ window.confirmOfflineSyncAll = function() {
     }
     
     // Feedback visual
-    alert("✅ Alterações offline sincronizadas com sucesso com o banco de dados Firebase!");
+    showToast("Alterações offline sincronizadas com sucesso com o banco de dados Firebase!", "success");
     
     // Re-render
     renderApp();

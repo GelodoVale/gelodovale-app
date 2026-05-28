@@ -123,12 +123,12 @@ export function openDocModal(docId = null) {
     document.getElementById("doc-logistics-distance").value = "0.0";
     document.getElementById("doc-logistics-avg-speed").value = logSettings.avgSpeed;
     document.getElementById("doc-logistics-vehicle-type").value = logSettings.vehicleType;
-    document.getElementById("doc-logistics-toll-base").value = logSettings.tollBase.toFixed(2);
-    document.getElementById("doc-logistics-toll-multiplier").value = logSettings.tollMultiplier.toFixed(1);
-    document.getElementById("doc-logistics-fuel-price").value = logSettings.fuelPrice.toFixed(2);
-    document.getElementById("doc-logistics-fuel-consumption").value = logSettings.fuelConsumption.toFixed(1);
+    document.getElementById("doc-logistics-toll-base").value = (parseFloat(logSettings.tollBase) || 0).toFixed(2);
+    document.getElementById("doc-logistics-toll-multiplier").value = (parseFloat(logSettings.tollMultiplier) || 0).toFixed(1);
+    document.getElementById("doc-logistics-fuel-price").value = (parseFloat(logSettings.fuelPrice) || 0).toFixed(2);
+    document.getElementById("doc-logistics-fuel-consumption").value = (parseFloat(logSettings.fuelConsumption) || 0).toFixed(1);
     document.getElementById("doc-logistics-markup-percent").value = logSettings.markupPercent;
-    document.getElementById("doc-logistics-markup-fixed").value = logSettings.markupFixed.toFixed(2);
+    document.getElementById("doc-logistics-markup-fixed").value = (parseFloat(logSettings.markupFixed) || 0).toFixed(2);
     document.getElementById("doc-logistics-toll-return").checked = logSettings.tollReturn;
 
     const calcContent = document.getElementById("doc-logistics-calc-content");
@@ -157,12 +157,12 @@ export function openDocModal(docId = null) {
                 document.getElementById("doc-logistics-distance").value = d.docLogisticsDistance;
                 document.getElementById("doc-logistics-avg-speed").value = d.docLogisticsAvgSpeed || logSettings.avgSpeed;
                 document.getElementById("doc-logistics-vehicle-type").value = d.docLogisticsVehicleType || logSettings.vehicleType;
-                document.getElementById("doc-logistics-toll-base").value = (d.docLogisticsTollBase !== undefined ? d.docLogisticsTollBase : logSettings.tollBase).toFixed(2);
-                document.getElementById("doc-logistics-toll-multiplier").value = (d.docLogisticsTollMultiplier !== undefined ? d.docLogisticsTollMultiplier : logSettings.tollMultiplier).toFixed(1);
-                document.getElementById("doc-logistics-fuel-price").value = (d.docLogisticsFuelPrice !== undefined ? d.docLogisticsFuelPrice : logSettings.fuelPrice).toFixed(2);
-                document.getElementById("doc-logistics-fuel-consumption").value = (d.docLogisticsFuelConsumption !== undefined ? d.docLogisticsFuelConsumption : logSettings.fuelConsumption).toFixed(1);
+                document.getElementById("doc-logistics-toll-base").value = (parseFloat(d.docLogisticsTollBase !== undefined ? d.docLogisticsTollBase : logSettings.tollBase) || 0).toFixed(2);
+                document.getElementById("doc-logistics-toll-multiplier").value = (parseFloat(d.docLogisticsTollMultiplier !== undefined ? d.docLogisticsTollMultiplier : logSettings.tollMultiplier) || 0).toFixed(1);
+                document.getElementById("doc-logistics-fuel-price").value = (parseFloat(d.docLogisticsFuelPrice !== undefined ? d.docLogisticsFuelPrice : logSettings.fuelPrice) || 0).toFixed(2);
+                document.getElementById("doc-logistics-fuel-consumption").value = (parseFloat(d.docLogisticsFuelConsumption !== undefined ? d.docLogisticsFuelConsumption : logSettings.fuelConsumption) || 0).toFixed(1);
                 document.getElementById("doc-logistics-markup-percent").value = (d.docLogisticsMarkupPercent !== undefined ? d.docLogisticsMarkupPercent : logSettings.markupPercent);
-                document.getElementById("doc-logistics-markup-fixed").value = (d.docLogisticsMarkupFixed !== undefined ? d.docLogisticsMarkupFixed : logSettings.markupFixed).toFixed(2);
+                document.getElementById("doc-logistics-markup-fixed").value = (parseFloat(d.docLogisticsMarkupFixed !== undefined ? d.docLogisticsMarkupFixed : logSettings.markupFixed) || 0).toFixed(2);
                 document.getElementById("doc-logistics-toll-return").checked = (d.docLogisticsTollReturn !== undefined ? d.docLogisticsTollReturn : logSettings.tollReturn);
             }
         }
@@ -201,7 +201,7 @@ export function populateDocClientDetails() {
             if (client && client.customPrices && client.customPrices[p.id] > 0) {
                 price = client.customPrices[p.id];
             }
-            priceInput.value = price.toFixed(2);
+            priceInput.value = (parseFloat(price) || 0).toFixed(2);
         }
         
         if (p.type === 'Gelo Saborizado') {
@@ -211,7 +211,7 @@ export function populateDocClientDetails() {
                 if (client && client.customPrices && client.customPrices[p.id + "_unit"] > 0) {
                     priceUnit = client.customPrices[p.id + "_unit"];
                 }
-                priceUnitInput.value = priceUnit.toFixed(2);
+                priceUnitInput.value = (parseFloat(priceUnit) || 0).toFixed(2);
             }
         }
     });
@@ -221,11 +221,18 @@ export function populateDocClientDetails() {
 }
 
 export function deleteDocument(docId) {
-    if (confirm("Deseja realmente excluir este documento comercial?")) {
-        state.documents = state.documents.filter(d => d.id !== docId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        "Deseja realmente excluir este documento comercial?",
+        () => {
+            state.documents = state.documents.filter(d => d.id !== docId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Documento comercial excluído com sucesso!", "success");
+        },
+        null,
+        "Excluir Documento",
+        "Excluir"
+    );
 }
 
 export function openDocumentPrint(docId) {
@@ -259,13 +266,13 @@ export function openDocumentPrint(docId) {
     // Montar tabela de itens
     let itemsRows = "";
     d.items.forEach(it => {
-        const totalItem = it.qty * it.price;
+        const totalItem = (parseInt(it.qty) || 0) * (parseFloat(it.price) || 0);
         itemsRows += `
             <tr>
                 <td style="padding: 6px; border-bottom: 1px dashed #ddd;">${it.name}</td>
                 <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: center;">${it.qty}</td>
-                <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${it.price.toFixed(2)}</td>
-                <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${totalItem.toFixed(2)}</td>
+                <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${(parseFloat(it.price) || 0).toFixed(2)}</td>
+                <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${(parseFloat(totalItem) || 0).toFixed(2)}</td>
             </tr>
         `;
     });
@@ -351,12 +358,12 @@ export function openDocumentPrint(docId) {
                     ${d.deliveryFee > 0 ? `
                         <tr>
                             <td colspan="3" style="padding: 6px; border-bottom: 1px dashed #ddd;">Taxa de Entrega / Frete</td>
-                            <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${d.deliveryFee.toFixed(2)}</td>
+                            <td style="padding: 6px; border-bottom: 1px dashed #ddd; text-align: right;">R$ ${(parseFloat(d.deliveryFee) || 0).toFixed(2)}</td>
                         </tr>
                     ` : ''}
                     <tr class="total-row">
                         <td colspan="3" style="padding: 8px 6px; text-align: left; font-weight: bold;">VALOR TOTAL DO DOCUMENTO</td>
-                        <td style="padding: 8px 6px; text-align: right; font-weight: bold; font-size: 1.1rem; color: #000;">R$ ${d.total.toFixed(2)}</td>
+                        <td style="padding: 8px 6px; text-align: right; font-weight: bold; font-size: 1.1rem; color: #000;">R$ ${(parseFloat(d.total) || 0).toFixed(2)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -416,7 +423,7 @@ export function renderDocModalProducts(documentObj = null) {
                 if (customNameEl && !customNameEl.value) {
                     customNameEl.value = it.name || "";
                     if (customQtyEl) customQtyEl.value = it.qty || 0;
-                    if (customPriceEl) customPriceEl.value = (it.price || 0).toFixed(2);
+                    if (customPriceEl) customPriceEl.value = (parseFloat(it.price) || 0).toFixed(2);
                 }
             }
         });
@@ -432,7 +439,7 @@ export function renderDocModalProducts(documentObj = null) {
             <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; align-items: center; margin-bottom: 0.25rem;">
                 <span style="font-size: 0.8rem; white-space: normal; line-height: 1.2; word-break: break-word;" title="${p.name}">${p.name}${p.type === 'Gelo Saborizado' ? ' (Fardo)' : ''}</span>
                 <input type="number" min="0" id="doc-qty-${p.id}" class="form-control doc-qty-input" data-prod-id="${p.id}" value="${qty}" style="padding: 6px 8px; font-size: 0.85rem;">
-                <input type="number" step="0.01" min="0" id="doc-price-${p.id}" class="form-control doc-price-input" data-prod-id="${p.id}" value="${price.toFixed(2)}" style="padding: 6px 8px; font-size: 0.85rem;">
+                <input type="number" step="0.01" min="0" id="doc-price-${p.id}" class="form-control doc-price-input" data-prod-id="${p.id}" value="${(parseFloat(price) || 0).toFixed(2)}" style="padding: 6px 8px; font-size: 0.85rem;">
             </div>
         `;
 
@@ -446,7 +453,7 @@ export function renderDocModalProducts(documentObj = null) {
                 <div class="form-row-grid" style="grid-template-columns: 2fr 1fr 1.2fr; gap: 0.5rem; align-items: center; margin-bottom: 0.25rem; border-left: 2px solid var(--color-primary); padding-left: 4px;">
                     <span style="font-size: 0.75rem; white-space: normal; line-height: 1.2; word-break: break-word; color: var(--color-text-muted);" title="${p.name} (Unidade)">↳ ${p.name} (Unidade)</span>
                     <input type="number" min="0" id="doc-qty-${p.id}_unit" class="form-control doc-qty-unit-input" data-prod-id="${p.id}_unit" value="${qtyUnit}" style="padding: 6px 8px; font-size: 0.85rem;">
-                    <input type="number" step="0.01" min="0" id="doc-price-${p.id}_unit" class="form-control doc-price-unit-input" data-prod-id="${p.id}_unit" value="${priceUnit.toFixed(2)}" style="padding: 6px 8px; font-size: 0.85rem;">
+                    <input type="number" step="0.01" min="0" id="doc-price-${p.id}_unit" class="form-control doc-price-unit-input" data-prod-id="${p.id}_unit" value="${(parseFloat(priceUnit) || 0).toFixed(2)}" style="padding: 6px 8px; font-size: 0.85rem;">
                 </div>
             `;
         }
@@ -460,7 +467,7 @@ export function printDocument() {
 
 export function downloadDocumentPDF() {
     if (typeof html2pdf === "undefined") {
-        alert("A biblioteca de geração de PDF ainda não foi carregada. Verifique sua conexão com a internet.");
+        window.showToast("A biblioteca de geração de PDF ainda não foi carregada. Verifique sua conexão com a internet.", "warning");
         return;
     }
 
@@ -525,7 +532,7 @@ export function downloadDocumentPDF() {
         }
     }).catch(err => {
         console.error("Erro ao gerar PDF:", err);
-        alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
+        window.showToast("Ocorreu um erro ao gerar o PDF. Tente novamente.", "error");
         if (btn) {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -569,14 +576,14 @@ export function shareDocumentWhatsApp() {
     text += `*Itens:*\n`;
     
     d.items.forEach(it => {
-        text += `- ${it.qty}x ${it.name} (R$ ${it.price.toFixed(2)}): R$ ${(it.qty * it.price).toFixed(2)}\n`;
+        text += `- ${it.qty}x ${it.name} (R$ ${(parseFloat(it.price) || 0).toFixed(2)}): R$ ${((parseInt(it.qty) || 0) * (parseFloat(it.price) || 0)).toFixed(2)}\n`;
     });
     
     if (d.deliveryFee > 0) {
-        text += `- Frete: R$ ${d.deliveryFee.toFixed(2)}\n`;
+        text += `- Frete: R$ ${(parseFloat(d.deliveryFee) || 0).toFixed(2)}\n`;
     }
     
-    text += `\n*Valor Total: R$ ${d.total.toFixed(2)}*\n\n`;
+    text += `\n*Valor Total: R$ ${(parseFloat(d.total) || 0).toFixed(2)}*\n\n`;
     text += `Obrigado pela parceria!`;
 
     const encodedText = encodeURIComponent(text);
@@ -585,10 +592,10 @@ export function shareDocumentWhatsApp() {
     if (!navigator.onLine) {
         navigator.clipboard.writeText(text)
             .then(() => {
-                alert("📶 Você está offline!\nO texto do recibo foi copiado para a sua área de transferência para que você possa colar no WhatsApp manualmente.");
+                window.showToast("📶 Você está offline!\nO texto do recibo foi copiado para a sua área de transferência para que você possa colar no WhatsApp manualmente.", "info");
             })
             .catch(() => {
-                alert("Erro ao copiar o texto para a área de transferência.");
+                window.showToast("Erro ao copiar o texto para a área de transferência.", "error");
             });
         return;
     }
@@ -645,23 +652,23 @@ export function shareDocumentEmail() {
     body += `Itens:\n`;
     
     d.items.forEach(it => {
-        body += `- ${it.qty}x ${it.name} (R$ ${it.price.toFixed(2)}): R$ ${(it.qty * it.price).toFixed(2)}\n`;
+        body += `- ${it.qty}x ${it.name} (R$ ${(parseFloat(it.price) || 0).toFixed(2)}): R$ ${((parseInt(it.qty) || 0) * (parseFloat(it.price) || 0)).toFixed(2)}\n`;
     });
     
     if (d.deliveryFee > 0) {
-        body += `- Frete: R$ ${d.deliveryFee.toFixed(2)}\n`;
+        body += `- Frete: R$ ${(parseFloat(d.deliveryFee) || 0).toFixed(2)}\n`;
     }
     
-    body += `\nValor Total: R$ ${d.total.toFixed(2)}\n\n`;
+    body += `\nValor Total: R$ ${(parseFloat(d.total) || 0).toFixed(2)}\n\n`;
     body += `Atenciosamente,\n${FACTORY_INFO.name}`;
 
     if (!navigator.onLine) {
         navigator.clipboard.writeText(body)
             .then(() => {
-                alert("📶 Você está offline!\nO texto do e-mail foi copiado para a sua área de transferência.");
+                window.showToast("📶 Você está offline!\nO texto do e-mail foi copiado para a sua área de transferência.", "info");
             })
             .catch(() => {
-                alert("Erro ao copiar o texto do e-mail.");
+                window.showToast("Erro ao copiar o texto do e-mail.", "error");
             });
         return;
     }
@@ -811,7 +818,7 @@ export function saveSignature() {
             }
             
             saveState();
-            alert("Assinatura do comodato salva com sucesso!");
+            window.showToast("Assinatura do comodato salva com sucesso!", "success");
             if (window.renderComodatoDetail) window.renderComodatoDetail(targetId);
             if (window.renderComodatosAdmin) window.renderComodatosAdmin();
         }
@@ -820,19 +827,19 @@ export function saveSignature() {
         if (rental) {
             rental.signatureBase64 = dataUrl;
             saveState();
-            alert("Assinatura do contrato salva com sucesso!");
+            window.showToast("Assinatura do contrato salva com sucesso!", "success");
             if (window.updateRentalContractPreview) window.updateRentalContractPreview(targetId);
         }
     } else {
         if (targetId === "TEST-0000") {
             window.testDocSignatureBase64 = dataUrl;
-            alert("Assinatura salva com sucesso no cupom de teste!");
+            window.showToast("Assinatura salva com sucesso no cupom de teste!", "success");
         } else {
             const doc = state.documents.find(item => item.id === targetId);
             if (doc) {
                 doc.signatureBase64 = dataUrl;
                 saveState();
-                alert("Assinatura salva com sucesso!");
+                window.showToast("Assinatura salva com sucesso!", "success");
             }
         }
     }
@@ -886,7 +893,7 @@ export async function generateMpFromDocument() {
     }
     
     if (d.total <= 0) {
-        alert("O valor do documento deve ser maior que zero para gerar cobrança no Mercado Pago.");
+        window.showToast("O valor do documento deve ser maior que zero para gerar cobrança no Mercado Pago.", "warning");
         return;
     }
     
@@ -900,12 +907,12 @@ export async function generateMpFromDocument() {
         const link = await window.generateMercadoPagoLink(`Recibo - ${d.clientName}`, d.total);
         if (link) {
             const phone = d.phone ? d.phone.replace(/\D/g, '') : '';
-            const msg = `Olá! Segue o link de pagamento do Mercado Pago (R$ ${d.total.toFixed(2).replace('.', ',')}) referente ao seu recibo.\nVocê pode escolher pagar via PIX ou Boleto clicando aqui:\n${link}`;
+            const msg = `Olá! Segue o link de pagamento do Mercado Pago (R$ ${(parseFloat(d.total) || 0).toFixed(2).replace('.', ',')}) referente ao seu recibo.\nVocê pode escolher pagar via PIX ou Boleto clicando aqui:\n${link}`;
             
             if (phone.length >= 10) {
                 window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
             } else {
-                alert(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`);
+                window.showToast(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`, "success");
             }
         }
     } finally {

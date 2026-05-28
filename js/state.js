@@ -3,6 +3,9 @@ import { pushToFirebase } from './sync.js';
 import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
+// Versão centralizada — altere aqui para atualizar em todo o sistema
+export const APP_VERSION = "3.2";
+
 export let state = {
     prices: {
         gelo5kg: 10.00,
@@ -489,7 +492,9 @@ export function loadState() {
     const saved = localStorage.getItem("gelcontrol_state");
     if (saved) {
         try {
-            state = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            Object.keys(state).forEach(k => delete state[k]);
+            Object.assign(state, parsed);
             normalizeStateArrays();
             // Retrocompatibilidade para arrays operacionais
             if (!state.clients) state.clients = [];
@@ -528,12 +533,18 @@ export function loadState() {
             
             // Backup e versões retrocompatíveis
             if (!state.backupSettings) {
-                state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: "2.7" };
+                state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
             } else {
                 if (state.backupSettings.frequencyDays === undefined) state.backupSettings.frequencyDays = 7;
                 if (state.backupSettings.lastBackupDate === undefined) state.backupSettings.lastBackupDate = "";
-                if (state.backupSettings.currentVersion === undefined || state.backupSettings.currentVersion === "1.0" || state.backupSettings.currentVersion === "2.5" || state.backupSettings.currentVersion === "2.6") {
-                     state.backupSettings.currentVersion = "2.7";
+                if (state.backupSettings.currentVersion === undefined || 
+                    state.backupSettings.currentVersion === "1.0" || 
+                    state.backupSettings.currentVersion === "2.5" || 
+                    state.backupSettings.currentVersion === "2.6" || 
+                    state.backupSettings.currentVersion === "2.7" ||
+                    state.backupSettings.currentVersion === "3.0" ||
+                    state.backupSettings.currentVersion === "3.1") {
+                     state.backupSettings.currentVersion = APP_VERSION;
                 }
             }
 
@@ -607,9 +618,12 @@ export function loadState() {
             console.error("Erro ao carregar dados salvos. Iniciando limpo.", e);
         }
     } else {
-        state = JSON.parse(JSON.stringify(MOCK_DATA));
+        // ⚠️ Nunca reatribuir state = ..., pois quebra a referência compartilhada!
+        // Usar Object.assign para preservar o objeto original e atualizar seus dados.
+        Object.keys(state).forEach(k => delete state[k]);
+        Object.assign(state, JSON.parse(JSON.stringify(MOCK_DATA)));
         state.adminPassword = "1120M@z@dr1";
-        state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: "2.7" };
+        state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
         state.factorySettings = {
             name: "GELO DO VALE INDÚSTRIA DE GELO LTDA.",
             cnpj: "65.007.307/0001-60",

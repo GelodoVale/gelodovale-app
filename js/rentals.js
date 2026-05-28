@@ -128,10 +128,10 @@ export function renderTinas() {
                         <i data-lucide="navigation" style="width: 12px; height: 12px;"></i> Dados de Logística:
                     </span>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; color: var(--color-text-muted);">
-                        <div>Dist. Ida: <strong style="color: #fff;">${r.logisticsDistance.toFixed(1)} km</strong></div>
+                        <div>Dist. Ida: <strong style="color: #fff;">${(parseFloat(r.logisticsDistance) || 0).toFixed(1)} km</strong></div>
                         <div>Tempo Viagem: <strong style="color: #fff;">${tripH}h ${tripM}m</strong></div>
                         <div>Veículo: <strong style="color: #fff;">${vehLabel}</strong></div>
-                        <div>Pedágios: <strong style="color: #fff;">R$ ${tripToll.toFixed(2)} /viagem</strong></div>
+                        <div>Pedágios: <strong style="color: #fff;">R$ ${(parseFloat(tripToll) || 0).toFixed(2)} /viagem</strong></div>
                     </div>
                 </div>
             `;
@@ -171,7 +171,7 @@ export function renderTinas() {
                     <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 6px; font-size: 0.75rem; color: var(--color-text-muted); border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px;">
                         <div style="display: flex; justify-content: space-between;">
                             <span>Aluguel base:</span>
-                            <span>R$ ${r.rentalFee.toFixed(2)}</span>
+                            <span>R$ ${(r.rentalFee || 0).toFixed(2)}</span>
                         </div>
                         ${r.shippingType !== "retirada" ? `
                         <div style="display: flex; justify-content: space-between;">
@@ -182,19 +182,19 @@ export function renderTinas() {
                         ${r.extraDayFee > 0 ? `
                         <div style="display: flex; justify-content: space-between; font-style: italic;">
                             <span>Diária Extra:</span>
-                            <span>R$ ${r.extraDayFee.toFixed(2)} / dia</span>
+                            <span>R$ ${(r.extraDayFee || 0).toFixed(2)} / dia</span>
                         </div>
                         ` : ''}
                         ${r.extraFee > 0 ? `
                         <div style="display: flex; justify-content: space-between; color: #ef4444; font-weight: 500;">
                             <span>Atraso (${r.extraDays} dias extras):</span>
-                            <span>+ R$ ${r.extraFee.toFixed(2)}</span>
+                            <span>+ R$ ${(r.extraFee || 0).toFixed(2)}</span>
                         </div>
                         ` : ''}
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 4px; font-weight: 600; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px;">
                         <span>Total Faturado:</span>
-                        <span style="color: var(--color-primary); font-size: 0.9rem;">R$ ${totalGeral.toFixed(2)}</span>
+                        <span style="color: var(--color-primary); font-size: 0.9rem;">R$ ${(parseFloat(totalGeral) || 0).toFixed(2)}</span>
                     </div>
                     ${r.returnDate ? `<div style="color: var(--color-primary); font-weight: 600; margin-top: 4px;">✓ Devolvido em: ${new Date(r.returnDate + 'T00:00:00').toLocaleDateString('pt-BR')}</div>` : ''}
                     ${r.notes ? `<div style="font-style: italic; font-size: 0.75rem; color: var(--color-text-muted); border-top: 1px solid rgba(255,255,255,0.03); padding-top: 4px; margin-top: 4px;">Obs: ${r.notes}</div>` : ''}
@@ -375,12 +375,12 @@ export function openRentalModal(rentalId = null) {
     document.getElementById("logistics-distance").value = "0.0";
     document.getElementById("logistics-avg-speed").value = logSettings.avgSpeed;
     document.getElementById("logistics-vehicle-type").value = logSettings.vehicleType;
-    document.getElementById("logistics-toll-base").value = logSettings.tollBase.toFixed(2);
-    document.getElementById("logistics-toll-multiplier").value = logSettings.tollMultiplier.toFixed(1);
-    document.getElementById("logistics-fuel-price").value = logSettings.fuelPrice.toFixed(2);
-    document.getElementById("logistics-fuel-consumption").value = logSettings.fuelConsumption.toFixed(1);
+    document.getElementById("logistics-toll-base").value = (parseFloat(logSettings.tollBase) || 0).toFixed(2);
+    document.getElementById("logistics-toll-multiplier").value = (parseFloat(logSettings.tollMultiplier) || 0).toFixed(1);
+    document.getElementById("logistics-fuel-price").value = (parseFloat(logSettings.fuelPrice) || 0).toFixed(2);
+    document.getElementById("logistics-fuel-consumption").value = (parseFloat(logSettings.fuelConsumption) || 0).toFixed(1);
     document.getElementById("logistics-markup-percent").value = logSettings.markupPercent;
-    document.getElementById("logistics-markup-fixed").value = logSettings.markupFixed.toFixed(2);
+    document.getElementById("logistics-markup-fixed").value = (parseFloat(logSettings.markupFixed) || 0).toFixed(2);
     document.getElementById("logistics-toll-return").checked = logSettings.tollReturn;
 
     const calcContent = document.getElementById("rental-logistics-calc-content");
@@ -417,12 +417,12 @@ export function openRentalModal(rentalId = null) {
                 document.getElementById("logistics-distance").value = r.logisticsDistance;
                 document.getElementById("logistics-avg-speed").value = r.logisticsAvgSpeed || logSettings.avgSpeed;
                 document.getElementById("logistics-vehicle-type").value = r.logisticsVehicleType || logSettings.vehicleType;
-                document.getElementById("logistics-toll-base").value = (r.logisticsTollBase !== undefined ? r.logisticsTollBase : logSettings.tollBase).toFixed(2);
-                document.getElementById("logistics-toll-multiplier").value = (r.logisticsTollMultiplier !== undefined ? r.logisticsTollMultiplier : logSettings.tollMultiplier).toFixed(1);
-                document.getElementById("logistics-fuel-price").value = (r.logisticsFuelPrice !== undefined ? r.logisticsFuelPrice : logSettings.fuelPrice).toFixed(2);
-                document.getElementById("logistics-fuel-consumption").value = (r.logisticsFuelConsumption !== undefined ? r.logisticsFuelConsumption : logSettings.fuelConsumption).toFixed(1);
+                document.getElementById("logistics-toll-base").value = (parseFloat(r.logisticsTollBase !== undefined ? r.logisticsTollBase : logSettings.tollBase) || 0).toFixed(2);
+                document.getElementById("logistics-toll-multiplier").value = (parseFloat(r.logisticsTollMultiplier !== undefined ? r.logisticsTollMultiplier : logSettings.tollMultiplier) || 0).toFixed(1);
+                document.getElementById("logistics-fuel-price").value = (parseFloat(r.logisticsFuelPrice !== undefined ? r.logisticsFuelPrice : logSettings.fuelPrice) || 0).toFixed(2);
+                document.getElementById("logistics-fuel-consumption").value = (parseFloat(r.logisticsFuelConsumption !== undefined ? r.logisticsFuelConsumption : logSettings.fuelConsumption) || 0).toFixed(1);
                 document.getElementById("logistics-markup-percent").value = (r.logisticsMarkupPercent !== undefined ? r.logisticsMarkupPercent : logSettings.markupPercent);
-                document.getElementById("logistics-markup-fixed").value = (r.logisticsMarkupFixed !== undefined ? r.logisticsMarkupFixed : logSettings.markupFixed).toFixed(2);
+                document.getElementById("logistics-markup-fixed").value = (parseFloat(r.logisticsMarkupFixed !== undefined ? r.logisticsMarkupFixed : logSettings.markupFixed) || 0).toFixed(2);
                 document.getElementById("logistics-toll-return").checked = (r.logisticsTollReturn !== undefined ? r.logisticsTollReturn : logSettings.tollReturn);
                 if (window.updateLogisticsTollMultiplier) window.updateLogisticsTollMultiplier();
                 if (window.calculateRentalLogistics) window.calculateRentalLogistics();
@@ -510,25 +510,39 @@ export function returnRental(rentalId) {
         extraChargeStr = `\n\n⚠️ O aluguel está atrasado em ${extraDays} dia(s).\nTaxa da diária extra: R$ ${rental.extraDayFee.toFixed(2)} por dia.\nValor adicional calculado: R$ ${extraFee.toFixed(2)}.\n\nDeseja adicionar esse valor de diárias extras ao faturamento deste aluguel?`;
     }
     
-    if (confirm(`Confirmar devolução do item ${rental.tinaCode}?${extraChargeStr}`)) {
-        rental.status = "returned";
-        rental.returnDate = returnDateStr;
-        if (extraFee > 0) {
-            rental.extraDays = extraDays;
-            rental.extraFee = extraFee;
-            rental.totalRevenue = (rental.totalRevenue || 0) + extraFee;
-        }
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        `Confirmar devolução do item ${rental.tinaCode}?${extraChargeStr}`,
+        () => {
+            rental.status = "returned";
+            rental.returnDate = returnDateStr;
+            if (extraFee > 0) {
+                rental.extraDays = extraDays;
+                rental.extraFee = extraFee;
+                rental.totalRevenue = (rental.totalRevenue || 0) + extraFee;
+            }
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Item devolvido com sucesso!", "success");
+        },
+        null,
+        "Receber Devolução",
+        "Confirmar"
+    );
 }
 
 export function deleteRental(rentalId) {
-    if (confirm("Deseja realmente excluir este registro de aluguel?")) {
-        state.rentals = (state.rentals || []).filter(r => r.id !== rentalId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        "Deseja realmente excluir este registro de aluguel?",
+        () => {
+            state.rentals = (state.rentals || []).filter(r => r.id !== rentalId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Registro de aluguel excluído com sucesso!", "success");
+        },
+        null,
+        "Excluir Aluguel",
+        "Excluir"
+    );
 }
 
 export function renderRentalModalProducts(rental = null) {

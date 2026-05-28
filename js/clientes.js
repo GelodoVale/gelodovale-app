@@ -8,7 +8,7 @@ export function renderClientes() {
     if (!clientsContainer) return;
     clientsContainer.innerHTML = "";
     
-    if (state.clients.length === 0) {
+    if ((state.clients || []).length === 0) {
         clientsContainer.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
                 <i data-lucide="users" style="width: 48px; height: 48px;"></i>
@@ -27,7 +27,7 @@ export function renderClientes() {
         let hasWarning = false;
         let hasDanger = false;
         
-        const geloProducts = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
+        const geloProducts = (state.products || []).filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
         geloProducts.forEach(p => {
             const prod = p.id;
             const max = (c.capacities && c.capacities[prod]) || 0;
@@ -129,6 +129,14 @@ export function renderClientes() {
                     <button class="btn btn-secondary" onclick="openComodato('${c.id}')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
                         <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Contrato
                     </button>
+                    ` : `<span style="flex:1;"></span>`}
+                    ${c.phone ? `
+                    <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
+                        <i data-lucide="phone-call" style="width: 15px; height: 15px;"></i>
+                    </a>
+                    <a href="https://api.whatsapp.com/send?phone=55${c.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-secondary btn-icon-only" title="WhatsApp ${c.phone}" style="color: #00f0ff; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05);">
+                        <i data-lucide="message-circle" style="width: 15px; height: 15px;"></i>
+                    </a>
                     ` : ''}
                     <button class="btn btn-secondary btn-icon-only" onclick="editClient('${c.id}')" title="Editar Cliente">
                         <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
@@ -203,7 +211,7 @@ export function openClientModal(clientId = null) {
             const debtGroup = document.getElementById("client-debt-group");
             if (debtGroup) {
                 debtGroup.style.display = "flex";
-                const debtVal = c.outstandingDebt || 0;
+                const debtVal = parseFloat(c.outstandingDebt) || 0;
                 document.getElementById("client-outstanding-debt").innerText = "R$ " + debtVal.toFixed(2).replace(".", ",");
                 const btnPay = document.getElementById("btn-pay-debt");
                 if (btnPay) {
@@ -229,26 +237,33 @@ export function openClientModal(clientId = null) {
 }
 
 export function deleteClient(clientId) {
-    if (confirm("Tem certeza que deseja remover este cliente? Todos os dados vinculados a ele serão mantidos no histórico financeiro, mas o freezer será liberado no inventário.")) {
-        const linkedFreezer = state.freezers.find(f => f.clientId === clientId);
-        if (linkedFreezer) {
-            linkedFreezer.status = "disponivel";
-            linkedFreezer.clientId = "";
-            linkedFreezer.clientName = "";
-            if (!linkedFreezer.movementHistory) linkedFreezer.movementHistory = [];
-            linkedFreezer.movementHistory.push({
-                date: window.formatDateBrazil(window.getBrazilTimeISO()),
-                from: "Cliente Removido",
-                to: "Fábrica",
-                reason: "Desvinculado devido à remoção do cliente"
-            });
-        }
-        
-        state.clients = state.clients.filter(c => c.id !== clientId);
-        state.orders = state.orders.filter(o => o.clientId !== clientId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        "Tem certeza que deseja remover este cliente? Todos os dados vinculados a ele serão mantidos no histórico financeiro, mas o freezer será liberado no inventário.",
+        () => {
+            const linkedFreezer = state.freezers.find(f => f.clientId === clientId);
+            if (linkedFreezer) {
+                linkedFreezer.status = "disponivel";
+                linkedFreezer.clientId = "";
+                linkedFreezer.clientName = "";
+                if (!linkedFreezer.movementHistory) linkedFreezer.movementHistory = [];
+                linkedFreezer.movementHistory.push({
+                    date: window.formatDateBrazil(window.getBrazilTimeISO()),
+                    from: "Cliente Removido",
+                    to: "Fábrica",
+                    reason: "Desvinculado devido à remoção do cliente"
+                });
+            }
+            
+            state.clients = state.clients.filter(c => c.id !== clientId);
+            state.orders = state.orders.filter(o => o.clientId !== clientId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Cliente removido com sucesso!", "success");
+        },
+        null,
+        "Remover Cliente",
+        "Remover"
+    );
 }
 
 export function editClient(clientId) {
@@ -272,7 +287,7 @@ export function renderClientModalProducts(client = null) {
     const container = document.getElementById("client-products-container");
     if (!container) return;
 
-    const geloProducts = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
+    const geloProducts = (state.products || []).filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
     
     if (geloProducts.length === 0) {
         container.innerHTML = `<p style="font-size: 0.8rem; color: var(--color-text-muted); text-align: center; padding: 0.5rem 0;">Nenhum produto de Gelo ou Gelo Saborizado cadastrado no catálogo.</p>`;
@@ -323,7 +338,7 @@ export function renderSalesModalProducts(client) {
     const container = document.getElementById("sales-products-container");
     if (!container) return;
 
-    const geloProducts = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
+    const geloProducts = (state.products || []).filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
 
     if (geloProducts.length === 0) {
         container.innerHTML = `<p style="font-size: 0.8rem; color: var(--color-text-muted); text-align: center; grid-column: 1 / -1; padding: 0.5rem 0;">Nenhum produto de Gelo ou Gelo Saborizado cadastrado no catálogo.</p>`;

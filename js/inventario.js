@@ -14,7 +14,7 @@ export function renderInventario() {
     const filterStatus = document.getElementById("filter-freezer-status").value;
     
     // Filtrar freezers
-    const filteredFreezers = state.freezers.filter(f => {
+    const filteredFreezers = (state.freezers || []).filter(f => {
         const matchesSearch = f.code.toLowerCase().includes(searchQuery) ||
                               f.brand.toLowerCase().includes(searchQuery) ||
                               (f.clientName && f.clientName.toLowerCase().includes(searchQuery));
@@ -176,15 +176,22 @@ export function deleteFreezer(freezerId) {
     if (!f) return;
     
     if (f.status === 'alocado') {
-        alert(`O freezer ${f.code} está alocado ao cliente "${f.clientName}". Desvincule-o no cadastro do cliente antes de remover do inventário!`);
+        window.showToast(`O freezer ${f.code} está alocado ao cliente "${f.clientName}". Desvincule-o no cadastro do cliente antes de remover do inventário!`, 'warning');
         return;
     }
     
-    if (confirm(`Deseja realmente excluir o freezer ${f.code} do inventário? Esta ação é irreversível.`)) {
-        state.freezers = state.freezers.filter(item => item.id !== freezerId);
-        saveState();
-        if (window.renderApp) window.renderApp();
-    }
+    window.showConfirm(
+        `Deseja realmente excluir o freezer ${f.code} do inventário? Esta ação é irreversível.`,
+        () => {
+            state.freezers = state.freezers.filter(item => item.id !== freezerId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Freezer removido com sucesso!", "success");
+        },
+        null,
+        "Excluir Freezer",
+        "Excluir"
+    );
 }
 
 export function openFreezerDetail(freezerId) {
@@ -485,6 +492,7 @@ export function printSticker() {
             </style>
         </head>
         <body>
+            <script>window.onafterprint = function() { window.close(); };<\/script>
             <div style="text-align: center; width: 100%;">
                 <div class="print-btn-container" style="margin-bottom: 20px;">
                     <button onclick="window.print();" style="padding: 10px 20px; font-size: 14px; font-weight: bold; background: #0072ff; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Imprimir Etiqueta</button>
@@ -497,8 +505,7 @@ export function printSticker() {
             </div>
         </body>
         </html>
-    `);
-    
+    `);    
     printWindow.document.close();
 }
 
@@ -605,7 +612,7 @@ export function startQRScanner() {
                 } else if (rental) {
                     openRentalModal(rental.id);
                 } else {
-                    alert(`Código Detectado: "${decodedText}". Equipamento ou Tina não cadastrados no sistema.`);
+                    window.showToast(`Código Detectado: "${decodedText}". Equipamento ou Tina não cadastrados no sistema.`, 'warning');
                 }
             },
             (errorMessage) => {
@@ -613,7 +620,7 @@ export function startQRScanner() {
             }
         ).catch(err => {
             console.error("Erro ao abrir câmera:", err);
-            alert("Não foi possível acessar a câmera traseira. Certifique-se de dar permissões de câmera ao seu navegador.");
+            window.showToast("Não foi possível acessar a câmera traseira. Certifique-se de dar permissões de câmera ao seu navegador.", "error");
             if (window.closeModal) window.closeModal('modal-scanner');
         });
     }, 200);

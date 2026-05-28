@@ -509,7 +509,7 @@ export async function saveWeatherConfig() {
                     return;
                 }
             } else {
-                alert(`Cidade "${cityInput}" não foi encontrada online. Aplicando valores inseridos manualmente.`);
+                window.showToast(`Cidade "${cityInput}" não foi encontrada online. Aplicando valores inseridos manualmente.`, 'warning');
             }
         } catch (e) {
             console.error("Falha ao buscar clima em tempo real, aplicando manual:", e);
@@ -600,7 +600,7 @@ export async function updateWeatherFromAPI() {
 
 export function detectUserLocation() {
     if (!navigator.geolocation) {
-        alert("Seu navegador não oferece suporte para geolocalização.");
+        window.showToast("Seu navegador não oferece suporte para geolocalização.", "error");
         return;
     }
 
@@ -661,7 +661,7 @@ export function detectUserLocation() {
                 document.getElementById("weather-temp-input").value = temp;
                 document.getElementById("weather-cond-select").value = condition;
 
-                alert(`Localização identificada:\n${city}`);
+                window.showToast(`Localização identificada: ${city}`, 'success');
             }
         } catch (e) {
             console.error("Erro na geolocalização reversa, aplicando coordenadas direta:", e);
@@ -699,13 +699,13 @@ export function detectUserLocation() {
                 }
             } catch (innerErr) {
                 console.error("Erro geral no clima via GPS:", innerErr);
-                alert("Não foi possível carregar as informações do clima via GPS.");
+                window.showToast("Não foi possível carregar as informações do clima via GPS.", "error");
             }
         } finally {
             if (btn) btn.innerHTML = originalText;
         }
     }, (error) => {
-        alert("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.");
+        window.showToast("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.", "warning");
         if (btn) btn.innerHTML = originalText;
     });
 }
@@ -826,7 +826,7 @@ export function saveDayNote() {
 
     saveState();
     renderCalendar(currentCalendarYear, currentCalendarMonth);
-    alert("Nota salva com sucesso para este dia!");
+    window.showToast("Nota salva com sucesso para este dia!", "success");
 }
 
 export function clearDayNote() {

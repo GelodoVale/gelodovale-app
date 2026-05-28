@@ -213,6 +213,12 @@ export function logoutUser() {
     const errEl = document.getElementById("login-error-msg");
     if (errEl) errEl.style.display = "none";
     
+    // Resetar select para a primeira opção (evita mostrar usuário anterior)
+    const selectEl = document.getElementById("login-user-select");
+    if (selectEl && selectEl.options.length > 0) {
+        selectEl.selectedIndex = 0;
+    }
+    
     // Show login screen
     const screenEl = document.getElementById("app-login-screen");
     if (screenEl) screenEl.style.display = "flex";
@@ -448,17 +454,17 @@ export function saveUser(event) {
     const password = document.getElementById("user-password").value;
     
     if (!name || !username || !password) {
-        alert("Por favor, preencha todos os campos obrigatórios.");
+        window.showToast("Por favor, preencha todos os campos obrigatórios.", "warning");
         return;
     }
     if (password && password.length < 4) {
-        alert('A senha deve ter pelo menos 4 caracteres.');
+        window.showToast("A senha deve ter pelo menos 4 caracteres.", "warning");
         return;
     }
     
     const existing = state.users.find(u => u.username === username && u.id !== id);
     if (existing) {
-        alert("Este login (usuário) já está em uso por outro perfil!");
+        window.showToast("Este login (usuário) já está em uso por outro perfil!", "error");
         return;
     }
     
@@ -518,7 +524,7 @@ function saveUserPostProcess(id, username) {
         renderUsersTable();
     }
     
-    alert("Usuário salvo com sucesso!");
+    window.showToast("Usuário salvo com sucesso!", "success");
 }
 
 export function deleteUser(userId) {
@@ -526,25 +532,31 @@ export function deleteUser(userId) {
     if (!user) return;
     
     if (user.username === "admin") {
-        alert("O usuário Administrador padrão não pode ser excluído.");
+        window.showToast("O usuário Administrador padrão não pode ser excluído.", "error");
         return;
     }
     
-    if (confirm(`Tem certeza que deseja excluir o usuário "${user.name}"?`)) {
-        state.users = state.users.filter(u => u.id !== userId);
-        saveState();
-        
-        const select = document.getElementById("login-user-select");
-        if (select) {
-            select.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name} (${u.username})</option>`).join("");
-        }
-        
-        if (window.activeAdminSubTab === "tab-usuarios") {
-            renderUsersTable();
-        }
-        
-        alert("Usuário excluído com sucesso!");
-    }
+    window.showConfirm(
+        `Tem certeza que deseja excluir o usuário "${user.name}"?`,
+        () => {
+            state.users = state.users.filter(u => u.id !== userId);
+            saveState();
+            
+            const select = document.getElementById("login-user-select");
+            if (select) {
+                select.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name} (${u.username})</option>`).join("");
+            }
+            
+            if (window.activeAdminSubTab === "tab-usuarios") {
+                renderUsersTable();
+            }
+            
+            window.showToast("Usuário excluído com sucesso!", "success");
+        },
+        null,
+        "Excluir Usuário",
+        "Excluir"
+    );
 }
 
 export function toggleSelectAllPermissions(checked) {

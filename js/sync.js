@@ -1,5 +1,5 @@
 // --- SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE) ---
-import { state, updateState, saveStateLocalOnly } from './state.js';
+import { state, updateState, saveStateLocalOnly, APP_VERSION } from './state.js';
 import { renderApp } from './app.js';
 
 let firebaseSDKLoaded = false;
@@ -206,7 +206,7 @@ export function initFirebase(callback) {
 // ─── FORÇAR SINCRONIZAÇÃO MANUAL ──────────────────────────────────────────
 export function forceManualSync() {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
-        alert('Sincronização desativada. Ative nas configurações primeiro.');
+        window.showToast('Sincronização desativada. Ative nas configurações primeiro.', 'warning');
         return;
     }
     state.lastUpdated = Date.now();
@@ -244,7 +244,7 @@ export function saveFirebaseSettings() {
 
     // Validar se todos os campos estão preenchidos ao ativar
     if (enabled && (!apiKey || !projectId || !databaseURL || !deviceKey)) {
-        alert('Preencha todas as configurações do Firebase antes de ativar a sincronização.');
+        window.showToast('Preencha todas as configurações do Firebase antes de ativar a sincronização.', 'warning');
         return;
     }
 
@@ -255,7 +255,7 @@ export function saveFirebaseSettings() {
     saveStateLocalOnly();
     if (enabled) initFirebase();
 
-    alert('Configurações do Firebase salvas!');
+    window.showToast('Configurações do Firebase salvas!', 'success');
 }
 
 // ─── INDICADOR DE STATUS NO CABEÇALHO ─────────────────────────────────────
@@ -341,7 +341,10 @@ export async function checkOneDriveSync() {
     }
 
     try {
-        const response = await fetch("../state_backup.json");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        const response = await fetch("../state_backup.json", { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (response.ok) {
             const payload = await response.json();
             const actualData = payload.data ? payload.data : payload;
@@ -363,7 +366,11 @@ export async function checkOneDriveSync() {
             }
         }
     } catch (err) {
-        console.log("OneDrive local backup not loaded automatically via fetch:", err);
+        if (err.name === 'AbortError') {
+            console.log("OneDrive backup fetch timed out after 5s — skipping.");
+        } else {
+            console.log("OneDrive local backup not loaded automatically via fetch:", err);
+        }
     }
 }
 
@@ -373,7 +380,7 @@ export function saveStateToOneDrive() {
         saveStateLocalOnly();
         
         const backupPayload = {
-            version: state.backupSettings?.currentVersion || "2.7",
+            version: state.backupSettings?.currentVersion || APP_VERSION,
             date: window.getBrazilTimeISO(),
             data: state
         };
@@ -388,7 +395,7 @@ export function saveStateToOneDrive() {
         
         showOneDriveToast("Backup baixado! Substitua na pasta GelodoVale-system do OneDrive.");
     } catch (e) {
-        alert("Erro ao salvar no OneDrive: " + e.message);
+        window.showToast("Erro ao salvar no OneDrive: " + e.message, "error");
     }
 }
 

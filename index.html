@@ -30,6 +30,22 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
+    <!-- SISTEMA DE TOAST E CONFIRM -->
+    <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+    <div id="confirm-overlay" class="hidden">
+        <div class="confirm-dialog">
+            <div class="confirm-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <h3 id="confirm-title">Confirmar ação</h3>
+            <p id="confirm-message">Tem certeza que deseja continuar?</p>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary" id="confirm-cancel-btn">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-ok-btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- BANNER DE STATUS CONEXÃO OFFLINE -->
     <div id="offline-status-banner" style="display: none; background: rgba(239, 68, 68, 0.15); border-bottom: 1px solid rgba(239, 68, 68, 0.3); color: #ff4d4d; font-size: 0.8rem; font-weight: 600; text-align: center; padding: 10px; z-index: 10000; position: sticky; top: 0; backdrop-filter: blur(12px); align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(239,68,68,0.15);">
         <i data-lucide="wifi-off" style="width: 16px; height: 16px;"></i>
@@ -139,7 +155,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p id="app-sidebar-version">Gelo do Vale v2.7 (26/05/2026 20:42)</p>
+                <p id="app-sidebar-version">Gelo do Vale v3.2 (28/05/2026)</p>
                 <p>Painel de Distribuição</p>
             </div>
         </aside>
@@ -591,8 +607,11 @@
                         <div id="tab-financeiro" class="admin-subtab-content active">
                             <!-- Painel Financeiro e Previsão de Demanda -->
                             <div class="dashboard-panel" id="admin-financial-dashboard" style="width: 100%; margin-bottom: 1.5rem;">
-                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <h2>Painel Financeiro & Previsão de Demanda (Admin)</h2>
+                                    <button type="button" class="btn btn-primary btn-generate-report" onclick="generateMonthlyPDFReport()" style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Gerar Relatório do Mês
+                                    </button>
                                 </div>
                                 <div style="padding: 1.5rem 0 0 0; display: flex; flex-direction: column; gap: 1.5rem;">
                                     <!-- KPI Row -->

@@ -157,19 +157,19 @@ export function saveNewComodato(e) {
     const notes = document.getElementById("comodato-notes").value.trim();
     
     if (!clientId || !freezerCode || !startDate) {
-        alert("Por favor, preencha todos os campos obrigatórios (*).");
+        window.showToast("Por favor, preencha todos os campos obrigatórios (*).", "warning");
         return;
     }
     
     const client = state.clients.find(c => c.id === clientId);
     if (!client) {
-        alert("Cliente selecionado inválido.");
+        window.showToast("Cliente selecionado inválido.", "error");
         return;
     }
     
     const freezer = state.freezers ? state.freezers.find(f => f.code === freezerCode) : null;
     if (!freezer) {
-        alert("Freezer selecionado inválido.");
+        window.showToast("Freezer selecionado inválido.", "error");
         return;
     }
     
@@ -211,7 +211,7 @@ export function saveNewComodato(e) {
     saveState();
     if (window.closeModal) window.closeModal("modal-create-comodato");
     if (window.renderApp) window.renderApp();
-    alert("Comodato criado com sucesso! Lembre-se de coletar a assinatura eletrônica do cliente.");
+    window.showToast("Comodato criado com sucesso! Lembre-se de coletar a assinatura eletrônica do cliente.", "success");
 }
 
 export function openComodatoDetail(comId) {
@@ -221,7 +221,7 @@ export function openComodatoDetail(comId) {
 }
 
 export function renderComodatoDetail(comId) {
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
     const client = state.clients.find(c => c.id === comodato.clientId);
@@ -358,7 +358,7 @@ export function renderComodatoDetail(comId) {
 }
 
 export function saveComodatoNotes(comId) {
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     const notesVal = document.getElementById("det-com-general-notes").value;
     comodato.notes = notesVal;
@@ -369,14 +369,14 @@ export function saveComodatoNotes(comId) {
     }
     
     saveState();
-    alert("Observações salvas com sucesso!");
+    window.showToast("Observações salvas com sucesso!", "success");
     renderComodatoDetail(comId);
     renderComodatosAdmin();
 }
 
 export function uploadComodatoPhotos(event) {
     const comId = window.currentComodatoId;
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
     const files = event.target.files;
@@ -385,7 +385,7 @@ export function uploadComodatoPhotos(event) {
     if (!comodato.photos) comodato.photos = [];
     
     if (comodato.photos.length + files.length > 10) {
-        alert("Limite de 10 fotos por comodato atingido.");
+        window.showToast("Limite de 10 fotos por comodato atingido.", "warning");
         return;
     }
     
@@ -445,64 +445,76 @@ export function uploadComodatoPhotos(event) {
 }
 
 export function deleteComodatoPhoto(comId, photoIndex) {
-    if (!confirm("Tem certeza que deseja excluir esta foto?")) return;
-    const comodato = state.comodatos.find(c => c.id === comId);
-    if (!comodato) return;
-    
-    if (comodato.photos && comodato.photos[photoIndex] !== undefined) {
-        comodato.photos.splice(photoIndex, 1);
-        saveState();
-        renderComodatoDetail(comId);
-    }
+    window.showConfirm(
+        "Tem certeza que deseja excluir esta foto?",
+        () => {
+            const comodato = (state.comodatos || []).find(c => c.id === comId);
+            if (!comodato) return;
+            
+            if (comodato.photos && comodato.photos[photoIndex] !== undefined) {
+                comodato.photos.splice(photoIndex, 1);
+                saveState();
+                renderComodatoDetail(comId);
+            }
+            window.showToast("Foto excluída com sucesso!", "success");
+        },
+        null,
+        "Excluir Foto",
+        "Excluir"
+    );
 }
 
 export function executeComodatoReturn() {
     const comId = window.currentComodatoId;
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
     const returnDate = document.getElementById("comodato-withdrawal-date").value;
     const returnNotes = document.getElementById("comodato-withdrawal-notes").value;
     
     if (!returnDate) {
-        alert("Por favor, preencha a data de retirada.");
+        window.showToast("Por favor, preencha a data de retirada.", "warning");
         return;
     }
     
-    if (!confirm("Confirmar a retirada / devolução deste freezer? O comodato será finalizado e o equipamento ficará disponível para alocação.")) {
-        return;
-    }
-    
-    comodato.status = 'retirado';
-    comodato.returnDate = returnDate;
-    comodato.returnNotes = returnNotes;
-    
-    const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
-    if (freezer) {
-        freezer.status = 'disponivel';
-        delete freezer.clientId;
-        delete freezer.clientName;
-        delete freezer.deliveryDate;
-    }
-    
-    const client = state.clients.find(c => c.id === comodato.clientId);
-    if (client) {
-        delete client.freezerCode;
-        delete client.freezerBrand;
-        delete client.freezerVoltage;
-        delete client.freezerCapacity;
-        delete client.deliveryDate;
-    }
-    
-    saveState();
-    alert("Retirada registrada com sucesso! O freezer voltou a ficar disponível.");
-    if (window.closeModal) window.closeModal("modal-comodato-detail");
-    if (window.renderApp) window.renderApp();
+    window.showConfirm(
+        "Confirmar a retirada / devolução deste freezer? O comodato será finalizado e o equipamento ficará disponível para alocação.",
+        () => {
+            comodato.status = 'retirado';
+            comodato.returnDate = returnDate;
+            comodato.returnNotes = returnNotes;
+            
+            const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
+            if (freezer) {
+                freezer.status = 'disponivel';
+                delete freezer.clientId;
+                delete freezer.clientName;
+                delete freezer.deliveryDate;
+            }
+            
+            const client = state.clients.find(c => c.id === comodato.clientId);
+            if (client) {
+                delete client.freezerCode;
+                delete client.freezerBrand;
+                delete client.freezerVoltage;
+                delete client.freezerCapacity;
+                delete client.deliveryDate;
+            }
+            
+            saveState();
+            window.showToast("Retirada registrada com sucesso! O freezer voltou a ficar disponível.", "success");
+            if (window.closeModal) window.closeModal("modal-comodato-detail");
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Registrar Retirada",
+        "Confirmar"
+    );
 }
 
 export function getComodatoPortalURL(comId) {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled || !state.firebaseConfig.apiKey) {
-        alert("Atenção: A sincronização com o Firebase precisa estar ativa e configurada nas Configurações da Fábrica para usar o Portal de Assinatura do Cliente.");
+        window.showToast("Atenção: A sincronização com o Firebase precisa estar ativa e configurada nas Configurações da Fábrica para usar o Portal de Assinatura do Cliente.", "warning");
         return null;
     }
     const { apiKey, projectId, databaseURL, deviceKey } = state.firebaseConfig;
@@ -515,7 +527,7 @@ export function sendComodatoWhatsAppLink(comId) {
     const url = getComodatoPortalURL(comId);
     if (!url) return;
     
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
     const client = state.clients.find(c => c.id === comodato.clientId);
@@ -523,7 +535,7 @@ export function sendComodatoWhatsAppLink(comId) {
     const clientPhone = client ? client.phone : comodato.clientPhone;
     
     if (!clientPhone) {
-        alert("Este cliente não possui telefone cadastrado.");
+        window.showToast("Este cliente não possui telefone cadastrado.", "warning");
         return;
     }
     
@@ -532,10 +544,10 @@ export function sendComodatoWhatsAppLink(comId) {
     if (!navigator.onLine) {
         navigator.clipboard.writeText(message)
             .then(() => {
-                alert("📶 Você está offline!\nO link de assinatura e mensagem do comodato foram copiados para a sua área de transferência para colar manualmente.");
+                window.showToast("📶 Você está offline!\nO link de assinatura e mensagem do comodato foram copiados para a sua área de transferência para colar manualmente.", "info");
             })
             .catch(() => {
-                alert("Erro ao copiar a mensagem.");
+                window.showToast("Erro ao copiar a mensagem.", "error");
             });
         return;
     }
@@ -551,7 +563,7 @@ export function sendComodatoEmailLink(comId) {
     const url = getComodatoPortalURL(comId);
     if (!url) return;
     
-    const comodato = state.comodatos.find(c => c.id === comId);
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
     const client = state.clients.find(c => c.id === comodato.clientId);
@@ -564,10 +576,10 @@ export function sendComodatoEmailLink(comId) {
         const fullEmailText = `Assunto: ${subjectText}\n\n${bodyText}`;
         navigator.clipboard.writeText(fullEmailText)
             .then(() => {
-                alert("📶 Você está offline!\nO texto do e-mail de comodato foi copiado para a sua área de transferência.");
+                window.showToast("📶 Você está offline!\nO texto do e-mail de comodato foi copiado para a sua área de transferência.", "info");
             })
             .catch(() => {
-                alert("Erro ao copiar o texto do e-mail.");
+                window.showToast("Erro ao copiar o texto do e-mail.", "error");
             });
         return;
     }
@@ -819,6 +831,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
                     <i data-lucide="check" style="width: 14px; height: 14px;"></i> Assinar e Enviar
                 </button>
             </div>
+            <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
         </div>
     `;
     
@@ -831,19 +844,19 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
         const addressVal = document.getElementById("portal-client-address").value.trim();
         
         if (!docVal) {
-            alert("Por favor, preencha o seu CNPJ ou CPF.");
+            window.showToast("Por favor, preencha o seu CNPJ ou CPF.", "warning");
             return;
         }
         if (!phoneVal) {
-            alert("Por favor, preencha o seu Telefone/WhatsApp.");
+            window.showToast("Por favor, preencha o seu Telefone/WhatsApp.", "warning");
             return;
         }
         if (!addressVal) {
-            alert("Por favor, preencha o endereço completo de instalação.");
+            window.showToast("Por favor, preencha o endereço completo de instalação.", "warning");
             return;
         }
         if (!portalHasDrawn) {
-            alert("Por favor, desenhe sua assinatura no campo indicado antes de enviar.");
+            window.showToast("Por favor, desenhe sua assinatura no campo indicado antes de enviar.", "warning");
             return;
         }
         
@@ -888,7 +901,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
             })
             .catch(err => {
                 console.error("Erro ao salvar assinatura remota no Firebase:", err);
-                alert("Ocorreu um erro ao enviar sua assinatura para o servidor. Por favor, tente novamente: " + err.message);
+                window.showToast("Ocorreu um erro ao enviar sua assinatura para o servidor. Por favor, tente novamente: " + err.message, "error");
                 if (btnSubmit) btnSubmit.disabled = false;
                 if (btnClear) btnClear.disabled = false;
                 if (btnSubmit) btnSubmit.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Assinar e Enviar';
@@ -1012,7 +1025,7 @@ export function renderPortalContractTerms(comodato, client, remoteState) {
 }
 
 export function openComodato(comId) {
-    let comodato = state.comodatos ? state.comodatos.find(c => c.id === comId) : null;
+    let comodato = state.comodatos ? (state.comodatos || []).find(c => c.id === comId) : null;
     let client, freezerCode, freezerBrand, freezerVoltage, freezerCapacity, dataEntrega, notes;
     
     if (comodato) {
@@ -1032,7 +1045,7 @@ export function openComodato(comId) {
         freezerCapacity = client.freezerCapacity || '';
         dataEntrega = client.deliveryDate ? new Date(client.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
         notes = client.maintenanceNotes || '';
-        comodato = state.comodatos ? state.comodatos.find(c => c.clientId === client.id && c.freezerCode === freezerCode && c.status !== 'retirado') : null;
+        comodato = state.comodatos ? (state.comodatos || []).find(c => c.clientId === client.id && c.freezerCode === freezerCode && c.status !== 'retirado') : null;
     }
 
     if (!client) return;
@@ -1206,14 +1219,14 @@ export function openRentalContract(rentalId) {
 }
 
 export function updateRentalContractPreview(rentalId) {
-    const rental = state.rentals.find(r => r.id === rentalId);
+    const rental = (state.rentals || []).find(r => r.id === rentalId);
     if (!rental) return;
 
     const dataEntrega = rental.deliveryDate ? new Date(rental.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
     const dataPrevisaoRetirada = rental.expectedReturnDate ? new Date(rental.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
     const dataAtual = window.formatDateBrazil(window.getBrazilTimeISO());
 
-    const matchingProd = state.products.find(p => p.id === rental.itemType);
+    const matchingProd = (state.products || []).find(p => p.id === rental.itemType);
     const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
 
     const totalGeral = rental.totalRevenue || (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));

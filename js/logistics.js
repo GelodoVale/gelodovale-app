@@ -163,7 +163,7 @@ export function applyCalculatedLogistics() {
     if (deliveryFeeInput && pickupFeeInput) {
         deliveryFeeInput.value = suggestedValue.toFixed(2);
         pickupFeeInput.value = suggestedValue.toFixed(2);
-        alert(`Valores de frete aplicados com sucesso!\nEntrega: R$ ${suggestedValue.toFixed(2)}\nBusca: R$ ${suggestedValue.toFixed(2)}`);
+        window.showToast(`Valores de frete aplicados com sucesso!\nEntrega: R$ ${suggestedValue.toFixed(2)}\nBusca: R$ ${suggestedValue.toFixed(2)}`, "success");
     }
 }
 
@@ -351,7 +351,7 @@ export function applyDocCalculatedLogistics() {
     const deliveryFeeInput = document.getElementById("doc-delivery-fee");
     if (deliveryFeeInput) {
         deliveryFeeInput.value = suggestedValue.toFixed(2);
-        alert(`Valor de frete aplicado com sucesso!\nFrete (${opType === "simples" ? "Simples" : "Duplo"}): R$ ${suggestedValue.toFixed(2)}`);
+        window.showToast(`Valor de frete aplicado com sucesso!\nFrete (${opType === "simples" ? "Simples" : "Duplo"}): R$ ${suggestedValue.toFixed(2)}`, "success");
     }
 }
 
@@ -362,7 +362,7 @@ export async function fetchDocRouteDistance(silent = false) {
 
     if (!clientAddress) {
         if (!silent) {
-            alert("Por favor, insira o endereço do cliente no campo 'Endereço de Entrega' primeiro!");
+            window.showToast("Por favor, insira o endereço do cliente no campo 'Endereço de Entrega' primeiro!", "warning");
         }
         return;
     }
@@ -447,7 +447,7 @@ export async function fetchDocRouteDistance(silent = false) {
             statusEl.innerText = `Erro: ${error.message}`;
         }
         if (!silent) {
-            alert(`Não foi possível calcular a rota de forma 100% automática:\n${error.message}\n\nVocê pode usar os botões "Google Maps" ou "Waze" ao lado para abrir a rota no seu mapa, ver a quilometragem e preenchê-la manualmente.`);
+            window.showToast(`Não foi possível calcular a rota de forma 100% automática:\n${error.message}\n\nVocê pode usar os botões "Google Maps" ou "Waze" ao lado para abrir a rota no seu mapa e preenchê-la manualmente.`, "error");
         }
     } finally {
         if (btn) {
@@ -460,7 +460,7 @@ export async function fetchDocRouteDistance(silent = false) {
 export function openDocRouteInGoogleMaps() {
     const clientAddress = document.getElementById("doc-address").value.trim();
     if (!clientAddress) {
-        alert("Por favor, insira o endereço do cliente primeiro!");
+        window.showToast("Por favor, insira o endereço do cliente primeiro!", "warning");
         return;
     }
     const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
@@ -471,7 +471,7 @@ export function openDocRouteInGoogleMaps() {
 export function openDocRouteInWaze() {
     const clientAddress = document.getElementById("doc-address").value.trim();
     if (!clientAddress) {
-        alert("Por favor, insira o endereço do cliente primeiro!");
+        window.showToast("Por favor, insira o endereço do cliente primeiro!", "warning");
         return;
     }
     const url = `https://waze.com/ul?q=${encodeURIComponent(clientAddress)}&navigate=yes`;
@@ -485,7 +485,7 @@ export async function fetchRentalRouteDistance(silent = false) {
 
     if (!clientAddress) {
         if (!silent) {
-            alert("Por favor, insira o endereço do cliente no campo 'Endereço de Entrega' primeiro!");
+            window.showToast("Por favor, insira o endereço do cliente no campo 'Endereço de Entrega' primeiro!", "warning");
         }
         return;
     }
@@ -570,7 +570,7 @@ export async function fetchRentalRouteDistance(silent = false) {
             statusEl.innerText = `Erro: ${error.message}`;
         }
         if (!silent) {
-            alert(`Não foi possível calcular a rota de forma 100% automática:\n${error.message}\n\nVocê pode usar os botões "Google Maps" ou "Waze" ao lado para abrir a rota no seu mapa, ver a quilometragem e preenchê-la manualmente.`);
+            window.showToast(`Não foi possível calcular a rota de forma 100% automática:\n${error.message}\n\nVocê pode usar os botões "Google Maps" ou "Waze" ao lado para abrir a rota no seu mapa e preenchê-la manualmente.`, "error");
         }
     } finally {
         if (btn) {
@@ -583,7 +583,7 @@ export async function fetchRentalRouteDistance(silent = false) {
 export function openRentalRouteInGoogleMaps() {
     const clientAddress = document.getElementById("rental-address").value.trim();
     if (!clientAddress) {
-        alert("Por favor, insira o endereço do cliente primeiro!");
+        window.showToast("Por favor, insira o endereço do cliente primeiro!", "warning");
         return;
     }
     const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
@@ -594,7 +594,7 @@ export function openRentalRouteInGoogleMaps() {
 export function openRentalRouteInWaze() {
     const clientAddress = document.getElementById("rental-address").value.trim();
     if (!clientAddress) {
-        alert("Por favor, insira o endereço do cliente primeiro!");
+        window.showToast("Por favor, insira o endereço do cliente primeiro!", "warning");
         return;
     }
     const url = `https://waze.com/ul?q=${encodeURIComponent(clientAddress)}&navigate=yes`;
@@ -606,7 +606,7 @@ export function optimizeDeliveryRoute() {
     const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
     
     if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
-        alert("Por favor, selecione pelo menos um pedido ou sugestão de visita para traçar a rota.");
+        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para traçar a rota.", "warning");
         return;
     }
     
@@ -632,7 +632,7 @@ export function optimizeDeliveryRoute() {
     });
     
     if (uniqueIntermediaries.size === 0) {
-        alert("Nenhum endereço válido encontrado nos itens selecionados.");
+        window.showToast("Nenhum endereço válido encontrado nos itens selecionados.", "warning");
         return;
     }
     
@@ -649,7 +649,7 @@ export function shareOptimizedRouteWhatsApp() {
     const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
     
     if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
-        alert("Por favor, selecione pelo menos um pedido ou sugestão de visita para compartilhar a rota.");
+        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para compartilhar a rota.", "warning");
         return;
     }
     
@@ -684,7 +684,7 @@ export function shareOptimizedRouteWhatsApp() {
     });
     
     if (uniqueIntermediaries.length === 0) {
-        alert("Nenhum endereço válido encontrado nos itens selecionados.");
+        window.showToast("Nenhum endereço válido encontrado nos itens selecionados.", "warning");
         return;
     }
     
@@ -709,10 +709,10 @@ export function shareOptimizedRouteWhatsApp() {
     if (!navigator.onLine) {
         navigator.clipboard.writeText(msg)
             .then(() => {
-                alert("📶 Você está offline!\nO roteiro de entregas e link do Google Maps foram copiados para a sua área de transferência para colar manualmente.");
+                window.showToast("📶 Você está offline!\nO roteiro de entregas e link do Google Maps foram copiados para a sua área de transferência para colar manualmente.", "info");
             })
             .catch(() => {
-                alert("Erro ao copiar o roteiro.");
+                window.showToast("Erro ao copiar o roteiro.", "error");
             });
         return;
     }

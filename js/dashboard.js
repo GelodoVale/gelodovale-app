@@ -1,6 +1,11 @@
 // --- TELA 1: RENDERIZAÇÃO DO DASHBOARD E GRÁFICOS ---
 import { state } from './state.js';
 import { renderWidgets } from './widgets.js';
+import { getWarrantyInfo } from './inventario.js';
+
+// Variáveis privadas de módulo para os charts (evita vazamento global)
+let _revChart = null;
+let _prodChart = null;
 
 export function renderDashboard() {
     // 1. Calcular indicadores KPIs
@@ -48,6 +53,16 @@ export function renderDashboard() {
             }
         });
     }
+
+    // Melhoria 1: Somar faturamento de documentos comerciais (recibos/notas) do mês
+    (state.documents || []).forEach(doc => {
+        if ((doc.type === 'recibo' || doc.type === 'nota') && doc.date) {
+            const docDate = new Date(doc.date + 'T00:00:00');
+            if (!isNaN(docDate) && docDate.getMonth() === currentMonth && docDate.getFullYear() === currentYear) {
+                totalRevenueMonth += (parseFloat(doc.total) || 0);
+            }
+        }
+    });
 
     const pendingOrdersCount = (state.orders || []).filter(o => o.status === "pending").length;
     const activeRentalsCount = state.rentals ? (state.rentals || []).filter(r => r.status === "active" || r.status === "overdue").length : 0;
@@ -189,6 +204,7 @@ export function renderDashboardAlerts() {
     }
     
     // Renderizar alertas
+    // Renderizar alertas de estoque
     if (alerts.length === 0) {
         alertsContainer.innerHTML += `
             <div class="empty-alerts" style="margin-top: 1rem;">
@@ -213,6 +229,40 @@ export function renderDashboardAlerts() {
             `;
         });
     }
+
+    // Funcionalidade 3: Alertas de Garantia Expirando (< 30 dias)
+    const today = new Date();
+    const warrantyAlerts = (state.freezers || []).filter(f => {
+        if (!f.purchaseDate || !f.warrantyMonths) return false;
+        const purchaseDate = new Date(f.purchaseDate + 'T00:00:00');
+        const expiryDate = new Date(purchaseDate);
+        expiryDate.setMonth(purchaseDate.getMonth() + parseInt(f.warrantyMonths));
+        const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 30;
+    });
+
+    if (warrantyAlerts.length > 0) {
+        alertsContainer.innerHTML += `
+            <div style="margin-top: 1rem; padding: 10px; background: rgba(255,183,3,0.06); border: 1px solid rgba(255,183,3,0.2); border-radius: 8px;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #ffb703; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="shield-alert" style="width:13px;height:13px;"></i> Garantias Vencendo em breve
+                </div>
+                ${warrantyAlerts.map(f => {
+                    const purchaseDate = new Date(f.purchaseDate + 'T00:00:00');
+                    const expiryDate = new Date(purchaseDate);
+                    expiryDate.setMonth(purchaseDate.getMonth() + parseInt(f.warrantyMonths));
+                    const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                            <span style="color: #fff; font-weight: 600;">${f.code}</span>
+                            <span style="color: var(--color-text-muted);">${f.clientName || 'Fábrica'}</span>
+                            <span style="color: #ffb703; font-weight: 700;">Vence em ${diffDays}d</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -222,9 +272,12 @@ export function renderDashboardChart() {
     
     if (!revCanvas || !prodCanvas) return;
     
-    // Destroy existing charts to prevent "Canvas is already in use" errors
-    if (window.myRevChart) window.myRevChart.destroy();
-    if (window.myProdChart) window.myProdChart.destroy();
+    // Destroy existing charts (usar variáveis de módulo em vez de window.* para evitar leak)
+    if (_revChart) { _revChart.destroy(); _revChart = null; }
+    if (_prodChart) { _prodChart.destroy(); _prodChart = null; }
+    // Compatibilidade retroativa
+    if (window.myRevChart) { window.myRevChart.destroy(); window.myRevChart = null; }
+    if (window.myProdChart) { window.myProdChart.destroy(); window.myProdChart = null; }
 
     // 1. DADOS DE FATURAMENTO (Últimos 15 dias)
     const now = new Date();
@@ -284,7 +337,7 @@ export function renderDashboardChart() {
     gradientBlue.addColorStop(1, 'rgba(0, 114, 255, 0.2)');
 
     // Render Revenue Bar Chart
-    window.myRevChart = new Chart(revCanvas, {
+    _revChart = new Chart(revCanvas, {
         type: 'bar',
         data: {
             labels: revLabels,
@@ -331,7 +384,7 @@ export function renderDashboardChart() {
 
     // Render Products Doughnut Chart
     if (soldProducts.length > 0) {
-        window.myProdChart = new Chart(prodCanvas, {
+        _prodChart = new Chart(prodCanvas, {
             type: 'doughnut',
             data: {
                 labels: soldProducts,
