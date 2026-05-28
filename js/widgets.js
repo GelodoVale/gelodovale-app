@@ -108,6 +108,16 @@ window.toggleWidget = function(widgetName) {
 window.updateWidgetConfig = function(widgetName, key, value) {
     if (state.widgets[widgetName]) {
         state.widgets[widgetName][key] = value;
+        
+        // Sync lateral drawer weather if dashboard weather location changes
+        if (widgetName === 'weather' && key === 'location' && window.updateWeatherFromAPI) {
+            if (!state.weatherConfig) state.weatherConfig = {};
+            state.weatherConfig.city = value;
+            state.weatherConfig.lat = null;
+            state.weatherConfig.lon = null;
+            window.updateWeatherFromAPI();
+        }
+        
         saveState();
         renderWidgetsSetupPanel();
         renderWidgets();
