@@ -9,8 +9,8 @@ export function renderTinas() {
     const filterStatus = document.getElementById("filter-rental-status").value;
 
     const filteredRentals = (state.rentals || []).filter(r => {
-        const matchesSearch = r.clientName.toLowerCase().includes(searchQuery) ||
-                              r.tinaCode.toLowerCase().includes(searchQuery);
+        const matchesSearch = (r.clientName || '').toLowerCase().includes(searchQuery) ||
+                              (r.tinaCode || '').toLowerCase().includes(searchQuery);
         const matchesStatus = filterStatus === "all" || r.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
@@ -75,7 +75,7 @@ export function renderTinas() {
             }
         }
 
-        const totalGeral = r.totalRevenue || (r.rentalFee + (r.deliveryFee || 0) + (r.pickupFee || 0));
+        const totalGeral = r.totalRevenue || ((r.rentalFee || 0) + (r.deliveryFee || 0) + (r.pickupFee || 0));
 
         let locationImageSnippet = "";
         if (r.photoRentalLocation) {
@@ -316,7 +316,7 @@ export function openRentalModal(rentalId = null) {
     document.getElementById("form-rental-id").value = "";
     if (clientSelect) {
         clientSelect.innerHTML = '<option value="">-- Cliente Avulso (Preencher Manualmente) --</option>';
-        state.clients.forEach(c => {
+        (state.clients || []).forEach(c => {
             clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
     }
@@ -332,7 +332,7 @@ export function openRentalModal(rentalId = null) {
     if (expectedReturnEl) expectedReturnEl.value = nextWeek.toISOString().split('T')[0];
 
     // Resetar quantidades de produtos e informações gerais
-    const activeEquips = state.products.filter(p => p.active && p.type === "Equipamento");
+    const activeEquips = (state.products || []).filter(p => p.active && p.type === "Equipamento");
     const defaultEquipId = activeEquips.length > 0 ? activeEquips[0].id : "";
     const defaultEquipPrice = activeEquips.length > 0 ? activeEquips[0].defaultPrice : 0;
 
@@ -394,7 +394,7 @@ export function openRentalModal(rentalId = null) {
 
     if (rentalId) {
         if (title) title.innerText = "Editar Aluguel";
-        const r = state.rentals.find(item => item.id === rentalId);
+        const r = (state.rentals || []).find(item => item.id === rentalId);
         if (r) {
             document.getElementById("form-rental-id").value = r.id;
             if (clientSelect) clientSelect.value = r.clientId || "";
@@ -453,11 +453,11 @@ export function updateRentalFee() {
     const clientId = clientSelect.value;
     
     let price = 0;
-    const equip = state.products.find(p => p.id === itemType);
+    const equip = (state.products || []).find(p => p.id === itemType);
     if (equip) {
         price = equip.defaultPrice || 0;
         if (clientId) {
-            const client = state.clients.find(c => c.id === clientId);
+            const client = (state.clients || []).find(c => c.id === clientId);
             if (client && client.customPrices && client.customPrices[itemType] > 0) {
                 price = client.customPrices[itemType];
             }
@@ -492,7 +492,7 @@ export function populateRentalClientDetails() {
 }
 
 export function returnRental(rentalId) {
-    const rental = state.rentals.find(r => r.id === rentalId);
+    const rental = (state.rentals || []).find(r => r.id === rentalId);
     if (!rental) return;
     
     const returnDateStr = window.getBrazilTimeISO().split('T')[0];
@@ -525,7 +525,7 @@ export function returnRental(rentalId) {
 
 export function deleteRental(rentalId) {
     if (confirm("Deseja realmente excluir este registro de aluguel?")) {
-        state.rentals = state.rentals.filter(r => r.id !== rentalId);
+        state.rentals = (state.rentals || []).filter(r => r.id !== rentalId);
         saveState();
         if (window.renderApp) window.renderApp();
     }
@@ -536,7 +536,7 @@ export function renderRentalModalProducts(rental = null) {
     if (itemSelect) {
         const currentVal = itemSelect.value || (rental ? rental.itemType : "");
         itemSelect.innerHTML = "";
-        const equips = state.products.filter(p => p.active && p.type === "Equipamento");
+        const equips = (state.products || []).filter(p => p.active && p.type === "Equipamento");
         equips.forEach(eq => {
             itemSelect.innerHTML += `<option value="${eq.id}">${eq.name}</option>`;
         });
@@ -546,7 +546,7 @@ export function renderRentalModalProducts(rental = null) {
     const container = document.getElementById("rental-consumables-container");
     if (!container) return;
 
-    const consumables = state.products.filter(p => p.active && p.type !== "Equipamento");
+    const consumables = (state.products || []).filter(p => p.active && p.type !== "Equipamento");
 
     if (consumables.length === 0) {
         container.innerHTML = `<p style="font-size: 0.8rem; color: var(--color-text-muted); text-align: center; grid-column: 1 / -1; padding: 0.5rem 0;">Nenhum consumível cadastrado no catálogo.</p>`;

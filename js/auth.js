@@ -69,12 +69,11 @@ export function initLoginScreen() {
     
     // Handle login form submission
     const form = document.getElementById("app-login-form");
-    if (form) {
+    if (form && !form.dataset.listenerAdded) {
+        form.dataset.listenerAdded = 'true';
         form.addEventListener("submit", (e) => {
             e.preventDefault();
-            const userId = document.getElementById("login-user-select").value;
-            const password = document.getElementById("login-password").value;
-            loginUser(userId, password);
+            loginUser();
         });
     }
     
@@ -135,6 +134,15 @@ export function initPasswordTogglers() {
 }
 
 export function loginUser(userId, password) {
+    // Se chamada sem argumentos (ex: submit do form), ler valores do DOM
+    if (!userId) {
+        const selectEl = document.getElementById("login-user-select");
+        userId = selectEl ? selectEl.value : "";
+    }
+    if (password === undefined) {
+        const pwdEl = document.getElementById("login-password");
+        password = pwdEl ? pwdEl.value : "";
+    }
     const user = state.users.find(u => u.id === userId);
     if (user && user.password === password) {
         sessionStorage.setItem("currentUserId", user.id);
@@ -146,11 +154,14 @@ export function loginUser(userId, password) {
             sessionStorage.removeItem("admin_authenticated");
         }
         
-        document.getElementById("login-error-msg").style.display = "none";
-        document.getElementById("login-password").value = "";
+        const errMsgEl = document.getElementById("login-error-msg");
+        if (errMsgEl) errMsgEl.style.display = "none";
+        const loginPwdEl = document.getElementById("login-password");
+        if (loginPwdEl) loginPwdEl.value = "";
         
         // Hide login screen
-        document.getElementById("app-login-screen").style.display = "none";
+        const loginScreenEl = document.getElementById("app-login-screen");
+        if (loginScreenEl) loginScreenEl.style.display = "none";
         
         // Update user display name in sidebar
         const userDisplayName = document.getElementById("user-display-name");
@@ -170,7 +181,7 @@ export function loginUser(userId, password) {
         const currentTab = activeNav ? activeNav.getAttribute("data-tab") : "dashboard";
         const hasAccess = user.permissions["tab-" + currentTab];
         
-        if (hasAccess === false) {
+        if (!hasAccess) {
             // Ir para a primeira aba disponível nas permissões dele
             const availableTab = Object.keys(user.permissions).find(key => key.startsWith("tab-") && user.permissions[key] === true);
             if (availableTab) {
@@ -197,11 +208,14 @@ export function logoutUser() {
     sessionStorage.removeItem("admin_authenticated");
     
     // Reset login inputs
-    document.getElementById("login-password").value = "";
-    document.getElementById("login-error-msg").style.display = "none";
+    const pwdEl = document.getElementById("login-password");
+    if (pwdEl) pwdEl.value = "";
+    const errEl = document.getElementById("login-error-msg");
+    if (errEl) errEl.style.display = "none";
     
     // Show login screen
-    document.getElementById("app-login-screen").style.display = "flex";
+    const screenEl = document.getElementById("app-login-screen");
+    if (screenEl) screenEl.style.display = "flex";
 }
 
 export function applyUserPermissions(user) {
@@ -382,8 +396,10 @@ export function openUserModal(userId = "") {
         cb.checked = false;
         cb.disabled = false;
     });
-    selectAllCheckbox.checked = false;
-    selectAllCheckbox.disabled = false;
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.disabled = false;
+    }
     usernameInput.disabled = false;
     
     if (userId) {
@@ -433,6 +449,10 @@ export function saveUser(event) {
     
     if (!name || !username || !password) {
         alert("Por favor, preencha todos os campos obrigatórios.");
+        return;
+    }
+    if (password && password.length < 4) {
+        alert('A senha deve ter pelo menos 4 caracteres.');
         return;
     }
     

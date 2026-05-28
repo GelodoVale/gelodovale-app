@@ -4,8 +4,8 @@ import { renderWidgets } from './widgets.js';
 
 export function renderDashboard() {
     // 1. Calcular indicadores KPIs
-    const activeClientsCount = state.clients.length;
-    const activeFreezersCount = state.clients.filter(c => c.freezerCode).length;
+    const activeClientsCount = (state.clients || []).length;
+    const activeFreezersCount = (state.clients || []).filter(c => c.freezerCode).length;
     
     // Faturamento e total de gelo no mês corrente
     const now = new Date();
@@ -15,13 +15,13 @@ export function renderDashboard() {
     let totalKgMonth = 0;
     let totalRevenueMonth = 0;
     
-    state.deliveries.forEach(del => {
-        const delDate = new Date(del.date);
-        if (delDate.getMonth() === currentMonth && delDate.getFullYear() === currentYear) {
-            totalRevenueMonth += del.revenue;
+    (state.deliveries || []).forEach(del => {
+        const delDate = del.date ? new Date(del.date) : null;
+        if (delDate && !isNaN(delDate) && delDate.getMonth() === currentMonth && delDate.getFullYear() === currentYear) {
+            totalRevenueMonth += (del.revenue || 0);
             // Calcular kg
             if (del.items) {
-                state.products.forEach(p => {
+                (state.products || []).forEach(p => {
                     if (p.type === 'Gelo') {
                         const qty = del.items[p.id] || 0;
                         const weight = p.weight || 0;
@@ -49,8 +49,8 @@ export function renderDashboard() {
         });
     }
 
-    const pendingOrdersCount = state.orders.filter(o => o.status === "pending").length;
-    const activeRentalsCount = state.rentals ? state.rentals.filter(r => r.status === "active" || r.status === "overdue").length : 0;
+    const pendingOrdersCount = (state.orders || []).filter(o => o.status === "pending").length;
+    const activeRentalsCount = state.rentals ? (state.rentals || []).filter(r => r.status === "active" || r.status === "overdue").length : 0;
     
     // Atualizar HTML de KPIs
     const kpiFreezers = document.getElementById("kpi-freezers");
@@ -91,10 +91,10 @@ export function renderDashboardAlerts() {
     
     let alerts = [];
     
-    state.clients.forEach(client => {
+    (state.clients || []).forEach(client => {
         const threshold = (client.alertThreshold || 20) / 100;
         
-        const geloProducts = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
+        const geloProducts = (state.products || []).filter(p => p.active && (p.type === 'Gelo' || p.type === 'Gelo Saborizado'));
         geloProducts.forEach(p => {
             const prod = p.id;
             const currentStock = (client.stock && client.stock[prod]) || 0;
@@ -147,7 +147,7 @@ export function renderDashboardAlerts() {
             `;
         });
     }
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function renderDashboardChart() {
@@ -174,9 +174,9 @@ export function renderDashboardChart() {
         revenueByDay[label] = 0;
     }
 
-    state.deliveries.forEach(del => {
-        const dDate = new Date(del.date);
-        if (dDate >= fifteenDaysAgo) {
+    (state.deliveries || []).forEach(del => {
+        const dDate = del.date ? new Date(del.date) : null;
+        if (dDate && !isNaN(dDate) && dDate >= fifteenDaysAgo) {
             const label = `${String(dDate.getDate()).padStart(2, '0')}/${String(dDate.getMonth() + 1).padStart(2, '0')}`;
             if (revenueByDay[label] !== undefined) {
                 revenueByDay[label] += del.revenue || 0;
@@ -189,15 +189,15 @@ export function renderDashboardChart() {
 
     // 2. DADOS DE PRODUTOS MAIS VENDIDOS (Geral)
     const productSales = {};
-    state.products.forEach(p => productSales[p.name] = 0);
+    (state.products || []).forEach(p => productSales[p.name] = 0);
 
-    state.deliveries.forEach(del => {
+    (state.deliveries || []).forEach(del => {
         if (!del.items) return;
-        state.products.forEach(p => {
+        (state.products || []).forEach(p => {
             const qtyFardo = del.items[p.id] || 0;
             const qtyUnit = del.items[p.id + "_unit"] || 0;
             // Somar pacotes equivalentes. (Se 1 fardo = 12 unidades, então 1 unidade = 1/12 fardo. Vamos somar em unidades totais ou fardos totais? Melhor unidades)
-            const unitsPerPack = p.unitsPerPack || (p.type.includes('Gelo') ? 1 : 1);
+            const unitsPerPack = p.unitsPerPack || ((p.type || '').includes('Gelo') ? 1 : 1);
             const totalUnits = (qtyFardo * unitsPerPack) + qtyUnit;
             if (totalUnits > 0) {
                 productSales[p.name] += totalUnits;

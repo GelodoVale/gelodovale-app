@@ -129,7 +129,7 @@ export function openNewComodatoModal() {
     document.getElementById("comodato-notes").value = "";
     document.getElementById("comodato-start-date").value = window.getBrazilTimeISO().split('T')[0];
     
-    const clients = [...(state.clients || [])].sort((a,b) => a.name.localeCompare(b.name));
+    const clients = [...(state.clients || [])].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
     clients.forEach(c => {
         const option = document.createElement("option");
         option.value = c.id;
@@ -700,7 +700,10 @@ export function initClientSigningPortal(urlParams) {
                         return;
                     }
                     
-                    const comodato = remoteState.comodatos.find(c => c.id === comId);
+                    const comodatosArr = Array.isArray(remoteState.comodatos)
+                        ? remoteState.comodatos
+                        : Object.values(remoteState.comodatos || {});
+                    const comodato = comodatosArr.find(c => c.id === comId);
                     if (!comodato) {
                         showPortalError("O Contrato de Comodato solicitado não foi encontrado no sistema ou foi cancelado.");
                         return;
@@ -716,7 +719,10 @@ export function initClientSigningPortal(urlParams) {
                         return;
                     }
                     
-                    const client = remoteState.clients ? remoteState.clients.find(c => c.id === comodato.clientId) : null;
+                    const clientsArr = Array.isArray(remoteState.clients)
+                        ? remoteState.clients
+                        : Object.values(remoteState.clients || {});
+                    const client = remoteState.clients ? clientsArr.find(c => c.id === comodato.clientId) : null;
                     if (!client) {
                         showPortalError("Cliente associado ao comodato não encontrado.");
                         return;
@@ -827,7 +833,10 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
         const dataUrl = portalCanvas.toDataURL("image/png");
         
         const comId = comodato.id;
-        const targetComodato = remoteState.comodatos.find(c => c.id === comId);
+        const comodatosArr = Array.isArray(remoteState.comodatos)
+            ? remoteState.comodatos
+            : Object.values(remoteState.comodatos || {});
+        const targetComodato = comodatosArr.find(c => c.id === comId);
         if (targetComodato) {
             targetComodato.signatureBase64 = dataUrl;
             targetComodato.status = 'ativo';
@@ -837,7 +846,10 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
             targetComodato.clientAddress = addressVal;
         }
         
-        const targetClient = remoteState.clients.find(c => c.id === comodato.clientId);
+        const clientsArr = Array.isArray(remoteState.clients)
+            ? remoteState.clients
+            : Object.values(remoteState.clients || {});
+        const targetClient = clientsArr.find(c => c.id === comodato.clientId);
         if (targetClient) {
             targetClient.document = docVal;
             targetClient.phone = phoneVal;
@@ -1030,7 +1042,7 @@ export function openComodato(comId) {
             <li><strong>Capacidade (Volume):</strong> ${freezerCapacity ? freezerCapacity + (freezerCapacity.toString().toLowerCase().includes('litros') ? '' : ' Litros') : 'Não informado'}</li>
             <li><strong>Data de Entrega ao Cliente:</strong> ${dataEntrega}</li>
         </ul>
-        <p>O COMODATÁRIO declara receber o equipamento em perfeitas condições de uso, functioning, limpeza e conservação.</p>
+        <p>O COMODATÁRIO declara receber o equipamento em perfeitas condições de uso, funcionamento, limpeza e conservação.</p>
         
         <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 2ª - DO USO E EXCLUSIVIDADE</h4>
         <p>O equipamento destina-se <strong>exclusivamente</strong> ao armazenamento e venda de gelo fornecido pela COMODANTE. Fica expressamente vedada a colocação de produtos de outras marcas ou quaisquer outros alimentos e bebidas no freezer comodado, sob pena de rescisão contratual imediata e retirada do equipamento.</p>
@@ -1133,13 +1145,13 @@ export function printComodato() {
 }
 
 export function openRentalContract(rentalId) {
-    const rental = state.rentals.find(r => r.id === rentalId);
+    const rental = (state.rentals || []).find(r => r.id === rentalId);
     if (!rental) return;
 
     document.getElementById("contract-rental-id").value = rentalId;
     
     if (!rental.rentalTerms) {
-        rental.rentalTerms = state.factorySettings.rentalTerms || "";
+        rental.rentalTerms = (state.factorySettings && state.factorySettings.rentalTerms) || "";
     }
 
     document.getElementById("contract-extra-day-fee").value = rental.extraDayFee !== undefined ? rental.extraDayFee.toFixed(2) : "0.00";

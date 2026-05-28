@@ -16,7 +16,7 @@ export function renderDocumentos() {
     const filterType = document.getElementById("filter-document-type").value;
 
     const filteredDocs = (state.documents || []).filter(d => {
-        const matchesSearch = d.clientName.toLowerCase().includes(searchQuery);
+        const matchesSearch = (d.clientName || '').toLowerCase().includes(searchQuery);
         const matchesType = filterType === "all" || d.type === filterType;
         return matchesSearch && matchesType;
     });
@@ -94,7 +94,7 @@ export function openDocModal(docId = null) {
     if (clientSelect) {
         clientSelect.innerHTML = '<option value="">-- Cliente Avulso (Preencher Manualmente) --</option>';
         // Popular Clientes
-        state.clients.forEach(c => {
+        (state.clients || []).forEach(c => {
             clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
     }
@@ -181,7 +181,7 @@ export function populateDocClientDetails() {
     const clientSelect = document.getElementById("doc-client-select");
     if (!clientSelect) return;
     const clientId = clientSelect.value;
-    const client = clientId ? state.clients.find(c => c.id === clientId) : null;
+    const client = clientId ? (state.clients || []).find(c => c.id === clientId) : null;
     
     if (client) {
         document.getElementById("doc-client-name").value = client.name;
@@ -400,7 +400,7 @@ export function renderDocModalProducts(documentObj = null) {
     if (customQtyEl) customQtyEl.value = 0;
     if (customPriceEl) customPriceEl.value = "0.00";
     
-    const activeProducts = state.products.filter(p => p.active);
+    const activeProducts = (state.products || []).filter(p => p.active);
 
     if (activeProducts.length === 0) {
         container.innerHTML = `<p style="font-size: 0.8rem; color: var(--color-text-muted); text-align: center; padding: 0.5rem 0;">Nenhum produto cadastrado no catálogo.</p>`;
@@ -776,14 +776,14 @@ export function saveSignature() {
     const targetId = window.signatureTargetId || currentPrintDocId;
     
     if (targetType === 'comodato') {
-        const comodato = state.comodatos.find(item => item.id === targetId);
+        const comodato = (state.comodatos || []).find(item => item.id === targetId);
         if (comodato) {
             comodato.signatureBase64 = dataUrl;
             comodato.status = 'ativo';
             comodato.signatureDate = window.getBrazilTimeISO();
             comodato.signatureMethod = 'local';
             
-            const client = state.clients.find(c => c.id === comodato.clientId);
+            const client = (state.clients || []).find(c => c.id === comodato.clientId);
             if (client) {
                 client.freezerCode = comodato.freezerCode;
             }
@@ -794,7 +794,7 @@ export function saveSignature() {
             if (window.renderComodatosAdmin) window.renderComodatosAdmin();
         }
     } else if (targetType === 'rental') {
-        const rental = state.rentals.find(item => item.id === targetId);
+        const rental = (state.rentals || []).find(item => item.id === targetId);
         if (rental) {
             rental.signatureBase64 = dataUrl;
             saveState();

@@ -150,7 +150,12 @@ function pushToFirebaseImediato() {
     isSyncing = true;
     updateSyncStatusUI('syncing');
 
-    firebase.database().ref(`factories/${deviceKey}`).set(state)
+    // Sanitizar dados sensíveis antes de enviar ao Firebase
+    const { adminPassword: _ap, ...safeState } = state;
+    if (safeState.users) {
+        safeState.users = safeState.users.map(({ password: _pw, ...u }) => u);
+    }
+    firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
             updateSyncStatusUI('success');
             console.log('[Sync] ✅ Dados enviados para a nuvem com sucesso.');
@@ -236,6 +241,12 @@ export function saveFirebaseSettings() {
     const projectId  = document.getElementById('cfg-fb-project-id').value.trim();
     const databaseURL= document.getElementById('cfg-fb-db-url').value.trim();
     const deviceKey  = document.getElementById('cfg-fb-device-key').value.trim();
+
+    // Validar se todos os campos estão preenchidos ao ativar
+    if (enabled && (!apiKey || !projectId || !databaseURL || !deviceKey)) {
+        alert('Preencha todas as configurações do Firebase antes de ativar a sincronização.');
+        return;
+    }
 
     state.firebaseConfig = { enabled, apiKey, projectId, databaseURL, deviceKey };
 

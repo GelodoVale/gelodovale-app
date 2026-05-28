@@ -27,9 +27,7 @@ import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil } from './utils.js
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("clientSign") === "comodato") {
-        if (window.initClientSigningPortal) {
-            window.initClientSigningPortal(urlParams);
-        }
+        initClientSigningPortal(urlParams);
         return;
     }
     
@@ -95,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 8. Inicializar central de utilitários (Relógio, Clima, Calendário & Notas)
-    if (window.initUtilityPanel) window.initUtilityPanel();
+    initUtilityPanel();
     
     // 9. Inicializar controle de acesso e tela de login
     initUserAccessControl();
@@ -273,7 +271,8 @@ export function initNavigation() {
         const newGlobalBtn = globalBtn.cloneNode(true);
         globalBtn.parentNode.replaceChild(newGlobalBtn, globalBtn);
         newGlobalBtn.addEventListener("click", () => {
-            const activeTab = document.querySelector(".nav-item.active").getAttribute("data-tab");
+            const activeTabEl = document.querySelector(".nav-item.active");
+            const activeTab = activeTabEl ? activeTabEl.getAttribute("data-tab") : "dashboard";
             if (activeTab === "clientes") {
                 if (window.openClientModal) window.openClientModal();
             } else if (activeTab === "inventario") {
@@ -918,7 +917,7 @@ export function renderHistorico() {
                 <td style="font-weight: 500;">${dateFormatted}</td>
                 <td><strong>${del.clientName}</strong></td>
                 <td>${itemsText.join("<br>")} ${extraInfo !== "" ? "<br><span style='font-size:0.75rem; color:var(--color-text-muted);'>" + extraInfo + "</span>" : ""}</td>
-                <td style="color: var(--color-primary); font-weight: 700;">R$ ${del.revenue.toFixed(2)}</td>
+                <td style="color: var(--color-primary); font-weight: 700;">R$ ${(del.revenue || 0).toFixed(2)}</td>
                 <td>
                     <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
                         ${gpsButton}
@@ -1035,6 +1034,7 @@ export function initForms() {
                 oldFreezer.status = "disponivel";
                 oldFreezer.clientId = "";
                 oldFreezer.clientName = "";
+                if (!oldFreezer.movementHistory) oldFreezer.movementHistory = [];
                 oldFreezer.movementHistory.push({
                     date: formatDateBrazil(getBrazilTimeISO()),
                     from: name,
@@ -1058,6 +1058,7 @@ export function initForms() {
                 selectedFreezer.clientName = name;
                 
                 if (!oldFreezer || oldFreezer.id !== selectedFreezer.id) {
+                    if (!selectedFreezer.movementHistory) selectedFreezer.movementHistory = [];
                     selectedFreezer.movementHistory.push({
                         date: formatDateBrazil(getBrazilTimeISO()),
                         from: "Fábrica",
@@ -1312,6 +1313,7 @@ export function initForms() {
                             if (status === 'manutencao') destName = "Oficina/Manutenção";
                             if (status === 'inativo') destName = "Inativo";
                             
+                            if (!state.freezers[idx].movementHistory) state.freezers[idx].movementHistory = [];
                             state.freezers[idx].movementHistory.push({
                                 date: formatDateBrazil(getBrazilTimeISO()),
                                 from: "Alocação",
@@ -1381,6 +1383,7 @@ export function initForms() {
                     clientHasFreezer.status = "disponivel";
                     clientHasFreezer.clientId = "";
                     clientHasFreezer.clientName = "";
+                    if (!clientHasFreezer.movementHistory) clientHasFreezer.movementHistory = [];
                     clientHasFreezer.movementHistory.push({
                         date: formatDateBrazil(getBrazilTimeISO()),
                         from: client.name,
@@ -1409,6 +1412,7 @@ export function initForms() {
                 client.freezerCapacity = freezer.capacity;
                 client.deliveryDate = getBrazilTimeISO().split('T')[0];
                 
+                if (!freezer.movementHistory) freezer.movementHistory = [];
                 freezer.movementHistory.push({
                     date: formatDateBrazil(getBrazilTimeISO()),
                     from: oldLocationName,
@@ -1435,6 +1439,7 @@ export function initForms() {
                 if (destiny === 'manutencao') destName = "Oficina/Manutenção";
                 if (destiny === 'inativo') destName = "Inativo";
                 
+                if (!freezer.movementHistory) freezer.movementHistory = [];
                 freezer.movementHistory.push({
                     date: formatDateBrazil(getBrazilTimeISO()),
                     from: oldLocationName,

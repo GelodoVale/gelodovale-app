@@ -1001,7 +1001,7 @@ export function loadTodaySalesData() {
     
     // 1. Somar de state.deliveries
     state.deliveries.forEach(del => {
-        if (del.date.startsWith(todayStr)) {
+        if (del.date && del.date.startsWith(todayStr)) {
             activeProds.forEach(p => {
                 const qtyFardos = del.items[p.id] || 0;
                 salesMap[p.id] += qtyFardos;
@@ -1034,8 +1034,16 @@ export function loadTodaySalesData() {
     let totalCard = 0;
     
     state.deliveries.forEach(del => {
-        if (del.date.startsWith(todayStr)) {
-            totalPix += del.revenue;
+        if (del.date && del.date.startsWith(todayStr)) {
+            const method = (del.paymentMethod || 'pix').toLowerCase();
+            const rev = del.revenue || 0;
+            if (method.includes('dinheiro') || method.includes('cash')) {
+                totalCash += rev;
+            } else if (method.includes('cartão') || method.includes('cartao') || method.includes('card') || method.includes('débito') || method.includes('credito')) {
+                totalCard += rev;
+            } else {
+                totalPix += rev; // Padrão: Pix
+            }
         }
     });
     
@@ -1410,15 +1418,24 @@ export function renderFinancialDashboard() {
     
     // 1. Somar de state.deliveries
     state.deliveries.forEach(del => {
+        if (!del.date) return;
         const delDateStr = del.date.split('T')[0];
         const delMonthStr = del.date.substring(0, 7);
         
         if (delDateStr === todayStr) {
-            revToday += del.revenue;
+            revToday += (del.revenue || 0);
         }
         if (delMonthStr === currentMonthStr) {
-            revMonth += del.revenue;
-            pixMonth += del.revenue; // Assumido Pix para entregas da fila
+            revMonth += (del.revenue || 0);
+            const method = (del.paymentMethod || 'pix').toLowerCase();
+            const rev = del.revenue || 0;
+            if (method.includes('dinheiro') || method.includes('cash')) {
+                cashMonth += rev;
+            } else if (method.includes('cartão') || method.includes('cartao') || method.includes('card') || method.includes('débito') || method.includes('credito')) {
+                cardMonth += rev;
+            } else {
+                pixMonth += rev; // Padrão: Pix
+            }
             
             activeProds.forEach(p => {
                 const qtyFardos = del.items[p.id] || 0;
@@ -1698,7 +1715,7 @@ export function renderAccountsReceivable() {
                                     <i data-lucide="message-square" style="width: 12px; height: 12px;"></i> Cobrar
                                 </button>
                                 ${state.mercadoPago && state.mercadoPago.enabled ? `
-                                <button type="button" class="btn" onclick="generateAndSendMP('${c.id}', ${c.outstandingDebt})" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
+                                <button type="button" class="btn" onclick="generateAndSendMP(event, '${c.id}', ${c.outstandingDebt})" style="font-size: 0.75rem; padding: 4px 8px; height: auto; display: inline-flex; align-items: center; gap: 4px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
                                     <i data-lucide="link" style="width: 12px; height: 12px;"></i> MP (Pix/Boleto)
                                 </button>
                                 ` : ''}
@@ -2486,6 +2503,8 @@ export function autoFillAppearanceSettings() {
     state.appearance = {
         themeName: "ciano",
         primaryColor: "#00f0ff",
+        primaryColorRgb: "0, 240, 255",
+        secondaryColor: "#0072ff",
         backgroundStyle: "darkSpace",
         customBgColor: "#090d16",
         panelStyle: "glassmorphism",
@@ -2557,7 +2576,7 @@ export function openProductionModal() {
     
     if (state.packaging && state.packaging.length > 0) {
         state.packaging.forEach(p => {
-            pkgSelect.innerHTML += `<option value="${p.id}">${p.name} (Estoque: ${p.stock})</option>`;
+            pkgSelect.innerHTML += `<option value="${p.id}">${p.name} (Estoque: ${p.currentStock || 0})</option>`;
         });
     }
 
@@ -2576,7 +2595,7 @@ export function updateProductionInfo() {
     }
     const pkg = state.packaging.find(p => p.id === pkgId);
     if (pkg) {
-        document.getElementById("prod-packaging-current").textContent = pkg.stock;
+        document.getElementById("prod-packaging-current").textContent = pkg.currentStock || 0;
     }
 }
 
@@ -2596,13 +2615,13 @@ export function saveProduction() {
         return;
     }
 
-    if (pkg.stock < qty) {
-        const confirmNegative = confirm(`Atenção: A embalagem tem apenas ${pkg.stock} unidades. Se continuar, o estoque ficará negativo. Deseja prosseguir?`);
+    if ((pkg.currentStock || 0) < qty) {
+        const confirmNegative = confirm(`Atenção: A embalagem tem apenas ${pkg.currentStock || 0} unidades. Se continuar, o estoque ficará negativo. Deseja prosseguir?`);
         if (!confirmNegative) return;
     }
 
-    const previousStock = pkg.stock;
-    pkg.stock -= qty;
+    const previousStock = pkg.currentStock || 0;
+    pkg.currentStock = previousStock - qty;
 
     if (!state.packagingTransactions) state.packagingTransactions = [];
     
@@ -2613,7 +2632,7 @@ export function saveProduction() {
         packagingName: pkg.name,
         type: 'out',
         qty: qty,
-        afterStock: pkg.stock,
+        afterStock: pkg.currentStock,
         obs: obs
     });
 
@@ -2681,15 +2700,21 @@ export function saveMercadoPagoSettings() {
 window.toggleMpFields = toggleMpFields;
 window.saveMercadoPagoSettings = saveMercadoPagoSettings;
 
-export async function generateAndSendMP(clientId, amount) {
+export async function generateAndSendMP(event, clientId, amount) {
+    if (typeof event === 'string') {
+        // Fallback for legacy calls where event was clientId
+        amount = clientId;
+        clientId = event;
+        event = null;
+    }
     const client = state.clients.find(c => c.id === clientId);
     if (!client) return;
     
     // Mostra um aviso carregando
-    const btnIcon = event.currentTarget.querySelector('i');
+    const btnIcon = (event && event.currentTarget) ? event.currentTarget.querySelector('i') : null;
     if (btnIcon) {
         btnIcon.setAttribute('data-lucide', 'loader');
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
     }
     
     try {
@@ -2709,7 +2734,7 @@ export async function generateAndSendMP(clientId, amount) {
     } finally {
         if (btnIcon) {
             btnIcon.setAttribute('data-lucide', 'link');
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         }
     }
 }
