@@ -408,6 +408,25 @@ export function renderTabContent(tab) {
             break;
         case "precos":
             if (window.renderPrecos) window.renderPrecos();
+            
+            // Popular formulário de dados da fábrica para não parecer que foram perdidos
+            if (state.factorySettings) {
+                const fields = [
+                    { id: "cfg-factory-name", key: "name" },
+                    { id: "cfg-factory-cnpj", key: "cnpj" },
+                    { id: "cfg-factory-phone", key: "phone" },
+                    { id: "cfg-factory-address", key: "address" },
+                    { id: "cfg-factory-email", key: "email" },
+                    { id: "cfg-factory-pix", key: "pixKey" },
+                    { id: "cfg-factory-rental-terms", key: "rentalTerms" }
+                ];
+                fields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el && state.factorySettings[f.key]) {
+                        el.value = state.factorySettings[f.key];
+                    }
+                });
+            }
             break;
     }
 }
