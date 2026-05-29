@@ -2740,26 +2740,17 @@ export function initConnectionStatusMonitor() {
         if (navigator.onLine) {
             const hasOfflineChanges = state.offlineChangesQueue && state.offlineChangesQueue.length > 0;
             if (hasOfflineChanges) {
-                // Estilizar o banner para o modo "Pronto para Sincronizar" (Ciano/Glow)
-                banner.style.background = "rgba(0, 240, 255, 0.15)";
-                banner.style.borderBottom = "1px solid rgba(0, 240, 255, 0.35)";
-                banner.style.color = "#00f0ff";
-                banner.style.boxShadow = "0 4px 15px rgba(0, 240, 255, 0.15)";
-                banner.style.display = "flex";
-                banner.style.cursor = "pointer";
-                
-                // Adicionar listener de clique para abrir o modal de confirmação
-                banner.onclick = () => window.openOfflineSyncModal();
-                
-                const count = state.offlineChangesQueue.length;
-                banner.innerHTML = `
-                    <i data-lucide="wifi" style="width: 16px; height: 16px; color: #00f0ff; filter: drop-shadow(0 0 4px #00f0ff);"></i>
-                    <span><strong>Conexão restabelecida!</strong> Você realizou ${count} ${count === 1 ? 'alteração' : 'alterações'} offline. <strong>Clique aqui para sincronizar com a nuvem</strong>.</span>
-                `;
-                if (window.lucide) window.lucide.createIcons();
-                
-                // Abrir o modal automaticamente para facilitar
-                window.openOfflineSyncModal();
+                // Sincronização automática ao restabelecer a conexão
+                if (window.confirmOfflineSyncAll) {
+                    window.confirmOfflineSyncAll();
+                } else {
+                    state.offlineChangesQueue = [];
+                    saveState();
+                    banner.style.display = "none";
+                    banner.onclick = null;
+                    showToast("Alterações offline sincronizadas com sucesso com o banco de dados Firebase!", "success");
+                    renderApp();
+                }
             } else {
                 banner.style.display = "none";
                 banner.onclick = null;
