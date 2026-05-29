@@ -2455,6 +2455,11 @@ export function initForms() {
     }
 }
 
+export function openModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.classList.add("active");
+}
+
 export function closeModal(modalId) {
     const el = document.getElementById(modalId);
     if (el) el.classList.remove("active");
@@ -2670,6 +2675,7 @@ window.deleteDelivery = deleteDelivery;
 window.initHistoryFilters = initHistoryFilters;
 window.initAllSearchFilters = initAllSearchFilters;
 window.initForms = initForms;
+window.openModal = openModal;
 window.closeModal = closeModal;
 window.toggleHighContrastTheme = toggleHighContrastTheme;
 window.renderOrderModalProducts = renderOrderModalProducts;
