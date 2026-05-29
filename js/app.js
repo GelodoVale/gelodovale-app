@@ -2865,6 +2865,7 @@ export function triggerLocalPixForCheckout() {
         window.showLocalPixModal(clientName, total);
     }
 }
+window.triggerLocalPixForCheckout = triggerLocalPixForCheckout;
 window.openCarneModal = openCarneModal;
 window.renderTopDevedores = renderTopDevedores;
 window.renderCarneList = renderCarneList;

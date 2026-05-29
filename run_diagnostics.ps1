@@ -7,7 +7,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host "  GelControl - AUTO-TESTE E DIAGNOSTICO ESTATICO DE INTEGRACAO  " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-$AppDir = "C:\Users\kissn\OneDrive\GelodoVale-system\App"
+$AppDir = $PSScriptRoot
 $JsDir = "$AppDir\js"
 $HtmlFile = "$AppDir\index.html"
 
