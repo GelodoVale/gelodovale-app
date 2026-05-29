@@ -116,43 +116,43 @@
             <nav class="nav-menu">
                 <a class="nav-item active" data-tab="dashboard">
                     <i data-lucide="layout-dashboard"></i>
-                    <span>Dashboard</span>
+                    <span>📊 Dashboard</span>
                 </a>
                 <a class="nav-item" data-tab="clientes">
                     <i data-lucide="users"></i>
-                    <span>Clientes & Freezers</span>
+                    <span>👥 Clientes & Freezers</span>
                 </a>
                 <a class="nav-item" data-tab="inventario">
-                    <i data-lucide="box"></i>
-                    <span>Inventário de Freezers</span>
+                    <i data-lucide="box" class="anim-rotate-ice"></i>
+                    <span>🧊 Inventário de Freezers</span>
                 </a>
                 <a class="nav-item" data-tab="tinas">
                     <i data-lucide="archive"></i>
-                    <span>Aluguel de Equipamentos</span>
+                    <span>🪣 Aluguel de Equipamentos</span>
                 </a>
                 <a class="nav-item" data-tab="documentos">
-                    <i data-lucide="file-text"></i>
-                    <span>Recibos & Orçamentos</span>
+                    <i data-lucide="file-text" class="anim-wiggle-doc"></i>
+                    <span>🧾 Recibos & Orçamentos</span>
                 </a>
                 <a class="nav-item" data-tab="pedidos">
                     <i data-lucide="shopping-cart"></i>
-                    <span>Pedidos Pendentes</span>
+                    <span>⏳ Pedidos Pendentes</span>
                 </a>
                 <a class="nav-item" data-tab="historico">
-                    <i data-lucide="history"></i>
-                    <span>Histórico de Entregas</span>
+                    <i data-lucide="history" class="anim-drive-truck"></i>
+                    <span>🚚 Histórico de Entregas</span>
                 </a>
                 <a class="nav-item" data-tab="pdv" id="nav-pdv">
                     <i data-lucide="monitor"></i>
-                    <span>Frente de Caixa (PDV)</span>
+                    <span>💻 Frente de Caixa (PDV)</span>
                 </a>
                 <a class="nav-item" data-tab="precos" id="nav-precos">
                     <i data-lucide="settings"></i>
-                    <span>Configurações & Preços</span>
+                    <span>⚙️ Configurações & Preços</span>
                 </a>
                 <a class="nav-item" data-tab="ajuda" id="nav-ajuda">
                     <i data-lucide="help-circle"></i>
-                    <span>Dúvidas & Soluções</span>
+                    <span>💡 Dúvidas & Soluções</span>
                 </a>
             </nav>
             
@@ -229,41 +229,41 @@
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-info">
-                            <h3>Clientes / Freezers</h3>
+                            <h3>👥 Clientes / 🧊 Freezers</h3>
                             <div class="kpi-value" id="kpi-freezers">0 / 0</div>
                         </div>
-                        <div class="kpi-icon-wrapper">
-                            <i data-lucide="thermometer"></i>
+                        <div class="kpi-icon-wrapper" style="background: rgba(0, 240, 255, 0.08);">
+                            <i data-lucide="thermometer" class="anim-rotate-ice" style="color: var(--color-primary);"></i>
                         </div>
                     </div>
                     
                     <div class="kpi-card">
                         <div class="kpi-info">
-                            <h3>Gelo Entregue (Mês)</h3>
+                            <h3>❄️ Gelo Entregue (Mês)</h3>
                             <div class="kpi-value" id="kpi-delivered">0 kg</div>
                         </div>
-                        <div class="kpi-icon-wrapper">
-                            <i data-lucide="package"></i>
+                        <div class="kpi-icon-wrapper" style="background: rgba(0, 240, 255, 0.08);">
+                            <i data-lucide="package" class="anim-rotate-ice"></i>
                         </div>
                     </div>
                     
                     <div class="kpi-card">
                         <div class="kpi-info">
-                            <h3>Pedidos Pendentes</h3>
+                            <h3>⏳ Pedidos Pendentes</h3>
                             <div class="kpi-value" id="kpi-pending-orders">0</div>
                         </div>
-                        <div class="kpi-icon-wrapper">
-                            <i data-lucide="clock"></i>
+                        <div class="kpi-icon-wrapper" style="background: rgba(255, 170, 0, 0.08);">
+                            <i data-lucide="clock" class="anim-wiggle-doc" style="color: #ffaa00;"></i>
                         </div>
                     </div>
                     
                     <div class="kpi-card">
                         <div class="kpi-info">
-                            <h3>Faturamento Mensal</h3>
+                            <h3>💰 Faturamento Mensal</h3>
                             <div class="kpi-value" id="kpi-revenue">R$ 0,00</div>
                         </div>
-                        <div class="kpi-icon-wrapper">
-                            <i data-lucide="dollar-sign"></i>
+                        <div class="kpi-icon-wrapper" style="background: rgba(0, 255, 100, 0.08);">
+                            <i data-lucide="dollar-sign" class="anim-float-money" style="color: #00ff64;"></i>
                         </div>
                     </div>
                 </div>

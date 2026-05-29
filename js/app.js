@@ -637,15 +637,16 @@ export function renderPedidos() {
             const qtyUnit = o.items[prod + "_unit"] || 0;
             
             if (qty > 0 || qtyUnit > 0) {
+                const badge = getProductEmojiBadge(p);
                 let tagText = "";
                 if (qty > 0 && qtyUnit > 0) {
-                    tagText = `${qty}f + ${qtyUnit}u de ${p.name}`;
+                    tagText = `${badge} ${qty}f + ${qtyUnit}u de ${p.name}`;
                 } else if (qty > 0) {
-                    tagText = `${qty}x ${p.name}`;
+                    tagText = `${badge} ${qty}x ${p.name}`;
                 } else {
-                    tagText = `${qtyUnit}u de ${p.name}`;
+                    tagText = `${badge} ${qtyUnit}u de ${p.name}`;
                 }
-                tagsHTML += `<span class="produto-tag">${tagText}</span>`;
+                tagsHTML += `<span class="produto-tag" style="display: inline-flex; align-items: center; gap: 4px;">${tagText}</span>`;
                 
                 if (client) {
                     const priceRes = calculateProductRevenue(client, p, qty, qtyUnit);
@@ -1119,15 +1120,16 @@ export function renderHistorico() {
         state.products.forEach(p => {
             const qty = del.items[p.id] || 0;
             const qtyUnit = del.items[p.id + "_unit"] || 0;
-            if (qty > 0 || qtyUnit > 0) {
-                if (qty > 0 && qtyUnit > 0) {
-                    itemsText.push(`${qty} f + ${qtyUnit} u de ${p.name}`);
-                } else if (qty > 0) {
-                    itemsText.push(`${qty}x ${p.name}`);
-                } else {
-                    itemsText.push(`${qtyUnit} u de ${p.name}`);
+                if (qty > 0 || qtyUnit > 0) {
+                    const badge = getProductEmojiBadge(p);
+                    if (qty > 0 && qtyUnit > 0) {
+                        itemsText.push(`${badge} ${qty} f + ${qtyUnit} u de ${p.name}`);
+                    } else if (qty > 0) {
+                        itemsText.push(`${badge} ${qty}x ${p.name}`);
+                    } else {
+                        itemsText.push(`${badge} ${qtyUnit} u de ${p.name}`);
+                    }
                 }
-            }
         });
         
         let extraInfo = "";
@@ -3141,3 +3143,49 @@ export function runClientDiagnosticsFromSupport() {
 window.updateSupportTabStatus = updateSupportTabStatus;
 window.testConnectionSpeed = testConnectionSpeed;
 window.runClientDiagnosticsFromSupport = runClientDiagnosticsFromSupport;
+
+export function getProductEmoji(p) {
+    if (!p) return "";
+    const nameLower = (p.name || "").toLowerCase();
+    const typeLower = (p.type || "").toLowerCase();
+    
+    if (typeLower.includes("carv") || nameLower.includes("carv")) {
+        return "🔥";
+    }
+    if (typeLower.includes("saborizado") || nameLower.includes("saborizado")) {
+        if (nameLower.includes("lim")) return "🍋";
+        if (nameLower.includes("moran") || nameLower.includes("red")) return "🍓";
+        if (nameLower.includes("coco")) return "🥥";
+        if (nameLower.includes("marac")) return "🍍";
+        return "❄️🍹";
+    }
+    if (typeLower.includes("gelo") || nameLower.includes("gelo")) {
+        return "🧊";
+    }
+    if (typeLower.includes("tina") || nameLower.includes("tina")) {
+        return "🪣";
+    }
+    if (nameLower.includes("mesa") || nameLower.includes("cadeira")) {
+        return "🪑";
+    }
+    return "📦";
+}
+
+window.getProductEmoji = getProductEmoji;
+
+export function getProductEmojiBadge(p) {
+    if (!p) return "";
+    const emoji = getProductEmoji(p);
+    const nameLower = (p.name || "").toLowerCase();
+    const typeLower = (p.type || "").toLowerCase();
+    
+    if (typeLower.includes("carv") || nameLower.includes("carv")) {
+        return `<span class="product-icon-badge anim-pulse-fire">${emoji}</span>`;
+    }
+    if (typeLower.includes("gelo") || typeLower.includes("saborizado") || nameLower.includes("gelo")) {
+        return `<span class="product-icon-badge anim-rotate-ice">${emoji}</span>`;
+    }
+    return `<span class="product-icon-badge">${emoji}</span>`;
+}
+
+window.getProductEmojiBadge = getProductEmojiBadge;

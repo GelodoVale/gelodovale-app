@@ -3494,4 +3494,82 @@ details.faq-item .faq-body code {
     width: 100%;
 }
 
+/* ==========================================================================
+   ANIMAÇÕES TEMÁTICAS E EFEITOS DINÂMICOS
+   ========================================================================== */
+
+@keyframes rotate-ice {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.anim-rotate-ice {
+    display: inline-block;
+    animation: rotate-ice 12s linear infinite;
+    transform-origin: center;
+}
+.anim-rotate-ice:hover {
+    animation-duration: 3s;
+}
+
+@keyframes pulse-fire {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 68, 0, 0.4)); }
+    50% { transform: scale(1.18); filter: drop-shadow(0 0 10px rgba(255, 68, 0, 0.8)); }
+}
+.anim-pulse-fire {
+    display: inline-block;
+    animation: pulse-fire 2s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes drive-truck {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(1px, -1px); }
+    40% { transform: translate(-1px, 1px); }
+    60% { transform: translate(1px, 1px); }
+    80% { transform: translate(-1px, -1px); }
+}
+/* Balanço de caminhão ativo no hover */
+.anim-drive-truck {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+.anim-drive-truck:hover {
+    animation: drive-truck 0.15s linear infinite;
+}
+
+@keyframes float-money {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+.anim-float-money {
+    display: inline-block;
+    animation: float-money 3.5s ease-in-out infinite;
+}
+.anim-float-money:hover {
+    transform: scale(1.2);
+    transition: transform 0.2s ease;
+}
+
+@keyframes wiggle-doc {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg); }
+    75% { transform: rotate(-5deg); }
+}
+.anim-wiggle-doc {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+.anim-wiggle-doc:hover {
+    animation: wiggle-doc 0.3s ease-in-out infinite;
+}
+
+/* Badges e tags temáticas de produtos */
+.product-icon-badge {
+    font-size: 1.1rem;
+    vertical-align: middle;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+
 

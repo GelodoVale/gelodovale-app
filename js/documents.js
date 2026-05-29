@@ -36,11 +36,11 @@ export function renderDocumentos() {
         const dateFormatted = new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR');
         let typeBadge = "";
         if (d.type === "orcamento") {
-            typeBadge = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">Orçamento</span>`;
+            typeBadge = `<span class="badge badge-warning anim-wiggle-doc" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); display: inline-flex; align-items: center; gap: 4px;">🧾 Orçamento</span>`;
         } else if (d.type === "nota") {
-            typeBadge = `<span class="badge badge-info" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">Nota</span>`;
+            typeBadge = `<span class="badge badge-info anim-wiggle-doc" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); display: inline-flex; align-items: center; gap: 4px;">📄 Nota</span>`;
         } else {
-            typeBadge = `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">Recibo</span>`;
+            typeBadge = `<span class="badge badge-success anim-wiggle-doc" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); display: inline-flex; align-items: center; gap: 4px;">💵 Recibo</span>`;
         }
 
         let gpsButton = '';

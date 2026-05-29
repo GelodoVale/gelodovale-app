@@ -2403,9 +2403,11 @@ export function renderProductsCatalog() {
             ? `<span class="status-badge completed" style="background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.15);">Ativo</span>`
             : `<span class="status-badge pending" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-muted); border: 1px solid rgba(255, 255, 255, 0.08);">Inativo</span>`;
         
+        const emojiBadge = window.getProductEmojiBadge ? window.getProductEmojiBadge(p) : "";
+        
         tbody.innerHTML += `
             <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.03);">
-                <td style="padding: 10px; font-weight: 600; color: var(--color-text-main);">${p.name}</td>
+                <td style="padding: 10px; font-weight: 600; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 4px;">${emojiBadge} ${p.name}</td>
                 <td style="padding: 10px; color: var(--color-text-muted);">${p.type}</td>
                 <td style="padding: 10px; color: var(--color-text-muted);">${p.subtype || '-'}</td>
                 <td style="padding: 10px; text-align: center; color: var(--color-text-main);">${p.weight || '0'} kg</td>
