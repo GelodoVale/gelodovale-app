@@ -15,11 +15,12 @@
     <!-- CSS Estilos -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
-            console.error("JS Error: " + message + " at " + source + ":" + lineno + ":" + colno);
-            return true;
+            const shortSource = source ? source.substring(source.lastIndexOf('/') + 1) : 'desconhecido';
+            alert("Erro de JavaScript no GelControl:\n\nMensagem: " + message + "\nArquivo: " + shortSource + "\nLinha: " + lineno + ", Coluna: " + colno);
+            return false;
         };
         window.addEventListener('unhandledrejection', function(event) {
-            console.error("Promise Error: " + event.reason);
+            alert("Erro de Promessa (Promise) no GelControl:\n\nMotivo: " + event.reason);
         });
     </script>
     <link rel="stylesheet" href="styles.css">
