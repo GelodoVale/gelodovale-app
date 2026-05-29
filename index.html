@@ -150,6 +150,10 @@
                     <i data-lucide="settings"></i>
                     <span>Configurações & Preços</span>
                 </a>
+                <a class="nav-item" data-tab="ajuda" id="nav-ajuda">
+                    <i data-lucide="help-circle"></i>
+                    <span>Dúvidas & Soluções</span>
+                </a>
             </nav>
             
             <div class="sidebar-user-status" id="sidebar-user-status" style="padding: 10px 12px; margin-bottom: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255,255,255,0.01); border-radius: var(--radius-md); margin-top: 1rem;">
@@ -2095,6 +2099,150 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TELA: SUPORTE, DÚVIDAS & SOLUÇÕES ================= -->
+            <section id="ajuda" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <div>
+                        <h2>Dúvidas & Soluções</h2>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Central de suporte, guias interativos e ferramentas de diagnóstico rápido.</p>
+                    </div>
+                </div>
+
+                <!-- Painel de Ações Rápidas de Automação -->
+                <div class="dashboard-panel" style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="cpu" style="width: 16px; height: 16px;"></i> Painel de Automação & Diagnóstico
+                    </h3>
+                    <div class="support-actions-grid">
+                        <!-- Card 1: Testar Conexão -->
+                        <div class="support-action-card">
+                            <i data-lucide="wifi"></i>
+                            <h4>Testar Conexão</h4>
+                            <p>Verifica a latência em tempo real com o banco de dados.</p>
+                            <span id="support-ping-result" style="font-size: 0.7rem; font-weight: bold; color: var(--color-text-muted); margin-top: 2px;">Não testado</span>
+                            <button type="button" class="btn btn-secondary" onclick="window.testConnectionSpeed()" style="font-size: 0.72rem; padding: 4px 8px; height: auto;">Testar Conexão</button>
+                        </div>
+                        
+                        <!-- Card 2: Auto-Teste -->
+                        <div class="support-action-card">
+                            <i data-lucide="activity"></i>
+                            <h4>Auto-Teste do Sistema</h4>
+                            <p>Executa uma análise de 13 testes de integridade operacional.</p>
+                            <button type="button" class="btn btn-secondary" onclick="window.runClientDiagnosticsFromSupport()" style="font-size: 0.72rem; padding: 4px 8px; height: auto;">Executar Teste</button>
+                        </div>
+
+                        <!-- Card 3: Forçar Sincronização -->
+                        <div class="support-action-card">
+                            <i data-lucide="refresh-cw"></i>
+                            <h4>Forçar Sincronização</h4>
+                            <p>Envia manualmente todos os dados locais para a nuvem.</p>
+                            <button type="button" class="btn btn-secondary" onclick="window.forceManualSync()" style="font-size: 0.72rem; padding: 4px 8px; height: auto;">Sincronizar Agora</button>
+                        </div>
+
+                        <!-- Card 4: Imprimir Teste -->
+                        <div class="support-action-card">
+                            <i data-lucide="printer"></i>
+                            <h4>Testar Impressão</h4>
+                            <p>Dispara a impressão de um cupom térmico fictício para teste.</p>
+                            <button type="button" class="btn btn-secondary" onclick="window.printTestReceipt()" style="font-size: 0.72rem; padding: 4px 8px; height: auto;">Imprimir Cupom</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel de Dúvidas Frequentes -->
+                <div class="dashboard-panel">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i> Dúvidas & Perguntas Frequentes (FAQ)
+                    </h3>
+                    
+                    <div class="faq-list">
+                        <!-- FAQ 1 -->
+                        <details class="faq-item">
+                            <summary>📱 Como instalar o aplicativo no Celular ou Tablet (Android/iOS)?</summary>
+                            <div class="faq-body">
+                                <p>O GelControl é um aplicativo PWA (Progressive Web App). Isso significa que você pode instalá-lo como um app de verdade sem precisar baixar da Google Play Store ou App Store:</p>
+                                <ul>
+                                    <li><strong>Android (Google Chrome):</strong> Acesse o link no Chrome, toque nos <code>três pontos</code> no canto superior direito e selecione <code>Instalar aplicativo</code> ou <code>Adicionar à tela inicial</code>.</li>
+                                    <li><strong>iPhone ou iPad (Safari):</strong> Acesse o link no Safari, toque no botão de <code>Compartilhar</code> (quadrado com seta para cima) e clique em <code>Adicionar à Tela de Início</code>.</li>
+                                    <li><strong>Computador:</strong> Clique no ícone de <code>computador com seta para baixo</code> na barra de endereços do Chrome ou Edge e clique em <code>Instalar</code>.</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <!-- FAQ 2 -->
+                        <details class="faq-item">
+                            <summary>🔄 Como funciona a Sincronização em Tempo Real e o Modo Offline?</summary>
+                            <div class="faq-body">
+                                <p>O sistema possui dois mecanismos automáticos que garantem a segurança dos seus dados:</p>
+                                <ul>
+                                    <li><strong>Sincronização em tempo real (Firebase):</strong> Com internet, cada alteração feita em qualquer celular ou computador é salva na nuvem e aparece instantaneamente em todos os outros aparelhos conectados.</li>
+                                    <li><strong>Sincronização Offline Automática:</strong> Se você estiver sem internet (na rua ou rota), o sistema salva tudo de forma segura localmente no aparelho. Assim que a conexão de internet for restabelecida, o próprio aplicativo identifica que voltou a ficar online e **sincroniza tudo sozinho com a nuvem**, sem você precisar apertar nenhum botão.</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <!-- FAQ 3 -->
+                        <details class="faq-item">
+                            <summary>🖨️ Como configurar e imprimir em Impressoras Térmicas (Bluetooth/USB)?</summary>
+                            <div class="faq-body">
+                                <p>Para imprimir recibos e cupons no formato de 80mm ou 58mm:</p>
+                                <ol>
+                                    <li>Pareie a impressora Bluetooth no seu celular/computador ou conecte o cabo USB.</li>
+                                    <li>Ao abrir o visualizador de documento, clique em <code>Imprimir Documento</code> ou <code>Imprimir Cupom</code>.</li>
+                                    <li>Se o botão de impressão não fizer nada no navegador:
+                                        <ul>
+                                            <li>Verifique se o seu navegador bloqueou o <strong>popup de impressão</strong>.</li>
+                                            <li>No topo direito do navegador, clique no aviso de bloqueador de popups e selecione <code>Sempre permitir popups de gelodovale.github.io</code>.</li>
+                                        </ul>
+                                    </li>
+                                    <li>Nas opções de impressão, selecione o papel adequado (como 80mm ou 58mm) e desmarque "Margens" para um melhor alinhamento.</li>
+                                </ol>
+                            </div>
+                        </details>
+
+                        <!-- FAQ 4 -->
+                        <details class="faq-item">
+                            <summary>📊 Como funciona o Fechamento de Caixa Diário e Compartilhamento?</summary>
+                            <div class="faq-body">
+                                <p>O Fechamento de Caixa Diário consolida todas as vendas realizadas na data de hoje:</p>
+                                <ul>
+                                    <li>Para acessar, clique no botão <code>Fechar Caixa do Dia</code> na tela de <strong>Frente de Caixa (PDV)</strong>.</li>
+                                    <li>Ele calcula o total faturado hoje e divide as entradas exatas por meio de pagamento: Dinheiro, PIX, Cartão e A Prazo (Fiado).</li>
+                                    <li>Você pode clicar em <code>Compartilhar no WhatsApp</code> para enviar o resumo financeiro formatado em texto para o administrador da fábrica com apenas um clique.</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <!-- FAQ 5 -->
+                        <details class="faq-item">
+                            <summary>💵 Como funciona o Carnê Digital de Fiados e Cobrança por WhatsApp?</summary>
+                            <div class="faq-body">
+                                <p>O Carnê Digital ajuda a gerenciar contas a prazo (fiado) de forma integrada:</p>
+                                <ul>
+                                    <li>Toda venda finalizada com a opção "A Prazo" gera automaticamente um saldo devedor na conta do cliente correspondente.</li>
+                                    <li>No painel principal ou no cadastro de clientes, você pode abrir o <strong>Carnê do Cliente</strong> para ver todas as parcelas pendentes ou vencidas.</li>
+                                    <li>Ao clicar em <code>Cobrar</code>, o aplicativo gera um link de WhatsApp com uma mensagem educada de lembrete contendo a descrição da dívida, data de vencimento e valor, permitindo cobrar o cliente de forma rápida.</li>
+                                    <li>Quando receber o valor, clique em <code>Marcar Pago</code> para recalcular o débito pendente.</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <!-- FAQ 6 -->
+                        <details class="faq-item">
+                            <summary>🔑 Controle de Acesso e Perfis de Usuário (Senha Master)</summary>
+                            <div class="faq-body">
+                                <p>O aplicativo possui controle de acessos para proteger dados sensíveis:</p>
+                                <ul>
+                                    <li>O perfil <strong>Administrador (Master)</strong> possui senha padrão <code>1120M@z@dr1</code>. Ele tem acesso completo a preços de fábrica, relatórios, cadastros e backup.</li>
+                                    <li>Você pode criar usuários de perfil <strong>Vendedor / Motorista</strong> na aba de Configurações, limitando suas permissões para que eles não consigam alterar tabelas de preços ou apagar históricos de vendas.</li>
+                                    <li>Se esquecer a senha padrão, você pode restaurar o estado a partir do backup físico JSON gerado nas configurações de backup.</li>
+                                </ul>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </section>

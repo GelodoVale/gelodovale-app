@@ -3356,4 +3356,142 @@ body.theme-high-contrast .modal-backdrop {
     transition: all 0.3s ease-in-out;
 }
 
+/* ==========================================================================
+   ABA DE SUPORTE, DÚVIDAS & SOLUÇÕES (PWA / FAQ / AUTOMATION)
+   ========================================================================== */
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+details.faq-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+details.faq-item summary {
+    padding: 14px 16px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    list-style: none;
+    outline: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+details.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+details.faq-item summary::after {
+    content: '▼';
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    transition: transform 0.25s ease;
+}
+
+details.faq-item[open] summary::after {
+    transform: rotate(-180deg);
+}
+
+details.faq-item summary:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+details.faq-item[open] {
+    border-color: rgba(var(--color-primary-rgb), 0.3);
+    box-shadow: 0 0 15px rgba(var(--color-primary-rgb), 0.1);
+    background: rgba(10, 15, 30, 0.4);
+}
+
+details.faq-item .faq-body {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+details.faq-item .faq-body ol, details.faq-item .faq-body ul {
+    margin: 8px 0;
+    padding-left: 1.2rem;
+}
+
+details.faq-item .faq-body li {
+    margin-bottom: 6px;
+}
+
+details.faq-item .faq-body code {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--color-primary);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+/* Painel de Suporte e Ações Rápidas */
+.support-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 1.5rem;
+}
+
+.support-action-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.support-action-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--color-primary-rgb), 0.35);
+    background: rgba(var(--color-primary-rgb), 0.03);
+    box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.support-action-card i {
+    width: 24px;
+    height: 24px;
+    color: var(--color-primary);
+}
+
+.support-action-card h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.support-action-card p {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.support-action-card button {
+    margin-top: 6px;
+    width: 100%;
+}
+
 

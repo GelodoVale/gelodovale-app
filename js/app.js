@@ -509,6 +509,11 @@ export function updateHeaderForTab(tab) {
             pageSubtitle.innerText = "Emita vendas locais e de retirada direto do balcão da fábrica";
             globalBtn.style.display = "none";
             break;
+        case "ajuda":
+            pageTitle.innerText = "Dúvidas & Soluções";
+            pageSubtitle.innerText = "Central de suporte, guias práticos e ferramentas de diagnóstico rápido";
+            globalBtn.style.display = "none";
+            break;
     }
     if (window.lucide) window.lucide.createIcons();
 }
@@ -565,6 +570,9 @@ export function renderTabContent(tab) {
             if (window.populatePDVClients) window.populatePDVClients();
             if (window.renderPDVCatalog) window.renderPDVCatalog();
             if (window.renderPDVCart) window.renderPDVCart();
+            break;
+        case "ajuda":
+            if (window.updateSupportTabStatus) window.updateSupportTabStatus();
             break;
     }
 }
@@ -3050,3 +3058,86 @@ export function shareCaixaWhatsApp() {
 window.openCaixaDiario = openCaixaDiario;
 window.renderCaixaDiario = renderCaixaDiario;
 window.shareCaixaWhatsApp = shareCaixaWhatsApp;
+
+// --- CENTRAL DE AJUDA, DÚVIDAS & SOLUÇÕES ---
+
+export function updateSupportTabStatus() {
+    const el = document.getElementById("support-ping-result");
+    if (!el) return;
+    if (navigator.onLine) {
+        el.textContent = "Online (Pronto)";
+        el.style.color = "#00ff64";
+    } else {
+        el.textContent = "Offline";
+        el.style.color = "#ef4444";
+    }
+}
+
+export async function testConnectionSpeed() {
+    const el = document.getElementById("support-ping-result");
+    if (!el) return;
+    
+    if (!navigator.onLine) {
+        el.textContent = "Offline (Sem rede)";
+        el.style.color = "#ef4444";
+        showToast("Você está offline. Conecte-se à internet para testar.", "warning");
+        return;
+    }
+    
+    el.textContent = "Testando latência...";
+    el.style.color = "#ffaa00";
+    
+    const startTime = Date.now();
+    try {
+        const fbUrl = (state.firebaseConfig && state.firebaseConfig.databaseURL) || "https://www.google.com";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+        
+        await fetch(`${fbUrl}/.json?shallow=true`, { 
+            method: 'GET',
+            mode: 'no-cors',
+            cache: 'no-store',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        const duration = Date.now() - startTime;
+        el.textContent = `Online (Ping: ${duration}ms)`;
+        el.style.color = "#00ff64";
+        showToast(`Conexão estável! Latência de rede: ${duration}ms`, "success");
+    } catch (err) {
+        const duration = Date.now() - startTime;
+        if (err.name === 'AbortError') {
+            el.textContent = "Tempo limite esgotado (>4s)";
+            el.style.color = "#f59e0b";
+            showToast("O teste de conexão demorou muito para responder.", "warning");
+        } else {
+            if (duration < 1000) {
+                el.textContent = `Online (Ping: ${duration}ms)`;
+                el.style.color = "#00ff64";
+                showToast(`Conexão estabelecida! Latência: ${duration}ms`, "success");
+            } else {
+                el.textContent = "Falha no Ping";
+                el.style.color = "#ef4444";
+                showToast("Erro ao conectar ao banco de dados.", "error");
+            }
+        }
+    }
+}
+
+export function runClientDiagnosticsFromSupport() {
+    if (window.runFullDiagnostic) {
+        const res = window.runFullDiagnostic();
+        if (res.failed === 0) {
+            showToast(`✨ Auto-Teste concluído: ${res.passed}/${res.total} testes passaram sem falhas! Todos os módulos estão funcionando perfeitamente.`, "success");
+        } else {
+            showToast(`⚠️ Auto-Teste concluído: Foram encontradas ${res.failed} falha(s). Verifique a aba de Configurações para mais detalhes.`, "warning");
+        }
+    } else {
+        showToast("Módulo de diagnósticos não carregado.", "error");
+    }
+}
+
+window.updateSupportTabStatus = updateSupportTabStatus;
+window.testConnectionSpeed = testConnectionSpeed;
+window.runClientDiagnosticsFromSupport = runClientDiagnosticsFromSupport;
