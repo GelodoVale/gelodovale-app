@@ -205,6 +205,14 @@
                         <i data-lucide="cloud" style="width: 18px; height: 18px; color: #00ff64;"></i>
                     </div>
 
+                    <!-- Quick sensory toggles -->
+                    <button class="btn btn-secondary" id="btn-quick-toggle-sound" title="Sons Ativados (Clique para Silenciar)" onclick="window.toggleQuickSound()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; flex-shrink: 0; margin-right: 4px;">
+                        <i data-lucide="volume-2" id="icon-quick-toggle-sound" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-quick-toggle-haptic" title="Vibração Ativada (Clique para Desativar)" onclick="window.toggleQuickHaptic()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; flex-shrink: 0; margin-right: 4px;">
+                        <i data-lucide="smartphone" id="icon-quick-toggle-haptic" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
+                    </button>
+
                     <button class="btn btn-secondary" id="btn-toggle-contrast" title="Modo Sol Forte (Alto Contraste)" onclick="toggleHighContrastTheme()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; flex-shrink: 0; margin-right: 4px;">
                         <i data-lucide="sun"></i>
                     </button>
@@ -1461,6 +1469,25 @@
                                                 <option value="soft">Brilho Suave (Moderno/Sutil)</option>
                                                 <option value="off">Sem Brilho (Estilo Limpo)</option>
                                             </select>
+                                        </div>
+
+                                        <!-- 5. Feedback Sensorial e Efeitos -->
+                                        <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                                            <label style="margin-bottom: 0.75rem; display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-text-main);">Feedback Sensorial & Interativo</label>
+                                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--color-text-main);">
+                                                    <input type="checkbox" id="cfg-sound-enabled" style="accent-color: var(--color-primary); width: 16px; height: 16px;">
+                                                    Habilitar Efeitos Sonoros 🔊
+                                                </label>
+                                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--color-text-main);">
+                                                    <input type="checkbox" id="cfg-haptic-enabled" style="accent-color: var(--color-primary); width: 16px; height: 16px;">
+                                                    Habilitar Feedback Háptico (Vibração) 📳
+                                                </label>
+                                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--color-text-main);">
+                                                    <input type="checkbox" id="cfg-weather-theme-enabled" style="accent-color: var(--color-primary); width: 16px; height: 16px;">
+                                                    Tema Climático Dinâmico (Fundo reativo à temperatura) 🌡️
+                                                </label>
+                                            </div>
                                         </div>
                                         
                                         <button type="submit" class="btn btn-primary" style="align-self: flex-end; display: inline-flex; align-items: center; gap: 6px; margin-top: 0.5rem;">

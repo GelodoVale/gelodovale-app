@@ -569,9 +569,15 @@ export function loadState() {
                     themeName: "ciano",
                     primaryColor: "#00f0ff",
                     primaryColorRgb: "0, 240, 255",
-                    secondaryColor: "#0072ff"
+                    secondaryColor: "#0072ff",
+                    soundEnabled: true,
+                    hapticEnabled: true,
+                    weatherThemeEnabled: true
                 };
             }
+            if (state.appearance.soundEnabled === undefined) state.appearance.soundEnabled = true;
+            if (state.appearance.hapticEnabled === undefined) state.appearance.hapticEnabled = true;
+            if (state.appearance.weatherThemeEnabled === undefined) state.appearance.weatherThemeEnabled = true;
 
             // Inicializar configurações de impressão se vazias
             if (!state.printSettings) {
@@ -636,7 +642,10 @@ export function loadState() {
             themeName: "ciano",
             primaryColor: "#00f0ff",
             primaryColorRgb: "0, 240, 255",
-            secondaryColor: "#0072ff"
+            secondaryColor: "#0072ff",
+            soundEnabled: true,
+            hapticEnabled: true,
+            weatherThemeEnabled: true
         };
         state.printSettings = {
             format: "a4",

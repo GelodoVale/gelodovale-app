@@ -408,6 +408,19 @@ export function renderWeather() {
         if (window.lucide) window.lucide.createIcons();
     }
 
+    // Aplicar temas baseados no clima reativo
+    const weatherThemeEnabled = state.appearance && state.appearance.weatherThemeEnabled !== false;
+    document.body.classList.remove('weather-hot', 'weather-cold', 'weather-mild');
+    if (weatherThemeEnabled) {
+        if (config.temp >= 30) {
+            document.body.classList.add('weather-hot');
+        } else if (config.temp <= 18) {
+            document.body.classList.add('weather-cold');
+        } else {
+            document.body.classList.add('weather-mild');
+        }
+    }
+
     // Carregar/atualizar a lista de cidades vizinhas
     updateNeighboringCities(config.lat, config.lon, config.city);
 }
@@ -986,3 +999,4 @@ export function copyLocalPixPayload() {
     }
 }
 window.copyLocalPixPayload = copyLocalPixPayload;
+window.renderWeather = renderWeather;

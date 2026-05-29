@@ -274,6 +274,12 @@ export function updateSyncStatusUI(status) {
     indicator.title = cfg.title;
     indicator.innerHTML = `<i data-lucide="${cfg.icon}" class="${cfg.spin ? 'spin-anim' : ''}" style="width:18px;height:18px;color:${cfg.color};"></i>`;
 
+    if (status === 'success') {
+        indicator.classList.add('pulse-glow-online');
+    } else {
+        indicator.classList.remove('pulse-glow-online');
+    }
+
     const btnSync = document.getElementById('btn-force-sync');
     if (btnSync) {
         if (status === 'syncing') {

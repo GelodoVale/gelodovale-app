@@ -381,6 +381,15 @@ export function renderPrecos() {
         
         document.getElementById("cfg-panel-style").value = state.appearance.panelStyle || "glassmorphism";
         document.getElementById("cfg-glow-intensity").value = state.appearance.glowIntensity || "high";
+
+        const chkSound = document.getElementById("cfg-sound-enabled");
+        if (chkSound) chkSound.checked = state.appearance.soundEnabled !== false;
+
+        const chkHaptic = document.getElementById("cfg-haptic-enabled");
+        if (chkHaptic) chkHaptic.checked = state.appearance.hapticEnabled !== false;
+
+        const chkWeather = document.getElementById("cfg-weather-theme-enabled");
+        if (chkWeather) chkWeather.checked = state.appearance.weatherThemeEnabled !== false;
     }
 
     // 7. Preencher inputs de configuração de impressão
@@ -796,6 +805,14 @@ export function applyAppearanceTheme(customTheme = null) {
             logoImg.src = "logo_horizontal.jpg";
         }
     }
+
+    // Atualizar UI dos botões rápidos e clima
+    if (window.updateQuickTogglesUI) {
+        window.updateQuickTogglesUI();
+    }
+    if (window.renderWeather) {
+        window.renderWeather();
+    }
 }
 
 export function getCurrentUIThemeSettings() {
@@ -842,6 +859,10 @@ export function getCurrentUIThemeSettings() {
     const customBgColor = document.getElementById("cfg-custom-bg-color").value || "#090d16";
     const panelStyle = document.getElementById("cfg-panel-style").value || "glassmorphism";
     const glowIntensity = document.getElementById("cfg-glow-intensity").value || "high";
+
+    const soundEnabled = document.getElementById("cfg-sound-enabled") ? document.getElementById("cfg-sound-enabled").checked : (state.appearance ? state.appearance.soundEnabled !== false : true);
+    const hapticEnabled = document.getElementById("cfg-haptic-enabled") ? document.getElementById("cfg-haptic-enabled").checked : (state.appearance ? state.appearance.hapticEnabled !== false : true);
+    const weatherThemeEnabled = document.getElementById("cfg-weather-theme-enabled") ? document.getElementById("cfg-weather-theme-enabled").checked : (state.appearance ? state.appearance.weatherThemeEnabled !== false : true);
     
     return {
         themeName: themePreset,
@@ -851,7 +872,10 @@ export function getCurrentUIThemeSettings() {
         backgroundStyle,
         customBgColor,
         panelStyle,
-        glowIntensity
+        glowIntensity,
+        soundEnabled,
+        hapticEnabled,
+        weatherThemeEnabled
     };
 }
 

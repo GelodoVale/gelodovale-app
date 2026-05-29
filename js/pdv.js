@@ -448,8 +448,12 @@ export function checkoutPDVSale() {
         client.outstandingDebt = (client.outstandingDebt || 0) + totalVal;
     }
     
-    // Persistir e atualizar aplicação
     saveState();
+    
+    // Trigger interactive sensory effects
+    if (window.playSound) window.playSound('cashRegister');
+    if (window.triggerConfetti) window.triggerConfetti();
+    if (window.triggerHaptic) window.triggerHaptic('success');
     
     if (window.showToast) window.showToast(`Venda Balcão finalizada! R$ ${totalVal.toFixed(2)} (${paymentMethod}).`, "success");
     

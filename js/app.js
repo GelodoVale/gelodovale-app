@@ -1078,6 +1078,12 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps, photoBase64
     
     saveState();
     renderApp();
+    
+    // Trigger interactive sensory effects
+    playSound('success');
+    triggerConfetti();
+    triggerHaptic('success');
+
     showToast(`Entrega efetuada com sucesso! R$ ${revenue.toFixed(2)} registrados (${paymentMethod}).`, "success");
 }
 
@@ -2321,6 +2327,10 @@ export function initForms() {
             const panelStyle = document.getElementById("cfg-panel-style").value;
             const glowIntensity = document.getElementById("cfg-glow-intensity").value;
             
+            const soundEnabled = document.getElementById("cfg-sound-enabled") ? document.getElementById("cfg-sound-enabled").checked : true;
+            const hapticEnabled = document.getElementById("cfg-haptic-enabled") ? document.getElementById("cfg-haptic-enabled").checked : true;
+            const weatherThemeEnabled = document.getElementById("cfg-weather-theme-enabled") ? document.getElementById("cfg-weather-theme-enabled").checked : true;
+            
             state.appearance = {
                 themeName: preset,
                 primaryColor,
@@ -2329,7 +2339,10 @@ export function initForms() {
                 backgroundStyle,
                 customBgColor,
                 panelStyle,
-                glowIntensity
+                glowIntensity,
+                soundEnabled,
+                hapticEnabled,
+                weatherThemeEnabled
             };
             
             saveState();
@@ -3189,3 +3202,268 @@ export function getProductEmojiBadge(p) {
 }
 
 window.getProductEmojiBadge = getProductEmojiBadge;
+
+// ==========================================
+// FEEDBACK SENSORIAL E INTERATIVIDADE (CONFES, SONS, HAPTICS, ETC)
+// ==========================================
+
+export function playSound(type) {
+    if (state && state.appearance && state.appearance.soundEnabled === false) return;
+    
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        
+        if (type === 'cashRegister') {
+            // Som de caixa registradora (metal cha-ching)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(987.77, ctx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.08);
+            gain1.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.4);
+
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+            osc2.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.22);
+            gain2.gain.setValueAtTime(0, ctx.currentTime);
+            gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.12);
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(ctx.currentTime + 0.12);
+            osc2.stop(ctx.currentTime + 0.5);
+            
+        } else if (type === 'success') {
+            // Sucesso: duplo bip melódico
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+            gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.16);
+
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+            gain2.gain.setValueAtTime(0, ctx.currentTime);
+            gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.08);
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(ctx.currentTime + 0.08);
+            osc2.stop(ctx.currentTime + 0.26);
+            
+        } else if (type === 'scan' || type === 'click') {
+            // Bipe rápido/clique
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, ctx.currentTime);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.09);
+        }
+    } catch (e) {
+        console.warn("Som não sintetizado:", e);
+    }
+}
+
+export function triggerHaptic(type) {
+    if (state && state.appearance && state.appearance.hapticEnabled === false) return;
+    if (!navigator.vibrate) return;
+    
+    try {
+        if (type === 'click') {
+            navigator.vibrate(12);
+        } else if (type === 'success') {
+            navigator.vibrate([35, 45, 35]);
+        } else if (type === 'error' || type === 'warning') {
+            navigator.vibrate([100, 50, 100, 50, 100]);
+        }
+    } catch (e) {
+        console.warn("Haptic não suportado ou bloqueado:", e);
+    }
+}
+
+export function triggerConfetti() {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '999999';
+        document.body.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const colors = ['#00f0ff', '#0072ff', '#10b981', '#f59e0b', '#ff007f', '#8b5cf6'];
+        const particles = [];
+
+        for (let i = 0; i < 120; i++) {
+            particles.push({
+                x: width / 2,
+                y: height + 20,
+                vx: (Math.random() - 0.5) * 15,
+                vy: -Math.random() * 20 - 10,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 8 + 4,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.2,
+                opacity: 1
+            });
+        }
+
+        let animationFrame;
+        const startTime = Date.now();
+
+        function update() {
+            ctx.clearRect(0, 0, width, height);
+
+            let active = false;
+            const elapsed = Date.now() - startTime;
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.5;
+                p.vx *= 0.98;
+                p.rotation += p.rotationSpeed;
+
+                if (elapsed > 1500) {
+                    p.opacity -= 0.02;
+                }
+
+                if (p.opacity > 0 && p.y < height + 50) {
+                    active = true;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                }
+            });
+
+            if (active && elapsed < 3500) {
+                animationFrame = requestAnimationFrame(update);
+            } else {
+                canvas.remove();
+            }
+        }
+
+        update();
+    } catch (e) {
+        console.warn("Confetes falharam:", e);
+    }
+}
+
+// Funções de controle rápido pelo cabeçalho
+export function toggleQuickSound() {
+    if (!state.appearance) state.appearance = {};
+    const enabled = !(state.appearance.soundEnabled !== false);
+    state.appearance.soundEnabled = enabled;
+    saveState();
+    updateQuickTogglesUI();
+    
+    // Sincronizar com o checkbox da aba configurações se existir
+    const chk = document.getElementById("cfg-sound-enabled");
+    if (chk) chk.checked = enabled;
+
+    const label = enabled ? "ativados" : "desativados";
+    showToast(`Efeitos sonoros ${label}`, "success");
+    
+    if (enabled) {
+        playSound('scan');
+    }
+    triggerHaptic('click');
+}
+
+export function toggleQuickHaptic() {
+    if (!state.appearance) state.appearance = {};
+    const enabled = !(state.appearance.hapticEnabled !== false);
+    state.appearance.hapticEnabled = enabled;
+    saveState();
+    updateQuickTogglesUI();
+    
+    // Sincronizar com o checkbox da aba configurações se existir
+    const chk = document.getElementById("cfg-haptic-enabled");
+    if (chk) chk.checked = enabled;
+
+    const label = enabled ? "ativada" : "desativada";
+    showToast(`Vibração ${label}`, "success");
+    
+    if (enabled) {
+        triggerHaptic('click');
+    }
+}
+
+export function updateQuickTogglesUI() {
+    const soundEnabled = state.appearance && state.appearance.soundEnabled !== false;
+    const hapticEnabled = state.appearance && state.appearance.hapticEnabled !== false;
+
+    const btnSound = document.getElementById("btn-quick-toggle-sound");
+    const iconSound = document.getElementById("icon-quick-toggle-sound");
+    if (btnSound && iconSound) {
+        if (soundEnabled) {
+            btnSound.title = "Sons Ativados (Clique para Silenciar)";
+            iconSound.setAttribute("data-lucide", "volume-2");
+            iconSound.style.color = "var(--color-primary)";
+        } else {
+            btnSound.title = "Sons Silenciados (Clique para Ativar)";
+            iconSound.setAttribute("data-lucide", "volume-x");
+            iconSound.style.color = "var(--color-text-muted)";
+        }
+    }
+
+    const btnHaptic = document.getElementById("btn-quick-toggle-haptic");
+    const iconHaptic = document.getElementById("icon-quick-toggle-haptic");
+    if (btnHaptic && iconHaptic) {
+        if (hapticEnabled) {
+            btnHaptic.title = "Vibração Ativada (Clique para Desativar)";
+            iconHaptic.setAttribute("data-lucide", "smartphone");
+            iconHaptic.style.color = "var(--color-primary)";
+        } else {
+            btnHaptic.title = "Vibração Desativada (Clique para Ativar)";
+            iconHaptic.setAttribute("data-lucide", "smartphone-off");
+            iconHaptic.style.color = "var(--color-text-muted)";
+        }
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.playSound = playSound;
+window.triggerHaptic = triggerHaptic;
+window.triggerConfetti = triggerConfetti;
+window.toggleQuickSound = toggleQuickSound;
+window.toggleQuickHaptic = toggleQuickHaptic;
+window.updateQuickTogglesUI = updateQuickTogglesUI;
+
