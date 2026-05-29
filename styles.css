@@ -3333,4 +3333,27 @@ body.theme-high-contrast .modal-backdrop {
     transform: translateY(0);
 }
 
+/* ==========================================================================
+   FRENTE DE CAIXA (PDV BALCÃO) STYLING
+   ========================================================================== */
+
+#pdv-catalog-grid::-webkit-scrollbar {
+    width: 6px;
+}
+#pdv-catalog-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 3px;
+}
+#pdv-catalog-grid::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-primary-rgb), 0.2);
+    border-radius: 3px;
+}
+#pdv-catalog-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--color-primary-rgb), 0.4);
+}
+
+#pdv-cash-details {
+    transition: all 0.3s ease-in-out;
+}
+
 

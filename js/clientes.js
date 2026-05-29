@@ -8,21 +8,59 @@ export function renderClientes() {
     if (!clientsContainer) return;
     clientsContainer.innerHTML = "";
     
-    if ((state.clients || []).length === 0) {
+    const searchVal = document.getElementById("client-search-input") ? document.getElementById("client-search-input").value.toLowerCase().trim() : "";
+    const filterVal = document.getElementById("client-activity-filter") ? document.getElementById("client-activity-filter").value : "all";
+
+    let filteredClients = (state.clients || []);
+    
+    // Filtro por nome ou endereço
+    if (searchVal) {
+        filteredClients = filteredClients.filter(c => 
+            (c.name || "").toLowerCase().includes(searchVal) || 
+            (c.address || "").toLowerCase().includes(searchVal)
+        );
+    }
+
+    // Calcular dias desde a última compra (churn) e associar status
+    const clientActivityInfo = {};
+    filteredClients.forEach(c => {
+        const clientDeliveries = (state.deliveries || []).filter(d => d.clientId === c.id);
+        let daysSinceLast = -1;
+        if (clientDeliveries.length > 0) {
+            const sorted = [...clientDeliveries].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const lastDate = sorted[0].date ? new Date(sorted[0].date) : null;
+            if (lastDate && !isNaN(lastDate)) {
+                const diffTime = Math.abs(new Date() - lastDate);
+                daysSinceLast = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            }
+        }
+        
+        let status = "new";
+        if (daysSinceLast >= 0) {
+            if (daysSinceLast <= 7) status = "active";
+            else if (daysSinceLast <= 14) status = "warning";
+            else status = "inactive";
+        }
+        clientActivityInfo[c.id] = { daysSinceLast, status };
+    });
+
+    // Filtro de atividade
+    if (filterVal !== "all") {
+        filteredClients = filteredClients.filter(c => clientActivityInfo[c.id].status === filterVal);
+    }
+
+    if (filteredClients.length === 0) {
         clientsContainer.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
                 <i data-lucide="users" style="width: 48px; height: 48px;"></i>
-                <p>Nenhum cliente cadastrado no momento.</p>
-                <button class="btn btn-primary" style="margin-top: 1rem;" onclick="openClientModal()">
-                    <i data-lucide="plus"></i> Cadastrar Primeiro Cliente
-                </button>
+                <p>Nenhum cliente atende aos filtros atuais.</p>
             </div>
         `;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
         return;
     }
     
-    state.clients.forEach(c => {
+    filteredClients.forEach(c => {
         const threshold = (c.alertThreshold || 20) / 100;
         let hasWarning = false;
         let hasDanger = false;
@@ -43,6 +81,19 @@ export function renderClientes() {
         if (hasDanger) statusBadgeHTML = '<span class="status-badge pending" style="background: rgba(239,68,68,0.15); color: var(--color-danger);">Estoque Crítico</span>';
         else if (hasWarning) statusBadgeHTML = '<span class="status-badge pending">Atenção</span>';
         
+        // Atividade/Churn Badge
+        const activity = clientActivityInfo[c.id];
+        let activityBadgeHTML = "";
+        if (activity.status === "active") {
+            activityBadgeHTML = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>Ativo</span>`;
+        } else if (activity.status === "warning") {
+            activityBadgeHTML = `<span class="badge" style="background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; background: #eab308; border-radius: 50%;"></span>Alerta (${activity.daysSinceLast} dias)</span>`;
+        } else if (activity.status === "inactive") {
+            activityBadgeHTML = `<span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 8px rgba(239,68,68,0.25);"><span style="width: 6px; height: 6px; background: #ef4444; border-radius: 50%;"></span>Inativo (${activity.daysSinceLast} dias)</span>`;
+        } else {
+            activityBadgeHTML = `<span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">Novo Cliente</span>`;
+        }
+
         let stockSectionHTML = '';
         if (c.freezerCode) {
             geloProducts.forEach(p => {
@@ -71,12 +122,17 @@ export function renderClientes() {
             stockSectionHTML = `<p class="no-freezer-msg">Nenhum freezer vinculado a este cliente.</p>`;
         }
         
+        const pendingCom = state.comodatos && state.comodatos.find(com => com.clientId === c.id && com.status === 'pendente');
+        
         clientsContainer.innerHTML += `
             <div class="client-card">
-                <div class="client-card-header">
+                <div class="client-card-header" style="flex-wrap: wrap; gap: 8px;">
                     <div class="client-name-details">
-                        <h3>${c.name}</h3>
-                        <p>${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <h3 style="margin: 0; font-size: 1rem;">${c.name}</h3>
+                            ${activityBadgeHTML}
+                        </div>
+                        <p style="margin-top: 4px;">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
                     </div>
                     ${statusBadgeHTML}
                 </div>
@@ -91,7 +147,7 @@ export function renderClientes() {
                         <span>${c.phone || 'Sem contato informado'}</span>
                     </div>
                 </div>
-
+ 
                 ${c.freezerCode ? `
                 <div class="freezer-specs-box" style="margin: 0.75rem 0; padding: 0.6rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.04);">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
@@ -129,6 +185,11 @@ export function renderClientes() {
                     <button class="btn btn-secondary" onclick="openComodato('${c.id}')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
                         <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Contrato
                     </button>
+                    ${pendingCom ? `
+                    <button class="btn btn-secondary" onclick="window.triggerComodatoSignatureForClient('${c.id}')" title="Assinar Comodato no Aparelho" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.05);">
+                        <i data-lucide="pen-tool" style="width: 14px; height: 14px;"></i> Assinar
+                    </button>
+                    ` : ''}
                     ` : `<span style="flex:1;"></span>`}
                     ${c.phone ? `
                     <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
@@ -148,7 +209,7 @@ export function renderClientes() {
             </div>
         `;
     });
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function openClientModal(clientId = null) {
@@ -225,12 +286,24 @@ export function openClientModal(clientId = null) {
             // Marcar checkboxes de visita
             const visitDays = c.visitDays || [];
             document.querySelectorAll('input[name="visit-days"]').forEach(cb => cb.checked = visitDays.includes(cb.value));
+
+            // Mostrar e renderizar as notas/observações do cliente
+            const notesGroup = document.getElementById("client-notes-group");
+            if (notesGroup) {
+                notesGroup.style.display = "block";
+                if (typeof window.renderClientNotesSection === 'function') {
+                    window.renderClientNotesSection(c.id);
+                }
+            }
         }
     } else {
         title.innerText = "Novo Cliente & Freezer";
         renderClientModalProducts(null);
         const debtGroup = document.getElementById("client-debt-group");
         if (debtGroup) debtGroup.style.display = "none";
+        
+        const notesGroup = document.getElementById("client-notes-group");
+        if (notesGroup) notesGroup.style.display = "none";
     }
     
     modal.classList.add("active");
@@ -334,6 +407,66 @@ export function renderClientModalProducts(client = null) {
     container.innerHTML = html;
 }
 
+export function predictClientDemand(clientId, currentTemp) {
+    const clientDeliveries = (state.deliveries || []).filter(d => d.clientId === clientId);
+    if (clientDeliveries.length === 0) return {};
+
+    const tempMin = currentTemp - 3;
+    const tempMax = currentTemp + 3;
+
+    // Se as entregas passadas não tiverem o campo temperature, vamos atribuir um de forma determinística
+    const deliveriesWithTemp = clientDeliveries.map(d => {
+        if (d.temperature !== undefined) return d;
+        let mockTemp = 24;
+        if (d.date) {
+            const dateObj = new Date(d.date);
+            const month = dateObj.getMonth();
+            if (month >= 10 || month <= 2) {
+                mockTemp = 28 + (dateObj.getDate() % 6) - 3; // 25 a 30
+            } else if (month >= 5 && month <= 7) {
+                mockTemp = 18 + (dateObj.getDate() % 6) - 3; // 15 a 20
+            } else {
+                mockTemp = 23 + (dateObj.getDate() % 6) - 3; // 20 a 25
+            }
+        } else {
+            let hash = 0;
+            const idStr = d.id || "";
+            for (let i = 0; i < idStr.length; i++) {
+                hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            mockTemp = 15 + Math.abs(hash % 21);
+        }
+        return { ...d, temperature: mockTemp };
+    });
+
+    const matchingDeliveries = deliveriesWithTemp.filter(d => d.temperature >= tempMin && d.temperature <= tempMax);
+    const targetDeliveries = matchingDeliveries.length > 0 ? matchingDeliveries : deliveriesWithTemp;
+
+    const productSums = {};
+    const productCounts = {};
+
+    targetDeliveries.forEach(d => {
+        if (!d.items) return;
+        Object.keys(d.items).forEach(prodId => {
+            if (prodId.endsWith("_unit")) return;
+            const qty = parseFloat(d.items[prodId]) || 0;
+            if (qty > 0) {
+                productSums[prodId] = (productSums[prodId] || 0) + qty;
+                productCounts[prodId] = (productCounts[prodId] || 0) + 1;
+            }
+        });
+    });
+
+    const suggestions = {};
+    Object.keys(productSums).forEach(prodId => {
+        const avg = productSums[prodId] / (productCounts[prodId] || 1);
+        suggestions[prodId] = Math.max(1, Math.round(avg));
+    });
+
+    return suggestions;
+}
+window.predictClientDemand = predictClientDemand;
+
 export function renderSalesModalProducts(client) {
     const container = document.getElementById("sales-products-container");
     if (!container) return;
@@ -345,15 +478,29 @@ export function renderSalesModalProducts(client) {
         return;
     }
 
+    const currentTemp = (state.weatherConfig && state.weatherConfig.temp) !== undefined ? state.weatherConfig.temp : 24;
+    const suggestions = predictClientDemand(client.id, currentTemp);
+
     let html = "";
     geloProducts.forEach(p => {
         const currentStock = (client.stock && client.stock[p.id]) || 0;
+        const suggestedQty = suggestions[p.id] || 0;
+
         if (p.type === 'Gelo Saborizado') {
             const unitsPerPack = p.unitsPerPack || 12;
             const fardos = Math.floor(currentStock);
             const units = Math.round((currentStock - fardos) * unitsPerPack);
             const stockStr = units > 0 ? `${fardos} f (${units} un)` : `${fardos} f`;
             
+            const badgeHTML = suggestedQty > 0 ? `
+                <span class="climatological-suggestion-badge" 
+                      onclick="document.getElementById('sale-${p.id}').value = ${suggestedQty}; document.getElementById('sale-${p.id}').dispatchEvent(new Event('input'));" 
+                      style="cursor: pointer; font-size: 0.6rem; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 1px 4px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;" 
+                      title="Sugerido: ${suggestedQty} fardos a ${currentTemp}°C">
+                    💡 Sugerido: ${suggestedQty} f
+                </span>
+            ` : '';
+
             html += `
                 <div style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; background: rgba(0,240,255,0.03);">
                     <div style="grid-column: span 2; font-size: 0.75rem; font-weight: bold; color: var(--color-primary); display: flex; justify-content: space-between; align-items: center;">
@@ -361,7 +508,10 @@ export function renderSalesModalProducts(client) {
                         <span style="font-size: 0.65rem; color: var(--color-text-muted);">Estoque: ${stockStr}</span>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="sale-${p.id}" style="font-size: 0.65rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Fardos</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <label for="sale-${p.id}" style="font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0;">Fardos</label>
+                            ${badgeHTML}
+                        </div>
                         <input type="number" id="sale-${p.id}" class="form-control sales-sale-input" data-prod-id="${p.id}" min="0" value="0" required style="padding: 4px 6px; font-size: 0.8rem;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
@@ -371,12 +521,24 @@ export function renderSalesModalProducts(client) {
                 </div>
             `;
         } else {
+            const badgeHTML = suggestedQty > 0 ? `
+                <span class="climatological-suggestion-badge" 
+                      onclick="document.getElementById('sale-${p.id}').value = ${suggestedQty}; document.getElementById('sale-${p.id}').dispatchEvent(new Event('input'));" 
+                      style="cursor: pointer; font-size: 0.65rem; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; margin-top: 4px;" 
+                      title="Clique para preencher sugestão climatológica de ${suggestedQty} fardos para ${currentTemp}°C">
+                    💡 Sugestão Clima: ${suggestedQty} fardos (a ${currentTemp}°C)
+                </span>
+            ` : '';
+
             html += `
                 <div class="form-group" style="display: flex; flex-direction: column; justify-content: space-between;">
-                    <label for="sale-${p.id}" id="label-sale-${p.id}" style="font-size: 0.75rem; white-space: normal; line-height: 1.2; word-break: break-word; margin-bottom: 4px;" title="${p.name} (Estoque: ${currentStock})">
-                        ${p.name} (Est: ${currentStock})
-                    </label>
-                    <input type="number" id="sale-${p.id}" class="form-control sales-sale-input" data-prod-id="${p.id}" min="0" max="${currentStock}" value="0" required style="padding: 6px 8px; font-size: 0.85rem; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <label for="sale-${p.id}" id="label-sale-${p.id}" style="font-size: 0.75rem; white-space: normal; line-height: 1.2; word-break: break-word;" title="${p.name} (Estoque: ${currentStock})">
+                            ${p.name} (Est: ${currentStock})
+                        </label>
+                        ${badgeHTML}
+                    </div>
+                    <input type="number" id="sale-${p.id}" class="form-control sales-sale-input" data-prod-id="${p.id}" min="0" max="${currentStock}" value="0" required style="padding: 6px 8px; font-size: 0.85rem; width: 100%; margin-top: 4px;">
                 </div>
             `;
         }
@@ -397,8 +559,10 @@ export function populateClientDropdowns() {
     filterClientSelect.innerHTML = '<option value="">Todos os Clientes</option>';
     
     state.clients.forEach(c => {
-        orderClientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        filterClientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        const debt = parseFloat(c.outstandingDebt) || 0;
+        const debtLabel = debt > 0 ? ` ⚠️ Devedor (R$ ${debt.toFixed(2).replace('.', ',')})` : '';
+        orderClientSelect.innerHTML += `<option value="${c.id}">${c.name}${debtLabel}</option>`;
+        filterClientSelect.innerHTML += `<option value="${c.id}">${c.name}${debtLabel}</option>`;
     });
     
     orderClientSelect.value = currentOrderVal;

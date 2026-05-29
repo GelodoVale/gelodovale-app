@@ -721,6 +721,204 @@ export function shareOptimizedRouteWhatsApp() {
     window.open(whatsappUrl, "_blank");
 }
 
+let leafletMap = null;
+let leafletRouteLayer = null;
+let leafletMarkers = [];
+
+export function initLeafletRouteMap() {
+    const mapDiv = document.getElementById("leaflet-route-map");
+    if (!mapDiv) return;
+
+    if (leafletMap) {
+        drawRouteOnLeafletMap();
+        return;
+    }
+
+    const factoryLat = -23.1791;
+    const factoryLng = -45.8872;
+
+    try {
+        leafletMap = L.map('leaflet-route-map').setView([factoryLat, factoryLng], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(leafletMap);
+
+        // Delegated event listener for route checkbox changes
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('order-route-checkbox') || e.target.classList.contains('visit-route-checkbox')) {
+                drawRouteOnLeafletMap();
+            }
+        });
+
+        drawRouteOnLeafletMap();
+    } catch (e) {
+        console.error("Erro ao inicializar mapa Leaflet:", e);
+        showLeafletFallback();
+    }
+}
+
+function showLeafletFallback() {
+    const fallbackDiv = document.getElementById("leaflet-route-fallback");
+    if (!fallbackDiv) return;
+    
+    fallbackDiv.style.display = "block";
+    fallbackDiv.innerHTML = `
+        <div style="display:flex; align-items:center; gap:6px; color:#f59e0b; margin-bottom:6px; font-weight:bold;">
+            <i data-lucide="wifi-off" style="width:14px; height:14px;"></i> Roteiro Offline Otimizado
+        </div>
+        <div style="margin-bottom: 4px;">Não foi possível plotar no mapa. Roteiro sequencial sugerido:</div>
+        <ol style="margin: 6px 0 0 16px; padding: 0;" id="route-textual-list"></ol>
+    `;
+    
+    const list = document.getElementById("route-textual-list");
+    if (!list) return;
+    list.innerHTML = "";
+    
+    const factoryAddress = FACTORY_INFO.address || "Fábrica";
+    list.innerHTML += `<li><strong>Saída:</strong> ${factoryAddress}</li>`;
+    
+    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+
+    orderCheckboxes.forEach(cb => {
+        const orderId = cb.getAttribute("data-order-id");
+        const order = (state.orders || []).find(o => o.id === orderId);
+        if (order) {
+            const client = (state.clients || []).find(c => c.id === order.clientId);
+            if (client && client.address) {
+                list.innerHTML += `<li><strong>${client.name}:</strong> ${client.address}</li>`;
+            }
+        }
+    });
+
+    visitCheckboxes.forEach(cb => {
+        const clientId = cb.getAttribute("data-client-id");
+        const client = (state.clients || []).find(c => c.id === clientId);
+        if (client && client.address) {
+            list.innerHTML += `<li><strong>${client.name} (Visita):</strong> ${client.address}</li>`;
+        }
+    });
+    
+    list.innerHTML += `<li><strong>Retorno:</strong> ${factoryAddress}</li>`;
+    if (window.lucide) window.lucide.createIcons();
+}
+
+export async function drawRouteOnLeafletMap() {
+    if (!leafletMap) {
+        showLeafletFallback();
+        return;
+    }
+
+    leafletMarkers.forEach(m => leafletMap.removeLayer(m));
+    leafletMarkers = [];
+    if (leafletRouteLayer) {
+        leafletMap.removeLayer(leafletRouteLayer);
+        leafletRouteLayer = null;
+    }
+
+    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+
+    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
+        document.getElementById("leaflet-route-fallback").style.display = "block";
+        document.getElementById("leaflet-route-fallback").innerText = "Selecione pedidos ou visitas para ver a rota no mapa.";
+        return;
+    }
+
+    document.getElementById("leaflet-route-fallback").style.display = "none";
+
+    const factoryLat = -23.1791;
+    const factoryLng = -45.8872;
+    const factoryAddress = FACTORY_INFO.address || "Fábrica";
+
+    // Ponto de partida
+    const factoryMarker = L.marker([factoryLat, factoryLng], {
+        title: "Fábrica - Partida",
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:#0072ff; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px #0072ff;'></div>",
+            iconSize: [12, 12]
+        })
+    }).addTo(leafletMap).bindPopup(`<b>Fábrica (Partida/Retorno)</b><br>${factoryAddress}`);
+    leafletMarkers.push(factoryMarker);
+
+    const waypoints = [[factoryLat, factoryLng]];
+    const routeAddresses = [];
+
+    orderCheckboxes.forEach(cb => {
+        const orderId = cb.getAttribute("data-order-id");
+        const order = (state.orders || []).find(o => o.id === orderId);
+        if (order) {
+            const client = (state.clients || []).find(c => c.id === order.clientId);
+            if (client && client.address) {
+                routeAddresses.push({ name: client.name, address: client.address, type: "Pedido" });
+            }
+        }
+    });
+
+    visitCheckboxes.forEach(cb => {
+        const clientId = cb.getAttribute("data-client-id");
+        const client = (state.clients || []).find(c => c.id === clientId);
+        if (client && client.address) {
+            routeAddresses.push({ name: client.name, address: client.address, type: "Visita" });
+        }
+    });
+
+    let geocodingFailed = false;
+    
+    for (let i = 0; i < routeAddresses.length; i++) {
+        const item = routeAddresses[i];
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(item.address)}&format=json&limit=1&email=contato@gelodovale.com.br`);
+            if (!response.ok) throw new Error("Erro na rede");
+            const data = await response.json();
+            
+            if (data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+                waypoints.push([lat, lng]);
+
+                const m = L.marker([lat, lng], {
+                    title: item.name,
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style='background-color:#00f0ff; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px #00f0ff;'></div>`,
+                        iconSize: [12, 12]
+                    })
+                }).addTo(leafletMap).bindPopup(`<b>${item.name}</b> (${item.type})<br>${item.address}`);
+                leafletMarkers.push(m);
+            } else {
+                geocodingFailed = true;
+            }
+        } catch (err) {
+            console.warn(`Falha ao geocodificar: ${item.address}`, err);
+            geocodingFailed = true;
+        }
+    }
+
+    waypoints.push([factoryLat, factoryLng]);
+
+    if (geocodingFailed || waypoints.length <= 2) {
+        showLeafletFallback();
+    }
+
+    leafletRouteLayer = L.polyline(waypoints, {
+        color: '#00f0ff',
+        weight: 4,
+        opacity: 0.7,
+        dashArray: '5, 10'
+    }).addTo(leafletMap);
+
+    try {
+        const group = new L.featureGroup(leafletMarkers);
+        leafletMap.fitBounds(group.getBounds().pad(0.1));
+    } catch (e) {
+        console.warn("Erro ao ajustar zoom do Leaflet:", e);
+    }
+}
+
 // Bind to window for HTML accessibility
 window.shareOptimizedRouteWhatsApp = shareOptimizedRouteWhatsApp;
 window.toggleRentalLogisticsCalc = toggleRentalLogisticsCalc;
@@ -738,3 +936,5 @@ window.fetchRentalRouteDistance = fetchRentalRouteDistance;
 window.openRentalRouteInGoogleMaps = openRentalRouteInGoogleMaps;
 window.openRentalRouteInWaze = openRentalRouteInWaze;
 window.optimizeDeliveryRoute = optimizeDeliveryRoute;
+window.initLeafletRouteMap = initLeafletRouteMap;
+window.drawRouteOnLeafletMap = drawRouteOnLeafletMap;

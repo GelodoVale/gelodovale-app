@@ -149,7 +149,7 @@ export function toggleUtilityDrawer() {
             drawer.classList.add("active");
             backdrop.classList.add("active");
             // Atualizar ícones do Lucide dentro do drawer
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         }
     }
 }
@@ -405,7 +405,7 @@ export function renderWeather() {
     }
     if (iconContainer) {
         iconContainer.innerHTML = `<i data-lucide="${iconName}" style="width: 20px; height: 20px; color: ${iconColor};"></i>`;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
     }
 
     // Carregar/atualizar a lista de cidades vizinhas
@@ -865,3 +865,124 @@ window.clearDayNote = clearDayNote;
 
 window.getBrazilTimeISO = getBrazilTimeISO;
 window.formatDateBrazil = formatDateBrazil;
+
+function cleanStringForPix(str) {
+    if (!str) return "";
+    return str.normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Z0-9\s]/gi, "")
+        .toUpperCase()
+        .trim();
+}
+
+export function generateStaticPixPayload(key, amount, city = "SAO JOSE DOS CAMPOS", name = "GELO DO VALE", txid = "***") {
+    const cleanKey = key.trim();
+    const cleanName = cleanStringForPix(name).substring(0, 25) || "GELO DO VALE";
+    const cleanCity = cleanStringForPix(city).substring(0, 15) || "SAO JOSE DOS CAMPOS";
+    const cleanTxid = cleanStringForPix(txid).substring(0, 25) || "***";
+    const amountStr = parseFloat(amount).toFixed(2);
+
+    function formatTLV(id, value) {
+        const len = value.length.toString().padStart(2, '0');
+        return id + len + value;
+    }
+
+    let payload = formatTLV("00", "01");
+    payload += formatTLV("01", "11");
+
+    const gui = formatTLV("00", "br.gov.bcb.pix");
+    const keyTLV = formatTLV("01", cleanKey);
+    payload += formatTLV("26", gui + keyTLV);
+
+    payload += formatTLV("52", "0000");
+    payload += formatTLV("53", "986");
+    payload += formatTLV("54", amountStr);
+    payload += formatTLV("58", "BR");
+    payload += formatTLV("59", cleanName);
+    payload += formatTLV("60", cleanCity);
+
+    const txidTLV = formatTLV("05", cleanTxid);
+    payload += formatTLV("62", txidTLV);
+
+    payload += "6304";
+
+    let crc = 0xFFFF;
+    const polynomial = 0x1021;
+    for (let i = 0; i < payload.length; i++) {
+        let b = payload.charCodeAt(i);
+        for (let j = 0; j < 8; j++) {
+            let bit = ((b >> (7 - j)) & 1) === 1;
+            let c15 = ((crc >> 15) & 1) === 1;
+            crc <<= 1;
+            if (c15 ^ bit) {
+                crc ^= polynomial;
+            }
+        }
+    }
+    crc &= 0xFFFF;
+    const crcHex = crc.toString(16).toUpperCase().padStart(4, '0');
+
+    return payload + crcHex;
+}
+window.generateStaticPixPayload = generateStaticPixPayload;
+
+export function showLocalPixModal(clientName, amount) {
+    const pixKey = (state.factorySettings && state.factorySettings.pixKey) || "";
+    if (!pixKey) {
+        window.showToast("Chave PIX da Fábrica não configurada nas Configurações!", "warning");
+        return;
+    }
+
+    const factoryName = (state.factorySettings && state.factorySettings.name) || "GELO DO VALE";
+    const factoryCity = (state.factorySettings && state.factorySettings.address) ? state.factorySettings.address.split(",")[0] : "SAO JOSE DOS CAMPOS";
+
+    const txid = "COB" + Date.now().toString().slice(-8);
+    const payload = generateStaticPixPayload(pixKey, amount, factoryCity, factoryName, txid);
+
+    const modal = document.getElementById("modal-pix-local");
+    if (!modal) {
+        console.warn("Modal modal-pix-local não encontrado no DOM.");
+        return;
+    }
+
+    const clientEl = document.getElementById("pix-local-client");
+    if (clientEl) clientEl.innerText = clientName;
+
+    const amountEl = document.getElementById("pix-local-amount");
+    if (amountEl) amountEl.innerText = "R$ " + parseFloat(amount).toFixed(2).replace(".", ",");
+    
+    const inputPayload = document.getElementById("pix-local-payload");
+    if (inputPayload) inputPayload.value = payload;
+
+    const qrContainer = document.getElementById("pix-local-qrcode");
+    if (qrContainer) {
+        qrContainer.innerHTML = "";
+        try {
+            new QRCode(qrContainer, {
+                text: payload,
+                width: 200,
+                height: 200,
+                colorDark: "#090d16",
+                colorLight: "#ffffff"
+            });
+        } catch (e) {
+            console.error("Erro ao gerar QR Code do PIX local:", e);
+            qrContainer.innerText = "Erro ao renderizar QR Code.";
+        }
+    }
+
+    modal.style.display = "flex";
+}
+window.showLocalPixModal = showLocalPixModal;
+
+export function copyLocalPixPayload() {
+    const payloadInput = document.getElementById("pix-local-payload");
+    if (payloadInput) {
+        payloadInput.select();
+        payloadInput.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(payloadInput.value)
+            .then(() => window.showToast("PIX Copia e Cola copiado com sucesso!", "success"))
+            .catch(() => window.showToast("Falha ao copiar PIX.", "error"));
+    }
+}
+window.copyLocalPixPayload = copyLocalPixPayload;

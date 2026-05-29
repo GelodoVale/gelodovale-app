@@ -28,6 +28,9 @@
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Leaflet.js (Offline-First Map API) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <!-- SISTEMA DE TOAST E CONFIRM -->
@@ -132,6 +135,10 @@
                 <a class="nav-item" data-tab="historico">
                     <i data-lucide="history"></i>
                     <span>Histórico de Entregas</span>
+                </a>
+                <a class="nav-item" data-tab="pdv" id="nav-pdv">
+                    <i data-lucide="monitor"></i>
+                    <span>Frente de Caixa (PDV)</span>
                 </a>
                 <a class="nav-item" data-tab="precos" id="nav-precos">
                     <i data-lucide="settings"></i>
@@ -265,6 +272,9 @@
                     <button class="btn btn-secondary btn-sm" onclick="window.quickAction('novo-recibo')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
                         <i data-lucide="file-check" style="width: 14px; height: 14px;"></i> Emitir Recibo
                     </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openCaixaDiario()" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.25); color: #10b981; cursor: pointer; border-radius: 6px; transition: all 0.2s; font-weight: 700;">
+                        <i data-lucide="calculator" style="width: 14px; height: 14px;"></i> Fechar Caixa
+                    </button>
                 </div>
                 
                 <!-- Grade de Widgets Customizáveis -->
@@ -301,15 +311,59 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Nova linha do Dashboard para Devedores e Pré-pedidos Agendados -->
+                <div class="dashboard-row" style="margin-top: 1.5rem;">
+                    <!-- Painel de Top Devedores (Carnê Fiado) -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <h2 style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="alert-circle" style="color: var(--color-danger); width: 18px; height: 18px;"></i>
+                                Top Clientes Devedores (Fiado)
+                            </h2>
+                            <span class="status-badge" style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);" id="top-devedores-count">0 Ativos</span>
+                        </div>
+                        <div class="alerts-list" id="top-devedores-list" style="margin-top: 0.75rem; max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                            <!-- Top Devedores gerados via carne.js -->
+                        </div>
+                    </div>
+
+                    <!-- Painel de Pré-pedidos Agendados / Calendário de Entregas -->
+                    <div class="dashboard-panel" style="grid-column: span 2;">
+                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <h2 style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="calendar" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
+                                Pré-Pedidos & Agendamentos Pendentes
+                            </h2>
+                            <span class="status-badge" style="background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2);" id="scheduled-orders-count">0 Agendados</span>
+                        </div>
+                        <div class="alerts-list" id="scheduled-orders-list" style="margin-top: 0.75rem; max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Pré-pedidos gerados via JS -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- ================= TELA: CLIENTES & FREEZERS ================= -->
             <section id="clientes" class="tab-content">
-                <div class="panel-header" style="margin-bottom: 1.5rem;">
-                    <h2>Lista de Clientes e Status de Estoque</h2>
-                    <button class="btn btn-primary" id="btn-add-client">
-                        <i data-lucide="user-plus"></i> Adicionar Cliente
-                    </button>
+                <div class="panel-header" style="margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2>Lista de Clientes e Status de Estoque</h2>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie os clientes cadastrados, níveis de estoque de gelo e risco de inatividade (churn).</p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; max-width: 580px; justify-content: flex-end; margin-left: auto; align-items: center;">
+                        <input type="text" id="client-search-input" class="form-control" placeholder="Buscar por nome ou endereço..." style="flex: 1.5; min-width: 180px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" oninput="renderClientes()">
+                        <select id="client-activity-filter" class="form-control" style="flex: 1; min-width: 130px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
+                            <option value="all">Todos os Status</option>
+                            <option value="active">🟢 Ativos (≤ 7 dias)</option>
+                            <option value="warning">🟡 Alerta (8-14 dias)</option>
+                            <option value="inactive">🔴 Inativos (> 14 dias)</option>
+                            <option value="new">🔵 Novos (Sem compras)</option>
+                        </select>
+                        <button class="btn btn-primary" id="btn-add-client" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; height: 36px; font-size: 0.85rem;">
+                            <i data-lucide="user-plus" style="width: 15px; height: 15px;"></i> Adicionar
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="clients-grid" id="clients-grid-container">
@@ -442,6 +496,24 @@
 
                     <!-- Lado Direito: Sugestões de Visita e Configurações -->
                     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- Rota no Mapa Interativo Leaflet -->
+                        <div class="pedidos-panel" style="height: fit-content;">
+                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <h2 style="display: flex; align-items: center; gap: 6px; color: var(--color-primary);">
+                                    <i data-lucide="map" style="width: 16px; height: 16px;"></i> Mapa de Rotas Otimizado
+                                </h2>
+                                <button type="button" class="btn btn-secondary" onclick="window.drawRouteOnLeafletMap()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; height: auto;">
+                                    <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="leaflet-route-map" style="width: 100%; height: 250px; border-radius: var(--radius-md); border: 1px solid rgba(0, 240, 255, 0.15); background: rgba(0,0,0,0.25); position: relative; overflow: hidden; z-index: 10;">
+                                <!-- Renderizado via Leaflet.js -->
+                            </div>
+                            <div id="leaflet-route-fallback" style="display: none; padding: 10px; font-size: 0.75rem; color: var(--color-text-muted); background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-top: 8px; line-height: 1.4;">
+                                <!-- Fallback textual em caso de offline -->
+                            </div>
+                        </div>
+
                         <!-- Sugestões de Visita de Hoje -->
                         <div class="pedidos-panel" style="height: fit-content;">
                             <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -564,6 +636,10 @@
                                     <i data-lucide="file-text"></i>
                                     <span>Gestão de Comodatos</span>
                                 </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-rentabilidade-freezers')">
+                                    <i data-lucide="line-chart"></i>
+                                    <span>Rentabilidade de Freezers</span>
+                                </button>
                                 <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-suprimentos')">
                                     <i data-lucide="package"></i>
                                     <span>Insumos & Compras</span>
@@ -685,6 +761,67 @@
                                             <!-- Gerado via JS -->
                                         </div>
                                     </div>
+
+                                    <!-- Painel de Comissões de Motoristas -->
+                                    <div class="dashboard-panel" id="admin-driver-commissions-panel" style="width: 100%;">
+                                        <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                            <div>
+                                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                                    <i data-lucide="award" style="color: var(--color-primary);"></i>
+                                                    Histórico de Comissões de Motoristas
+                                                </h3>
+                                                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Acompanhe o faturamento, despesas e comissões acumuladas de cada entregador/colaborador.</p>
+                                            </div>
+                                        </div>
+                                        <div style="padding: 1rem 0 0 0;">
+                                            <!-- Filtro do Motorista -->
+                                            <div style="display: flex; gap: 10px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;">
+                                                <label style="font-size: 0.8rem; color: var(--color-text-muted);">Filtrar por Motorista:</label>
+                                                <select id="commission-driver-filter" class="form-control" style="max-width: 250px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderDriverCommissionsReport()">
+                                                    <option value="">-- Todos os Motoristas --</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Resumo KPIs do Motorista Filtrado -->
+                                            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; display: grid;">
+                                                <div class="kpi-card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 12px; min-height: 80px;">
+                                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0 0 4px 0;">Viagens Realizadas</div>
+                                                    <div id="driver-kpi-trips" style="font-size: 1.25rem; font-weight: bold; color: #fff;">0</div>
+                                                </div>
+                                                <div class="kpi-card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 12px; min-height: 80px;">
+                                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0 0 4px 0;">Total Faturado</div>
+                                                    <div id="driver-kpi-revenue" style="font-size: 1.25rem; font-weight: bold; color: #fff;">R$ 0,00</div>
+                                                </div>
+                                                <div class="kpi-card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 12px; min-height: 80px;">
+                                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0 0 4px 0;">Despesas de Viagem</div>
+                                                    <div id="driver-kpi-expenses" style="font-size: 1.25rem; font-weight: bold; color: var(--color-danger);">R$ 0,00</div>
+                                                </div>
+                                                <div class="kpi-card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(0, 240, 255, 0.15); padding: 12px; min-height: 80px;">
+                                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0 0 4px 0;">Comissão Acumulada</div>
+                                                    <div id="driver-kpi-commission" style="font-size: 1.25rem; font-weight: bold; color: var(--color-primary);">R$ 0,00</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Tabela de Viagens -->
+                                            <div style="overflow-x: auto;">
+                                                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;" class="data-table">
+                                                    <thead>
+                                                        <tr style="border-bottom: 1.5px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left; color: var(--color-text-muted);">
+                                                            <th style="padding: 8px 6px;">Data/Hora</th>
+                                                            <th style="padding: 8px 6px;">Motorista</th>
+                                                            <th style="padding: 8px 6px; text-align: right;">Caixa (R$)</th>
+                                                            <th style="padding: 8px 6px; text-align: right;">Despesas (R$)</th>
+                                                            <th style="padding: 8px 6px; text-align: right;">Comissão (R$)</th>
+                                                            <th style="padding: 8px 6px; text-align: right;">Lucro Líquido</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="driver-commissions-tbody">
+                                                        <!-- Preenchido via Javascript -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -721,6 +858,12 @@
                                                 <i data-lucide="dollar-sign" style="width: 16px; height: 16px;"></i> Caixa Recebido Fisicamente
                                             </h3>
                                             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                <div class="form-group" style="margin-bottom: 0.75rem;">
+                                                    <label for="settle-driver-id">Motorista / Entregador Responsável *</label>
+                                                    <select id="settle-driver-id" class="form-control" onchange="calculateCargoSettlement()">
+                                                        <!-- Preenchido via JS -->
+                                                    </select>
+                                                </div>
                                                 <div class="form-group">
                                                     <label>Dinheiro em Espécie Entregue pelo Motorista (R$)</label>
                                                     <input type="number" step="0.01" min="0" id="settle-cash-received" class="form-control" value="0.00" oninput="calculateCargoSettlement()">
@@ -944,6 +1087,38 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- sub-aba: Rentabilidade de Freezers -->
+                        <div id="tab-rentabilidade-freezers" class="admin-subtab-content">
+                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                                    <div>
+                                        <h2>Análise de Rentabilidade de Freezers (ROI)</h2>
+                                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 4px;">Cruza o faturamento gerado por cliente com custos de manutenção e depreciação estimada do freezer (vida útil de 10 anos).</p>
+                                    </div>
+                                </div>
+                                <div style="padding: 1.5rem; overflow-x: auto;">
+                                    <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: left;" id="freezer-rentability-table">
+                                        <thead>
+                                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.8rem; color: var(--color-text-muted);">
+                                                <th style="padding: 10px 8px;">Código</th>
+                                                <th style="padding: 10px 8px;">Cliente Alocado</th>
+                                                <th style="padding: 10px 8px;">Marca / Tipo</th>
+                                                <th style="padding: 10px 8px; text-align: right;">Depreciação</th>
+                                                <th style="padding: 10px 8px; text-align: right;">Manutenções</th>
+                                                <th style="padding: 10px 8px; text-align: right;">Vendas (Gelo)</th>
+                                                <th style="padding: 10px 8px; text-align: right;">Resultado Líquido</th>
+                                                <th style="padding: 10px 8px; text-align: center;">ROI %</th>
+                                                <th style="padding: 10px 8px; text-align: center;">Status ROI</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="freezer-rentability-tbody" style="font-size: 0.85rem; color: #fff;">
+                                            <!-- Preenchido via JS -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -1677,8 +1852,35 @@
                                             <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
                                                 <i data-lucide="download" style="width: 13px; height: 13px;"></i> Fazer Backup Agora
                                             </button>
-                                        </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Painel de Diagnóstico & Autoteste de Integração -->
+                            <div class="dashboard-panel" style="width: 100%; margin-top: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                            <i data-lucide="shield-check" style="color: var(--color-primary);"></i>
+                                            Central de Autoteste & Integridade de Módulos
+                                        </h3>
+                                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Execute uma varredura completa em tempo real para verificar se todos os módulos integrados, fórmulas e conexões estão se comunicando sem falhas.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="runClientDiagnostics()" style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); border: none; font-size: 0.8rem; padding: 6px 12px; height: auto;">
+                                        <i data-lucide="play" style="width: 14px; height: 14px;"></i> Executar Autoteste Geral
+                                    </button>
+                                </div>
+                                <div id="diagnostic-results-area" style="padding: 1rem 0 0 0; display: none;">
+                                    <!-- Barra de Progresso do Autoteste -->
+                                    <div style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 1.5rem; position: relative;">
+                                        <div id="diagnostic-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); transition: width 0.4s ease;"></div>
+                                    </div>
+                                    
+                                    <!-- Status Resumido -->
+                                    <div id="diagnostic-summary-badge" style="margin-bottom: 1.5rem; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; text-align: center;"></div>
+                                    
+                                    <!-- Lista de Verificações de Integração -->
+                                    <div id="diagnostic-items-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1763,6 +1965,127 @@
                             </div>
                         </div>
                     </main>
+                </div>
+            </section>
+
+            <!-- ================= TELA: FRENTE DE CAIXA (PDV BALCÃO) ================= -->
+            <section id="pdv" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <div>
+                        <h2>Frente de Caixa (PDV Balcão)</h2>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Vendas expressas para retirada local na fábrica.</p>
+                    </div>
+                </div>
+                
+                <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+                    <!-- Coluna da Esquerda: Catálogo e Carrinho -->
+                    <div style="flex: 1.8; display: flex; flex-direction: column; gap: 1.5rem; min-width: 320px;">
+                        <!-- Produtos Disponíveis -->
+                        <div class="dashboard-panel">
+                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="grid" style="width: 16px; height: 16px;"></i> Catálogo Rápido
+                            </h3>
+                            <div id="pdv-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Carrinho de Compras -->
+                        <div class="dashboard-panel">
+                            <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                    <i data-lucide="shopping-bag" style="width: 16px; height: 16px;"></i> Itens no Carrinho
+                                </h3>
+                                <button type="button" class="btn btn-secondary" onclick="clearPDVCart()" style="font-size: 0.75rem; padding: 4px 8px; height: auto; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239,68,68,0.05);">Limpar Carrinho</button>
+                            </div>
+                            <div style="overflow-x: auto; max-height: 200px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;" class="data-table">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left; color: var(--color-text-muted);">
+                                            <th style="padding: 6px;">Item</th>
+                                            <th style="padding: 6px; text-align: center; width: 80px;">Qtd</th>
+                                            <th style="padding: 6px; text-align: right; width: 85px;">Preço Un.</th>
+                                            <th style="padding: 6px; text-align: right; width: 85px;">Subtotal</th>
+                                            <th style="padding: 6px; text-align: center; width: 45px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pdv-cart-tbody">
+                                        <!-- Preenchido via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna da Direita: Checkout & Fechamento -->
+                    <div style="flex: 1.2; min-width: 320px;" class="dashboard-panel">
+                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="credit-card" style="width: 16px; height: 16px;"></i> Finalização da Venda
+                        </h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Selecionar Cliente -->
+                            <div class="form-group">
+                                <label for="pdv-client-id">Cliente (Opcional)</label>
+                                <select id="pdv-client-id" class="form-control" style="font-size: 0.85rem;" onchange="updatePDVClientPricing()">
+                                    <option value="">-- Consumidor Final (Balcão) --</option>
+                                    <!-- Preenchido via JS com clientes -->
+                                </select>
+                                <!-- Alerta de Inadimplência PDV -->
+                                <div id="pdv-debt-warning" style="display:none; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; color: #fca5a5; font-size: 0.78rem; font-weight: 600; line-height: 1.4;">
+                                </div>
+                            </div>
+
+                            <!-- Método de Pagamento -->
+                            <div class="form-group">
+                                <label for="pdv-payment-method">Método de Pagamento</label>
+                                <select id="pdv-payment-method" class="form-control" style="font-size: 0.85rem;" onchange="togglePDVPaymentDetails()">
+                                    <option value="Pix">PIX Copia e Cola / QR Code</option>
+                                    <option value="Dinheiro">Dinheiro (Espécie)</option>
+                                    <option value="Cartão">Cartão de Crédito / Débito</option>
+                                </select>
+                            </div>
+
+                            <!-- Detalhes de Pagamento em Dinheiro -->
+                            <div id="pdv-cash-details" style="display: none; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label style="font-size: 0.75rem; color: var(--color-text-muted);">Valor Recebido (R$)</label>
+                                        <input type="number" step="0.01" min="0" id="pdv-cash-received" class="form-control" style="font-size: 0.85rem;" value="0.00" oninput="calculatePDVChange()">
+                                    </div>
+                                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Troco a Devolver:</span>
+                                        <strong id="pdv-cash-change" style="font-size: 1.1rem; color: #00ff64; display: block; margin-bottom: 4px;">R$ 0,00</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção de Totais -->
+                            <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 12px; margin-top: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 4px;">
+                                    <span>Total do Pedido:</span>
+                                    <span id="pdv-total-items-qty">0 itens</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+                                    <span style="font-weight: bold; color: #fff; font-size: 0.9rem;">Valor Total:</span>
+                                    <strong id="pdv-total-price" style="font-size: 1.25rem; color: var(--color-primary); text-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.3);">R$ 0,00</strong>
+                                </div>
+                            </div>
+
+                            <!-- Painel Pós-Venda (WhatsApp + Impressão Térmica) -->
+                            <div id="pdv-postsale-panel" style="display: none;"></div>
+
+                            <!-- Botões de Ação -->
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 0.5rem;">
+                                <button type="button" class="btn btn-primary" onclick="checkoutPDVSale()" style="font-weight: bold; font-size: 0.9rem; padding: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); border: none;">
+                                    <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> Concluir Venda Balcão
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="openCaixaDiario()" style="font-size: 0.8rem; height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(16,185,129,0.3); color: #10b981;">
+                                    <i data-lucide="calculator" style="width: 14px; height: 14px;"></i> Fechar Caixa do Dia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -1895,6 +2218,22 @@
                     <!-- Gerado dinamicamente via JS com base nos produtos tipo Gelo -->
                 </div>
 
+                <!-- Seção de Histórico de Observações (visível apenas na edição) -->
+                <div id="client-notes-group" style="display: none; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; margin-top: 1rem; margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="notebook" style="width: 16px; height: 16px;"></i> Histórico de Observações / Notas
+                    </h4>
+                    <div style="display: flex; gap: 8px; margin-bottom: 0.75rem;">
+                        <input type="text" id="client-note-input" class="form-control" placeholder="Adicionar nova observação rápida..." style="font-size: 0.82rem;">
+                        <button type="button" class="btn btn-primary" onclick="const input = document.getElementById('client-note-input'); if(input && input.value.trim()){ window.addClientNote(document.getElementById('form-client-id').value, input.value); }" style="padding: 0 12px; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; height: 38px; background: var(--grad-primary); border: none; color: #000; font-weight: bold;">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                    <div id="client-notes-list" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 6px;">
+                        <!-- Lista de observações gerada por JS -->
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Salvar Cadastro</button>
@@ -1918,6 +2257,9 @@
                     <select id="order-client-id" class="form-control" required>
                         <option value="">Selecione...</option>
                     </select>
+                    <!-- Alerta de Inadimplência -->
+                    <div id="order-debt-warning" style="display:none; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; color: #fca5a5; font-size: 0.8rem; font-weight: 600; line-height: 1.4;">
+                    </div>
                 </div>
 
                 <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 1rem;">
@@ -1938,6 +2280,19 @@
                         <label for="order-exchange-qty">Quantidade de Sacos Trocados (Quebra no Cliente)</label>
                         <input type="number" id="order-exchange-qty" class="form-control" min="0" placeholder="Ex: 2">
                         <small style="color: var(--color-text-muted);">Sacos estourados que o motorista precisou recolher no cliente.</small>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.25rem 0; padding-top: 1rem;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--color-primary);">Agendar Entrega / Pré-Pedido (Opcional)</h4>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="order-scheduled-date">Data de Agendamento</label>
+                        <input type="date" id="order-scheduled-date" class="form-control">
+                        <small style="color: var(--color-text-muted);">Deixe em branco para entrega imediata na próxima rota.</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="order-scheduled-note">Observação / Instruções de Agendamento</label>
+                        <input type="text" id="order-scheduled-note" class="form-control" placeholder="Ex: Entregar após as 14h, cliente estará viajando de manhã...">
                     </div>
                 </div>
 
@@ -3102,6 +3457,9 @@
                 <button type="button" class="btn btn-whatsapp" id="btn-share-whatsapp" onclick="shareDocumentWhatsApp()">
                     <i data-lucide="message-square"></i> WhatsApp
                 </button>
+                <button type="button" class="btn" id="btn-pix-local-doc" onclick="window.triggerLocalPixForDoc()" style="display: inline-flex; align-items: center; gap: 6px; background: #00f0ff; border: 1px solid #00f0ff; color: #000; font-weight: bold;">
+                    <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> PIX Local (Sem Taxa)
+                </button>
                 <button type="button" class="btn" id="btn-mp-doc" onclick="generateMpFromDocument()" style="display: none; align-items: center; gap: 6px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
                     <i data-lucide="link" style="width: 14px; height: 14px;"></i> MP (Pix/Boleto)
                 </button>
@@ -3323,6 +3681,14 @@
                     </small>
                 </div>
 
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="delivery-photo-input">Foto de Comprovação de Entrega (Opcional)</label>
+                    <input type="file" id="delivery-photo-input" class="form-control" accept="image/*" capture="environment" style="padding: 4px 8px;">
+                    <small style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-top: 4px;">
+                        Tire uma foto do freezer cheio ou do canhoto assinado.
+                    </small>
+                </div>
+
                 <!-- Aviso de GPS -->
                 <div style="display: flex; gap: 8px; background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 6px; align-items: flex-start; margin-top: 1rem;">
                     <i data-lucide="map-pin" style="width: 16px; height: 16px; color: var(--color-primary); flex-shrink: 0; margin-top: 2px;"></i>
@@ -3331,8 +3697,11 @@
                     </p>
                 </div>
 
-                <div class="form-actions" style="margin-top: 1.5rem;">
+                <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-confirm-delivery')">Cancelar</button>
+                    <button type="button" class="btn" id="btn-pix-local-checkout" onclick="window.triggerLocalPixForCheckout()" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary);">
+                        <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> PIX Offline
+                    </button>
                     <button type="submit" class="btn btn-primary" id="btn-submit-delivery-checkout" style="display: inline-flex; align-items: center; gap: 6px;">
                         <i data-lucide="check" style="width: 14px; height: 14px;"></i> Confirmar Entrega
                     </button>
@@ -3712,6 +4081,75 @@
         </div>
     </div>
 
+    <!-- Modal do Carnê Digital de Fiado -->
+    <div class="modal-backdrop" id="modal-carne">
+        <div class="modal-content" style="width: 480px; max-width: 95vw; background: rgba(15, 22, 38, 0.99); border: 1px solid rgba(0, 240, 255, 0.2); box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--color-primary); font-weight: 800; font-size: 1.15rem; margin: 0; text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);">
+                    <i data-lucide="book-open" style="width: 20px; height: 20px;"></i>
+                    Carnê Digital & Fiado
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-carne')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <input type="hidden" id="carne-client-id">
+            
+            <div class="modal-body" style="padding: 1.25rem 0; display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- Cabeçalho do Cliente -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Cliente</span>
+                        <strong id="carne-client-name" style="font-size: 1rem; color: #fff; font-weight: 700;">-</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Saldo Devedor Total</span>
+                        <strong id="carne-total-debt" style="font-size: 1.15rem; font-weight: 800; color: var(--color-danger);">-</strong>
+                    </div>
+                </div>
+
+                <!-- Novo Lançamento Rápido -->
+                <div style="background: rgba(255, 255, 255, 0.01); border: 1px dashed rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                    <h4 style="font-size: 0.82rem; font-weight: 700; color: var(--color-primary); margin-top: 0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Novo Lançamento Rápido</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label for="carne-amount" style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Valor (R$)</label>
+                                <input type="number" id="carne-amount" step="0.01" min="0.01" class="form-control" placeholder="0,00" style="font-size: 0.85rem; padding: 6px 10px; height: 34px;">
+                            </div>
+                            <div>
+                                <label for="carne-due-date" style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Vencimento</label>
+                                <input type="date" id="carne-due-date" class="form-control" style="font-size: 0.85rem; padding: 6px 10px; height: 34px;">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="carne-description" style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Descrição do Lançamento</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="carne-description" class="form-control" placeholder="Ex: Carga de Gelo 27/05 ou Empréstimo de Tina" style="font-size: 0.85rem; padding: 6px 10px; height: 34px; flex: 1;">
+                                <button type="button" class="btn btn-primary" onclick="window.addCarneEntry()" style="padding: 0 14px; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; height: 34px; background: var(--grad-primary); border: none; color: #000; font-weight: bold;">
+                                    Lançar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Histórico do Extrato / Parcelas -->
+                <div>
+                    <h4 style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Extrato de Lançamentos</h4>
+                    <div id="carne-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.04); padding: 8px; border-radius: 8px;">
+                        <!-- Inserido dinamicamente pelo JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-carne')" style="font-size: 0.8rem; padding: 8px 16px;">Fechar Carnê</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Central de Utilitários (Clock, Weather, Calendar, Notepad) -->
     <div class="utility-drawer-backdrop" id="utility-drawer-backdrop" onclick="toggleUtilityDrawer()"></div>
     <div class="utility-drawer" id="utility-drawer">
@@ -3867,6 +4305,54 @@
         </div>
     </div>
 
+    <!-- MODAL PIX LOCAL (OFFLINE BILLING) -->
+    <div class="modal-backdrop" id="modal-pix-local" style="display: none; z-index: 10001;">
+        <div class="modal-content" style="width: 420px; max-width: 95vw; background: rgba(17, 25, 44, 0.98); border: 1px solid var(--color-primary); box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0, 240, 255, 0.15); padding-bottom: 10px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--color-primary); font-weight: 800; font-size: 1.1rem; margin: 0; text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);">
+                    <i data-lucide="qr-code" style="width: 20px; height: 20px;"></i>
+                    Cobrança PIX Direta (Sem Taxa)
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-pix-local')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.25rem 0; display: flex; flex-direction: column; gap: 1.25rem; align-items: center; text-align: center;">
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0;">
+                    Apresente o QR Code abaixo ao cliente ou copie a chave PIX Copia e Cola.
+                </p>
+                
+                <div style="background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;" id="pix-local-qrcode">
+                    <!-- Inserido dinamicamente pelo JS -->
+                </div>
+
+                <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: var(--color-text-muted);">
+                        <span>Cliente:</span>
+                        <strong id="pix-local-client" style="color: #fff;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px; margin-bottom: 12px;">
+                        <span>Valor total:</span>
+                        <strong id="pix-local-amount" style="color: var(--color-primary); font-size: 1rem; text-shadow: 0 0 5px rgba(0,240,255,0.3);">-</strong>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
+                        <label style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Chave Copia e Cola:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="pix-local-payload" readonly style="flex: 1; padding: 8px; font-size: 0.75rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-family: monospace; outline: none;" onclick="this.select()">
+                            <button type="button" class="btn btn-primary" onclick="window.copyLocalPixPayload()" style="padding: 0 12px; font-size: 0.8rem; background: var(--grad-primary); border: none; color: #000; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;" title="Copiar código">
+                                <i data-lucide="copy" style="width: 14px; height: 14px;"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pix-local')" style="font-size: 0.8rem; padding: 8px 16px;">Concluir Cobrança</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Navigation Bar (Apenas para Telas Pequenas < 768px) -->
     <nav class="mobile-nav" id="mobile-nav">
         <a class="nav-item mobile-nav-item active" data-tab="dashboard">
@@ -3890,6 +4376,31 @@
             <span>Config</span>
         </a>
     </nav>
+
+    <!-- Modal: Fechamento de Caixa Diário -->
+    <div class="modal-backdrop" id="modal-caixa-diario" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='M8 21h8'/><path d='M12 17v4'/></svg>
+                    Fechamento de Caixa
+                </h2>
+                <button type="button" class="close-btn" onclick="closeModal('modal-caixa-diario')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="caixa-diario-content" style="flex: 1; overflow-y: auto; padding: 1rem; min-height: 200px;">
+                <!-- Gerado dinamicamente -->
+            </div>
+            <div class="form-actions" style="border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-caixa-diario')" style="flex: 1;">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="shareCaixaWhatsApp()" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='currentColor'><path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'/></svg>
+                    Compartilhar no WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Biblioteca Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

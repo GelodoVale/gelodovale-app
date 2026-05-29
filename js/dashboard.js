@@ -96,6 +96,20 @@ export function renderDashboard() {
 
     // 4. Renderizar Widgets Customizados
     renderWidgets();
+
+    // 5. Renderizar Top Devedores do Carnê
+    if (typeof window.renderTopDevedores === 'function') {
+        window.renderTopDevedores();
+        // Atualizar o badge de Top Devedores
+        const topDevedoresCountEl = document.getElementById("top-devedores-count");
+        if (topDevedoresCountEl) {
+            const devedoresCount = (state.clients || []).filter(c => (parseFloat(c.outstandingDebt) || 0) > 0).length;
+            topDevedoresCountEl.innerText = `${devedoresCount} Ativo${devedoresCount !== 1 ? 's' : ''}`;
+        }
+    }
+
+    // 6. Renderizar Pré-Pedidos Agendados
+    renderScheduledOrders();
 }
 
 export function renderDashboardAlerts() {
@@ -439,8 +453,81 @@ export function quickAction(type) {
     }
 }
 
+export function renderScheduledOrders() {
+    const container = document.getElementById("scheduled-orders-list");
+    const badge = document.getElementById("scheduled-orders-count");
+    if (!container) return;
+
+    const scheduled = (state.orders || []).filter(o => o.scheduledDate);
+    if (badge) badge.innerText = `${scheduled.length} Agendado${scheduled.length !== 1 ? 's' : ''}`;
+
+    if (scheduled.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding: 20px; color: var(--color-text-muted); font-size: 0.8rem;">
+                🕐 Nenhum pré-pedido ou agendamento para os próximos dias.
+            </div>
+        `;
+        return;
+    }
+
+    // Ordenar por data de agendamento
+    scheduled.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+
+    container.innerHTML = scheduled.map(order => {
+        const client = (state.clients || []).find(c => c.id === order.clientId) || { name: 'Cliente desconhecido' };
+        const dueDate = new Date(order.scheduledDate + 'T00:00:00');
+        const dueFmt = dueDate.toLocaleDateString('pt-BR');
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        let dateColor = '#818cf8'; // indigo
+        let warningText = '';
+        
+        if (dueDate < today) {
+            dateColor = '#ef4444'; // atrasado
+            warningText = ' (Atrasado!)';
+        } else if (dueDate.getTime() === today.getTime()) {
+            dateColor = '#f59e0b'; // hoje
+            warningText = ' (Entregar hoje!)';
+        }
+
+        // Descrição resumida dos itens
+        const itemsDesc = Object.keys(order.items).map(key => {
+            const p = (state.products || []).find(prod => prod.id === key.replace('_unit', ''));
+            if (!p) return '';
+            const qty = order.items[key];
+            const unitType = key.endsWith('_unit') ? 'unidades' : 'fardos';
+            return `${qty} ${unitType} de ${p.name}`;
+        }).filter(Boolean).join(', ');
+
+        return `
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                    <div>
+                        <h4 style="font-size: 0.82rem; font-weight: 700; color: #fff; margin: 0;">${client.name}</h4>
+                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">${itemsDesc || 'Nenhum item informado'}</p>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <span style="font-size: 0.72rem; font-weight: 700; color: ${dateColor};">${dueFmt}${warningText}</span>
+                    </div>
+                </div>
+                ${order.scheduledNote ? `
+                    <div style="font-size: 0.72rem; background: rgba(0, 240, 255, 0.05); border-left: 2px solid var(--color-primary); padding: 4px 8px; border-radius: 0 4px 4px 0; color: var(--color-text-main);">
+                        <strong>Obs:</strong> ${order.scheduledNote}
+                    </div>
+                ` : ''}
+                <div style="display: flex; gap: 6px; margin-top: 2px; justify-content: flex-end;">
+                    <button onclick="window.confirmScheduledDelivery('${order.id}')" style="padding: 4px 8px; font-size: 0.7rem; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary); border-radius: 4px; cursor: pointer; font-weight: 700;">Despachar Agora</button>
+                    <button onclick="window.cancelScheduledOrder('${order.id}')" style="padding: 4px 8px; font-size: 0.7rem; background: transparent; border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 // Bind to window for HTML accessibility
 window.renderDashboard = renderDashboard;
 window.renderDashboardAlerts = renderDashboardAlerts;
 window.renderDashboardChart = renderDashboardChart;
 window.quickAction = quickAction;
+window.renderScheduledOrders = renderScheduledOrders;

@@ -285,7 +285,7 @@ export function updateSyncStatusUI(status) {
         }
     }
 
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // ─── TOAST DE NOTIFICAÇÃO QUANDO RECEBE ATUALIZAÇÃO ──────────────────────
@@ -307,7 +307,7 @@ function mostrarToastSync() {
     `;
     toast.innerHTML = `<i data-lucide="zap" style="width:15px;height:15px;"></i> Atualização recebida de outro dispositivo!`;
     document.body.appendChild(toast);
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 
     setTimeout(() => {
         toast.style.opacity = '0';
@@ -331,7 +331,7 @@ export function updateOneDriveStatusUI(status) {
         indicator.style.background = "rgba(255, 255, 255, 0.03)";
         indicator.innerHTML = `<i data-lucide="cloud-off" style="width: 18px; height: 18px; color: var(--color-text-muted);"></i>`;
     }
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export async function checkOneDriveSync() {
@@ -416,7 +416,7 @@ function showOneDriveToast(msg) {
     `;
     toast.innerHTML = `<i data-lucide="cloud" style="width:15px;height:15px;"></i> ${msg}`;
     document.body.appendChild(toast);
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 
     setTimeout(() => {
         toast.style.opacity = '0';

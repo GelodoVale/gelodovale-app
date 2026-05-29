@@ -28,7 +28,7 @@ export function renderDocumentos() {
                 <p>Nenhum recibo ou orçamento comercial gerado.</p>
             </div>
         `;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
         return;
     }
 
@@ -78,7 +78,7 @@ export function renderDocumentos() {
         `;
     });
 
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function openDocModal(docId = null) {
@@ -900,7 +900,7 @@ export async function generateMpFromDocument() {
     const btnIcon = document.getElementById("btn-mp-doc").querySelector("i");
     if (btnIcon) {
         btnIcon.setAttribute('data-lucide', 'loader');
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
     }
     
     try {
@@ -918,8 +918,27 @@ export async function generateMpFromDocument() {
     } finally {
         if (btnIcon) {
             btnIcon.setAttribute('data-lucide', 'link');
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         }
     }
 }
 window.generateMpFromDocument = generateMpFromDocument;
+ 
+export function triggerLocalPixForDoc() {
+    const activeDocId = window.currentPrintDocId || currentPrintDocId;
+    if (!activeDocId) return;
+    
+    let d = state.documents.find(item => item.id === activeDocId);
+    if (!d) {
+        if (activeDocId === "TEST-0000") {
+            d = { id: "TEST", total: 55.00, clientName: "Teste" };
+        } else {
+            return;
+        }
+    }
+    
+    if (window.showLocalPixModal) {
+        window.showLocalPixModal(d.clientName, d.total);
+    }
+}
+window.triggerLocalPixForDoc = triggerLocalPixForDoc;

@@ -8,7 +8,7 @@ export function switchAdminSubTab(subTabId) {
     if (currentUserId && state.users) {
         const currentUser = state.users.find(u => u.id === currentUserId);
         if (currentUser) {
-            const hasPerm = currentUser.permissions["admin-" + subTabId];
+            const hasPerm = (currentUser.permissions || {})["admin-" + subTabId];
             if (hasPerm === false) {
                 window.showToast("Você não possui permissão para acessar esta sub-aba administrativa.", "error");
                 return;
@@ -39,6 +39,10 @@ export function switchAdminSubTab(subTabId) {
         }
     });
     
+    if (subTabId === "tab-rentabilidade-freezers" && typeof window.renderFreezerRentability === "function") {
+        window.renderFreezerRentability();
+    }
+    
     // Renderizar tabela de usuários se a aba for a correspondente
     if (subTabId === "tab-usuarios" && typeof window.renderUsersTable === "function") {
         window.renderUsersTable();
@@ -52,6 +56,15 @@ export function switchAdminSubTab(subTabId) {
     // Renderizar painel de widgets
     if (subTabId === "tab-dados-fabrica") {
         renderWidgetsSetupPanel();
+    }
+
+    if (subTabId === "tab-acerto") {
+        populateCargoSettlementDrivers();
+    }
+    
+    if (subTabId === "tab-financeiro") {
+        populateCommissionsDriverFilter();
+        renderDriverCommissionsReport();
     }
     
     // Força a renderização dos ícones Lucide recém-exibidos
@@ -978,6 +991,12 @@ export function selectThemeCard(themeName) {
     });
     
     handlePresetThemeChange(themeName);
+    
+    // Salvar o tema automaticamente ao clicar
+    const settings = getCurrentUIThemeSettings();
+    state.appearance = settings;
+    saveState();
+    if (window.showToast) window.showToast("Aparência salva!", "success");
 }
 
 // 6. Fechamento de Carga e Acerto de Viagem
@@ -1104,6 +1123,9 @@ export function calculateCargoSettlement() {
     const resultsDiv = document.getElementById("cargo-settlement-results");
     if (!resultsDiv) return;
     
+    const driverSelect = document.getElementById("settle-driver-id");
+    const driverName = driverSelect && driverSelect.selectedIndex >= 0 ? driverSelect.options[driverSelect.selectedIndex].text : "Não selecionado";
+    
     const activeProds = state.products.filter(p => p.active && (p.type === 'Gelo' || p.type === 'Carvão' || p.type === 'Gelo Saborizado'));
     
     let stockDivergenceHTML = "";
@@ -1212,9 +1234,12 @@ export function calculateCargoSettlement() {
     
     resultsDiv.style.display = "block";
     resultsDiv.innerHTML = `
-        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
             <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Resultado da Auditoria
         </h3>
+        <div style="font-size: 0.8rem; margin-bottom: 1rem; color: var(--color-text-muted);">
+            Motorista: <strong style="color: #fff;">${driverName}</strong>
+        </div>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
             <thead>
                 <tr style="border-bottom: 1.5px solid rgba(255,255,255,0.1); color: var(--color-text-muted); font-size: 0.75rem;">
@@ -1285,6 +1310,15 @@ export function calculateCargoSettlement() {
 }
 
 export function saveCargoSettlement() {
+    const driverSelect = document.getElementById("settle-driver-id");
+    const driverId = driverSelect ? driverSelect.value : "";
+    const driverName = driverSelect && driverSelect.selectedIndex >= 0 ? driverSelect.options[driverSelect.selectedIndex].text : "Geral";
+    
+    if (!driverId) {
+        window.showToast("Selecione o motorista responsável antes de fechar o acerto!", "warning");
+        return;
+    }
+    
     const cashReceived = parseFloat(document.getElementById("settle-cash-received").value) || 0;
     const pixReceived = parseFloat(document.getElementById("settle-pix-received").value) || 0;
     const cardReceived = parseFloat(document.getElementById("settle-card-received").value) || 0;
@@ -1354,6 +1388,8 @@ export function saveCargoSettlement() {
     const settlement = {
         id: "settle_" + Date.now(),
         date: window.getBrazilTimeISO(),
+        driverId,
+        driverName,
         kmInitial,
         kmFinal,
         kmDriven,
@@ -1381,6 +1417,7 @@ export function saveCargoSettlement() {
     state.cargoSettlements.push(settlement);
 
     // Limpar os campos do formulário
+    if (driverSelect) driverSelect.value = "";
     document.getElementById("settle-cash-received").value = "0.00";
     document.getElementById("settle-pix-received").value = "0.00";
     document.getElementById("settle-card-received").value = "0.00";
@@ -2729,7 +2766,9 @@ export function loadMercadoPagoSettings() {
 }
 
 export function toggleMpFields() {
-    const isEnabled = document.getElementById("mp-enabled").checked;
+    const input = document.getElementById("mp-enabled");
+    if (!input) return;
+    const isEnabled = input.checked;
     const box = document.getElementById("mp-credentials-box");
     if (box) {
         box.style.display = isEnabled ? "block" : "none";
@@ -2737,7 +2776,9 @@ export function toggleMpFields() {
 }
 
 export function saveMercadoPagoSettings() {
-    const isEnabled = document.getElementById("mp-enabled").checked;
+    const input = document.getElementById("mp-enabled");
+    if (!input) return;
+    const isEnabled = input.checked;
     const token = document.getElementById("mp-access-token").value.trim();
     
     if (isEnabled && !token) {
@@ -2755,6 +2796,7 @@ export function saveMercadoPagoSettings() {
 }
 
 window.toggleMpFields = toggleMpFields;
+window.loadMercadoPagoSettings = loadMercadoPagoSettings;
 window.saveMercadoPagoSettings = saveMercadoPagoSettings;
 
 export async function generateAndSendMP(event, clientId, amount) {
@@ -3218,6 +3260,181 @@ export function generateMonthlyPDFReport() {
 }
 
 window.generateMonthlyPDFReport = generateMonthlyPDFReport;
+
+export function renderFreezerRentability() {
+    const tbody = document.getElementById("freezer-rentability-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const activeFreezers = (state.freezers || []).filter(f => f.status === "alocado");
+
+    if (activeFreezers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+                    Nenhum freezer alocado (em comodato) no momento.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    activeFreezers.forEach(f => {
+        // 1. Manutenção: Soma dos custos de registros de manutenção do freezer
+        let totalMaintenanceCost = 0;
+        if (f.maintenanceLogs) {
+            f.maintenanceLogs.forEach(log => {
+                totalMaintenanceCost += parseFloat(log.cost) || 0;
+            });
+        }
+
+        // 2. Depreciação: Estimativa baseada na data de compra e vida útil de 10 anos (120 meses).
+        // Custo estimado do freezer novo: R$ 3500.00
+        const purchaseCost = 3500.00;
+        let depreciation = 0;
+        if (f.purchaseDate) {
+            const purchaseDateObj = new Date(f.purchaseDate + 'T00:00:00');
+            const today = new Date();
+            const diffMonths = (today.getFullYear() - purchaseDateObj.getFullYear()) * 12 + (today.getMonth() - purchaseDateObj.getMonth());
+            const monthsClamped = Math.max(0, Math.min(120, diffMonths));
+            depreciation = (purchaseCost / 120) * monthsClamped;
+        }
+
+        // 3. Faturamento Gerado: Receita acumulada das vendas de fardos de gelo do cliente alocado
+        let totalSalesRevenue = 0;
+        if (f.clientId && state.deliveries) {
+            state.deliveries.forEach(del => {
+                if (del.clientId === f.clientId) {
+                    totalSalesRevenue += parseFloat(del.revenue) || 0;
+                }
+            });
+        }
+
+        // 4. Resultado Líquido
+        const netResult = totalSalesRevenue - totalMaintenanceCost - depreciation;
+
+        // 5. ROI %: (Resultado Líquido / (Depreciação + Custos de Manutenção)) * 100
+        const costBasis = depreciation + totalMaintenanceCost;
+        let roiPercent = 0;
+        if (costBasis > 0) {
+            roiPercent = (netResult / costBasis) * 100;
+        } else if (totalSalesRevenue > 0) {
+            roiPercent = 100.00; // Faturamento com custo zero
+        }
+
+        // 6. Badge visual de ROI
+        let statusBadge = "";
+        if (roiPercent > 50) {
+            statusBadge = `<span class="status-badge completed" style="background: rgba(16,185,129,0.15); color: #10b981; font-weight: bold; border: 1px solid rgba(16,185,129,0.3);">🟢 Lucrativo</span>`;
+        } else if (roiPercent >= 0) {
+            statusBadge = `<span class="status-badge pending" style="background: rgba(245,158,11,0.15); color: #f59e0b; font-weight: bold; border: 1px solid rgba(245,158,11,0.3);">🟡 Equilibrado</span>`;
+        } else {
+            statusBadge = `<span class="status-badge expired" style="background: rgba(239,68,68,0.15); color: var(--color-danger); font-weight: bold; border: 1px solid rgba(239,68,68,0.3);">🔴 Prejuízo</span>`;
+        }
+
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.8rem;">
+                <td style="padding: 12px 8px; font-weight: bold; color: var(--color-primary);">${f.code}</td>
+                <td style="padding: 12px 8px;">${f.clientName || 'N/A'}</td>
+                <td style="padding: 12px 8px; color: var(--color-text-muted);">${f.brand || 'Freezer'}</td>
+                <td style="padding: 12px 8px; text-align: right; color: var(--color-danger);">R$ ${depreciation.toFixed(2).replace(".", ",")}</td>
+                <td style="padding: 12px 8px; text-align: right; color: #ffb703;">R$ ${totalMaintenanceCost.toFixed(2).replace(".", ",")}</td>
+                <td style="padding: 12px 8px; text-align: right; color: #10b981; font-weight: 600;">R$ ${totalSalesRevenue.toFixed(2).replace(".", ",")}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 700; color: ${netResult >= 0 ? '#10b981' : 'var(--color-danger)'}">R$ ${netResult.toFixed(2).replace(".", ",")}</td>
+                <td style="padding: 12px 8px; text-align: center; font-weight: bold; color: ${roiPercent >= 0 ? 'var(--color-primary)' : 'var(--color-danger)'}">${roiPercent.toFixed(1)}%</td>
+                <td style="padding: 12px 8px; text-align: center;">${statusBadge}</td>
+            </tr>
+        `;
+    });
+}
+window.renderFreezerRentability = renderFreezerRentability;
+
+export function populateCargoSettlementDrivers() {
+    const select = document.getElementById("settle-driver-id");
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Selecione o Motorista --</option>';
+    
+    const users = state.users || [];
+    users.forEach(u => {
+        const option = document.createElement("option");
+        option.value = u.id;
+        option.textContent = u.name;
+        select.appendChild(option);
+    });
+}
+window.populateCargoSettlementDrivers = populateCargoSettlementDrivers;
+
+export function populateCommissionsDriverFilter() {
+    const select = document.getElementById("commission-driver-filter");
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Todos os Motoristas --</option>';
+    
+    const users = state.users || [];
+    users.forEach(u => {
+        const option = document.createElement("option");
+        option.value = u.id;
+        option.textContent = u.name;
+        select.appendChild(option);
+    });
+}
+window.populateCommissionsDriverFilter = populateCommissionsDriverFilter;
+
+export function renderDriverCommissionsReport() {
+    const tbody = document.getElementById("driver-commissions-tbody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
+    
+    const filterSelect = document.getElementById("commission-driver-filter");
+    const driverIdFilter = filterSelect ? filterSelect.value : "";
+    
+    const settlements = state.cargoSettlements || [];
+    
+    let totalTrips = 0;
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let totalCommission = 0;
+    
+    settlements.forEach(s => {
+        if (driverIdFilter && s.driverId !== driverIdFilter) return;
+        
+        totalTrips++;
+        const rev = s.financials ? (s.financials.totalReceived || 0) : 0;
+        const exp = s.expenses ? (s.expenses.total || 0) : 0;
+        const com = s.financials ? (s.financials.commission || 0) : 0;
+        
+        totalRevenue += rev;
+        totalExpenses += exp;
+        totalCommission += com;
+        
+        const netProfit = rev - exp - com;
+        const row = document.createElement("tr");
+        row.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+        row.innerHTML = `
+            <td style="padding: 8px 6px; color: #fff;">${s.date ? new Date(s.date).toLocaleDateString('pt-BR') : '-'}</td>
+            <td style="padding: 8px 6px; color: var(--color-text-muted);">${s.driverName || 'Geral'}</td>
+            <td style="padding: 8px 6px; text-align: right; color: #fff;">R$ ${rev.toFixed(2).replace(".", ",")}</td>
+            <td style="padding: 8px 6px; text-align: right; color: var(--color-danger);">R$ ${exp.toFixed(2).replace(".", ",")}</td>
+            <td style="padding: 8px 6px; text-align: right; color: var(--color-primary); font-weight: bold;">R$ ${com.toFixed(2).replace(".", ",")}</td>
+            <td style="padding: 8px 6px; text-align: right; color: ${netProfit >= 0 ? '#00ff64' : '#ef4444'}; font-weight: bold;">R$ ${netProfit.toFixed(2).replace(".", ",")}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    // Atualizar KPIs na tela
+    const tripsEl = document.getElementById("driver-kpi-trips");
+    if (tripsEl) tripsEl.textContent = totalTrips;
+    
+    const revEl = document.getElementById("driver-kpi-revenue");
+    if (revEl) revEl.textContent = "R$ " + totalRevenue.toFixed(2).replace(".", ",");
+    
+    const expEl = document.getElementById("driver-kpi-expenses");
+    if (expEl) expEl.textContent = "R$ " + totalExpenses.toFixed(2).replace(".", ",");
+    
+    const comEl = document.getElementById("driver-kpi-commission");
+    if (comEl) comEl.textContent = "R$ " + totalCommission.toFixed(2).replace(".", ",");
+}
+window.renderDriverCommissionsReport = renderDriverCommissionsReport;
 
 
 

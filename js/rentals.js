@@ -22,7 +22,7 @@ export function renderTinas() {
                 <p>Nenhum aluguel de equipamento ou mobiliário encontrado com os filtros selecionados.</p>
             </div>
         `;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
         return;
     }
 
@@ -222,7 +222,7 @@ export function renderTinas() {
         `;
     });
 
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function quickCreateRentalItem() {

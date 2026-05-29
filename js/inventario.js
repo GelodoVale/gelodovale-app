@@ -34,7 +34,7 @@ export function renderInventario() {
                 </button>
             </div>
         `;
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
         return;
     }
     
@@ -111,7 +111,7 @@ export function renderInventario() {
         `;
     });
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function openFreezerModal(freezerId = null) {
@@ -321,7 +321,7 @@ export function openFreezerDetail(freezerId) {
         }
     }
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
     const modal = document.getElementById("modal-freezer-detail");
     if (modal) modal.classList.add("active");
 }
@@ -603,16 +603,103 @@ export function startQRScanner() {
                 stopQRScanner();
                 if (window.closeModal) window.closeModal('modal-scanner');
                 
-                const codeScanned = decodedText.trim().toUpperCase();
-                const freezer = state.freezers.find(f => f.code && f.code.trim().toUpperCase() === codeScanned);
-                const rental = state.rentals.find(r => r.tinaCode && r.tinaCode.trim().toUpperCase() === codeScanned);
+                const scanVal = decodedText.trim();
+                const scanValUpper = scanVal.toUpperCase();
+                
+                // 1. PREFIX ROUTING: Cliente (cli-)
+                if (scanValUpper.startsWith("CLI-")) {
+                    const clientId = scanVal.substring(4).trim();
+                    const client = state.clients.find(c => c.id === clientId || c.name.toUpperCase() === clientId.toUpperCase());
+                    if (client) {
+                        if (window.openSalesModal) {
+                            window.openSalesModal(client.id);
+                            window.showToast(`Cliente encontrado: ${client.name}. Iniciando venda.`, "success");
+                        } else if (window.editClient) {
+                            window.editClient(client.id);
+                        }
+                    } else {
+                        window.showToast(`Cliente "${clientId}" não encontrado no sistema.`, "warning");
+                    }
+                    return;
+                }
+                
+                // 2. PREFIX ROUTING: Documento (doc-) ou Entrega (del-)
+                if (scanValUpper.startsWith("DOC-") || scanValUpper.startsWith("DEL-")) {
+                    const docId = scanVal.substring(4).trim();
+                    const doc = state.documents.find(d => d.id === docId);
+                    const delivery = state.deliveries.find(d => d.id === docId);
+                    const order = state.orders.find(o => o.id === docId);
+                    
+                    if (doc) {
+                        if (window.openDocumentPrint) {
+                            window.openDocumentPrint(doc.id);
+                            window.showToast(`Documento encontrado. Abrindo recibo.`, "success");
+                        }
+                    } else if (delivery) {
+                        if (window.openDocumentPrint) {
+                            window.openDocumentPrint(delivery.id);
+                        }
+                    } else if (order) {
+                        if (window.deliverOrder) {
+                            window.deliverOrder(order.id);
+                        }
+                    } else {
+                        if (window.openDocumentPrint) {
+                            window.openDocumentPrint(docId);
+                        } else {
+                            window.showToast(`Documento/Entrega "${docId}" não encontrado.`, "warning");
+                        }
+                    }
+                    return;
+                }
+
+                // 3. PRODUCT ROUTING: Se começar com p- ou for um produto cadastrado
+                let product = null;
+                if (scanValUpper.startsWith("P-")) {
+                    const prodId = scanVal.substring(2).trim();
+                    product = (state.products || []).find(p => p.id.toUpperCase() === prodId.toUpperCase() || p.name.toUpperCase() === prodId.toUpperCase());
+                } else {
+                    product = (state.products || []).find(p => p.id.toUpperCase() === scanValUpper || p.name.toUpperCase() === scanValUpper);
+                }
+
+                if (product) {
+                    const outInput = document.getElementById(`cargo-out-${product.id}`);
+                    const salesInput = document.getElementById(`sales-qty-${product.id}`);
+                    const orderInput = document.getElementById(`order-qty-${product.id}`);
+                    
+                    if (outInput) {
+                        const currentVal = parseInt(outInput.value) || 0;
+                        outInput.value = currentVal + 1;
+                        if (window.calculateCargoSettlement) {
+                            window.calculateCargoSettlement();
+                        }
+                        window.showToast(`Carga de ${product.name}: +1 fardo na Saída!`, "success");
+                    } else if (salesInput) {
+                        const val = parseInt(salesInput.value) || 0;
+                        salesInput.value = val + 1;
+                        salesInput.dispatchEvent(new Event('input'));
+                        window.showToast(`Venda: +1 fardo de ${product.name}!`, "success");
+                    } else if (orderInput) {
+                        const val = parseInt(orderInput.value) || 0;
+                        orderInput.value = val + 1;
+                        orderInput.dispatchEvent(new Event('input'));
+                        window.showToast(`Pedido: +1 fardo de ${product.name}!`, "success");
+                    } else {
+                        window.showToast(`Produto: ${product.name}. Abra o Fechamento de Carga ou Painel de Vendas para interagir.`, "info");
+                    }
+                    return;
+                }
+                
+                // 4. DEFAULT ROUTAS: Freezer ou Tina
+                const freezer = state.freezers.find(f => f.code && f.code.trim().toUpperCase() === scanValUpper);
+                const rental = state.rentals.find(r => r.tinaCode && r.tinaCode.trim().toUpperCase() === scanValUpper);
                 
                 if (freezer) {
                     openFreezerDetail(freezer.id);
                 } else if (rental) {
                     openRentalModal(rental.id);
                 } else {
-                    window.showToast(`Código Detectado: "${decodedText}". Equipamento ou Tina não cadastrados no sistema.`, 'warning');
+                    window.showToast(`Código Detectado: "${decodedText}". Item não identificado ou não cadastrado no sistema.`, 'warning');
                 }
             },
             (errorMessage) => {

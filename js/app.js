@@ -22,6 +22,9 @@ import { migrateLegacyComodatos, initClientSigningPortal } from './comodatos.js'
 import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal } from './admin.js';
 import { initFirebase, checkOneDriveSync } from './sync.js';
 import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil } from './utils.js';
+import { runClientDiagnostics } from './diagnostics.js';
+import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './pdv.js';
+import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry } from './carne.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -221,6 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 11. Monitor de status de conexão offline
     initConnectionStatusMonitor();
+
+    // 12. Inicializar Frente de Caixa (PDV)
+    initPDV();
 });
 
 // --- PERSISTÊNCIA DE DADOS (RETROCOMPATIBILIDADE E LOGICA AUXILIAR) ---
@@ -498,6 +504,11 @@ export function updateHeaderForTab(tab) {
             pageSubtitle.innerText = "Edite preços de fábrica, promoções e configure descontos específicos por cliente";
             globalBtn.style.display = "none";
             break;
+        case "pdv":
+            pageTitle.innerText = "Frente de Caixa (PDV Balcão)";
+            pageSubtitle.innerText = "Emita vendas locais e de retirada direto do balcão da fábrica";
+            globalBtn.style.display = "none";
+            break;
     }
     if (window.lucide) window.lucide.createIcons();
 }
@@ -521,6 +532,9 @@ export function renderTabContent(tab) {
             break;
         case "pedidos":
             renderPedidos();
+            if (window.initLeafletRouteMap) {
+                setTimeout(window.initLeafletRouteMap, 100);
+            }
             break;
         case "historico":
             renderHistorico();
@@ -547,6 +561,11 @@ export function renderTabContent(tab) {
                 });
             }
             break;
+        case "pdv":
+            if (window.populatePDVClients) window.populatePDVClients();
+            if (window.renderPDVCatalog) window.renderPDVCatalog();
+            if (window.renderPDVCart) window.renderPDVCart();
+            break;
     }
 }
 
@@ -570,6 +589,10 @@ export function renderApp() {
 // --- PEDIDOS E SUAS VISITAS SUGERIDAS ---
 export function renderPedidos() {
     renderSuggestedVisits();
+
+    if (window.drawRouteOnLeafletMap) {
+        setTimeout(window.drawRouteOnLeafletMap, 100);
+    }
 
     const ordersContainer = document.getElementById("pedidos-list-container");
     if (!ordersContainer) return;
@@ -623,6 +646,8 @@ export function renderPedidos() {
             }
         });
         
+        const pendingCom = state.comodatos && state.comodatos.find(com => com.clientId === o.clientId && com.status === 'pendente');
+
         ordersContainer.innerHTML += `
             <div class="pedido-item" style="display: flex; align-items: center; gap: 12px;">
                 <input type="checkbox" class="order-route-checkbox" data-order-id="${o.id}" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--color-primary); flex-shrink: 0;">
@@ -633,7 +658,12 @@ export function renderPedidos() {
                         ${tagsHTML}
                     </div>
                 </div>
-                <div class="pedido-acoes" style="flex-shrink: 0;">
+                <div class="pedido-acoes" style="flex-shrink: 0; display: flex; gap: 4px;">
+                    ${pendingCom ? `
+                    <button class="btn btn-secondary btn-icon-only" onclick="window.triggerComodatoSignatureForClient('${o.clientId}')" title="Assinar Comodato" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.05); padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
+                        <i data-lucide="pen-tool" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    ` : ''}
                     <button class="btn btn-primary btn-icon-only" style="background: var(--color-success); box-shadow: none;" onclick="deliverOrder('${o.id}')" title="Marcar como Entregue">
                         <i data-lucide="check" style="color: #000; width: 18px; height: 18px;"></i>
                     </button>
@@ -716,6 +746,28 @@ export function openOrderModal() {
     document.getElementById("order-form").reset();
     if (window.renderOrderModalProducts) window.renderOrderModalProducts();
     if (window.populateClientDropdowns) window.populateClientDropdowns();
+    
+    // Add change event listener for client selection to recalculate suggestions
+    const select = document.getElementById("order-client-id");
+    if (select && !select.dataset.listenerAdded) {
+        select.dataset.listenerAdded = 'true';
+        select.addEventListener('change', () => {
+            if (window.renderOrderModalProducts) window.renderOrderModalProducts();
+            // Verificar inadimplência ao trocar cliente
+            const debtWarning = document.getElementById('order-debt-warning');
+            if (debtWarning) {
+                const selClient = (state.clients || []).find(c => c.id === select.value);
+                const debt = selClient ? parseFloat(selClient.outstandingDebt) || 0 : 0;
+                if (debt > 0) {
+                    debtWarning.style.display = 'flex';
+                    debtWarning.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/><path d='M12 9v4'/><path d='M12 17h.01'/></svg> <strong>⚠️ Cliente Inadimplente!</strong> Débito pendente: <strong>R$ ${debt.toFixed(2).replace('.', ',')}</strong>. Confirme o recebimento antes de entregar.`;
+                } else {
+                    debtWarning.style.display = 'none';
+                }
+            }
+        });
+    }
+    
     modal.classList.add("active");
 }
 
@@ -730,6 +782,21 @@ export function cancelOrder(orderId) {
         },
         null,
         "Cancelar Pedido",
+        "Confirmar"
+    );
+}
+
+export function cancelScheduledOrder(orderId) {
+    window.showConfirm(
+        "Deseja realmente cancelar este agendamento / pré-pedido?",
+        () => {
+            state.orders = state.orders.filter(o => o.id !== orderId);
+            saveState();
+            renderApp();
+            window.showToast("Agendamento cancelado com sucesso!", "success");
+        },
+        null,
+        "Cancelar Agendamento",
         "Confirmar"
     );
 }
@@ -868,6 +935,9 @@ export function deliverOrder(orderId) {
     document.getElementById("checkout-order-total").innerText = "R$ " + revenue.toFixed(2).replace(".", ",");
     document.getElementById("checkout-payment-method").value = "Dinheiro";
     
+    const photoInput = document.getElementById("delivery-photo-input");
+    if (photoInput) photoInput.value = "";
+    
     const modal = document.getElementById("modal-confirm-delivery");
     if (modal) modal.classList.add("active");
 }
@@ -882,20 +952,35 @@ export function processDeliveryCheckout(event) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="loading-spinner"></span> Aguardando GPS...';
     }
-    
-    getGPSLocation((gps) => {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Confirmar Entrega';
-            if (window.lucide) window.lucide.createIcons();
+
+    // Capturar foto de entrega se houver
+    const photoInput = document.getElementById('delivery-photo-input');
+    let photoBase64 = null;
+    const capturePhoto = (cb) => {
+        if (photoInput && photoInput.files && photoInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => cb(e.target.result);
+            reader.readAsDataURL(photoInput.files[0]);
+        } else {
+            cb(null);
         }
-        
-        closeModal("modal-confirm-delivery");
-        deliverOrderWithDetails(orderId, paymentMethod, gps);
+    };
+    
+    capturePhoto((photo) => {
+        photoBase64 = photo;
+        getGPSLocation((gps) => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Confirmar Entrega';
+                if (window.lucide) window.lucide.createIcons();
+            }
+            closeModal("modal-confirm-delivery");
+            deliverOrderWithDetails(orderId, paymentMethod, gps, photoBase64);
+        });
     });
 }
 
-export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
+export function deliverOrderWithDetails(orderId, paymentMethod, gps, photoBase64 = null) {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
     
@@ -955,13 +1040,29 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps) {
         paymentMethod: paymentMethod,
         gps: gps,
         lotNumber: order.lotNumber || "",
-        exchangeQty: order.exchangeQty || 0
+        exchangeQty: order.exchangeQty || 0,
+        temperature: (state.weatherConfig && state.weatherConfig.temp) !== undefined ? state.weatherConfig.temp : 24,
+        photoBase64: photoBase64 || null
     };
     
     state.deliveries.push(newDelivery);
     
     if (paymentMethod === "A Prazo") {
         client.outstandingDebt = (client.outstandingDebt || 0) + revenue;
+        // Criar entrada no carnê automaticamente
+        if (!client.carnet) client.carnet = [];
+        const dateStr = new Date().toLocaleDateString('pt-BR');
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 10);
+        client.carnet.push({
+            id: 'cr-' + Date.now(),
+            amount: revenue,
+            description: `Entrega em ${dateStr}`,
+            dueDate: dueDate.toISOString().split('T')[0],
+            paid: false,
+            paidDate: null,
+            createdAt: new Date().toISOString()
+        });
     }
     
     state.orders = state.orders.filter(o => o.id !== orderId);
@@ -1036,6 +1137,16 @@ export function renderHistorico() {
             `;
         }
         
+        // Botão WhatsApp de comprovante do histórico
+        const cleanPhone = (del.clientPhone || '').replace(/\D/g, '');
+        const phoneWithDDI = (cleanPhone.length === 10 || cleanPhone.length === 11) ? '55' + cleanPhone : cleanPhone;
+        const waText = encodeURIComponent(
+            `*Comprovante de Entrega - Gelo do Vale*\n` +
+            `Cliente: ${del.clientName}\nData: ${dateFormatted}\nItens: ${itemsText.join(', ')}\n*Total: R$ ${(del.revenue || 0).toFixed(2)}*\nPagamento: ${del.paymentMethod || 'Não informado'}\n\nObrigado pela parceria!`
+        );
+        const waUrl = phoneWithDDI ? `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${waText}` : `https://api.whatsapp.com/send?text=${waText}`;
+        const whatsappBtn = `<a href="${waUrl}" target="_blank" class="btn btn-secondary btn-icon-only" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border-color: rgba(37,211,102,0.3); color: #25D366;" title="Enviar comprovante no WhatsApp"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='currentColor'><path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'/></svg></a>`;
+        
         tableBody.innerHTML += `
             <tr>
                 <td style="font-weight: 500;">${dateFormatted}</td>
@@ -1045,6 +1156,7 @@ export function renderHistorico() {
                 <td>
                     <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
                         ${gpsButton}
+                        ${whatsappBtn}
                         <button class="btn btn-danger btn-icon-only" style="padding: 4px;" onclick="deleteDelivery('${del.id}')" title="Excluir Registro">
                             <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                         </button>
@@ -1283,6 +1395,8 @@ export function initForms() {
             
             const lotNumber = document.getElementById("order-lot") ? document.getElementById("order-lot").value : "";
             const exchangeQty = document.getElementById("order-exchange-qty") ? parseInt(document.getElementById("order-exchange-qty").value) || 0 : 0;
+            const scheduledDate = document.getElementById("order-scheduled-date") ? document.getElementById("order-scheduled-date").value : "";
+            const scheduledNote = document.getElementById("order-scheduled-note") ? document.getElementById("order-scheduled-note").value.trim() : "";
             
             const newOrder = {
                 id: "o-" + Date.now(),
@@ -1291,13 +1405,18 @@ export function initForms() {
                 status: "pending",
                 items: items,
                 lotNumber: lotNumber,
-                exchangeQty: exchangeQty
+                exchangeQty: exchangeQty,
+                scheduledDate: scheduledDate || null,
+                scheduledNote: scheduledNote || null
             };
             
             state.orders.push(newOrder);
             saveState();
             closeModal("modal-order");
             renderApp();
+            if (scheduledDate) {
+                showToast(`Pré-pedido agendado para ${new Date(scheduledDate + 'T00:00:00').toLocaleDateString('pt-BR')}! Vai aparecer destacado no dia certo.`, "success");
+            }
         });
     }
     
@@ -2362,16 +2481,33 @@ export function renderOrderModalProducts() {
         return;
     }
 
+    const clientId = document.getElementById("order-client-id") ? document.getElementById("order-client-id").value : "";
+    const currentTemp = (state.weatherConfig && state.weatherConfig.temp) !== undefined ? state.weatherConfig.temp : 24;
+    const suggestions = (clientId && window.predictClientDemand) ? window.predictClientDemand(clientId, currentTemp) : {};
+
     let html = "";
     activeProds.forEach(p => {
+        const suggestedQty = suggestions[p.id] || 0;
         if (p.type === 'Gelo Saborizado') {
+            const badgeHTML = suggestedQty > 0 ? `
+                <span class="climatological-suggestion-badge" 
+                      onclick="document.getElementById('req-${p.id}').value = ${suggestedQty};" 
+                      style="cursor: pointer; font-size: 0.6rem; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 1px 4px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;" 
+                      title="Sugerido: ${suggestedQty} fardos a ${currentTemp}°C">
+                    💡 Sugerido: ${suggestedQty} f
+                </span>
+            ` : '';
+
             html += `
                 <div style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; background: rgba(0,240,255,0.03);">
                     <div style="grid-column: span 2; font-size: 0.75rem; font-weight: bold; color: var(--color-primary); white-space: normal; line-height: 1.2; word-break: break-word;" title="${p.name}">
                         ${p.name}
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="req-${p.id}" style="font-size: 0.65rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Fardos (12 un)</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <label for="req-${p.id}" style="font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0;">Fardos (12 un)</label>
+                            ${badgeHTML}
+                        </div>
                         <input type="number" id="req-${p.id}" class="form-control order-req-input" data-prod-id="${p.id}" min="0" value="0" required style="padding: 4px 6px; font-size: 0.8rem;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
@@ -2381,10 +2517,22 @@ export function renderOrderModalProducts() {
                 </div>
             `;
         } else {
+            const badgeHTML = suggestedQty > 0 ? `
+                <span class="climatological-suggestion-badge" 
+                      onclick="document.getElementById('req-${p.id}').value = ${suggestedQty};" 
+                      style="cursor: pointer; font-size: 0.65rem; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; margin-top: 4px;" 
+                      title="Clique para preencher sugestão climatológica de ${suggestedQty} fardos para ${currentTemp}°C">
+                    💡 Sugestão Clima: ${suggestedQty} fardos (a ${currentTemp}°C)
+                </span>
+            ` : '';
+
             html += `
                 <div class="form-group" style="display: flex; flex-direction: column; justify-content: space-between;">
-                    <label for="req-${p.id}" style="font-size: 0.75rem; white-space: normal; line-height: 1.2; word-break: break-word; margin-bottom: 4px;" title="${p.name}">${p.name}</label>
-                    <input type="number" id="req-${p.id}" class="form-control order-req-input" data-prod-id="${p.id}" min="0" value="0" required style="padding: 6px 8px; font-size: 0.85rem; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <label for="req-${p.id}" style="font-size: 0.75rem; white-space: normal; line-height: 1.2; word-break: break-word;" title="${p.name}">${p.name}</label>
+                        ${badgeHTML}
+                    </div>
+                    <input type="number" id="req-${p.id}" class="form-control order-req-input" data-prod-id="${p.id}" min="0" value="0" required style="padding: 6px 8px; font-size: 0.85rem; width: 100%; margin-top: 4px;">
                 </div>
             `;
         }
@@ -2509,6 +2657,8 @@ window.openOrderModalForClient = openOrderModalForClient;
 window.addSuggestedVisitsToRoute = addSuggestedVisitsToRoute;
 window.openOrderModal = openOrderModal;
 window.cancelOrder = cancelOrder;
+window.cancelScheduledOrder = cancelScheduledOrder;
+window.confirmScheduledDelivery = deliverOrder;
 window.calculateProductRevenue = calculateProductRevenue;
 window.getGPSLocation = getGPSLocation;
 window.deductPackagingStock = deductPackagingStock;
@@ -2701,3 +2851,204 @@ window.confirmOfflineSyncAll = function() {
     // Re-render
     renderApp();
 };
+ 
+export function triggerLocalPixForCheckout() {
+    const orderId = document.getElementById("checkout-order-id").value;
+    const order = (state.orders || []).find(o => o.id === orderId);
+    if (!order) return;
+    
+    const client = (state.clients || []).find(c => c.id === order.clientId);
+    const clientName = client ? client.name : (order.clientName || "Cliente");
+    const total = order.total || 0;
+    
+    if (window.showLocalPixModal) {
+        window.showLocalPixModal(clientName, total);
+    }
+}
+window.openCarneModal = openCarneModal;
+window.renderTopDevedores = renderTopDevedores;
+window.renderCarneList = renderCarneList;
+window.addCarneEntry = addCarneEntry;
+window.payCarneEntry = payCarneEntry;
+window.deleteCarneEntry = deleteCarneEntry;
+
+// --- OBSERVAÇÕES DO CLIENTE ---
+export function addClientNote(clientId, text) {
+    const client = (state.clients || []).find(c => c.id === clientId);
+    if (!client || !text.trim()) return;
+    if (!client.notes) client.notes = [];
+    const user = (state.users && state.currentUser) ? (state.users.find(u => u.id === state.currentUser) || {}).name || 'Admin' : 'Admin';
+    client.notes.unshift({
+        id: 'n-' + Date.now(),
+        text: text.trim(),
+        date: new Date().toISOString(),
+        author: user
+    });
+    saveState();
+    renderClientNotesSection(clientId);
+    const input = document.getElementById('client-note-input');
+    if (input) input.value = '';
+    showToast('Observação salva!', 'success');
+}
+
+export function deleteClientNote(clientId, noteId) {
+    const client = (state.clients || []).find(c => c.id === clientId);
+    if (!client || !client.notes) return;
+    client.notes = client.notes.filter(n => n.id !== noteId);
+    saveState();
+    renderClientNotesSection(clientId);
+}
+
+export function renderClientNotesSection(clientId) {
+    const container = document.getElementById('client-notes-list');
+    if (!container) return;
+    const client = (state.clients || []).find(c => c.id === clientId);
+    if (!client) return;
+    const notes = client.notes || [];
+    if (notes.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.78rem; text-align: center; padding: 8px;">Nenhuma observação registrada.</p>';
+        return;
+    }
+    container.innerHTML = notes.map(n => {
+        const dt = new Date(n.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+        return `
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 7px; padding: 8px 10px; margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <p style="font-size: 0.8rem; color: #fff; margin: 0; flex: 1; line-height: 1.4;">${n.text}</p>
+                <button onclick="deleteClientNote('${clientId}', '${n.id}')" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 0; flex-shrink: 0;" title="Excluir">✕</button>
+            </div>
+            <div style="font-size: 0.68rem; color: var(--color-text-muted); margin-top: 4px;">${n.author} • ${dt}</div>
+        </div>`;
+    }).join('');
+}
+
+window.addClientNote = addClientNote;
+window.deleteClientNote = deleteClientNote;
+window.renderClientNotesSection = renderClientNotesSection;
+
+// ==========================================
+// FECHAMENTO DE CAIXA DIÁRIO
+// ==========================================
+export function openCaixaDiario() {
+    const modal = document.getElementById('modal-caixa-diario');
+    if (!modal) return;
+    renderCaixaDiario();
+    modal.classList.add('active');
+}
+
+export function renderCaixaDiario() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayDeliveries = (state.deliveries || []).filter(d => {
+        if (!d.date) return false;
+        return d.date.startsWith(today);
+    });
+
+    // Totais por método de pagamento
+    const byMethod = {};
+    todayDeliveries.forEach(d => {
+        const method = d.paymentMethod || 'Não informado';
+        byMethod[method] = (byMethod[method] || 0) + (parseFloat(d.revenue) || 0);
+    });
+
+    // Totais por produto
+    const byProduct = {};
+    todayDeliveries.forEach(d => {
+        (state.products || []).forEach(p => {
+            const qty = (d.items && d.items[p.id]) || 0;
+            const qtyUnit = (d.items && d.items[p.id + '_unit']) || 0;
+            if (qty > 0 || qtyUnit > 0) {
+                if (!byProduct[p.name]) byProduct[p.name] = { qty: 0, qtyUnit: 0, revenue: 0 };
+                byProduct[p.name].qty += qty;
+                byProduct[p.name].qtyUnit += qtyUnit;
+                // Calcular receita estimada do produto
+                const price = p.defaultPrice || 0;
+                const unitPrice = p.unitPrice || 0;
+                byProduct[p.name].revenue += qty * price + qtyUnit * unitPrice;
+            }
+        });
+    });
+
+    const totalDay = todayDeliveries.reduce((sum, d) => sum + (parseFloat(d.revenue) || 0), 0);
+    const totalOrders = todayDeliveries.length;
+
+    // Renderizar totais por método
+    const methodColors = { 'Dinheiro': '#10b981', 'Pix': '#6366f1', 'Cartão': '#f59e0b', 'A Prazo': '#ef4444' };
+    let methodHTML = '';
+    if (Object.keys(byMethod).length === 0) {
+        methodHTML = '<p style="color: var(--color-text-muted); text-align: center; padding: 10px;">Nenhuma venda registrada hoje.</p>';
+    } else {
+        Object.entries(byMethod).sort((a, b) => b[1] - a[1]).forEach(([method, total]) => {
+            const color = methodColors[method] || 'var(--color-primary)';
+            methodHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; border-left: 3px solid ${color};">
+                    <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">${method}</span>
+                    <span style="font-size: 1rem; font-weight: 800; color: ${color};">R$ ${total.toFixed(2).replace('.', ',')}</span>
+                </div>`;
+        });
+    }
+
+    // Renderizar totais por produto
+    let productHTML = '';
+    Object.entries(byProduct).forEach(([name, data]) => {
+        const qtyStr = data.qty > 0 ? `${data.qty} fardo${data.qty > 1 ? 's' : ''}` : '';
+        const unitStr = data.qtyUnit > 0 ? `${data.qtyUnit} un.` : '';
+        const qtyDisplay = [qtyStr, unitStr].filter(Boolean).join(' + ');
+        productHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8rem;">
+                <span style="color: #fff;">${name}</span>
+                <span style="color: var(--color-text-muted); font-size: 0.75rem;">${qtyDisplay}</span>
+            </div>`;
+    });
+    if (!productHTML) productHTML = '<p style="color: var(--color-text-muted); text-align: center; font-size: 0.8rem;">Nenhum produto vendido hoje.</p>';
+
+    // Injetar tudo no modal
+    const container = document.getElementById('caixa-diario-content');
+    if (!container) return;
+
+    const dateDisplay = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    container.innerHTML = `
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <p style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: capitalize; margin: 0;">${dateDisplay}</p>
+            <div style="font-size: 2rem; font-weight: 900; color: var(--color-primary); text-shadow: 0 0 16px rgba(var(--color-primary-rgb),0.4); margin: 4px 0;">R$ ${totalDay.toFixed(2).replace('.', ',')}</div>
+            <p style="font-size: 0.8rem; color: var(--color-text-muted);">${totalOrders} venda${totalOrders !== 1 ? 's' : ''} realizadas hoje</p>
+        </div>
+        <h4 style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.5rem;">Entradas por Forma de Pagamento</h4>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem;">${methodHTML}</div>
+        <h4 style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.5rem;">Produtos Vendidos Hoje</h4>
+        <div>${productHTML}</div>
+    `;
+}
+
+export function shareCaixaWhatsApp() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayDeliveries = (state.deliveries || []).filter(d => d.date && d.date.startsWith(today));
+    const total = todayDeliveries.reduce((sum, d) => sum + (parseFloat(d.revenue) || 0), 0);
+    const byMethod = {};
+    todayDeliveries.forEach(d => {
+        const m = d.paymentMethod || 'Outros';
+        byMethod[m] = (byMethod[m] || 0) + (parseFloat(d.revenue) || 0);
+    });
+    const dateStr = new Date().toLocaleDateString('pt-BR');
+
+    let text = `📊 *FECHAMENTO DE CAIXA - ${dateStr}*\n`;
+    text += `*Gelo do Vale*\n\n`;
+    text += `Total de vendas: ${todayDeliveries.length}\n`;
+    text += `*Faturamento Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    text += `*Por Forma de Pagamento:*\n`;
+    Object.entries(byMethod).forEach(([m, v]) => {
+        text += `• ${m}: R$ ${v.toFixed(2).replace('.', ',')}\n`;
+    });
+    text += `\n✅ Fechamento realizado via GelControl`;
+
+    if (navigator.onLine) {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    } else {
+        navigator.clipboard.writeText(text).then(() => {
+            window.showToast('Resumo copiado! Cole no WhatsApp quando tiver sinal.', 'info');
+        });
+    }
+}
+
+window.openCaixaDiario = openCaixaDiario;
+window.renderCaixaDiario = renderCaixaDiario;
+window.shareCaixaWhatsApp = shareCaixaWhatsApp;

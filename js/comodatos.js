@@ -116,7 +116,7 @@ export function renderComodatosAdmin() {
         tableBody.appendChild(tr);
     });
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function openNewComodatoModal() {
@@ -354,7 +354,7 @@ export function renderComodatoDetail(comId) {
         openComodato(comodato.id);
     };
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function saveComodatoNotes(comId) {
@@ -835,7 +835,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
         </div>
     `;
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
     initPortalSignatureCanvas();
     
     document.getElementById("btn-portal-submit").onclick = () => {
@@ -905,7 +905,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
                 if (btnSubmit) btnSubmit.disabled = false;
                 if (btnClear) btnClear.disabled = false;
                 if (btnSubmit) btnSubmit.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Assinar e Enviar';
-                if (window.lucide) lucide.createIcons();
+                if (window.lucide) window.lucide.createIcons();
             });
     };
 }
@@ -946,7 +946,7 @@ export function showPortalSuccess(remoteState, comodato, alreadySigned) {
         </div>
     `;
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function showPortalError(msg) {
@@ -974,7 +974,7 @@ export function showPortalError(msg) {
         </div>
     `;
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons();
 }
 
 export function renderPortalContractTerms(comodato, client, remoteState) {
@@ -1384,3 +1384,15 @@ window.printComodato = printComodato;
 window.openRentalContract = openRentalContract;
 window.updateRentalContractPreview = updateRentalContractPreview;
 window.printRentalContract = printRentalContract;
+ 
+export function triggerComodatoSignatureForClient(clientId) {
+    const comodato = (state.comodatos || []).find(c => c.clientId === clientId && c.status === 'pendente');
+    if (!comodato) {
+        window.showToast("Nenhum contrato de comodato pendente encontrado para este cliente.", "warning");
+        return;
+    }
+    if (window.openSignatureModal) {
+        window.openSignatureModal('comodato', comodato.id);
+    }
+}
+window.triggerComodatoSignatureForClient = triggerComodatoSignatureForClient;

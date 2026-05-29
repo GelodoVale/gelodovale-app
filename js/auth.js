@@ -12,6 +12,11 @@ export function initUserAccessControl() {
     // Remove invalid entries
     state.users = state.users.filter(u => u && typeof u === 'object' && u.username);
     
+    // Garantir que todos os usuários tenham o objeto de permissões inicializado
+    state.users.forEach(u => {
+        if (!u.permissions) u.permissions = {};
+    });
+    
     // Garantir que o admin existe
     let adminUser = state.users.find(u => u.username === "admin");
     if (!adminUser) {
@@ -54,7 +59,8 @@ export function initUserAccessControl() {
         "admin-tab-dados-fabrica": true,
         "admin-tab-impressao": true,
         "admin-tab-seguranca-backup": true,
-        "admin-tab-usuarios": true
+        "admin-tab-usuarios": true,
+        "admin-tab-integracoes": true
     };
 }
 
@@ -112,7 +118,7 @@ export function initPasswordTogglers() {
                 input.type = "password";
                 if (icon) icon.setAttribute("data-lucide", "eye");
             }
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         });
     }
     
@@ -128,7 +134,7 @@ export function initPasswordTogglers() {
                 input.type = "password";
                 if (icon) icon.setAttribute("data-lucide", "eye");
             }
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         });
     }
 }
@@ -173,17 +179,17 @@ export function loginUser(userId, password) {
         applyUserPermissions(user);
         
         if (window.lucide) {
-            lucide.createIcons();
+            window.lucide.createIcons();
         }
         
         // Redirecionamento seguro se a aba ativa não for acessível
         const activeNav = document.querySelector(".nav-item.active");
         const currentTab = activeNav ? activeNav.getAttribute("data-tab") : "dashboard";
-        const hasAccess = user.permissions["tab-" + currentTab];
+        const hasAccess = (user.permissions || {})["tab-" + currentTab];
         
         if (!hasAccess) {
             // Ir para a primeira aba disponível nas permissões dele
-            const availableTab = Object.keys(user.permissions).find(key => key.startsWith("tab-") && user.permissions[key] === true);
+            const availableTab = Object.keys(user.permissions || {}).find(key => key.startsWith("tab-") && (user.permissions || {})[key] === true);
             if (availableTab) {
                 const tabId = availableTab.replace("tab-", "");
                 navigateToTab(tabId);
@@ -231,7 +237,7 @@ export function applyUserPermissions(user) {
     const navItems = document.querySelectorAll(".nav-item");
     navItems.forEach(item => {
         const tabId = item.getAttribute("data-tab");
-        const hasPerm = user.permissions["tab-" + tabId];
+        const hasPerm = (user.permissions || {})["tab-" + tabId];
         if (hasPerm === false) {
             item.style.display = "none";
         } else {
@@ -246,7 +252,7 @@ export function applyUserPermissions(user) {
         const match = onclickAttr.match(new RegExp("switchAdminSubTab\\('([^']+)'\\)"));
         if (match && match[1]) {
             const subTabId = match[1];
-            const hasPerm = user.permissions["admin-tab-" + subTabId.replace("tab-", "")];
+            const hasPerm = (user.permissions || {})["admin-tab-" + subTabId.replace("tab-", "")];
             if (hasPerm === false) {
                 btn.style.display = "none";
             } else {
@@ -316,11 +322,11 @@ export function renderUsersTable() {
     
     tbody.innerHTML = "";
     
-    state.users.forEach(user => {
+    (state.users || []).forEach(user => {
         const isRoot = user.username === "admin";
         
         const activePerms = [];
-        Object.keys(user.permissions).forEach(key => {
+        Object.keys(user.permissions || {}).forEach(key => {
             if (user.permissions[key]) {
                 let friendlyName = key;
                 if (key.startsWith("tab-")) {
@@ -383,7 +389,7 @@ export function renderUsersTable() {
     });
     
     if (window.lucide) {
-        lucide.createIcons();
+        window.lucide.createIcons();
     }
 }
 
@@ -409,7 +415,7 @@ export function openUserModal(userId = "") {
     usernameInput.disabled = false;
     
     if (userId) {
-        const user = state.users.find(u => u.id === userId);
+        const user = (state.users || []).find(u => u.id === userId);
         if (!user) return;
         
         titleEl.innerText = "Editar Usuário & Acessos";
@@ -420,7 +426,7 @@ export function openUserModal(userId = "") {
         
         checkboxes.forEach(cb => {
             const permKey = cb.getAttribute("data-perm");
-            cb.checked = !!user.permissions[permKey];
+            cb.checked = !!(user.permissions && user.permissions[permKey]);
         });
         
         if (user.username === "admin") {
@@ -462,7 +468,7 @@ export function saveUser(event) {
         return;
     }
     
-    const existing = state.users.find(u => u.username === username && u.id !== id);
+    const existing = (state.users || []).find(u => u.username === username && u.id !== id);
     if (existing) {
         window.showToast("Este login (usuário) já está em uso por outro perfil!", "error");
         return;
@@ -476,7 +482,7 @@ export function saveUser(event) {
     });
     
     if (id) {
-        const index = state.users.findIndex(u => u.id === id);
+        const index = (state.users || []).findIndex(u => u.id === id);
         if (index !== -1) {
             if (state.users[index].username === "admin") {
                 state.users[index].name = name;
@@ -528,7 +534,7 @@ function saveUserPostProcess(id, username) {
 }
 
 export function deleteUser(userId) {
-    const user = state.users.find(u => u.id === userId);
+    const user = (state.users || []).find(u => u.id === userId);
     if (!user) return;
     
     if (user.username === "admin") {
@@ -539,12 +545,12 @@ export function deleteUser(userId) {
     window.showConfirm(
         `Tem certeza que deseja excluir o usuário "${user.name}"?`,
         () => {
-            state.users = state.users.filter(u => u.id !== userId);
+            state.users = (state.users || []).filter(u => u.id !== userId);
             saveState();
             
             const select = document.getElementById("login-user-select");
             if (select) {
-                select.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name} (${u.username})</option>`).join("");
+                select.innerHTML = (state.users || []).map(u => `<option value="${u.id}">${u.name} (${u.username})</option>`).join("");
             }
             
             if (window.activeAdminSubTab === "tab-usuarios") {
@@ -562,7 +568,7 @@ export function deleteUser(userId) {
 export function toggleSelectAllPermissions(checked) {
     const idInput = document.getElementById("form-user-id").value;
     if (idInput) {
-        const user = state.users.find(u => u.id === idInput);
+        const user = (state.users || []).find(u => u.id === idInput);
         if (user && user.username === "admin") return;
     }
     

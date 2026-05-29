@@ -1,8 +1,9 @@
-const CACHE_NAME = 'gelodovale-v47';
+const CACHE_NAME = 'gelodovale-v53';
 const ASSETS = [
   'index.html',
   'styles.css',
   'manifest.json',
+  'gelcontrol.ico',
   'logo_vertical.png',
   'logo_horizontal.jpg',
   'js/app.js',
@@ -19,7 +20,10 @@ const ASSETS = [
   'js/sync.js',
   'js/utils.js',
   'js/storage.js',
-  'js/widgets.js'
+  'js/widgets.js',
+  'js/pdv.js',
+  'js/diagnostics.js',
+  'js/carne.js'
 ];
 
 self.addEventListener('install', (e) => {
