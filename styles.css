@@ -346,6 +346,9 @@ nav.nav-menu {
     flex-direction: column;
     gap: 0.5rem;
     flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 4px;
 }
 
 .nav-item {
