@@ -270,12 +270,16 @@ export function updateSyncStatusUI(status) {
 
     const cfg = MAP[status] || MAP.disabled;
     indicator.title = cfg.title;
+    indicator.setAttribute('data-title', cfg.title);
     indicator.innerHTML = `<i data-lucide="${cfg.icon}" class="${cfg.spin ? 'spin-anim' : ''}" style="width:18px;height:18px;color:${cfg.color};"></i>`;
 
+    indicator.classList.remove('pulse-glow-online', 'pulse-glow-syncing', 'pulse-glow-error');
     if (status === 'success') {
         indicator.classList.add('pulse-glow-online');
-    } else {
-        indicator.classList.remove('pulse-glow-online');
+    } else if (status === 'syncing') {
+        indicator.classList.add('pulse-glow-syncing');
+    } else if (status === 'error') {
+        indicator.classList.add('pulse-glow-error');
     }
 
     const btnSync = document.getElementById('btn-force-sync');
@@ -325,15 +329,21 @@ export function updateOneDriveStatusUI(status) {
     const indicator = document.getElementById("onedrive-sync-status");
     if (!indicator) return;
     if (status === "connected") {
-        indicator.title = "OneDrive: Conectado (Sincronizado localmente)";
+        const title = "OneDrive: Conectado (Clique para Gravar Backup)";
+        indicator.title = title;
+        indicator.setAttribute("data-title", title);
         indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
         indicator.style.background = "rgba(0, 240, 255, 0.05)";
         indicator.innerHTML = `<i data-lucide="cloud" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
+        indicator.classList.add("pulse-glow-onedrive");
     } else {
-        indicator.title = "OneDrive Desconectado";
+        const title = "OneDrive Desconectado";
+        indicator.title = title;
+        indicator.setAttribute("data-title", title);
         indicator.style.borderColor = "rgba(255, 255, 255, 0.08)";
         indicator.style.background = "rgba(255, 255, 255, 0.03)";
         indicator.innerHTML = `<i data-lucide="cloud-off" style="width: 18px; height: 18px; color: var(--color-text-muted);"></i>`;
+        indicator.classList.remove("pulse-glow-onedrive");
     }
     if (window.lucide) window.lucide.createIcons();
 }
