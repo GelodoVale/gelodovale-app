@@ -1854,6 +1854,7 @@ export function initForms() {
                 return;
             }
 
+            let targetRentalId = rentalId;
             if (rentalId) {
                 const idx = state.rentals.findIndex(r => r.id === rentalId);
                 if (idx !== -1) {
@@ -1866,8 +1867,10 @@ export function initForms() {
                     };
                 }
             } else {
+                const newId = "r-" + Date.now();
+                targetRentalId = newId;
                 const newRental = {
-                    id: "r-" + Date.now(),
+                    id: newId,
                     clientId, clientName, address, phone, itemType, tinaCode, tinaColor, rentalFee, shippingType, extraDayFee, deliveryFee, pickupFee, deliveryDate, expectedReturnDate, rentalDays,
                     returnDate: null,
                     status: "active",
@@ -1884,6 +1887,20 @@ export function initForms() {
             saveState();
             closeModal("modal-rental");
             renderApp();
+
+            // Perguntar se quer gerar/imprimir a etiqueta QR Code de locação
+            window.showConfirm(
+                `Aluguel do item "${tinaCode}" salvo com sucesso! Deseja gerar e imprimir a etiqueta QR Code agora?`,
+                () => {
+                    if (window.openRentalStickerModal) {
+                        window.openRentalStickerModal(targetRentalId);
+                    }
+                },
+                null,
+                "Imprimir Etiqueta QR",
+                "Gerar Etiqueta",
+                "Agora Não"
+            );
         });
     }
 
