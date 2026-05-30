@@ -2376,8 +2376,9 @@
                             <label style="font-size:0.73rem; display:block; margin-bottom:4px;">Foto do Documento</label>
                             <div class="upload-dropzone" style="padding: 10px; min-height: 60px;" onclick="document.getElementById('input-photo-doc').click()">
                                 <i data-lucide="camera" style="width: 18px; height: 18px;"></i>
-                                <p style="font-size: 0.75rem; margin: 2px 0 0;">Tirar foto / Selecionar imagem</p>
-                                <input type="file" id="input-photo-doc" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(this, 'preview-doc', 'photo-doc-data')">
+                                <p style="font-size: 0.75rem; margin: 2px 0 0;">Câmera, Galeria ou Arquivo</p>
+                                <p style="font-size: 0.68rem; margin: 2px 0 0; color: var(--color-text-muted); opacity: 0.8;">Foto tirada, recebida pelo WhatsApp ou RG/CPF Digital (Gov.br)</p>
+                                <input type="file" id="input-photo-doc" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-doc', 'photo-doc-data')">
                             </div>
                             <div class="preview-box-container" id="preview-doc" style="margin-top: 6px;"></div>
                         </div>
