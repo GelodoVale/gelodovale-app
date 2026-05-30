@@ -3747,3 +3747,20 @@ body.astro-day.weather-hot {
     color: #00f0ff !important;
     font-weight: bold;
 }
+
+/* Estilos para a miniatura da fachada do estabelecimento do cliente */
+.client-facade-thumbnail {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+.client-facade-thumbnail.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.01);
+}

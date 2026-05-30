@@ -2329,6 +2329,7 @@
             </div>
             <form id="client-form">
                 <input type="hidden" id="form-client-id">
+                <input type="hidden" id="photo-facade-data">
                 
                 <!-- Informações Básicas -->
                 <div class="form-group">
@@ -2349,6 +2350,28 @@
                 <div class="form-group">
                     <label for="client-phone">Telefone / Contato</label>
                     <input type="text" id="client-phone" class="form-control" placeholder="Ex: (11) 98765-4321">
+                </div>
+
+                <div class="form-row-grid" style="margin-top: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label>Foto do Estabelecimento (Fachada)</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-facade').click()">
+                            <i data-lucide="camera" style="width: 20px; height: 20px;"></i>
+                            <p>Selecionar ou Tirar Foto</p>
+                            <input type="file" id="input-photo-facade" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-facade')">
+                        </div>
+                        <div class="preview-box-container" id="preview-facade"></div>
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <label>Coordenadas de Localização (GPS)</label>
+                        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                            <input type="text" id="client-latitude" class="form-control" placeholder="Lat (Ex: -23.179)" style="font-size: 0.8rem; padding: 4px 6px;">
+                            <input type="text" id="client-longitude" class="form-control" placeholder="Long (Ex: -45.887)" style="font-size: 0.8rem; padding: 4px 6px;">
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btn-client-gps" onclick="captureClientGPS()" style="font-size: 0.75rem; padding: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border-color: var(--color-primary); color: var(--color-primary); background: rgba(0, 240, 255, 0.05); width: 100%;">
+                            <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i> Capturar GPS do Dispositivo
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">

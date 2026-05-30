@@ -380,18 +380,28 @@ export async function fetchDocRouteDistance(silent = false) {
             statusEl.innerText = "Buscando coordenadas do endereço do cliente...";
         }
 
-        // 1. Geocodificar endereço do cliente via Nominatim
-        const clientGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clientAddress)}&format=json&limit=1&email=contato@gelodovale.com.br`;
-        const clientResponse = await fetch(clientGeoUrl);
-        if (!clientResponse.ok) throw new Error("Erro ao buscar coordenadas do cliente");
-        const clientGeoData = await clientResponse.json();
-        
-        if (clientGeoData.length === 0) {
-            throw new Error("Endereço do cliente não encontrado. Tente digitar de forma mais simples (ex: Nome da Rua, Número, Cidade).");
-        }
+        let clientLat, clientLng;
+        const docClientSelect = document.getElementById("doc-client-id");
+        const docClientId = docClientSelect ? docClientSelect.value : "";
+        const clientObj = docClientId ? state.clients.find(c => c.id === docClientId) : null;
 
-        const clientLat = parseFloat(clientGeoData[0].lat);
-        const clientLng = parseFloat(clientGeoData[0].lon);
+        if (clientObj && clientObj.latitude && clientObj.longitude && !isNaN(parseFloat(clientObj.latitude)) && !isNaN(parseFloat(clientObj.longitude))) {
+            clientLat = parseFloat(clientObj.latitude);
+            clientLng = parseFloat(clientObj.longitude);
+        } else {
+            // 1. Geocodificar endereço do cliente via Nominatim
+            const clientGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clientAddress)}&format=json&limit=1&email=contato@gelodovale.com.br`;
+            const clientResponse = await fetch(clientGeoUrl);
+            if (!clientResponse.ok) throw new Error("Erro ao buscar coordenadas do cliente");
+            const clientGeoData = await clientResponse.json();
+            
+            if (clientGeoData.length === 0) {
+                throw new Error("Endereço do cliente não encontrado. Tente digitar de forma mais simples (ex: Nome da Rua, Número, Cidade).");
+            }
+
+            clientLat = parseFloat(clientGeoData[0].lat);
+            clientLng = parseFloat(clientGeoData[0].lon);
+        }
 
         if (statusEl) statusEl.innerText = "Buscando coordenadas da fábrica...";
         if (btn) btn.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle;"></span> Roteirizando...';
@@ -503,18 +513,28 @@ export async function fetchRentalRouteDistance(silent = false) {
             statusEl.innerText = "Buscando coordenadas do endereço do cliente...";
         }
 
-        // 1. Geocodificar endereço do cliente via Nominatim
-        const clientGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clientAddress)}&format=json&limit=1&email=contato@gelodovale.com.br`;
-        const clientResponse = await fetch(clientGeoUrl);
-        if (!clientResponse.ok) throw new Error("Erro ao buscar coordenadas do cliente");
-        const clientGeoData = await clientResponse.json();
-        
-        if (clientGeoData.length === 0) {
-            throw new Error("Endereço do cliente não encontrado. Tente digitar de forma mais simples (ex: Nome da Rua, Número, Cidade).");
-        }
+        let clientLat, clientLng;
+        const rentalClientSelect = document.getElementById("rental-client-select");
+        const rentalClientId = rentalClientSelect ? rentalClientSelect.value : "";
+        const clientObj = rentalClientId ? state.clients.find(c => c.id === rentalClientId) : null;
 
-        const clientLat = parseFloat(clientGeoData[0].lat);
-        const clientLng = parseFloat(clientGeoData[0].lon);
+        if (clientObj && clientObj.latitude && clientObj.longitude && !isNaN(parseFloat(clientObj.latitude)) && !isNaN(parseFloat(clientObj.longitude))) {
+            clientLat = parseFloat(clientObj.latitude);
+            clientLng = parseFloat(clientObj.longitude);
+        } else {
+            // 1. Geocodificar endereço do cliente via Nominatim
+            const clientGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clientAddress)}&format=json&limit=1&email=contato@gelodovale.com.br`;
+            const clientResponse = await fetch(clientGeoUrl);
+            if (!clientResponse.ok) throw new Error("Erro ao buscar coordenadas do cliente");
+            const clientGeoData = await clientResponse.json();
+            
+            if (clientGeoData.length === 0) {
+                throw new Error("Endereço do cliente não encontrado. Tente digitar de forma mais simples (ex: Nome da Rua, Número, Cidade).");
+            }
+
+            clientLat = parseFloat(clientGeoData[0].lat);
+            clientLng = parseFloat(clientGeoData[0].lon);
+        }
 
         if (statusEl) statusEl.innerText = "Buscando coordenadas da fábrica...";
         if (btn) btn.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle;"></span> Roteirizando...';
@@ -654,7 +674,14 @@ export async function getOptimizedRouteData() {
                 const addr = client.address.trim();
                 if (!uniqueIntermediaries.includes(addr)) {
                     uniqueIntermediaries.push(addr);
-                    clientDetails.push({ id: client.id, name: client.name, address: addr, type: "Pedido" });
+                    clientDetails.push({ 
+                        id: client.id, 
+                        name: client.name, 
+                        address: addr, 
+                        type: "Pedido",
+                        latitude: client.latitude,
+                        longitude: client.longitude
+                    });
                 }
             }
         }
@@ -667,7 +694,14 @@ export async function getOptimizedRouteData() {
             const addr = client.address.trim();
             if (!uniqueIntermediaries.includes(addr)) {
                 uniqueIntermediaries.push(addr);
-                clientDetails.push({ id: client.id, name: client.name, address: addr, type: "Visita" });
+                clientDetails.push({ 
+                    id: client.id, 
+                    name: client.name, 
+                    address: addr, 
+                    type: "Visita",
+                    latitude: client.latitude,
+                    longitude: client.longitude
+                });
             }
         }
     });
@@ -695,6 +729,16 @@ export async function getOptimizedRouteData() {
     for (let i = 0; i < clientDetails.length; i++) {
         const item = clientDetails[i];
         const addr = item.address;
+        
+        // Se o cliente ja tem coordenadas GPS salvas
+        if (item.latitude && item.longitude && !isNaN(parseFloat(item.latitude)) && !isNaN(parseFloat(item.longitude))) {
+            targets.push({
+                ...item,
+                lat: parseFloat(item.latitude),
+                lng: parseFloat(item.longitude)
+            });
+            continue;
+        }
         
         if (cache[addr]) {
             targets.push({

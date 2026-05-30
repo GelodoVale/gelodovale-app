@@ -589,6 +589,8 @@ export function handleImageUpload(inputEl, previewId) {
                 document.getElementById("photo-establishment-data").value = compressedBase64;
             } else if (previewId === "preview-rental-location") {
                 document.getElementById("photo-rental-location-data").value = compressedBase64;
+            } else if (previewId === "preview-facade") {
+                document.getElementById("photo-facade-data").value = compressedBase64;
             }
             
             previewContainer.innerHTML = `<img src="${compressedBase64}" style="max-height: 80px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">`;

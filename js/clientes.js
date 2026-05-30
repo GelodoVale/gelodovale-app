@@ -122,17 +122,27 @@ export function renderClientes() {
             stockSectionHTML = `<p class="no-freezer-msg">Nenhum freezer vinculado a este cliente.</p>`;
         }
         
+        let facadeSnippet = '';
+        if (c.photoFacade) {
+            facadeSnippet = `<div class="client-facade-thumbnail" style="background-image: url('${c.photoFacade}'); cursor: pointer;" onclick="window.open('${c.photoFacade}', '_blank')" title="Ver Foto Completa"></div>`;
+        } else {
+            facadeSnippet = `<div class="client-facade-thumbnail placeholder"><i data-lucide="image" style="width: 18px; height: 18px; opacity: 0.25;"></i></div>`;
+        }
+        
         const pendingCom = state.comodatos && state.comodatos.find(com => com.clientId === c.id && com.status === 'pendente');
         
         clientsContainer.innerHTML += `
             <div class="client-card">
-                <div class="client-card-header" style="flex-wrap: wrap; gap: 8px;">
-                    <div class="client-name-details">
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <h3 style="margin: 0; font-size: 1rem;">${c.name}</h3>
-                            ${activityBadgeHTML}
+                <div class="client-card-header" style="flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 180px;">
+                        ${facadeSnippet}
+                        <div class="client-name-details">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <h3 style="margin: 0; font-size: 1rem; color: #fff;">${c.name}</h3>
+                                ${activityBadgeHTML}
+                            </div>
+                            <p style="margin-top: 4px; font-size: 0.75rem; color: var(--color-text-muted);">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
                         </div>
-                        <p style="margin-top: 4px;">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
                     </div>
                     ${statusBadgeHTML}
                 </div>
@@ -142,6 +152,12 @@ export function renderClientes() {
                         <i data-lucide="map-pin"></i>
                         <span>${c.address || 'Sem endereço informado'}</span>
                     </div>
+                    ${c.latitude && c.longitude ? `
+                    <div class="contact-item" style="color: var(--color-primary); cursor: pointer;" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}', '_blank')" title="Ver no Google Maps">
+                        <i data-lucide="navigation" style="width: 14px; height: 14px; color: var(--color-primary);"></i>
+                        <span>GPS: <strong>${c.latitude}, ${c.longitude}</strong> <span style="font-size: 0.7rem; opacity: 0.8; text-decoration: underline;">(Ver no Mapa)</span></span>
+                    </div>
+                    ` : ''}
                     <div class="contact-item">
                         <i data-lucide="phone"></i>
                         <span>${c.phone || 'Sem contato informado'}</span>
@@ -221,6 +237,21 @@ export function openClientModal(clientId = null) {
     form.reset();
     document.getElementById("form-client-id").value = "";
     
+    // Resetar novos campos de facade e GPS
+    if (document.getElementById("photo-facade-data")) {
+        document.getElementById("photo-facade-data").value = "";
+    }
+    const previewFacade = document.getElementById("preview-facade");
+    if (previewFacade) {
+        previewFacade.innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
+    }
+    if (document.getElementById("client-latitude")) {
+        document.getElementById("client-latitude").value = "";
+    }
+    if (document.getElementById("client-longitude")) {
+        document.getElementById("client-longitude").value = "";
+    }
+    
     // Limpar checkboxes de visita
     document.querySelectorAll('input[name="visit-days"]').forEach(cb => cb.checked = false);
     
@@ -252,6 +283,25 @@ export function openClientModal(clientId = null) {
             document.getElementById("client-phone").value = c.phone || "";
             if (document.getElementById("client-document")) {
                 document.getElementById("client-document").value = c.document || "";
+            }
+            
+            // Carregar novos campos de facade e GPS
+            if (document.getElementById("photo-facade-data")) {
+                document.getElementById("photo-facade-data").value = c.photoFacade || "";
+            }
+            const previewFacade = document.getElementById("preview-facade");
+            if (previewFacade) {
+                if (c.photoFacade) {
+                    previewFacade.innerHTML = `<img src="${c.photoFacade}" style="max-height: 80px; border-radius: 4px;">`;
+                } else {
+                    previewFacade.innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
+                }
+            }
+            if (document.getElementById("client-latitude")) {
+                document.getElementById("client-latitude").value = c.latitude || "";
+            }
+            if (document.getElementById("client-longitude")) {
+                document.getElementById("client-longitude").value = c.longitude || "";
             }
             document.getElementById("freezer-code").value = c.freezerCode || "";
             document.getElementById("alert-threshold").value = c.alertThreshold || 20;
@@ -569,6 +619,47 @@ export function populateClientDropdowns() {
     filterClientSelect.value = currentFilterVal;
 }
 
+export function captureClientGPS() {
+    if (!navigator.geolocation) {
+        window.showToast("Geolocalização não é suportada pelo seu navegador.", "warning");
+        return;
+    }
+    
+    window.showToast("Capturando coordenadas pelo GPS do aparelho...", "info");
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            
+            const latInput = document.getElementById("client-latitude");
+            const lngInput = document.getElementById("client-longitude");
+            
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+            
+            window.showToast("Coordenadas GPS capturadas com sucesso!", "success");
+        },
+        (error) => {
+            console.error("Erro ao obter GPS:", error);
+            let msg = "Não foi possível obter a localização.";
+            if (error.code === error.PERMISSION_DENIED) {
+                msg = "Permissão de localização negada pelo usuário.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                msg = "Sinal de GPS indisponível no momento.";
+            } else if (error.code === error.TIMEOUT) {
+                msg = "Tempo limite atingido para obter localização.";
+            }
+            window.showToast(msg, "error");
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
 // Bind to window for HTML accessibility
 window.renderClientes = renderClientes;
 window.openClientModal = openClientModal;
@@ -576,3 +667,4 @@ window.deleteClient = deleteClient;
 window.editClient = editClient;
 window.openSalesModal = openSalesModal;
 window.populateClientDropdowns = populateClientDropdowns;
+window.captureClientGPS = captureClientGPS;

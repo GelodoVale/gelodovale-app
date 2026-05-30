@@ -1270,6 +1270,9 @@ export function initForms() {
             const address = document.getElementById("client-address").value;
             const phone = document.getElementById("client-phone").value;
             const clientDoc = document.getElementById("client-document") ? document.getElementById("client-document").value.trim() : "";
+            const photoFacade = document.getElementById("photo-facade-data") ? document.getElementById("photo-facade-data").value : "";
+            const latitude = document.getElementById("client-latitude") ? document.getElementById("client-latitude").value.trim() : "";
+            const longitude = document.getElementById("client-longitude") ? document.getElementById("client-longitude").value.trim() : "";
             
             const selectedFreezerId = document.getElementById("client-freezer-id-select").value;
             const selectedFreezer = state.freezers.find(f => f.id === selectedFreezerId);
@@ -1360,7 +1363,10 @@ export function initForms() {
                         name, address, phone, freezerCode, alertThreshold, capacities, stock,
                         freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
                         visitDays,
-                        document: clientDoc
+                        document: clientDoc,
+                        photoFacade,
+                        latitude,
+                        longitude
                     };
                 }
             } else {
@@ -1370,7 +1376,10 @@ export function initForms() {
                     freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
                     outstandingDebt: 0,
                     visitDays,
-                    document: clientDoc
+                    document: clientDoc,
+                    photoFacade,
+                    latitude,
+                    longitude
                 };
                 state.clients.push(newClient);
             }
