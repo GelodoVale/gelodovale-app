@@ -122,36 +122,91 @@ export function renderDashboardAlerts() {
     const temp = (state.weatherConfig && state.weatherConfig.temp !== undefined) ? state.weatherConfig.temp : 24;
     const locationName = (state.weatherConfig && state.weatherConfig.city) || "São José dos Campos";
     
+    // Varredura de feriados para os próximos 3 dias (hoje + 2 dias) no dashboard
+    let holidaysNear = [];
+    let isCarnavalPeriod = false;
+    let isReveillonPeriod = false;
+    const todayDate = new Date();
+    
+    if (typeof window.getBrazilianHolidays === 'function') {
+        for (let i = 0; i < 3; i++) {
+            const checkDate = new Date();
+            checkDate.setDate(todayDate.getDate() + i);
+            const pad = n => String(n).padStart(2, '0');
+            const dateStr = `${checkDate.getFullYear()}-${pad(checkDate.getMonth() + 1)}-${pad(checkDate.getDate())}`;
+            
+            const yearHolidays = window.getBrazilianHolidays(checkDate.getFullYear());
+            const holiday = yearHolidays[dateStr];
+            if (holiday) {
+                holidaysNear.push(holiday.name);
+                if (holiday.name.toLowerCase().includes("carnaval") || holiday.name.toLowerCase().includes("cinzas")) {
+                    isCarnavalPeriod = true;
+                }
+            }
+            
+            const m = checkDate.getMonth() + 1;
+            const d = checkDate.getDate();
+            if ((m === 12 && d >= 24) || (m === 1 && d <= 2)) {
+                isReveillonPeriod = true;
+            }
+        }
+    }
+
     let demandLevel = "Normal";
     let demandPct = 50;
     let demandColor = "#00f0ff"; // ciano
     let demandIcon = "thermometer";
-    let demandDesc = "Consumo padrão de clima ameno. Mantenha as entregas preventivas no cronograma regular.";
+    let demandDesc = "Consumo padrão estável. Condições climáticas ideais. Abasteça os freezers conforme planejado.";
     
-    if (temp < 20) {
-        demandLevel = "Baixa";
-        demandPct = 25;
-        demandColor = "var(--color-text-muted)";
-        demandDesc = "Clima frio. O consumo cai cerca de 20%. Reduza a frequência de entregas preventivas para evitar acúmulos.";
-        demandIcon = "thermometer-snowflake";
-    } else if (temp >= 20 && temp <= 26) {
-        demandLevel = "Normal";
-        demandPct = 50;
-        demandColor = "#00f0ff";
-        demandDesc = "Consumo padrão estável. Condições climáticas ideais. Abasteça os freezers conforme planejado.";
-        demandIcon = "thermometer";
-    } else if (temp >= 27 && temp <= 31) {
-        demandLevel = "Alta (Tempo Quente)";
-        demandPct = 75;
-        demandColor = "#ffb703"; // amarelo/laranja
-        demandDesc = "Calor em alta! Aumento estimado de 30% a 50% nas vendas. Mantenha os freezers mais abastecidos.";
-        demandIcon = "thermometer-sun";
-    } else if (temp >= 32) {
-        demandLevel = "Crítica (Onda de Calor)";
+    // Determinar base pela temperatura
+    let isExplosao = false;
+    if (temp >= 30 && (holidaysNear.length > 0 || isCarnavalPeriod || isReveillonPeriod)) {
+        isExplosao = true;
+    }
+
+    if (isExplosao) {
+        demandLevel = "💥 EXPLOSÃO DE VENDAS";
         demandPct = 100;
-        demandColor = "#ff0055"; // neon pink
-        demandDesc = "Calor extremo! Consumo projetado de +70% a +90%. Abasteça no máximo e planeje produção extra de emergência!";
-        demandIcon = "zap";
+        demandColor = "#ff3300"; // vermelho/laranja vivo
+        demandIcon = "flame";
+        demandDesc = `PICO MÁXIMO! Calor intenso de ${temp}°C e proximidade de festa/feriado (${holidaysNear.join(', ') || 'Fim de Ano/Carnaval'}). Ative produção 24h e abastecimento preventivo total!`;
+    } else {
+        let finalPct = 50;
+        if (temp < 20) {
+            demandLevel = "Baixa";
+            finalPct = 25;
+            demandColor = "var(--color-text-muted)";
+            demandDesc = "Clima frio. O consumo cai cerca de 20%. Reduza a frequência de entregas preventivas para evitar acúmulos.";
+            demandIcon = "thermometer-snowflake";
+        } else if (temp >= 20 && temp <= 26) {
+            demandLevel = "Normal";
+            finalPct = 50;
+            demandColor = "#00f0ff";
+            demandIcon = "thermometer";
+            demandDesc = "Consumo padrão estável. Condições climáticas ideais. Abasteça os freezers conforme planejado.";
+        } else if (temp >= 27 && temp <= 31) {
+            demandLevel = "Alta (Tempo Quente)";
+            finalPct = 75;
+            demandColor = "#ffb703";
+            demandIcon = "thermometer-sun";
+            demandDesc = "Calor em alta! Aumento estimado de 30% a 50% nas vendas. Mantenha os freezers mais abastecidos.";
+        } else if (temp >= 32) {
+            demandLevel = "Crítica (Onda de Calor)";
+            finalPct = 100;
+            demandColor = "#ff0055";
+            demandIcon = "zap";
+            demandDesc = "Calor extremo! Consumo projetado de +70% a +90%. Abasteça no máximo e planeje produção extra de emergência!";
+        }
+
+        if (holidaysNear.length > 0 || isCarnavalPeriod || isReveillonPeriod) {
+            finalPct = Math.min(100, finalPct + 25);
+            demandLevel = `Elevada (Feriado Próximo)`;
+            demandColor = "#ffb703";
+            demandIcon = "trending-up";
+            const holidayLabel = holidaysNear.length > 0 ? holidaysNear[0] : (isReveillonPeriod ? "Festas de Fim de Ano" : "Carnaval");
+            demandDesc = `Demanda em alta devido à proximidade de ${holidayLabel} (${temp}°C). Planeje reforço nos estoques de segurança de gelo.`;
+        }
+        demandPct = finalPct;
     }
 
     let weatherSnippetHTML = `
@@ -166,12 +221,12 @@ export function renderDashboardAlerts() {
             </div>
             
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.1); border: 1px solid rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.25);">
+                <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(${isExplosao ? '255,51,0' : temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.1); border: 1px solid rgba(${isExplosao ? '255,51,0' : temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.25);">
                     <i data-lucide="${demandIcon}" style="width: 20px; height: 20px; color: ${demandColor};"></i>
                 </div>
                 <div>
                     <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; line-height: 1; margin-bottom: 3px;">Demanda Projetada</span>
-                    <span style="font-size: 1rem; font-weight: 800; color: ${demandColor}; text-shadow: 0 0 10px rgba(${temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.3);">${demandLevel}</span>
+                    <span style="font-size: 1rem; font-weight: 800; color: ${demandColor}; text-shadow: 0 0 10px rgba(${isExplosao ? '255,51,0' : temp >= 32 ? '255,0,85' : temp >= 27 ? '255,183,3' : '0,240,255'}, 0.3);">${demandLevel}</span>
                 </div>
             </div>
 

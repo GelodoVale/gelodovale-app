@@ -33,6 +33,32 @@ const WEATHER_CONDITIONS = {
     wind: { desc: "Ventania", icon: "wind", color: "#38bdf8" }
 };
 
+export function extractDailyForecast(weatherData) {
+    let dailyForecast = [];
+    if (weatherData && weatherData.daily && weatherData.daily.time) {
+        for (let i = 0; i < weatherData.daily.time.length; i++) {
+            const dateStr = weatherData.daily.time[i];
+            const max = Math.round(weatherData.daily.temperature_2m_max[i]);
+            const min = Math.round(weatherData.daily.temperature_2m_min[i]);
+            const code = weatherData.daily.weather_code[i];
+            let condition = "sun";
+            if (code === 0) {
+                condition = "sun";
+            } else if ([1, 2, 3, 45, 48].includes(code)) {
+                condition = "cloud";
+            } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+                condition = "cloud-rain";
+            } else if ([95, 96, 99].includes(code)) {
+                condition = "cloud-lightning";
+            } else {
+                condition = "wind";
+            }
+            dailyForecast.push({ date: dateStr, max, min, condition });
+        }
+    }
+    return dailyForecast;
+}
+
 const WEATHER_REGIONAL_FALLBACKS = {
     "registro": [
         { name: "Juquiá - SP", lat: -24.3200, lon: -47.6353 },
@@ -295,7 +321,7 @@ export async function selectNeighborCity(cityName, lat, lon) {
     if (iconSync) iconSync.classList.add("spin-anim");
 
     try {
-        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
         const weatherRes = await fetch(weatherUrl);
         const weatherData = await weatherRes.json();
         
@@ -317,6 +343,7 @@ export async function selectNeighborCity(cityName, lat, lon) {
                 condition = "wind";
             }
             
+            state.weatherForecast = extractDailyForecast(weatherData);
             state.weatherConfig = { city: cityName, temp, condition, lat, lon, isDay };
             saveState();
             renderWeather();
@@ -501,7 +528,7 @@ export async function saveWeatherConfig() {
                     resolvedCityName += ` - ${stateAbbr}`;
                 }
 
-                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
                 const weatherRes = await fetch(weatherUrl);
                 const weatherData = await weatherRes.json();
                 
@@ -523,6 +550,7 @@ export async function saveWeatherConfig() {
                         condition = "wind";
                     }
                     
+                    state.weatherForecast = extractDailyForecast(weatherData);
                     state.weatherConfig = { city: resolvedCityName, temp, condition, lat, lon, isDay };
                     saveState();
                     renderWeather();
@@ -590,7 +618,7 @@ export async function updateWeatherFromAPI() {
             }
         }
 
-        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
         const weatherRes = await fetch(weatherUrl);
         const weatherData = await weatherRes.json();
         
@@ -612,6 +640,7 @@ export async function updateWeatherFromAPI() {
                 condition = "wind";
             }
             
+            state.weatherForecast = extractDailyForecast(weatherData);
             state.weatherConfig = { city: resolvedCityName, temp, condition, lat, lon, isDay };
             saveState();
             renderWeather();
@@ -654,7 +683,7 @@ export function detectUserLocation() {
                 }
             }
 
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
             const weatherRes = await fetch(weatherUrl);
             const weatherData = await weatherRes.json();
 
@@ -676,6 +705,7 @@ export function detectUserLocation() {
                     condition = "wind";
                 }
 
+                state.weatherForecast = extractDailyForecast(weatherData);
                 state.weatherConfig = { city, temp, condition, lat, lon, isDay };
                 saveState();
                 renderWeather();
@@ -689,7 +719,7 @@ export function detectUserLocation() {
         } catch (e) {
             console.error("Erro na geolocalização reversa, aplicando coordenadas direta:", e);
             try {
-                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
                 const weatherRes = await fetch(weatherUrl);
                 const weatherData = await weatherRes.json();
 
@@ -712,6 +742,7 @@ export function detectUserLocation() {
                     }
 
                     const formattedCoords = `Lat/Lon: ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                    state.weatherForecast = extractDailyForecast(weatherData);
                     state.weatherConfig = { city: formattedCoords, temp, condition, lat, lon, isDay };
                     saveState();
                     renderWeather();
@@ -733,6 +764,105 @@ export function detectUserLocation() {
     });
 }
 
+export function getBrazilianHolidays(year) {
+    const holidays = {};
+
+    const pad = n => String(n).padStart(2, '0');
+    const setDate = (m, d, name, type = 'holiday') => {
+        holidays[`${year}-${pad(m)}-${pad(d)}`] = { name, type };
+    };
+
+    // Feriados Fixos Nacionais
+    setDate(1, 1, "Ano Novo (Confraternização Universal)", "holiday");
+    setDate(4, 21, "Tiradentes", "holiday");
+    setDate(5, 1, "Dia do Trabalho", "holiday");
+    setDate(9, 7, "Independência do Brasil", "holiday");
+    setDate(10, 12, "Nossa Senhora Aparecida (Dia das Crianças)", "holiday");
+    setDate(11, 2, "Finados", "holiday");
+    setDate(11, 15, "Proclamação da República", "holiday");
+    setDate(11, 20, "Dia Nacional de Zumbi e da Consciência Negra", "holiday");
+    setDate(12, 25, "Natal", "holiday");
+
+    // Datas Festivas Fixas
+    setDate(6, 12, "Dia dos Namorados", "festive");
+    setDate(6, 24, "Festa Junina (São João)", "festive");
+    setDate(12, 24, "Véspera de Natal", "festive");
+    setDate(12, 31, "Véspera de Ano Novo", "festive");
+
+    // Cálculo da Páscoa (Módulo Gauss/Meeus)
+    const f = Math.floor,
+          c = f(year / 100),
+          n = year - 19 * f(year / 19),
+          k = f((c - 17) / 25),
+          i = c - f(c / 4) - f((c - k) / 3) + 19 * n + 15;
+    const i2 = i - 30 * f(i / 30);
+    const i3 = i2 - f(i2 / 28) * (1 - f(i2 / 28) * f(29 / (i2 + 1)) * f((21 - n) / 11));
+    const j = year + f(year / 4) + i3 + 2 - c + f(c / 4);
+    const j2 = j - 7 * f(j / 7);
+    const l = i3 - j2;
+    const easterMonth = 3 + f((l + 40) / 44);
+    const easterDay = l + 28 - 31 * f(easterMonth / 4);
+
+    const easter = new Date(year, easterMonth - 1, easterDay);
+
+    const addDays = (date, days) => {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    };
+
+    const formatDate = (date) => {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    };
+
+    // Carnaval (48 e 47 dias antes da Páscoa)
+    const carnavalSeg = addDays(easter, -48);
+    const carnavalTer = addDays(easter, -47);
+    const cinzas = addDays(easter, -46);
+    holidays[formatDate(carnavalSeg)] = { name: "Carnaval (Segunda-feira)", type: "holiday" };
+    holidays[formatDate(carnavalTer)] = { name: "Carnaval (Terça-feira)", type: "holiday" };
+    holidays[formatDate(cinzas)] = { name: "Quarta-feira de Cinzas", type: "festive" };
+
+    // Sexta-feira Santa (2 dias antes)
+    const sextaSanta = addDays(easter, -2);
+    holidays[formatDate(sextaSanta)] = { name: "Sexta-feira Santa", type: "holiday" };
+
+    // Páscoa (Domingo de Páscoa)
+    holidays[formatDate(easter)] = { name: "Domingo de Páscoa", type: "festive" };
+
+    // Corpus Christi (60 dias depois)
+    const corpusChristi = addDays(easter, 60);
+    holidays[formatDate(corpusChristi)] = { name: "Corpus Christi", type: "holiday" };
+
+    // Dia das Mães: Segundo domingo de Maio
+    let sundaysInMay = 0;
+    for (let d = 1; d <= 14; d++) {
+        const dt = new Date(year, 4, d);
+        if (dt.getDay() === 0) {
+            sundaysInMay++;
+            if (sundaysInMay === 2) {
+                holidays[formatDate(dt)] = { name: "Dia das Mães", type: "festive" };
+                break;
+            }
+        }
+    }
+
+    // Dia dos Pais: Segundo domingo de Agosto
+    let sundaysInAug = 0;
+    for (let d = 1; d <= 14; d++) {
+        const dt = new Date(year, 7, d);
+        if (dt.getDay() === 0) {
+            sundaysInAug++;
+            if (sundaysInAug === 2) {
+                holidays[formatDate(dt)] = { name: "Dia dos Pais", type: "festive" };
+                break;
+            }
+        }
+    }
+
+    return holidays;
+}
+
 export function renderCalendar(year, month) {
     const monthYearEl = document.getElementById("calendar-month-year");
     if (monthYearEl) {
@@ -749,6 +879,9 @@ export function renderCalendar(year, month) {
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // Buscar feriados do ano
+    const yearHolidays = getBrazilianHolidays(year);
 
     // 1. Renderizar dias do mês anterior
     for (let i = firstDayIndex - 1; i >= 0; i--) {
@@ -775,6 +908,17 @@ export function renderCalendar(year, month) {
 
         if (dateStr === selectedCalendarDateStr) {
             dayEl.classList.add("selected");
+        }
+
+        // Marcar feriados e datas festivas
+        const holiday = yearHolidays[dateStr];
+        if (holiday) {
+            if (holiday.type === 'holiday') {
+                dayEl.classList.add("is-holiday");
+            } else if (holiday.type === 'festive') {
+                dayEl.classList.add("is-festive");
+            }
+            dayEl.title = holiday.name;
         }
 
         if (state.calendarNotes && state.calendarNotes[dateStr]) {
@@ -827,6 +971,31 @@ export function selectCalendarDay(dateStr) {
     if (notesBox && label && textarea) {
         notesBox.style.display = "block";
         label.innerText = `Notas do dia ${formattedDate}`;
+
+        // Exibir indicador de feriado se houver
+        const yearHolidays = getBrazilianHolidays(parseInt(y));
+        const holiday = yearHolidays[dateStr];
+        let holidayHtml = "";
+        if (holiday) {
+            const badgeClass = holiday.type === 'holiday' ? 'badge-holiday' : 'badge-festive';
+            const iconName = holiday.type === 'holiday' ? 'calendar-days' : 'sparkles';
+            holidayHtml = `
+                <div class="holiday-badge ${badgeClass}" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                    <i data-lucide="${iconName}" style="width: 14px; height: 14px;"></i>
+                    <span>${holiday.name}</span>
+                </div>
+            `;
+        }
+
+        let indicatorEl = document.getElementById("selected-day-holiday-badge");
+        if (!indicatorEl) {
+            indicatorEl = document.createElement("div");
+            indicatorEl.id = "selected-day-holiday-badge";
+            label.parentNode.insertBefore(indicatorEl, label.nextSibling);
+        }
+        indicatorEl.innerHTML = holidayHtml;
+        if (window.lucide) window.lucide.createIcons();
+
         textarea.value = (state.calendarNotes && state.calendarNotes[dateStr]) || "";
         textarea.focus();
     }
@@ -869,6 +1038,295 @@ export function clearDayNote() {
     if (notesBox) notesBox.style.display = "none";
 }
 
+export function openWeatherForecastModal() {
+    const modal = document.getElementById("modal-weather-forecast");
+    if (!modal) return;
+
+    modal.style.display = "flex";
+
+    const cityLabel = document.getElementById("forecast-active-city");
+    if (cityLabel) {
+        cityLabel.innerText = (state.weatherConfig && state.weatherConfig.city) || "São José dos Campos - SP";
+    }
+
+    let forecast = state.weatherForecast || [];
+    if (forecast.length === 0) {
+        forecast = getFallbackForecast();
+    }
+
+    const daysToShow = forecast.slice(0, 5);
+
+    const gridContainer = document.getElementById("forecast-grid-container");
+    if (gridContainer) {
+        gridContainer.innerHTML = "";
+        
+        daysToShow.forEach(day => {
+            const dateObj = new Date(day.date + 'T00:00:00');
+            const weekday = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+            const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+            const dayMonth = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            
+            const yearHolidays = getBrazilianHolidays(dateObj.getFullYear());
+            const holiday = yearHolidays[day.date];
+            
+            let holidayTagHtml = "";
+            if (holiday) {
+                const tagColor = holiday.type === 'holiday' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+                const tagTextColor = holiday.type === 'holiday' ? '#f87171' : '#facc15';
+                const tagBorderColor = holiday.type === 'holiday' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(234, 179, 8, 0.3)';
+                holidayTagHtml = `
+                    <span class="badge-mini" style="font-size: 0.5rem; background: ${tagColor}; color: ${tagTextColor}; border: 1px solid ${tagBorderColor}; border-radius: 3px; padding: 1px 3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${holiday.name}">
+                        ${holiday.type === 'holiday' ? 'Feriado' : 'Festa'}
+                    </span>
+                `;
+            }
+
+            const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+            if (isWeekend && !holiday) {
+                holidayTagHtml = `
+                    <span class="badge-mini" style="font-size: 0.5rem; background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 3px; padding: 1px 3px;">
+                        Fim de Sem
+                    </span>
+                `;
+            }
+
+            const cond = WEATHER_CONDITIONS[day.condition] || WEATHER_CONDITIONS.sun;
+            
+            const card = document.createElement("div");
+            card.style.cssText = "background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0;";
+            card.innerHTML = `
+                <span style="font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; font-weight: 700; white-space: nowrap;">${capitalizedWeekday}, ${dayMonth}</span>
+                <i data-lucide="${cond.icon}" style="width: 20px; height: 20px; color: ${cond.color};"></i>
+                <div style="font-size: 0.75rem; font-weight: 700; color: #fff; margin-top: 2px;">${day.max}° <span style="color: var(--color-text-muted); font-weight: 500;">${day.min}°</span></div>
+                ${holidayTagHtml}
+            `;
+            gridContainer.appendChild(card);
+        });
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    calculatePredictiveDemand(daysToShow);
+}
+
+function getFallbackForecast() {
+    const forecast = [];
+    const today = new Date();
+    const temp = (state.weatherConfig && state.weatherConfig.temp) || 24;
+    const condition = (state.weatherConfig && state.weatherConfig.condition) || "sun";
+    
+    for (let i = 0; i < 5; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+        const max = Math.round(temp + Math.sin(i) * 2 + (Math.random() - 0.5) * 2);
+        const min = Math.round(max - 7 - (Math.random() * 2));
+        
+        forecast.push({
+            date: dateStr,
+            max,
+            min,
+            condition: i === 0 ? condition : (Math.random() > 0.4 ? "sun" : "cloud")
+        });
+    }
+    return forecast;
+}
+
+function calculatePredictiveDemand(forecastDays) {
+    if (forecastDays.length === 0) return;
+
+    let sumMaxTemp = 0;
+    let highestTemp = 0;
+    forecastDays.forEach(d => {
+        sumMaxTemp += d.max;
+        if (d.max > highestTemp) highestTemp = d.max;
+    });
+    const avgMaxTemp = sumMaxTemp / forecastDays.length;
+
+    let baseChange = 0;
+    let demandLevel = "Normal";
+    let baseColor = "#00f0ff";
+    let baseIcon = "thermometer";
+    let progress = 50;
+
+    if (avgMaxTemp >= 32) {
+        baseChange = 80;
+        demandLevel = "Crítica (Calor Extremo)";
+        baseColor = "#ff0055";
+        baseIcon = "zap";
+        progress = 100;
+    } else if (avgMaxTemp >= 27) {
+        baseChange = 40;
+        demandLevel = "Alta (Tempo Quente)";
+        baseColor = "#ffb703";
+        baseIcon = "thermometer-sun";
+        progress = 75;
+    } else if (avgMaxTemp <= 19) {
+        baseChange = -25;
+        demandLevel = "Baixa (Tempo Frio)";
+        baseColor = "#94a3b8";
+        baseIcon = "thermometer-snowflake";
+        progress = 25;
+    } else {
+        baseChange = 0;
+        demandLevel = "Normal (Estável)";
+        baseColor = "#00f0ff";
+        baseIcon = "thermometer";
+        progress = 50;
+    }
+
+    let adjustment = 0;
+    let holidaysList = [];
+    let isCarnavalPeriod = false;
+    let isReveillonPeriod = false;
+
+    forecastDays.forEach(day => {
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const yearHolidays = getBrazilianHolidays(dateObj.getFullYear());
+        const holiday = yearHolidays[day.date];
+
+        if (holiday) {
+            holidaysList.push({ name: holiday.name, date: day.date });
+            adjustment += 20;
+
+            if (holiday.name.toLowerCase().includes("carnaval") || holiday.name.toLowerCase().includes("cinzas")) {
+                isCarnavalPeriod = true;
+            }
+        }
+
+        const m = dateObj.getMonth() + 1;
+        const d = dateObj.getDate();
+        if ((m === 12 && d >= 24) || (m === 1 && d <= 2)) {
+            isReveillonPeriod = true;
+        }
+
+        const wday = dateObj.getDay();
+        if (wday === 0 || wday === 6) {
+            adjustment += 10;
+        }
+    });
+
+    if (isCarnavalPeriod) adjustment += 35;
+    if (isReveillonPeriod) adjustment += 45;
+
+    let finalChange = baseChange + adjustment;
+    if (finalChange > 120) finalChange = 120;
+    if (finalChange < -40) finalChange = -40;
+
+    let isExplosao = false;
+    if (highestTemp >= 30 && (holidaysList.length > 0 || isCarnavalPeriod || isReveillonPeriod)) {
+        isExplosao = true;
+    }
+
+    const container = document.getElementById("predictive-demand-container");
+    const iconWrapper = document.getElementById("predictive-demand-icon-wrapper");
+    const iconEl = document.getElementById("predictive-demand-icon");
+    const levelEl = document.getElementById("predictive-demand-level");
+    const progressEl = document.getElementById("predictive-demand-progress");
+    const analysisEl = document.getElementById("predictive-demand-analysis");
+
+    if (container && iconWrapper && iconEl && levelEl && progressEl && analysisEl) {
+        container.className = "demand-alert-panel";
+        container.style.animation = "";
+        
+        let color = baseColor;
+        let iconName = baseIcon;
+        let labelText = demandLevel;
+
+        if (isExplosao) {
+            labelText = "💥 EXPLOSÃO DE VENDAS (Calor + Festa)";
+            color = "#ff3300";
+            iconName = "flame";
+            progress = 100;
+            container.classList.add("predictive-boom");
+        } else if (finalChange >= 30) {
+            labelText = `Alta (+${finalChange}%)`;
+            color = "#ffb703";
+            iconName = "trending-up";
+            progress = 75;
+            container.classList.add("predictive-high");
+        } else if (finalChange <= -15) {
+            labelText = `Baixa (${finalChange}%)`;
+            color = "#94a3b8";
+            iconName = "trending-down";
+            progress = 25;
+            container.classList.add("predictive-low");
+        } else {
+            labelText = `Estável (${finalChange >= 0 ? '+' : ''}${finalChange}%)`;
+            color = "#00f0ff";
+            iconName = "thermometer";
+            progress = 50;
+            container.classList.add("predictive-normal");
+        }
+
+        iconWrapper.style.background = `rgba(${hexToRgb(color)}, 0.1)`;
+        iconWrapper.style.borderColor = `rgba(${hexToRgb(color)}, 0.25)`;
+        iconEl.style.color = color;
+        iconEl.setAttribute("data-lucide", iconName);
+        levelEl.innerText = labelText;
+        levelEl.style.color = color;
+        progressEl.style.width = `${progress}%`;
+        progressEl.style.background = color;
+        progressEl.style.boxShadow = `0 0 8px ${color}`;
+
+        let analysisText = `🌡️ **Resumo do Clima:** Média máxima de **${avgMaxTemp.toFixed(1)}°C** nos próximos 5 dias.\n`;
+        
+        if (holidaysList.length > 0) {
+            analysisText += `🎉 **Feriados no Período:**\n`;
+            holidaysList.forEach(h => {
+                const [y, m, d] = h.date.split("-");
+                analysisText += `   • **${h.name}** no dia ${d}/${m}\n`;
+            });
+        }
+
+        if (isReveillonPeriod) {
+            analysisText += `✨ **Alerta Réveillon/Natal:** Período de festas de Fim de Ano ativo. Procura de gelo no patamar histórico máximo!\n`;
+        } else if (isCarnavalPeriod) {
+            analysisText += `🎭 **Alerta Carnaval:** Período de festas de Carnaval ativo. Grande fluxo de turismo e eventos.\n`;
+        }
+
+        analysisText += `\n📋 **Recomendações para a Fábrica:**\n`;
+
+        if (isExplosao) {
+            analysisText += `• ⚙️ **Produção:** **EMERGÊNCIA MÁXIMA.** Ligue todas as máquinas de gelo em capacidade de 100% ininterruptamente.\n`;
+            analysisText += `• 📦 **Estoque:** Encha as câmaras frias no limite físico (+100%). Prepare fardos extras de 5kg (gelo em cubo) e fardos de gelo moído.\n`;
+            analysisText += `• 🚚 **Logística/Tinas:** Alta procura por tinas de aluguel para festas. Faça carregamento preventivo das tinas e organize rotas de reabastecimento rápido nos clientes de alto fluxo (postos e adegas).`;
+        } else if (finalChange >= 30) {
+            analysisText += `• ⚙️ **Produção:** Aumente o ritmo de produção diária em cerca de **20% a 30%**.\n`;
+            analysisText += `• 📦 **Estoque:** Mantenha um estoque de segurança equivalente a 2 dias de vendas habituais.\n`;
+            analysisText += `• 🚚 **Logística:** Abasteça os clientes antes do final de semana para evitar chamadas de emergência.`;
+        } else if (finalChange <= -15) {
+            analysisText += `• ⚙️ **Produção:** Desacelere as máquinas. Reduza a produção para evitar falta de espaço nas câmaras.\n`;
+            analysisText += `• 📦 **Estoque:** Mantenha estoque reduzido (apenas giro de segurança).\n`;
+            analysisText += `• 🚚 **Logística:** Frequência de entregas reduzida. Verifique o estoque dos freezers dos clientes via painel para otimizar rotas.`;
+        } else {
+            analysisText += `• ⚙️ **Produção:** Mantenha o ritmo padrão regular de produção diária.\n`;
+            analysisText += `• 📦 **Estoque:** Níveis regulares de estoque comercial.\n`;
+            analysisText += `• 🚚 **Logística:** Siga o cronograma regular de rotas de entrega preventiva.`;
+        }
+
+        analysisEl.innerHTML = formatMarkdownText(analysisText);
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+
+function hexToRgb(hex) {
+    if (hex === '#00f0ff') return '0, 240, 255';
+    if (hex === '#ffb703') return '255, 183, 3';
+    if (hex === '#ff0055') return '255, 0, 85';
+    if (hex === '#ff3300') return '255, 51, 0';
+    if (hex === '#94a3b8') return '148, 163, 184';
+    
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 240, 255';
+}
+
+function formatMarkdownText(text) {
+    return text
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
 // Bind to window for HTML accessibility
 window.initUtilityPanel = initUtilityPanel;
 window.toggleUtilityDrawer = toggleUtilityDrawer;
@@ -885,6 +1343,8 @@ window.changeMonth = changeMonth;
 window.selectCalendarDay = selectCalendarDay;
 window.saveDayNote = saveDayNote;
 window.clearDayNote = clearDayNote;
+window.getBrazilianHolidays = getBrazilianHolidays;
+window.openWeatherForecastModal = openWeatherForecastModal;
 
 window.getBrazilTimeISO = getBrazilTimeISO;
 window.formatDateBrazil = formatDateBrazil;

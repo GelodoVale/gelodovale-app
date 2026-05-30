@@ -4979,6 +4979,10 @@
                         </div>
                     </div>
                     <div id="weather-desc" style="font-size: 0.65rem; color: var(--color-text-muted);">Ensolarado - S.J. Campos</div>
+                    <button type="button" onclick="openWeatherForecastModal()" class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; width: 100%; text-align: center; height: auto; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(0, 240, 255, 0.15); background: rgba(0, 240, 255, 0.02); color: var(--color-primary);">
+                        <i data-lucide="line-chart" style="width: 12px; height: 12px; color: var(--color-primary);"></i>
+                        Previsão Estendida & Assistente
+                    </button>
                     
                     <!-- Dropdown de Seleção de Cidade -->
                     <div id="weather-cities-dropdown" style="display: none; position: absolute; top: 100%; right: 0; background: #0f1626; border: 1px solid var(--border-card-hover); border-radius: 6px; padding: 10px; z-index: 12; width: 170px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: left; margin-top: 5px; max-height: 200px; overflow-y: auto;" onclick="event.stopPropagation();">
@@ -5102,6 +5106,68 @@
     </div>
 
     <!-- MODAL PIX LOCAL (OFFLINE BILLING) -->
+    <!-- MODAL PREVISÃO DO TEMPO ESTENDIDA E ASSISTENTE DE DEMANDA -->
+    <div class="modal-backdrop" id="modal-weather-forecast" style="display: none; z-index: 10001;">
+        <div class="modal-content" style="width: 550px; max-width: 95vw; background: rgba(17, 25, 44, 0.98); border: 1px solid var(--color-primary); box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15); display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0, 240, 255, 0.15); padding-bottom: 10px;">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--color-primary); font-weight: 800; font-size: 1.1rem; margin: 0; text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);">
+                    <i data-lucide="cloud-sun" style="width: 20px; height: 20px;"></i>
+                    Previsão do Tempo & Assistente de Demanda
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-weather-forecast')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1rem 0; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: 70vh;">
+                <!-- Cidade activa e coordenadas -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                    <span style="color: var(--color-text-muted);">Localização ativa:</span>
+                    <strong id="forecast-active-city" style="color: #fff;">-</strong>
+                </div>
+
+                <!-- Grid de Previsão Estendida -->
+                <div>
+                    <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-primary); margin-top: 0; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="calendar" style="width: 14px; height: 14px;"></i> Previsão para os Próximos 5 Dias:
+                    </h4>
+                    <div id="forecast-grid-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                        <!-- Inserido dinamicamente pelo JS -->
+                    </div>
+                </div>
+
+                <!-- Quadro de Inteligência de Demanda e Produção Predictiva -->
+                <div id="predictive-demand-container" class="demand-alert-panel" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: all 0.3s ease;">
+                    <h4 style="font-size: 0.8rem; text-transform: uppercase; color: #ffb703; margin-top: 0; margin-bottom: 0; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="brain" style="width: 14px; height: 14px; color: #ffb703;"></i> Assistente de Planejamento de Estoque:
+                    </h4>
+                    
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div id="predictive-demand-icon-wrapper" style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.25);">
+                            <i data-lucide="thermometer" id="predictive-demand-icon" style="width: 22px; height: 22px; color: var(--color-primary);"></i>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; line-height: 1; margin-bottom: 3px;">Status Projetado (Média 5 dias + Entorno de Feriados)</span>
+                            <span id="predictive-demand-level" style="font-size: 1rem; font-weight: 800; color: var(--color-primary);">Normal</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="progress-track" style="height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; position: relative;">
+                        <div id="predictive-demand-progress" style="width: 50%; height: 100%; border-radius: 3px; background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary); transition: width 0.5s ease-out;"></div>
+                    </div>
+
+                    <!-- Análise Detalhada -->
+                    <div id="predictive-demand-analysis" style="font-size: 0.78rem; line-height: 1.4; color: var(--color-text-muted); margin: 0; white-space: pre-line;">
+                        <!-- Inserido dinamicamente pelo JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; padding-bottom: 0.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-weather-forecast')" style="font-size: 0.8rem; padding: 8px 16px;">Fechar Painel</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modal-pix-local" style="display: none; z-index: 10001;">
         <div class="modal-content" style="width: 420px; max-width: 95vw; background: rgba(17, 25, 44, 0.98); border: 1px solid var(--color-primary); box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(0, 240, 255, 0.15); padding-bottom: 10px;">

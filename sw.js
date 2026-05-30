@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v84';
+const CACHE_NAME = 'gelodovale-v85';
 const ASSETS = [
   'index.html',
   'styles.css',
