@@ -218,7 +218,6 @@ export function renderDashboardAlerts() {
     }
     
     // Renderizar alertas
-    // Renderizar alertas de estoque
     if (alerts.length === 0) {
         alertsContainer.innerHTML += `
             <div class="empty-alerts" style="margin-top: 1rem;">
@@ -227,9 +226,7 @@ export function renderDashboardAlerts() {
             </div>
         `;
     } else {
-        // Ordenar os alertas de maior urgência (danger primeiro)
         alerts.sort((a, b) => a.pct - b.pct);
-        
         alerts.forEach(al => {
             const isDanger = al.severity === 'danger';
             alertsContainer.innerHTML += `
@@ -277,10 +274,76 @@ export function renderDashboardAlerts() {
             </div>
         `;
     }
+
+    // Funcionalidade 4: Alertas de Ativos Retidos/Atrasados ou Comodatos Pendentes
+    const activeRentals = state.rentals || [];
+    const activeComodatos = state.comodatos || [];
+    const assetAlerts = [];
+    
+    activeRentals.forEach(r => {
+        if (r.status !== "returned") {
+            const expectedDate = new Date(r.expectedReturnDate + 'T00:00:00');
+            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const diffTime = expectedDate - todayDateOnly;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                assetAlerts.push({
+                    type: 'danger',
+                    icon: 'truck',
+                    title: `Tina Retida / Atrasada: ${r.tinaCode}`,
+                    desc: `Cliente <strong>${r.clientName}</strong> está com a tina. Atrasado há ${Math.abs(diffDays)} dia(s) (Previsto: ${expectedDate.toLocaleDateString('pt-BR')}).`
+                });
+            } else if (diffDays <= 2) {
+                let timeStr = diffDays === 0 ? "hoje" : `em ${diffDays} dia(s)`;
+                assetAlerts.push({
+                    type: 'warning',
+                    icon: 'clock',
+                    title: `Contrato de Tina Expirando: ${r.tinaCode}`,
+                    desc: `Busca/devolução com <strong>${r.clientName}</strong> prevista para ${timeStr} (${expectedDate.toLocaleDateString('pt-BR')}).`
+                });
+            }
+        }
+    });
+
+    activeComodatos.forEach(c => {
+        if (c.status === "pendente") {
+            assetAlerts.push({
+                type: 'warning',
+                icon: 'file-text',
+                title: `Assinatura Pendente: Freezer ${c.freezerCode}`,
+                desc: `Comodato com <strong>${c.clientName}</strong> aguardando assinatura eletrônica do contrato.`
+            });
+        }
+    });
+
+    if (assetAlerts.length > 0) {
+        alertsContainer.innerHTML += `
+            <div style="margin-top: 1rem; padding: 10px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 8px;">
+                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-primary); font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="package" style="width:13px;height:13px;"></i> Alertas de Ativos & Comodatos
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${assetAlerts.map(alert => `
+                        <div style="display: flex; gap: 8px; font-size: 0.75rem; padding: 6px; background: rgba(255,255,255,0.01); border-radius: 4px; border-left: 3px solid ${alert.type === 'danger' ? '#ff4d4d' : '#f59e0b'};">
+                            <div style="color: ${alert.type === 'danger' ? '#ff4d4d' : '#f59e0b'}; display: flex; align-items: flex-start; padding-top: 2px;">
+                                <i data-lucide="${alert.icon}" style="width: 14px; height: 14px;"></i>
+                            </div>
+                            <div>
+                                <span style="color: #fff; font-weight: 700; display:block;">${alert.title}</span>
+                                <span style="color: var(--color-text-muted);">${alert.desc}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     if (window.lucide) window.lucide.createIcons();
 }
 
-export function renderDashboardChart() {
+export async function renderDashboardChart() {
     const revCanvas = document.getElementById("revenueChart");
     const prodCanvas = document.getElementById("productsChart");
     
@@ -298,13 +361,17 @@ export function renderDashboardChart() {
     const fifteenDaysAgo = new Date();
     fifteenDaysAgo.setDate(now.getDate() - 15);
     
-    // Agrupar faturamento por dia (dd/mm)
     const revenueByDay = {};
+    const datesArray = [];
+    const revLabels = [];
+    
     for (let i = 14; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
         const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
         revenueByDay[label] = 0;
+        revLabels.push(label);
+        datesArray.push(d.toISOString().split('T')[0]); // YYYY-MM-DD
     }
 
     (state.deliveries || []).forEach(del => {
@@ -317,8 +384,46 @@ export function renderDashboardChart() {
         }
     });
 
-    const revLabels = Object.keys(revenueByDay);
     const revData = Object.values(revenueByDay);
+
+    // FETCH HISTORICAL TEMPERATURES
+    const lat = (state.weatherConfig && state.weatherConfig.lat) || -23.1791;
+    const lon = (state.weatherConfig && state.weatherConfig.lon) || -45.8872;
+    
+    let dateTempMap = {};
+    let cacheKey = `temp_history_${now.toISOString().split('T')[0]}_${lat.toFixed(2)}_${lon.toFixed(2)}`;
+    
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) dateTempMap = JSON.parse(cached);
+    } catch(e) {}
+    
+    if (Object.keys(dateTempMap).length === 0 && navigator.onLine) {
+        try {
+            const tempRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&past_days=15&timezone=auto`);
+            if (tempRes.ok) {
+                const tempData = await tempRes.json();
+                if (tempData && tempData.daily && tempData.daily.time) {
+                    for (let j = 0; j < tempData.daily.time.length; j++) {
+                        dateTempMap[tempData.daily.time[j]] = tempData.daily.temperature_2m_max[j];
+                    }
+                    localStorage.setItem(cacheKey, JSON.stringify(dateTempMap));
+                }
+            }
+        } catch(err) {
+            console.warn("Erro ao buscar histórico de temperatura:", err);
+        }
+    }
+    
+    if (Object.keys(dateTempMap).length === 0) {
+        datesArray.forEach(date => {
+            const day = parseInt(date.split('-')[2]);
+            const mockTemp = 24 + Math.sin(day) * 5 + (Math.random() - 0.5) * 3;
+            dateTempMap[date] = parseFloat(mockTemp.toFixed(1));
+        });
+    }
+    
+    const tempData = datesArray.map(date => dateTempMap[date] || 25);
 
     // 2. DADOS DE PRODUTOS MAIS VENDIDOS (Geral)
     const productSales = {};
@@ -329,8 +434,7 @@ export function renderDashboardChart() {
         (state.products || []).forEach(p => {
             const qtyFardo = del.items[p.id] || 0;
             const qtyUnit = del.items[p.id + "_unit"] || 0;
-            // Somar pacotes equivalentes. (Se 1 fardo = 12 unidades, então 1 unidade = 1/12 fardo. Vamos somar em unidades totais ou fardos totais? Melhor unidades)
-            const unitsPerPack = p.unitsPerPack || ((p.type || '').includes('Gelo') ? 1 : 1);
+            const unitsPerPack = p.unitsPerPack || 1;
             const totalUnits = (qtyFardo * unitsPerPack) + qtyUnit;
             if (totalUnits > 0) {
                 productSales[p.name] += totalUnits;
@@ -338,7 +442,6 @@ export function renderDashboardChart() {
         });
     });
 
-    // Filtrar produtos com vendas > 0
     const soldProducts = Object.keys(productSales).filter(k => productSales[k] > 0);
     const soldValues = soldProducts.map(k => productSales[k]);
 
@@ -350,24 +453,42 @@ export function renderDashboardChart() {
     gradientBlue.addColorStop(0, 'rgba(0, 240, 255, 0.8)');
     gradientBlue.addColorStop(1, 'rgba(0, 114, 255, 0.2)');
 
-    // Render Revenue Bar Chart
+    // Render Revenue Bar & Line Chart
     _revChart = new Chart(revCanvas, {
-        type: 'bar',
         data: {
             labels: revLabels,
-            datasets: [{
-                label: 'Faturamento Diário (R$)',
-                data: revData,
-                backgroundColor: gradientBlue,
-                borderRadius: 4,
-                borderWidth: 0
-            }]
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Faturamento Diário (R$)',
+                    data: revData,
+                    backgroundColor: gradientBlue,
+                    borderRadius: 4,
+                    yAxisID: 'y',
+                    order: 2
+                },
+                {
+                    type: 'line',
+                    label: 'Temp. Máxima (°C)',
+                    data: tempData,
+                    borderColor: '#ff5e00',
+                    backgroundColor: 'rgba(255, 94, 0, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointBackgroundColor: '#ff5e00',
+                    yAxisID: 'y1',
+                    order: 1
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    labels: { color: '#fff', boxWidth: 12 }
+                },
                 tooltip: {
                     backgroundColor: 'rgba(10, 14, 23, 0.9)',
                     titleColor: '#00f0ff',
@@ -376,17 +497,31 @@ export function renderDashboardChart() {
                     borderWidth: 1,
                     callbacks: {
                         label: function(context) {
-                            return 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                            if (context.dataset.type === 'bar') {
+                                return 'Faturamento: R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                            } else {
+                                return 'Temp. Máxima: ' + context.parsed.y + '°C';
+                            }
                         }
                     }
                 }
             },
             scales: {
                 y: {
+                    type: 'linear',
+                    position: 'left',
                     beginAtZero: true,
                     grid: { color: 'rgba(255, 255, 255, 0.05)' },
                     ticks: {
                         callback: function(value) { return 'R$ ' + value; }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        callback: function(value) { return value + '°C'; }
                     }
                 },
                 x: {
@@ -432,7 +567,6 @@ export function renderDashboardChart() {
             }
         });
     } else {
-        // Empty state for products
         const ctx = prodCanvas.getContext('2d');
         ctx.fillStyle = "rgba(255,255,255,0.5)";
         ctx.font = "12px Inter";

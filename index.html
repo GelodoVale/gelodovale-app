@@ -324,7 +324,7 @@
                     <!-- Painel de Alertas de Reabastecimento -->
                     <div class="dashboard-panel">
                         <div class="panel-header">
-                            <h2>Alertas de Reposição</h2>
+                            <h2>Alertas Operacionais & Devoluções</h2>
                             <span class="status-badge pending" id="alert-count">0 Alertas</span>
                         </div>
                         <div class="alerts-list" id="alerts-list-container">
@@ -706,9 +706,12 @@
                             <div class="dashboard-panel" id="admin-financial-dashboard" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <h2>Painel Financeiro & Previsão de Demanda (Admin)</h2>
-                                    <button type="button" class="btn btn-primary btn-generate-report" onclick="generateMonthlyPDFReport()" style="display: inline-flex; align-items: center; gap: 6px;">
-                                        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Gerar Relatório do Mês
-                                    </button>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <select id="admin-finance-month-select" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(0, 240, 255, 0.25);" onchange="renderFinancialDashboard()"></select>
+                                        <button type="button" class="btn btn-primary btn-generate-report" onclick="generateMonthlyPDFReport()" style="display: inline-flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Gerar Relatório do Mês
+                                        </button>
+                                    </div>
                                 </div>
                                 <div style="padding: 1.5rem 0 0 0; display: flex; flex-direction: column; gap: 1.5rem;">
                                     <!-- KPI Row -->
@@ -775,11 +778,33 @@
                                             <div style="display: flex; align-items: center; gap: 8px;">
                                                 <label style="font-size: 0.8rem; color: var(--color-text-muted);">Simular Temp. Fim de Semana:</label>
                                                 <input type="range" id="simulated-temp-range" min="15" max="42" value="30" oninput="updateSimulatedTempLabel(this.value); calculateDemandForecast();" style="width: 120px; accent-color: var(--color-primary);">
-                                                <span id="simulated-temp-val" style="font-size: 0.9rem; font-weight: bold; color: #fff; width: 35px; text-align: right;">30Â°C</span>
+                                                <span id="simulated-temp-val" style="font-size: 0.9rem; font-weight: bold; color: #fff; width: 35px; text-align: right;">30°C</span>
                                             </div>
                                         </div>
                                         <div id="demand-forecast-results" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                                             <!-- Gerado via JS -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Demonstrativo do Resultado do Exercício (DRE) -->
+                                    <div class="dre-panel">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0 0 10px 0;">
+                                            <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px;"></i> Demonstrativo do Resultado do Exercício (DRE)
+                                        </h3>
+                                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 1rem 0;">Estrutura analítica mensal de receitas de vendas e custos operacionais.</p>
+                                        <div class="dre-table-container">
+                                            <table class="dre-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Rubrica / Descrição</th>
+                                                        <th style="text-align: right; width: 150px;">Valor</th>
+                                                        <th style="text-align: right; width: 100px;">% Receita</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="dre-table-body">
+                                                    <!-- Gerado dinamicamente no admin.js -->
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
 

@@ -9,6 +9,9 @@ function initWidgetsState() {
     if (!state.widgets.notepad) state.widgets.notepad = { enabled: true, theme: 'notepad-glass-sticky', text: '' };
     if (!state.widgets.salesCalc) state.widgets.salesCalc = { enabled: true };
     if (!state.widgets.salesGoal) state.widgets.salesGoal = { enabled: true, monthlyGoal: 10000 };
+    if (!state.widgetOrder) {
+        state.widgetOrder = ['clock', 'weather', 'salesGoal', 'salesCalc', 'notepad'];
+    }
 }
 
 // ============================================================================
@@ -19,13 +22,17 @@ export function renderWidgetsSetupPanel() {
     const panel = document.getElementById('widgets-setup-panel');
     if (!panel) return;
 
-    panel.innerHTML = `
-        <div class="widget-setup-item">
-            <div class="widget-setup-info">
-                <span class="widget-setup-name">Relógio</span>
-                <span class="widget-setup-desc">Mostra a hora e a data atual no dashboard.</span>
-            </div>
-            <div class="widget-setup-actions">
+    let html = '';
+    
+    state.widgetOrder.forEach((key, idx) => {
+        let name = '';
+        let desc = '';
+        let actionsHTML = '';
+        
+        if (key === 'clock') {
+            name = 'Relógio';
+            desc = 'Mostra a hora e a data atual no dashboard.';
+            actionsHTML = `
                 <select class="widget-style-select" id="cfg-widget-clock-theme" onchange="window.updateWidgetConfig('clock', 'theme', this.value)">
                     <option value="analog-neon" ${state.widgets.clock.theme === 'analog-neon' ? 'selected' : ''}>Analógico Neon Cyber</option>
                     <option value="analog-gold" ${state.widgets.clock.theme === 'analog-gold' ? 'selected' : ''}>Analógico Ouro Clássico</option>
@@ -36,28 +43,20 @@ export function renderWidgetsSetupPanel() {
                 <button type="button" class="btn ${state.widgets.clock.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('clock')">
                     ${state.widgets.clock.enabled ? 'Desativar' : 'Ativar'}
                 </button>
-            </div>
-        </div>
-
-        <div class="widget-setup-item">
-            <div class="widget-setup-info">
-                <span class="widget-setup-name">Clima</span>
-                <span class="widget-setup-desc">Temperatura local. Digite sua cidade para forçar o local (Ex: São Paulo, SP).</span>
-            </div>
-            <div class="widget-setup-actions">
-                <input type="text" class="widget-style-select" style="width: 150px;" value="${state.widgets.weather.location || ''}" onchange="window.updateWidgetConfig('weather', 'location', this.value)" placeholder="Sua Cidade">
+            `;
+        } else if (key === 'weather') {
+            name = 'Clima';
+            desc = 'Temperatura local. Digite sua cidade para forçar o local (Ex: São Paulo, SP).';
+            actionsHTML = `
+                <input type="text" class="widget-style-select" style="width: 120px;" value="${state.widgets.weather.location || ''}" onchange="window.updateWidgetConfig('weather', 'location', this.value)" placeholder="Sua Cidade">
                 <button type="button" class="btn ${state.widgets.weather.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('weather')">
                     ${state.widgets.weather.enabled ? 'Desativar' : 'Ativar'}
                 </button>
-            </div>
-        </div>
-
-        <div class="widget-setup-item">
-            <div class="widget-setup-info">
-                <span class="widget-setup-name">Bloco de Notas</span>
-                <span class="widget-setup-desc">Anotações rápidas salvas em nuvem.</span>
-            </div>
-            <div class="widget-setup-actions">
+            `;
+        } else if (key === 'notepad') {
+            name = 'Bloco de Notas';
+            desc = 'Anotações rápidas salvas em nuvem.';
+            actionsHTML = `
                 <select class="widget-style-select" id="cfg-widget-notepad-theme" onchange="window.updateWidgetConfig('notepad', 'theme', this.value)">
                     <option value="notepad-glass-sticky" ${state.widgets.notepad.theme === 'notepad-glass-sticky' ? 'selected' : ''}>Vidro Neon</option>
                     <option value="notepad-yellow-pad" ${state.widgets.notepad.theme === 'notepad-yellow-pad' ? 'selected' : ''}>Post-it Amarelo</option>
@@ -66,37 +65,54 @@ export function renderWidgetsSetupPanel() {
                 <button type="button" class="btn ${state.widgets.notepad.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('notepad')">
                     ${state.widgets.notepad.enabled ? 'Desativar' : 'Ativar'}
                 </button>
-            </div>
-        </div>
-
-        <div class="widget-setup-item">
-            <div class="widget-setup-info">
-                <span class="widget-setup-name">Calculadora de Vendas</span>
-                <span class="widget-setup-desc">Para contas rápidas de troco e peso.</span>
-            </div>
-            <div class="widget-setup-actions">
+            `;
+        } else if (key === 'salesCalc') {
+            name = 'Calculadora de Vendas';
+            desc = 'Para contas rápidas de troco e peso.';
+            actionsHTML = `
                 <button type="button" class="btn ${state.widgets.salesCalc.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('salesCalc')">
                     ${state.widgets.salesCalc.enabled ? 'Desativar' : 'Ativar'}
                 </button>
-            </div>
-        </div>
-
-        <div class="widget-setup-item">
-            <div class="widget-setup-info">
-                <span class="widget-setup-name">Progresso de Meta (Faturamento Mensal)</span>
-                <span class="widget-setup-desc">Visualizador circular de meta de faturamento.</span>
-            </div>
-            <div class="widget-setup-actions">
-                <input type="number" class="widget-style-select" style="width: 100px; text-align: right;" value="${state.widgets.salesGoal.monthlyGoal}" onchange="window.updateWidgetConfig('salesGoal', 'monthlyGoal', Number(this.value))" placeholder="R$ Meta">
+            `;
+        } else if (key === 'salesGoal') {
+            name = 'Progresso de Meta (Faturamento)';
+            desc = 'Visualizador circular de meta de faturamento mensal.';
+            actionsHTML = `
+                <input type="number" class="widget-style-select" style="width: 80px; text-align: right;" value="${state.widgets.salesGoal.monthlyGoal}" onchange="window.updateWidgetConfig('salesGoal', 'monthlyGoal', Number(this.value))" placeholder="Meta">
                 <button type="button" class="btn ${state.widgets.salesGoal.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('salesGoal')">
                     ${state.widgets.salesGoal.enabled ? 'Desativar' : 'Ativar'}
                 </button>
+            `;
+        }
+
+        const isFirst = idx === 0;
+        const isLast = idx === state.widgetOrder.length - 1;
+        const orderBtnsHTML = `
+            <div style="display:flex; flex-direction:column; gap:2px; margin-right:8px; justify-content:center;">
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.65rem; height:auto; display:flex; align-items:center; justify-content:center;" onclick="window.moveWidget('${key}', -1)" ${isFirst ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.65rem; height:auto; display:flex; align-items:center; justify-content:center;" onclick="window.moveWidget('${key}', 1)" ${isLast ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
             </div>
-        </div>
-    `;
+        `;
+
+        html += `
+            <div class="widget-setup-item" style="display:flex; align-items:center; width:100%; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:8px; margin-bottom:8px;">
+                ${orderBtnsHTML}
+                <div class="widget-setup-info" style="flex:1;">
+                    <span class="widget-setup-name" style="font-weight:700; color:#fff;">${name}</span>
+                    <span class="widget-setup-desc" style="font-size:0.75rem; color:var(--color-text-muted);">${desc}</span>
+                </div>
+                <div class="widget-setup-actions" style="display:flex; gap:6px; align-items:center;">
+                    ${actionsHTML}
+                </div>
+            </div>
+        `;
+    });
+
+    panel.innerHTML = html;
 }
 
 window.toggleWidget = function(widgetName) {
+    initWidgetsState();
     if (state.widgets[widgetName]) {
         state.widgets[widgetName].enabled = !state.widgets[widgetName].enabled;
         saveState();
@@ -106,6 +122,7 @@ window.toggleWidget = function(widgetName) {
 };
 
 window.updateWidgetConfig = function(widgetName, key, value) {
+    initWidgetsState();
     if (state.widgets[widgetName]) {
         state.widgets[widgetName][key] = value;
         
@@ -118,6 +135,22 @@ window.updateWidgetConfig = function(widgetName, key, value) {
             window.updateWeatherFromAPI();
         }
         
+        saveState();
+        renderWidgetsSetupPanel();
+        renderWidgets();
+    }
+};
+
+window.moveWidget = function(widgetName, direction) {
+    initWidgetsState();
+    const idx = state.widgetOrder.indexOf(widgetName);
+    if (idx === -1) return;
+    
+    const targetIdx = idx + direction;
+    if (targetIdx >= 0 && targetIdx < state.widgetOrder.length) {
+        const temp = state.widgetOrder[idx];
+        state.widgetOrder[idx] = state.widgetOrder[targetIdx];
+        state.widgetOrder[targetIdx] = temp;
         saveState();
         renderWidgetsSetupPanel();
         renderWidgets();
@@ -146,21 +179,14 @@ export function renderWidgets() {
     container.style.display = 'grid';
     let html = '';
 
-    if (state.widgets.clock.enabled) {
-        html += getClockHTML(state.widgets.clock.theme);
-    }
-    if (state.widgets.weather.enabled) {
-        html += getWeatherHTML();
-    }
-    if (state.widgets.salesGoal.enabled) {
-        html += getSalesGoalHTML();
-    }
-    if (state.widgets.salesCalc.enabled) {
-        html += getSalesCalcHTML();
-    }
-    if (state.widgets.notepad.enabled) {
-        html += getNotepadHTML(state.widgets.notepad.theme);
-    }
+    state.widgetOrder.forEach(key => {
+        if (!state.widgets[key] || !state.widgets[key].enabled) return;
+        if (key === 'clock') html += getClockHTML(state.widgets.clock.theme);
+        else if (key === 'weather') html += getWeatherHTML();
+        else if (key === 'salesGoal') html += getSalesGoalHTML();
+        else if (key === 'salesCalc') html += getSalesCalcHTML();
+        else if (key === 'notepad') html += getNotepadHTML(state.widgets.notepad.theme);
+    });
 
     container.innerHTML = html;
 
@@ -169,8 +195,10 @@ export function renderWidgets() {
     if (state.widgets.weather.enabled) initWeatherLogic();
     if (state.widgets.salesGoal.enabled) initSalesGoalLogic();
     if (state.widgets.salesCalc.enabled) initSalesCalcLogic();
-    // Notepad icones SVG e bindings
     if (window.lucide) window.lucide.createIcons();
+    
+    // Iniciar listeners de Drag & Drop
+    initWidgetDragAndDrop();
 }
 
 // 1. Relógio
@@ -178,7 +206,7 @@ function getClockHTML(theme) {
     const isDigital = theme.startsWith('digital');
     if (isDigital) {
         return `
-        <div class="widget-card size-small">
+        <div class="widget-card size-small" draggable="true" data-widget-key="clock">
             <div class="widget-header"><h3><i data-lucide="clock"></i> Relógio Local</h3></div>
             <div class="widget-body">
                 <div class="digital-clock-widget ${theme}">
@@ -189,7 +217,7 @@ function getClockHTML(theme) {
         </div>`;
     } else {
         return `
-        <div class="widget-card size-small">
+        <div class="widget-card size-small" draggable="true" data-widget-key="clock">
             <div class="widget-header"><h3><i data-lucide="clock"></i> Horário</h3></div>
             <div class="widget-body">
                 <div class="analog-clock-container">
@@ -250,7 +278,7 @@ function initClockLogic(theme) {
 // 2. Clima
 function getWeatherHTML() {
     return `
-    <div class="widget-card size-small">
+    <div class="widget-card size-small" draggable="true" data-widget-key="weather">
         <div class="widget-header"><h3><i data-lucide="cloud"></i> Clima</h3></div>
         <div class="widget-body">
             <div class="weather-widget">
@@ -278,33 +306,30 @@ async function initWeatherLogic() {
                 const lon = geoData.results[0].longitude;
                 const resolvedName = geoData.results[0].name;
                 fetchWeatherData(lat, lon, resolvedName, content);
-                return; // done
+                return;
             } else {
                 content.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 0.85rem; color: #888;">Cidade não encontrada. Tente "Nome da Cidade, Sigla do Estado".</div>';
                 return;
             }
         } catch(e) {
             console.error(e);
-            // fallback if geocoding fails
         }
     }
     
-    // Fallbacks to standard SP coords if factory settings not found or geolocation fails
-    let lat = -23.1895; 
-    let lon = -45.8841; // Sao Jose dos Campos SP
+    let lat = -23.1791; 
+    let lon = -45.8872; // São José dos Campos SP
     
     try {
-        // Try to get user location
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
                 fetchWeatherData(lat, lon, "Auto (GPS)", content);
             }, () => {
-                fetchWeatherData(lat, lon, "São José dos Campos", content); // fallback
+                fetchWeatherData(lat, lon, "São José dos Campos", content);
             });
         } else {
-            fetchWeatherData(lat, lon, "São José dos Campos", content); // fallback
+            fetchWeatherData(lat, lon, "São José dos Campos", content);
         }
     } catch(e) {
         content.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar clima</div>';
@@ -321,7 +346,6 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             const wind = Math.round(data.current.wind_speed_10m);
             const code = data.current.weather_code;
             
-            // Simple logic for weather condition
             let condition = "Céu Limpo";
             let icon = "sun";
             if (code >= 1 && code <= 3) { condition = "Parcialmente Nublado"; icon = "cloud"; }
@@ -331,7 +355,6 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             else if (code >= 80 && code <= 82) { condition = "Pancadas de Chuva"; icon = "cloud-rain"; }
             else if (code >= 95) { condition = "Tempestade"; icon = "cloud-lightning"; }
             
-            // is_day specific icons
             if (data.current.is_day === 0) {
                 if (icon === "sun") {
                     icon = "moon";
@@ -358,14 +381,12 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             `;
             if (window.lucide) window.lucide.createIcons();
 
-            // Sincronizar com o estado global para o painel de demanda do dashboard
             if (!state.weatherConfig) state.weatherConfig = {};
             state.weatherConfig.temp = temp;
             state.weatherConfig.condition = icon;
             state.weatherConfig.city = locationName;
             saveStateLocalOnly();
 
-            // Atualizar o painel de alertas do dashboard em tempo real se a tela estiver aberta
             const activeEl = document.querySelector(".nav-item.active");
             const activeTab = activeEl ? activeEl.getAttribute("data-tab") : "dashboard";
             if (activeTab === "dashboard" && window.renderDashboardAlerts) {
@@ -380,7 +401,7 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
 // 3. Meta de Vendas
 function getSalesGoalHTML() {
     return `
-    <div class="widget-card size-small">
+    <div class="widget-card size-small" draggable="true" data-widget-key="salesGoal">
         <div class="widget-header"><h3><i data-lucide="target"></i> Meta do Mês</h3></div>
         <div class="widget-body">
             <div class="sales-goal-widget">
@@ -412,7 +433,6 @@ function initSalesGoalLogic() {
     const currTxt = document.getElementById('widget-goal-current');
     if (!bar) return;
     
-    // Calculate current revenue for the current month
     const now = new Date();
     const currMonth = now.getMonth() + 1;
     const currYear = now.getFullYear();
@@ -441,7 +461,6 @@ function initSalesGoalLogic() {
     currTxt.innerText = formatCurrency(totalRevenue);
     pctTxt.innerText = pct + '%';
     
-    // Animation for circular bar (circumference is ~283)
     const offset = 283 - (283 * pct / 100);
     setTimeout(() => {
         bar.style.strokeDashoffset = offset;
@@ -451,7 +470,7 @@ function initSalesGoalLogic() {
 // 4. Calculadora
 function getSalesCalcHTML() {
     return `
-    <div class="widget-card size-small">
+    <div class="widget-card size-small" draggable="true" data-widget-key="salesCalc">
         <div class="widget-header"><h3><i data-lucide="calculator"></i> Calc. Rápida</h3></div>
         <div class="widget-body">
             <div class="sales-calc-widget">
@@ -497,8 +516,6 @@ function initSalesCalcLogic() {
         
         if (val === '=') {
             try {
-                // simple math evaluation (safe for just these buttons)
-                // eslint-disable-next-line
                 let res = new Function('return ' + expression)();
                 expression = String(res);
                 display.innerText = expression;
@@ -517,7 +534,7 @@ function initSalesCalcLogic() {
 // 5. Bloco de Notas
 function getNotepadHTML(theme) {
     return `
-    <div class="widget-card size-medium">
+    <div class="widget-card size-medium" draggable="true" data-widget-key="notepad">
         <div class="widget-header">
             <h3><i data-lucide="pen-tool"></i> Lembretes Rápidos</h3>
             <span style="font-size: 0.7rem; color: var(--color-text-muted);">Salvo na nuvem</span>
@@ -536,3 +553,66 @@ window.saveNotepad = function(value) {
         saveState();
     }
 };
+
+// ============================================================================
+// DRAG & DROP LOGIC
+// ============================================================================
+export function initWidgetDragAndDrop() {
+    const container = document.getElementById('widgets-container');
+    if (!container) return;
+    
+    let draggedKey = null;
+
+    container.addEventListener('dragstart', (e) => {
+        const card = e.target.closest('.widget-card');
+        if (card) {
+            draggedKey = card.getAttribute('data-widget-key');
+            card.classList.add('widget-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedKey);
+        }
+    });
+
+    container.addEventListener('dragend', (e) => {
+        const card = e.target.closest('.widget-card');
+        if (card) {
+            card.classList.remove('widget-dragging');
+        }
+        document.querySelectorAll('.widget-card').forEach(c => c.classList.remove('drag-over'));
+    });
+
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const card = e.target.closest('.widget-card');
+        if (card && card.getAttribute('data-widget-key') !== draggedKey) {
+            card.classList.add('drag-over');
+        }
+    });
+
+    container.addEventListener('dragleave', (e) => {
+        const card = e.target.closest('.widget-card');
+        if (card) {
+            card.classList.remove('drag-over');
+        }
+    });
+
+    container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetCard = e.target.closest('.widget-card');
+        if (!targetCard) return;
+        
+        const targetKey = targetCard.getAttribute('data-widget-key');
+        if (draggedKey && targetKey && draggedKey !== targetKey) {
+            const fromIdx = state.widgetOrder.indexOf(draggedKey);
+            const toIdx = state.widgetOrder.indexOf(targetKey);
+            
+            if (fromIdx > -1 && toIdx > -1) {
+                // Swap position in layout array
+                state.widgetOrder.splice(fromIdx, 1);
+                state.widgetOrder.splice(toIdx, 0, draggedKey);
+                saveState();
+                renderWidgets();
+            }
+        }
+    });
+}

@@ -1495,8 +1495,38 @@ export function calculateProductPackagingCost(productId, qtyFardos, qtyUnits = 0
 }
 
 export function renderFinancialDashboard() {
+    // 0. Preencher o seletor de meses se estiver vazio
+    const monthSelect = document.getElementById("admin-finance-month-select");
+    if (monthSelect && monthSelect.options.length === 0) {
+        const availableMonths = new Set();
+        const currentMonthStrDefault = window.getBrazilTimeISO().substring(0, 7);
+        availableMonths.add(currentMonthStrDefault);
+        
+        (state.deliveries || []).forEach(del => {
+            if (del.date) {
+                availableMonths.add(del.date.substring(0, 7));
+            }
+        });
+        (state.documents || []).forEach(doc => {
+            if (doc.date) {
+                availableMonths.add(doc.date.substring(0, 7));
+            }
+        });
+        
+        const sortedMonths = Array.from(availableMonths).sort().reverse();
+        sortedMonths.forEach(m => {
+            const [yr, mn] = m.split('-');
+            const opt = document.createElement("option");
+            opt.value = m;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            opt.textContent = `${monthNames[parseInt(mn) - 1]} / ${yr}`;
+            monthSelect.appendChild(opt);
+        });
+        monthSelect.value = currentMonthStrDefault;
+    }
+    
     const todayStr = window.getBrazilTimeISO().split('T')[0];
-    const currentMonthStr = window.getBrazilTimeISO().substring(0, 7);
+    const selectedMonthStr = monthSelect ? monthSelect.value : window.getBrazilTimeISO().substring(0, 7);
     
     let revToday = 0;
     let revMonth = 0;
@@ -1519,7 +1549,7 @@ export function renderFinancialDashboard() {
         if (delDateStr === todayStr) {
             revToday += (del.revenue || 0);
         }
-        if (delMonthStr === currentMonthStr) {
+        if (delMonthStr === selectedMonthStr) {
             revMonth += (del.revenue || 0);
             const method = (del.paymentMethod || 'pix').toLowerCase();
             const rev = del.revenue || 0;
@@ -1550,7 +1580,7 @@ export function renderFinancialDashboard() {
             if (doc.date === todayStr) {
                 revToday += doc.total;
             }
-            if (doc.date.startsWith(currentMonthStr)) {
+            if (doc.date.startsWith(selectedMonthStr)) {
                 revMonth += doc.total;
                 
                 const method = (doc.paymentMethod || "").toLowerCase();
@@ -1583,16 +1613,19 @@ export function renderFinancialDashboard() {
     });
     
     // 3. Somar despesas operacionais do mês a partir do histórico de acertos
-    let logisticsCostMonth = 0;
+    let logisticsExpensesMonth = 0;
+    let logisticsCommissionsMonth = 0;
     if (state.cargoSettlements) {
         state.cargoSettlements.forEach(settle => {
-            if (settle.date && settle.date.substring(0, 7) === currentMonthStr) {
+            if (settle.date && settle.date.substring(0, 7) === selectedMonthStr) {
                 const expensesTotal = settle.expenses ? (settle.expenses.total || 0) : 0;
                 const commission = settle.financials ? (settle.financials.commission || 0) : 0;
-                logisticsCostMonth += expensesTotal + commission;
+                logisticsExpensesMonth += expensesTotal;
+                logisticsCommissionsMonth += commission;
             }
         });
     }
+    const logisticsCostMonth = logisticsExpensesMonth + logisticsCommissionsMonth;
     
     // 4. Calcular Lucro Líquido Real (Mês)
     const realProfitMonth = revMonth - packagingCostMonth - logisticsCostMonth;
@@ -1636,6 +1669,53 @@ export function renderFinancialDashboard() {
             ? sortedProds.slice(0, 3).map(([name, qty]) => `${name}: ${Math.round(qty)} fardos`).join("<br>")
             : "Nenhum dado de venda";
         kpiTopProducts.innerHTML = topProdsHTML;
+    }
+    
+    // 5. Renderizar DRE
+    const dreTableBody = document.getElementById("dre-table-body");
+    if (dreTableBody) {
+        const pctPackaging = revMonth > 0 ? (packagingCostMonth / revMonth * 100).toFixed(1) : "0,0";
+        const contributionMargin = revMonth - packagingCostMonth;
+        const pctContribution = revMonth > 0 ? (contributionMargin / revMonth * 100).toFixed(1) : "0,0";
+        const pctCommissions = revMonth > 0 ? (logisticsCommissionsMonth / revMonth * 100).toFixed(1) : "0,0";
+        const pctExpenses = revMonth > 0 ? (logisticsExpensesMonth / revMonth * 100).toFixed(1) : "0,0";
+        const pctNetProfit = revMonth > 0 ? (realProfitMonth / revMonth * 100).toFixed(1) : "0,0";
+
+        const formatDRECurrency = (val) => "R$ " + val.toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+        dreTableBody.innerHTML = `
+            <tr class="dre-row-header">
+                <td><i data-lucide="trending-up" style="width:14px; height:14px; color:#00ff64; vertical-align:middle; margin-right:4px;"></i> Receita Bruta de Vendas</td>
+                <td style="text-align: right;" class="dre-val-positive">${formatDRECurrency(revMonth)}</td>
+                <td style="text-align: right;">100,0%</td>
+            </tr>
+            <tr class="dre-row-deduction">
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;(-) Custo de Sacarias e Embalagens (CMV)</td>
+                <td style="text-align: right;">- ${formatDRECurrency(packagingCostMonth)}</td>
+                <td style="text-align: right;">${pctPackaging}%</td>
+            </tr>
+            <tr class="dre-row-subtotal">
+                <td>(=) Margem de Contribuição</td>
+                <td style="text-align: right;" class="${contributionMargin >= 0 ? 'dre-val-neutral' : 'dre-val-negative'}">${formatDRECurrency(contributionMargin)}</td>
+                <td style="text-align: right;">${pctContribution}%</td>
+            </tr>
+            <tr class="dre-row-deduction">
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;(-) Comissões de Entregadores</td>
+                <td style="text-align: right;">- ${formatDRECurrency(logisticsCommissionsMonth)}</td>
+                <td style="text-align: right;">${pctCommissions}%</td>
+            </tr>
+            <tr class="dre-row-deduction">
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;(-) Despesas de Viagem (Pedágio, Combustível)</td>
+                <td style="text-align: right;">- ${formatDRECurrency(logisticsExpensesMonth)}</td>
+                <td style="text-align: right;">${pctExpenses}%</td>
+            </tr>
+            <tr class="dre-row-total">
+                <td>(=) Lucro Líquido Real (Resultado Operacional)</td>
+                <td style="text-align: right;" class="${realProfitMonth >= 0 ? 'dre-val-positive' : 'dre-val-negative'}">${formatDRECurrency(realProfitMonth)}</td>
+                <td style="text-align: right;" class="${realProfitMonth >= 0 ? 'dre-val-positive' : 'dre-val-negative'}">${pctNetProfit}%</td>
+            </tr>
+        `;
+        if (window.lucide) window.lucide.createIcons();
     }
     
     calculateDemandForecast();
@@ -2874,13 +2954,14 @@ export function generateMonthlyPDFReport() {
         return;
     }
 
-    const currentMonthStr = window.getBrazilTimeISO().substring(0, 7);
-    const now = new Date();
+    const monthSelect = document.getElementById("admin-finance-month-select");
+    const currentMonthStr = monthSelect ? monthSelect.value : window.getBrazilTimeISO().substring(0, 7);
+    const [yr, mn] = currentMonthStr.split('-');
     const monthNames = [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
-    const periodStr = `${monthNames[now.getMonth()]} de ${now.getFullYear()}`;
+    const periodStr = `${monthNames[parseInt(mn) - 1]} de ${yr}`;
 
     // Get Factory Settings
     const factoryName = (state.factorySettings && state.factorySettings.name) || FACTORY_INFO.name;

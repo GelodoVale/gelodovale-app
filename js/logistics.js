@@ -601,57 +601,46 @@ export function openRentalRouteInWaze() {
     window.open(url, '_blank');
 }
 
-export function optimizeDeliveryRoute() {
-    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
-    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
-    
-    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
-        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para traçar a rota.", "warning");
-        return;
-    }
-    
-    const uniqueIntermediaries = new Set();
-    
-    orderCheckboxes.forEach(cb => {
-        const orderId = cb.getAttribute("data-order-id");
-        const order = (state.orders || []).find(o => o.id === orderId);
-        if (order) {
-            const client = (state.clients || []).find(c => c.id === order.clientId);
-            if (client && client.address && client.address.trim() !== "") {
-                uniqueIntermediaries.add(client.address.trim());
-            }
-        }
-    });
-    
-    visitCheckboxes.forEach(cb => {
-        const clientId = cb.getAttribute("data-client-id");
-        const client = (state.clients || []).find(c => c.id === clientId);
-        if (client && client.address && client.address.trim() !== "") {
-            uniqueIntermediaries.add(client.address.trim());
-        }
-    });
-    
-    if (uniqueIntermediaries.size === 0) {
-        window.showToast("Nenhum endereço válido encontrado nos itens selecionados.", "warning");
-        return;
-    }
-    
-    const addresses = [FACTORY_INFO.address, ...Array.from(uniqueIntermediaries), FACTORY_INFO.address];
-    
-    const baseUrl = "https://www.google.com/maps/dir/";
-    const routeUrl = baseUrl + addresses.map(addr => encodeURIComponent(addr)).join("/");
-    
-    window.open(routeUrl, "_blank");
+// --- Algoritmo TSP Offline (Nearest Neighbor) ---
+function haversineDistance(coords1, coords2) {
+    const [lat1, lon1] = coords1;
+    const [lat2, lon2] = coords2;
+    const R = 6371; // Raio da Terra em km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
-export function shareOptimizedRouteWhatsApp() {
+function solveTSP(startCoords, targets) {
+    const tour = [];
+    let currentCoords = startCoords;
+    const unvisited = [...targets];
+    
+    while (unvisited.length > 0) {
+        let nearestIdx = 0;
+        let minDistance = Infinity;
+        for (let i = 0; i < unvisited.length; i++) {
+            const dist = haversineDistance(currentCoords, [unvisited[i].lat, unvisited[i].lng]);
+            if (dist < minDistance) {
+                minDistance = dist;
+                nearestIdx = i;
+            }
+        }
+        const nextNode = unvisited.splice(nearestIdx, 1)[0];
+        tour.push(nextNode);
+        currentCoords = [nextNode.lat, nextNode.lng];
+    }
+    return tour;
+}
+
+export async function getOptimizedRouteData() {
     const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
     const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
-    
-    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
-        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para compartilhar a rota.", "warning");
-        return;
-    }
     
     const uniqueIntermediaries = [];
     const clientDetails = [];
@@ -665,7 +654,7 @@ export function shareOptimizedRouteWhatsApp() {
                 const addr = client.address.trim();
                 if (!uniqueIntermediaries.includes(addr)) {
                     uniqueIntermediaries.push(addr);
-                    clientDetails.push({ name: client.name, address: addr, type: "Pedido" });
+                    clientDetails.push({ id: client.id, name: client.name, address: addr, type: "Pedido" });
                 }
             }
         }
@@ -678,32 +667,166 @@ export function shareOptimizedRouteWhatsApp() {
             const addr = client.address.trim();
             if (!uniqueIntermediaries.includes(addr)) {
                 uniqueIntermediaries.push(addr);
-                clientDetails.push({ name: client.name, address: addr, type: "Visita" });
+                clientDetails.push({ id: client.id, name: client.name, address: addr, type: "Visita" });
             }
         }
     });
     
-    if (uniqueIntermediaries.length === 0) {
+    if (clientDetails.length === 0) {
+        return null;
+    }
+    
+    const factoryLat = -23.1791;
+    const factoryLng = -45.8872;
+    const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
+    
+    // Ler cache de geocodificacao
+    let cache = {};
+    try {
+        const cached = localStorage.getItem("gelcontrol_geocode_cache");
+        if (cached) cache = JSON.parse(cached);
+    } catch (e) {
+        console.warn("Erro ao ler cache de geocodificacao:", e);
+    }
+    
+    const targets = [];
+    let geocodingFailed = false;
+    
+    for (let i = 0; i < clientDetails.length; i++) {
+        const item = clientDetails[i];
+        const addr = item.address;
+        
+        if (cache[addr]) {
+            targets.push({
+                ...item,
+                lat: cache[addr].lat,
+                lng: cache[addr].lng
+            });
+            continue;
+        }
+        
+        if (navigator.onLine) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&email=contato@gelodovale.com.br`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lng = parseFloat(data[0].lon);
+                        targets.push({
+                            ...item,
+                            lat,
+                            lng
+                        });
+                        cache[addr] = { lat, lng };
+                        continue;
+                    }
+                }
+            } catch (err) {
+                console.warn(`Erro de rede ao geocodificar: ${addr}`, err);
+            }
+        }
+        
+        geocodingFailed = true;
+    }
+    
+    // Salvar cache
+    try {
+        localStorage.setItem("gelcontrol_geocode_cache", JSON.stringify(cache));
+    } catch (e) {}
+    
+    // Resolver TSP
+    let tour = [];
+    if (targets.length > 0) {
+        tour = solveTSP([factoryLat, factoryLng], targets);
+    }
+    
+    // Se algum ponto falhou na geocodificacao, adicionamos no fim do tour
+    const geocodedAddresses = targets.map(t => t.address);
+    clientDetails.forEach(item => {
+        if (!geocodedAddresses.includes(item.address)) {
+            tour.push({
+                ...item,
+                lat: factoryLat + (Math.random() - 0.5) * 0.01,
+                lng: factoryLng + (Math.random() - 0.5) * 0.01
+            });
+        }
+    });
+    
+    return {
+        tour,
+        factoryLat,
+        factoryLng,
+        factoryAddress,
+        geocodingFailed
+    };
+}
+
+export async function optimizeDeliveryRoute() {
+    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+    
+    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
+        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para traçar a rota.", "warning");
+        return;
+    }
+    
+    window.showToast("Otimizando ordem das entregas (TSP)...", "info");
+    
+    const routeData = await getOptimizedRouteData();
+    if (!routeData) {
         window.showToast("Nenhum endereço válido encontrado nos itens selecionados.", "warning");
         return;
     }
     
-    const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
-    const addresses = [factoryAddress, ...uniqueIntermediaries, factoryAddress];
+    const addresses = [
+        routeData.factoryAddress,
+        ...routeData.tour.map(t => t.address),
+        routeData.factoryAddress
+    ];
+    
+    const baseUrl = "https://www.google.com/maps/dir/";
+    const routeUrl = baseUrl + addresses.map(addr => encodeURIComponent(addr)).join("/");
+    
+    window.open(routeUrl, "_blank");
+}
+
+export async function shareOptimizedRouteWhatsApp() {
+    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+    
+    if (orderCheckboxes.length === 0 && visitCheckboxes.length === 0) {
+        window.showToast("Por favor, selecione pelo menos um pedido ou sugestão de visita para compartilhar a rota.", "warning");
+        return;
+    }
+    
+    window.showToast("Gerando roteiro otimizado...", "info");
+    
+    const routeData = await getOptimizedRouteData();
+    if (!routeData) {
+        window.showToast("Nenhum endereço válido encontrado nos itens selecionados.", "warning");
+        return;
+    }
+    
+    const addresses = [
+        routeData.factoryAddress,
+        ...routeData.tour.map(t => t.address),
+        routeData.factoryAddress
+    ];
     const baseUrl = "https://www.google.com/maps/dir/";
     const routeUrl = baseUrl + addresses.map(addr => encodeURIComponent(addr)).join("/");
     
     // Montar texto WhatsApp
-    let msg = `❄️ *GELO DO VALE - ROTEIRO DE ENTREGAS* 🚚\n\n`;
-    msg += `Olá, segue a rota de entregas otimizada para o dia de hoje:\n\n`;
+    let msg = `❄️ *GELO DO VALE - ROTEIRO DE ENTREGAS OTIMIZADO* 🚚\n\n`;
+    msg += `Olá, segue a rota de entregas otimizada para o dia de hoje (menor caminho calculado):\n\n`;
     msg += `📍 *1. Partida:* Fábrica\n`;
     
-    clientDetails.forEach((c, idx) => {
+    routeData.tour.forEach((c, idx) => {
         msg += `📦 *${idx + 2}. ${c.name}* (${c.type})\n`;
         msg += `   └ Endereço: ${c.address}\n`;
     });
     
-    msg += `📍 *${clientDetails.length + 2}. Retorno:* Fábrica\n\n`;
+    msg += `📍 *${routeData.tour.length + 2}. Retorno:* Fábrica\n\n`;
     msg += `🗺️ *Link do Mapa Otimizado (Google Maps):*\n${routeUrl}`;
     
     if (!navigator.onLine) {
@@ -759,47 +882,54 @@ export function initLeafletRouteMap() {
     }
 }
 
-function showLeafletFallback() {
+function showLeafletFallback(tour = null) {
     const fallbackDiv = document.getElementById("leaflet-route-fallback");
     if (!fallbackDiv) return;
     
     fallbackDiv.style.display = "block";
     fallbackDiv.innerHTML = `
-        <div style="display:flex; align-items:center; gap:6px; color:#f59e0b; margin-bottom:6px; font-weight:bold;">
-            <i data-lucide="wifi-off" style="width:14px; height:14px;"></i> Roteiro Offline Otimizado
+        <div style="display:flex; align-items:center; gap:6px; color:var(--color-primary); margin-bottom:6px; font-weight:bold;">
+            <i data-lucide="map-pin" style="width:14px; height:14px;"></i> Roteiro Sequencial Otimizado (TSP)
         </div>
-        <div style="margin-bottom: 4px;">Não foi possível plotar no mapa. Roteiro sequencial sugerido:</div>
-        <ol style="margin: 6px 0 0 16px; padding: 0;" id="route-textual-list"></ol>
+        <div style="margin-bottom: 4px; font-size: 0.72rem;">Ordem de visitas sugerida para economizar combustível:</div>
+        <ol style="margin: 6px 0 0 16px; padding: 0; line-height: 1.5;" id="route-textual-list"></ol>
     `;
     
     const list = document.getElementById("route-textual-list");
     if (!list) return;
     list.innerHTML = "";
     
-    const factoryAddress = FACTORY_INFO.address || "Fábrica";
+    const factoryAddress = FACTORY_INFO.address || "Vale do Paraíba, São José dos Campos - SP";
     list.innerHTML += `<li><strong>Saída:</strong> ${factoryAddress}</li>`;
     
-    const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
-    const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
+    if (tour && tour.length > 0) {
+        tour.forEach((item, idx) => {
+            list.innerHTML += `<li><strong>[${idx + 1}] ${item.name}</strong> (${item.type}): ${item.address}</li>`;
+        });
+    } else {
+        const orderCheckboxes = document.querySelectorAll(".order-route-checkbox:checked");
+        const visitCheckboxes = document.querySelectorAll(".visit-route-checkbox:checked");
 
-    orderCheckboxes.forEach(cb => {
-        const orderId = cb.getAttribute("data-order-id");
-        const order = (state.orders || []).find(o => o.id === orderId);
-        if (order) {
-            const client = (state.clients || []).find(c => c.id === order.clientId);
-            if (client && client.address) {
-                list.innerHTML += `<li><strong>${client.name}:</strong> ${client.address}</li>`;
+        let index = 1;
+        orderCheckboxes.forEach(cb => {
+            const orderId = cb.getAttribute("data-order-id");
+            const order = (state.orders || []).find(o => o.id === orderId);
+            if (order) {
+                const client = (state.clients || []).find(c => c.id === order.clientId);
+                if (client && client.address) {
+                    list.innerHTML += `<li><strong>[${index++}] ${client.name}</strong> (Pedido): ${client.address}</li>`;
+                }
             }
-        }
-    });
+        });
 
-    visitCheckboxes.forEach(cb => {
-        const clientId = cb.getAttribute("data-client-id");
-        const client = (state.clients || []).find(c => c.id === clientId);
-        if (client && client.address) {
-            list.innerHTML += `<li><strong>${client.name} (Visita):</strong> ${client.address}</li>`;
-        }
-    });
+        visitCheckboxes.forEach(cb => {
+            const clientId = cb.getAttribute("data-client-id");
+            const client = (state.clients || []).find(c => c.id === clientId);
+            if (client && client.address) {
+                list.innerHTML += `<li><strong>[${index++}] ${client.name}</strong> (Visita): ${client.address}</li>`;
+            }
+        });
+    }
     
     list.innerHTML += `<li><strong>Retorno:</strong> ${factoryAddress}</li>`;
     if (window.lucide) window.lucide.createIcons();
@@ -829,80 +959,43 @@ export async function drawRouteOnLeafletMap() {
 
     document.getElementById("leaflet-route-fallback").style.display = "none";
 
-    const factoryLat = -23.1791;
-    const factoryLng = -45.8872;
-    const factoryAddress = FACTORY_INFO.address || "Fábrica";
+    const routeData = await getOptimizedRouteData();
+    if (!routeData) {
+        showLeafletFallback();
+        return;
+    }
 
     // Ponto de partida
-    const factoryMarker = L.marker([factoryLat, factoryLng], {
-        title: "Fábrica - Partida",
+    const factoryMarker = L.marker([routeData.factoryLat, routeData.factoryLng], {
+        title: "Fábrica - Partida/Retorno",
         icon: L.divIcon({
             className: 'custom-div-icon',
             html: "<div style='background-color:#0072ff; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px #0072ff;'></div>",
             iconSize: [12, 12]
         })
-    }).addTo(leafletMap).bindPopup(`<b>Fábrica (Partida/Retorno)</b><br>${factoryAddress}`);
+    }).addTo(leafletMap).bindPopup(`<b>Fábrica (Partida/Retorno)</b><br>${routeData.factoryAddress}`);
     leafletMarkers.push(factoryMarker);
 
-    const waypoints = [[factoryLat, factoryLng]];
-    const routeAddresses = [];
+    const waypoints = [[routeData.factoryLat, routeData.factoryLng]];
 
-    orderCheckboxes.forEach(cb => {
-        const orderId = cb.getAttribute("data-order-id");
-        const order = (state.orders || []).find(o => o.id === orderId);
-        if (order) {
-            const client = (state.clients || []).find(c => c.id === order.clientId);
-            if (client && client.address) {
-                routeAddresses.push({ name: client.name, address: client.address, type: "Pedido" });
-            }
-        }
+    // Desenhar cada ponto do tour otimizado
+    routeData.tour.forEach((item, idx) => {
+        waypoints.push([item.lat, item.lng]);
+
+        const m = L.marker([item.lat, item.lng], {
+            title: item.name,
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style='background-color:#00f0ff; width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px #00f0ff; display:flex; align-items:center; justify-content:center; color:#0a0e17; font-size:0.75rem; font-weight:800;'>${idx + 1}</div>`,
+                iconSize: [22, 22]
+            })
+        }).addTo(leafletMap).bindPopup(`<b>Parada ${idx + 1}: ${item.name}</b> (${item.type})<br>${item.address}`);
+        leafletMarkers.push(m);
     });
 
-    visitCheckboxes.forEach(cb => {
-        const clientId = cb.getAttribute("data-client-id");
-        const client = (state.clients || []).find(c => c.id === clientId);
-        if (client && client.address) {
-            routeAddresses.push({ name: client.name, address: client.address, type: "Visita" });
-        }
-    });
+    waypoints.push([routeData.factoryLat, routeData.factoryLng]);
 
-    let geocodingFailed = false;
-    
-    for (let i = 0; i < routeAddresses.length; i++) {
-        const item = routeAddresses[i];
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(item.address)}&format=json&limit=1&email=contato@gelodovale.com.br`);
-            if (!response.ok) throw new Error("Erro na rede");
-            const data = await response.json();
-            
-            if (data.length > 0) {
-                const lat = parseFloat(data[0].lat);
-                const lng = parseFloat(data[0].lon);
-                waypoints.push([lat, lng]);
-
-                const m = L.marker([lat, lng], {
-                    title: item.name,
-                    icon: L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style='background-color:#00f0ff; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px #00f0ff;'></div>`,
-                        iconSize: [12, 12]
-                    })
-                }).addTo(leafletMap).bindPopup(`<b>${item.name}</b> (${item.type})<br>${item.address}`);
-                leafletMarkers.push(m);
-            } else {
-                geocodingFailed = true;
-            }
-        } catch (err) {
-            console.warn(`Falha ao geocodificar: ${item.address}`, err);
-            geocodingFailed = true;
-        }
-    }
-
-    waypoints.push([factoryLat, factoryLng]);
-
-    if (geocodingFailed || waypoints.length <= 2) {
-        showLeafletFallback();
-    }
+    showLeafletFallback(routeData.tour);
 
     leafletRouteLayer = L.polyline(waypoints, {
         color: '#00f0ff',

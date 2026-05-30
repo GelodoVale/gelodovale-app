@@ -3660,3 +3660,90 @@ body.astro-day.weather-hot {
         radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.12) 0px, transparent 50%) !important;
 }
 
+/* --- Drag & Drop de Widgets --- */
+.widget-card[draggable="true"] {
+    cursor: grab;
+    user-select: none;
+}
+.widget-card[draggable="true"]:active {
+    cursor: grabbing;
+}
+.widget-card.widget-dragging {
+    opacity: 0.4;
+    border: 2px dashed var(--color-primary) !important;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1) !important;
+}
+.widget-card.drag-over {
+    border: 2px dashed var(--color-secondary) !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.15) !important;
+    transition: transform 0.2s, border 0.2s, box-shadow 0.2s;
+}
+
+/* --- Demonstrativo Financeiro DRE --- */
+.dre-panel {
+    background: rgba(10, 14, 23, 0.6);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(8px);
+    margin-bottom: 1.5rem;
+}
+.dre-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+.dre-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+.dre-table th {
+    background: rgba(0, 240, 255, 0.05);
+    color: var(--color-primary);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 2px solid rgba(0, 240, 255, 0.2);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+.dre-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--color-text-main);
+}
+.dre-row-header {
+    font-weight: 600;
+}
+.dre-row-subtotal {
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.dre-row-total {
+    font-weight: 800;
+    background: rgba(0, 240, 255, 0.03);
+    border-top: 2px solid rgba(0, 240, 255, 0.15);
+    border-bottom: 2px solid rgba(0, 240, 255, 0.25);
+    font-size: 0.95rem;
+}
+.dre-row-deduction {
+    color: #ff6464 !important;
+}
+.dre-val-positive {
+    color: #00ff64 !important;
+    font-weight: bold;
+}
+.dre-val-negative {
+    color: #ff4d4d !important;
+    font-weight: bold;
+}
+.dre-val-neutral {
+    color: #00f0ff !important;
+    font-weight: bold;
+}
