@@ -1277,17 +1277,7 @@ export function initForms() {
             const latitude = document.getElementById("client-latitude") ? document.getElementById("client-latitude").value.trim() : "";
             const longitude = document.getElementById("client-longitude") ? document.getElementById("client-longitude").value.trim() : "";
             
-            const selectedFreezerId = document.getElementById("client-freezer-id-select").value;
-            const selectedFreezer = state.freezers.find(f => f.id === selectedFreezerId);
-            
-            const freezerCode = selectedFreezer ? selectedFreezer.code : "";
-            const freezerBrand = selectedFreezer ? selectedFreezer.brand : "";
-            const freezerVoltage = selectedFreezer ? selectedFreezer.voltage : "";
-            const freezerCapacity = selectedFreezer ? selectedFreezer.capacity : "";
-            
             const alertThreshold = parseInt(document.getElementById("alert-threshold").value) || 20;
-            const deliveryDate = document.getElementById("freezer-delivery-date").value;
-            const maintenanceNotes = document.getElementById("freezer-maintenance").value;
             
             const capacities = {};
             const stock = {};
@@ -1305,57 +1295,6 @@ export function initForms() {
             });
             
             const targetClientId = clientId || "c-" + Date.now();
-            const oldFreezer = state.freezers.find(f => f.clientId === targetClientId);
-            
-            if (oldFreezer && (!selectedFreezer || oldFreezer.id !== selectedFreezer.id)) {
-                oldFreezer.status = "disponivel";
-                oldFreezer.clientId = "";
-                oldFreezer.clientName = "";
-                if (!oldFreezer.movementHistory) oldFreezer.movementHistory = [];
-                oldFreezer.movementHistory.push({
-                    date: formatDateBrazil(getBrazilTimeISO()),
-                    from: name,
-                    to: "Fábrica",
-                    reason: "Desvinculado devido à alteração no cadastro do cliente"
-                });
-                if (state.comodatos) {
-                    state.comodatos.forEach(com => {
-                        if (com.clientId === targetClientId && com.freezerCode === oldFreezer.code && com.status !== 'retirado') {
-                            com.status = 'retirado';
-                            com.returnDate = getBrazilTimeISO().split('T')[0];
-                            com.returnNotes = "Desvinculado no cadastro do cliente";
-                        }
-                    });
-                }
-            }
-            
-            if (selectedFreezer) {
-                selectedFreezer.status = "alocado";
-                selectedFreezer.clientId = targetClientId;
-                selectedFreezer.clientName = name;
-                
-                if (!oldFreezer || oldFreezer.id !== selectedFreezer.id) {
-                    if (!selectedFreezer.movementHistory) selectedFreezer.movementHistory = [];
-                    selectedFreezer.movementHistory.push({
-                        date: formatDateBrazil(getBrazilTimeISO()),
-                        from: "Fábrica",
-                        to: name,
-                        reason: "Alocação em regime de comodato"
-                    });
-                }
-                
-                if (maintenanceNotes) {
-                    if (!selectedFreezer.maintenanceLogs) selectedFreezer.maintenanceLogs = [];
-                    const jaExiste = selectedFreezer.maintenanceLogs.some(log => log.note === maintenanceNotes);
-                    if (!jaExiste) {
-                        selectedFreezer.maintenanceLogs.push({
-                            date: formatDateBrazil(getBrazilTimeISO()),
-                            note: maintenanceNotes
-                        });
-                    }
-                }
-            }
-            
             const visitDays = Array.from(document.querySelectorAll('input[name="visit-days"]:checked')).map(cb => cb.value);
             
             if (clientId) {
@@ -1363,8 +1302,7 @@ export function initForms() {
                 if (idx !== -1) {
                     state.clients[idx] = {
                         ...state.clients[idx],
-                        name, fantasyName, address, phone, freezerCode, alertThreshold, capacities, stock,
-                        freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
+                        name, fantasyName, address, phone, alertThreshold, capacities, stock,
                         visitDays,
                         document: clientDoc,
                         photoFacade,
@@ -1377,8 +1315,14 @@ export function initForms() {
             } else {
                 const newClient = {
                     id: targetClientId,
-                    name, fantasyName, address, phone, freezerCode, alertThreshold, capacities, stock,
-                    freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
+                    name, fantasyName, address, phone, 
+                    freezerCode: "",
+                    freezerBrand: "",
+                    freezerVoltage: "",
+                    freezerCapacity: "",
+                    deliveryDate: "",
+                    maintenanceNotes: "",
+                    alertThreshold, capacities, stock,
                     outstandingDebt: 0,
                     visitDays,
                     document: clientDoc,

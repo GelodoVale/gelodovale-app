@@ -207,7 +207,14 @@ export function renderClientes() {
                         <i data-lucide="pen-tool" style="width: 14px; height: 14px;"></i> Assinar
                     </button>
                     ` : ''}
-                    ` : `<span style="flex:1;"></span>`}
+                    <button class="btn btn-secondary" onclick="window.unlinkFreezerFromClient('${c.id}')" title="Desvincular Freezer" style="padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.05);">
+                        <i data-lucide="link-2" style="width: 14px; height: 14px;"></i> Desvincular
+                    </button>
+                    ` : `
+                    <button class="btn btn-secondary" onclick="window.openLinkFreezerModal('${c.id}')" title="Vincular Freezer" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                        <i data-lucide="link" style="width: 14px; height: 14px;"></i> Vincular Freezer
+                    </button>
+                    `}
                     ${c.phone ? `
                     <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
                         <i data-lucide="phone-call" style="width: 15px; height: 15px;"></i>
@@ -735,6 +742,300 @@ export function captureClientGPS() {
     );
 }
 
+export function openLinkFreezerModal(clientId) {
+    const client = state.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    document.getElementById("link-freezer-client-id").value = clientId;
+    document.getElementById("link-freezer-client-name").innerText = client.name;
+    document.getElementById("link-freezer-code-input").value = "";
+    document.getElementById("link-freezer-notes").value = "";
+    document.getElementById("link-freezer-delivery-date").value = window.getBrazilTimeISO().split('T')[0];
+    
+    const searchFeedback = document.getElementById("link-freezer-search-feedback");
+    if (searchFeedback) searchFeedback.innerHTML = "";
+    const detPanel = document.getElementById("link-freezer-details-panel");
+    if (detPanel) detPanel.style.display = "none";
+    
+    // Popular o dropdown de freezers disponíveis
+    const dropdown = document.getElementById("link-freezer-select-dropdown");
+    if (dropdown) {
+        dropdown.innerHTML = '<option value="">-- Escolher da lista --</option>';
+        const availableFreezers = (state.freezers || []).filter(f => f.status === "disponivel");
+        availableFreezers.forEach(f => {
+            dropdown.innerHTML += `<option value="${f.code}">${f.code} - ${f.brand || ''} (${f.capacity ? f.capacity + 'L' : 'Capacidade N/I'})</option>`;
+        });
+    }
+    
+    // Verificar se o cliente tem os dados obrigatórios para o comodato
+    const missingPanel = document.getElementById("link-freezer-missing-data-panel");
+    if (missingPanel) {
+        const hasRequiredData = client.document && client.phone && client.address && client.latitude && client.longitude;
+        if (!hasRequiredData) {
+            missingPanel.style.display = "block";
+            document.getElementById("link-client-document").value = client.document || "";
+            document.getElementById("link-client-phone").value = client.phone || "";
+            document.getElementById("link-client-address").value = client.address || "";
+            document.getElementById("link-client-latitude").value = client.latitude || "";
+            document.getElementById("link-client-longitude").value = client.longitude || "";
+            
+            // Inicializar CPF/CNPJ checker inline se disponível
+            const docFeedback = document.getElementById("link-client-document-feedback");
+            if (docFeedback) docFeedback.innerHTML = "";
+            if (window.initDocumentField) {
+                window.initDocumentField('link-client-document', 'link-client-document-feedback', (cnpjData) => {
+                    const phoneEl = document.getElementById('link-client-phone');
+                    if (phoneEl && cnpjData.ddd_telefone_1) {
+                        phoneEl.value = cnpjData.ddd_telefone_1.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
+                    }
+                    const addrEl = document.getElementById('link-client-address');
+                    if (addrEl) {
+                        const parts = [
+                            cnpjData.logradouro,
+                            cnpjData.numero ? ', ' + cnpjData.numero : '',
+                            cnpjData.complemento ? ' - ' + cnpjData.complemento : '',
+                            cnpjData.bairro ? ' - ' + cnpjData.bairro : '',
+                            cnpjData.municipio ? ' - ' + cnpjData.municipio : '',
+                            cnpjData.uf ? '/' + cnpjData.uf : ''
+                        ];
+                        const fullAddr = parts.join('').replace(/^,\s*/, '').trim();
+                        if (fullAddr) addrEl.value = fullAddr;
+                    }
+                    window.showToast('Dados do CNPJ preenchidos automaticamente!', 'success');
+                });
+            }
+        } else {
+            missingPanel.style.display = "none";
+        }
+    }
+    
+    const modal = document.getElementById("modal-link-freezer");
+    if (modal) modal.classList.add("active");
+    if (window.lucide) window.lucide.createIcons();
+}
+
+export function searchFreezerForLinking() {
+    const codeInput = document.getElementById("link-freezer-code-input");
+    if (!codeInput) return;
+    
+    const code = codeInput.value.toUpperCase().trim();
+    const feedback = document.getElementById("link-freezer-search-feedback");
+    const detailsPanel = document.getElementById("link-freezer-details-panel");
+    const dropdown = document.getElementById("link-freezer-select-dropdown");
+    
+    if (!code) {
+        if (feedback) feedback.innerHTML = '<span style="color: var(--color-danger);">Digite um código de freezer.</span>';
+        if (detailsPanel) detailsPanel.style.display = "none";
+        return;
+    }
+    
+    const freezer = (state.freezers || []).find(f => f.code.toUpperCase() === code);
+    if (!freezer) {
+        if (feedback) feedback.innerHTML = `<span style="color: var(--color-danger);">❌ Freezer "${code}" não cadastrado.</span>`;
+        if (detailsPanel) detailsPanel.style.display = "none";
+        if (dropdown) dropdown.value = "";
+        return;
+    }
+    
+    if (freezer.status !== "disponivel") {
+        const ownerLabel = freezer.clientName ? `vinculado a ${freezer.clientName}` : `com status "${freezer.status}"`;
+        if (feedback) feedback.innerHTML = `<span style="color: #f59e0b;">⚠️ Freezer "${code}" está indisponível (${ownerLabel}).</span>`;
+        if (detailsPanel) detailsPanel.style.display = "none";
+        if (dropdown) dropdown.value = "";
+        return;
+    }
+    
+    // Freezer disponível encontrado!
+    if (feedback) feedback.innerHTML = `<span style="color: #10b981;">✅ Freezer "${code}" disponível!</span>`;
+    const dBrand = document.getElementById("link-freezer-det-brand");
+    const dCap = document.getElementById("link-freezer-det-cap");
+    const dVol = document.getElementById("link-freezer-det-voltage");
+    if (dBrand) dBrand.innerText = freezer.brand || "Não informada";
+    if (dCap) dCap.innerText = freezer.capacity ? freezer.capacity + " Litros" : "Não informada";
+    if (dVol) dVol.innerText = freezer.voltage || "Não informada";
+    if (detailsPanel) detailsPanel.style.display = "block";
+    
+    // Selecionar no dropdown também
+    if (dropdown) dropdown.value = freezer.code;
+}
+
+export function selectFreezerFromDropdownForLinking() {
+    const dropdown = document.getElementById("link-freezer-select-dropdown");
+    const codeInput = document.getElementById("link-freezer-code-input");
+    if (!dropdown || !codeInput) return;
+    
+    codeInput.value = dropdown.value;
+    searchFreezerForLinking();
+}
+
+export function captureClientGPSForLinking() {
+    if (!navigator.geolocation) {
+        window.showToast("Geolocalização não suportada.", "warning");
+        return;
+    }
+    window.showToast("Capturando GPS...", "info");
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const latInput = document.getElementById("link-client-latitude");
+            const lngInput = document.getElementById("link-client-longitude");
+            if (latInput) latInput.value = position.coords.latitude.toFixed(6);
+            if (lngInput) lngInput.value = position.coords.longitude.toFixed(6);
+            window.showToast("Localização capturada!", "success");
+        },
+        (error) => {
+            window.showToast("Erro ao obter GPS: " + error.message, "error");
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+
+export function handleLinkFreezerSubmit(e) {
+    if (e) e.preventDefault();
+    
+    const clientId = document.getElementById("link-freezer-client-id").value;
+    const client = state.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    const code = document.getElementById("link-freezer-code-input").value.toUpperCase().trim();
+    const freezer = (state.freezers || []).find(f => f.code.toUpperCase() === code);
+    
+    if (!freezer || freezer.status !== "disponivel") {
+        window.showToast("Selecione um freezer disponível válido.", "error");
+        return;
+    }
+    
+    // Verificar e atualizar dados faltantes do cliente se a seção estiver aberta
+    const missingPanel = document.getElementById("link-freezer-missing-data-panel");
+    if (missingPanel && missingPanel.style.display !== "none") {
+        const docVal = document.getElementById("link-client-document").value.trim();
+        const phoneVal = document.getElementById("link-client-phone").value.trim();
+        const addressVal = document.getElementById("link-client-address").value.trim();
+        const latVal = document.getElementById("link-client-latitude").value.trim();
+        const lngVal = document.getElementById("link-client-longitude").value.trim();
+        
+        if (!docVal || !phoneVal || !addressVal || !latVal || !lngVal) {
+            window.showToast("Por favor, preencha todos os dados obrigatórios do cliente para o comodato.", "warning");
+            return;
+        }
+        
+        client.document = docVal;
+        client.phone = phoneVal;
+        client.address = addressVal;
+        client.latitude = latVal;
+        client.longitude = lngVal;
+    }
+    
+    const deliveryDate = document.getElementById("link-freezer-delivery-date").value;
+    const notes = document.getElementById("link-freezer-notes").value.trim();
+    
+    // Atualizar dados do freezer
+    freezer.status = "alocado";
+    freezer.clientId = client.id;
+    freezer.clientName = client.name;
+    freezer.deliveryDate = deliveryDate;
+    freezer.maintenanceNotes = notes;
+    if (!freezer.movementHistory) freezer.movementHistory = [];
+    freezer.movementHistory.push({
+        date: window.formatDateBrazil(window.getBrazilTimeISO()),
+        from: "Fábrica",
+        to: client.name,
+        reason: `Alocação via fluxo separado. Notas: ${notes}`
+    });
+    
+    // Atualizar dados no cliente
+    client.freezerCode = freezer.code;
+    client.freezerBrand = freezer.brand || "Não informado";
+    client.freezerVoltage = freezer.voltage || "Não informado";
+    client.freezerCapacity = freezer.capacity || "";
+    client.deliveryDate = deliveryDate;
+    client.maintenanceNotes = notes;
+    
+    // Gerar o Comodato pendente automaticamente!
+    const newCom = {
+        id: 'com_' + Math.random().toString(36).substr(2, 9),
+        clientId: client.id,
+        clientName: client.name,
+        clientPhone: client.phone || '',
+        clientAddress: client.address || '',
+        clientDoc: client.document || '',
+        latitude: client.latitude || '',
+        longitude: client.longitude || '',
+        freezerCode: freezer.code,
+        freezerBrand: freezer.brand || 'Não informado',
+        freezerVoltage: freezer.voltage || 'Não informado',
+        freezerCapacity: freezer.capacity || '',
+        startDate: deliveryDate,
+        status: 'pendente',
+        signatureBase64: '',
+        signatureDate: '',
+        notes: notes,
+        photos: [],
+        createdAt: Date.now()
+    };
+    
+    if (!state.comodatos) state.comodatos = [];
+    state.comodatos.push(newCom);
+    
+    saveState();
+    if (window.closeModal) window.closeModal("modal-link-freezer");
+    if (window.renderApp) window.renderApp();
+    
+    window.showToast("Freezer vinculado e contrato de comodato pendente gerado!", "success");
+}
+
+export function unlinkFreezerFromClient(clientId) {
+    const client = state.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    const code = client.freezerCode;
+    if (!code) return;
+    
+    window.showConfirm(
+        `Tem certeza que deseja desvincular o freezer "${code}" do cliente "${client.name}"? O comodato correspondente será encerrado e o freezer voltará para o inventário disponível.`,
+        () => {
+            const freezer = state.freezers.find(f => f.code === code);
+            if (freezer) {
+                freezer.status = "disponivel";
+                freezer.clientId = "";
+                freezer.clientName = "";
+                if (!freezer.movementHistory) freezer.movementHistory = [];
+                freezer.movementHistory.push({
+                    date: window.formatDateBrazil(window.getBrazilTimeISO()),
+                    from: client.name,
+                    to: "Fábrica",
+                    reason: "Desvinculado pelo fluxo administrativo"
+                });
+            }
+            
+            // Encerrar o comodato correspondente
+            if (state.comodatos) {
+                state.comodatos.forEach(com => {
+                    if (com.clientId === client.id && com.freezerCode === code && com.status !== 'retirado') {
+                        com.status = 'retirado';
+                        com.returnDate = window.getBrazilTimeISO().split('T')[0];
+                        com.returnNotes = "Desvinculado manualmente na tela de clientes";
+                    }
+                });
+            }
+            
+            // Limpar dados no cliente
+            client.freezerCode = "";
+            client.freezerBrand = "";
+            client.freezerVoltage = "";
+            client.freezerCapacity = "";
+            client.deliveryDate = "";
+            client.maintenanceNotes = "";
+            
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast(`Freezer "${code}" desvinculado com sucesso!`, "success");
+        },
+        null,
+        "Desvincular Freezer",
+        "Desvincular"
+    );
+}
+
 // Bind to window for HTML accessibility
 window.renderClientes = renderClientes;
 window.openClientModal = openClientModal;
@@ -743,6 +1044,12 @@ window.editClient = editClient;
 window.openSalesModal = openSalesModal;
 window.populateClientDropdowns = populateClientDropdowns;
 window.captureClientGPS = captureClientGPS;
+window.openLinkFreezerModal = openLinkFreezerModal;
+window.searchFreezerForLinking = searchFreezerForLinking;
+window.selectFreezerFromDropdownForLinking = selectFreezerFromDropdownForLinking;
+window.captureClientGPSForLinking = captureClientGPSForLinking;
+window.handleLinkFreezerSubmit = handleLinkFreezerSubmit;
+window.unlinkFreezerFromClient = unlinkFreezerFromClient;
 
 // Inicializar campo de documento do fornecedor quando o modal abrir
 document.addEventListener('DOMContentLoaded', () => {

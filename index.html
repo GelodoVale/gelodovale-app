@@ -2454,53 +2454,11 @@
                     </button>
                 </div>
 
-                <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); margin: 1.5rem 0; padding-top: 1rem;">
-                    <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary);">Dados do Freezer Vinculado</h4>
-                </div>
-
-                <div class="form-group">
-                    <label for="client-freezer-id-select">Vincular Freezer do Inventário</label>
-                    <select id="client-freezer-id-select" class="form-control" onchange="autoPopulateFreezerDetailsInClientForm()">
-                        <option value="">Nenhum freezer alocado</option>
-                    </select>
-                </div>
-
-                <div class="form-row-grid">
+                <div class="form-row-grid" style="margin-top: 1rem;">
                     <div class="form-group">
-                        <label for="freezer-code">Código / Serial do Freezer</label>
-                        <input type="text" id="freezer-code" class="form-control" placeholder="Vinculado automaticamente..." readonly style="background: rgba(255,255,255,0.02); opacity: 0.8; cursor: not-allowed;">
-                    </div>
-                    <div class="form-group">
-                        <label for="alert-threshold">Limiar de Alerta (%)</label>
+                        <label for="alert-threshold">Limiar de Alerta de Estoque (%)</label>
                         <input type="number" id="alert-threshold" class="form-control" min="5" max="50" value="20">
                     </div>
-                </div>
-
-                <div class="form-row-grid">
-                    <div class="form-group">
-                        <label for="freezer-brand">Marca / Modelo</label>
-                        <input type="text" id="freezer-brand" class="form-control" placeholder="Preenchido automaticamente..." readonly style="background: rgba(255,255,255,0.02); opacity: 0.8; cursor: not-allowed;">
-                    </div>
-                    <div class="form-group">
-                        <label for="freezer-voltage">Voltagem</label>
-                        <input type="text" id="freezer-voltage" class="form-control" placeholder="Preenchido automaticamente..." readonly style="background: rgba(255,255,255,0.02); opacity: 0.8; cursor: not-allowed;">
-                    </div>
-                </div>
-
-                <div class="form-row-grid">
-                    <div class="form-group">
-                        <label for="freezer-capacity">Capacidade (Litros)</label>
-                        <input type="text" id="freezer-capacity" class="form-control" placeholder="Preenchido automaticamente..." readonly style="background: rgba(255,255,255,0.02); opacity: 0.8; cursor: not-allowed;">
-                    </div>
-                    <div class="form-group">
-                        <label for="freezer-delivery-date">Data de Entrega</label>
-                        <input type="date" id="freezer-delivery-date" class="form-control">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="freezer-maintenance">Observações / Histórico de Manutenção</label>
-                    <textarea id="freezer-maintenance" class="form-control" placeholder="Ex: Borracha trocada em 10/04/2026. Próxima limpeza em 10/10/2026." rows="2" style="font-family: inherit; font-size: 0.85rem; padding: 0.5rem;"></textarea>
                 </div>
 
                 <!-- Capacidades e Estoques Dinâmicos de Gelo -->
@@ -2527,6 +2485,110 @@
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Salvar Cadastro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Vínculo de Freezer a Cliente -->
+    <div class="modal-backdrop" id="modal-link-freezer">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>Vincular Freezer a Cliente</h3>
+                <button class="close-btn" onclick="closeModal('modal-link-freezer')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="link-freezer-form" onsubmit="window.handleLinkFreezerSubmit(event)">
+                <input type="hidden" id="link-freezer-client-id">
+                
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; margin-bottom: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">Cliente:</span>
+                    <strong id="link-freezer-client-name" style="font-size: 0.95rem; color: #fff; display: block; margin-top: 2px;">-</strong>
+                </div>
+
+                <!-- Campo de busca de freezer por código/serial -->
+                <div class="form-group">
+                    <label for="link-freezer-code-input">Código/Serial do Freezer *</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="link-freezer-code-input" class="form-control" placeholder="Ex: GEL-001" required style="text-transform: uppercase;">
+                        <button type="button" class="btn btn-secondary" onclick="window.searchFreezerForLinking()" style="padding: 0 12px; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; height: 38px;">
+                            <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    </div>
+                    <div id="link-freezer-search-feedback" style="margin-top: 6px; font-size: 0.8rem;"></div>
+                </div>
+
+                <!-- Alternativa: Dropdown selector de disponíveis -->
+                <div class="form-group">
+                    <label for="link-freezer-select-dropdown">Ou selecione um freezer disponível</label>
+                    <select id="link-freezer-select-dropdown" class="form-control" onchange="window.selectFreezerFromDropdownForLinking()">
+                        <option value="">-- Escolher da lista --</option>
+                    </select>
+                </div>
+
+                <!-- Detalhes do Freezer Encontrado -->
+                <div id="link-freezer-details-panel" style="display: none; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 1rem; font-size: 0.8rem;">
+                    <h4 style="color: var(--color-primary); margin: 0 0 8px 0; font-size: 0.85rem;">Equipamento Selecionado</h4>
+                    <p style="margin: 3px 0;"><strong>Marca/Modelo:</strong> <span id="link-freezer-det-brand">-</span></p>
+                    <p style="margin: 3px 0;"><strong>Capacidade:</strong> <span id="link-freezer-det-cap">-</span></p>
+                    <p style="margin: 3px 0;"><strong>Voltagem:</strong> <span id="link-freezer-det-voltage">-</span></p>
+                </div>
+
+                <!-- Dados Adicionais do Vínculo -->
+                <div class="form-group">
+                    <label for="link-freezer-delivery-date">Data de Entrega *</label>
+                    <input type="date" id="link-freezer-delivery-date" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="link-freezer-notes">Observações / Instruções de Instalação</label>
+                    <textarea id="link-freezer-notes" class="form-control" rows="2" placeholder="Ex: Equipamento entregue limpo e funcionando. Voltagem confirmada." style="font-family: inherit; font-size: 0.85rem; padding: 0.5rem;"></textarea>
+                </div>
+
+                <!-- Seção de Dados Faltantes do Cliente para o Comodato -->
+                <div id="link-freezer-missing-data-panel" style="display: none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; margin-top: 1rem; margin-bottom: 1rem;">
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 10px; color: #f59e0b; font-size: 0.78rem; line-height: 1.4; display: flex; align-items: flex-start; gap: 8px;">
+                        <i data-lucide="alert-triangle" style="width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;"></i>
+                        <div>
+                            <strong>Dados obrigatórios pendentes!</strong><br>
+                            O contrato de comodato requer CNPJ/CPF, Telefone, Endereço e GPS. Complete-os abaixo para vinculá-los automaticamente ao cliente.
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="link-client-document">CNPJ / CPF do Cliente *</label>
+                        <input type="text" id="link-client-document" class="form-control" placeholder="CPF ou CNPJ" maxlength="18">
+                        <div id="link-client-document-feedback" style="margin-top: 4px;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="link-client-phone">Telefone / Contato *</label>
+                        <input type="text" id="link-client-phone" class="form-control" placeholder="Ex: (11) 98765-4321">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="link-client-address">Endereço Completo *</label>
+                        <input type="text" id="link-client-address" class="form-control" placeholder="Ex: Av. Principal, 123">
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: flex-end; margin-top: 8px;">
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label style="font-size: 0.72rem;">Coordenadas GPS *</label>
+                            <div style="display: flex; gap: 4px;">
+                                <input type="text" id="link-client-latitude" class="form-control" placeholder="Lat" style="font-size: 0.75rem; padding: 4px 6px;">
+                                <input type="text" id="link-client-longitude" class="form-control" placeholder="Long" style="font-size: 0.75rem; padding: 4px 6px;">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="window.captureClientGPSForLinking()" style="padding: 0 8px; height: 32px; font-size: 0.7rem; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border-color: var(--color-primary); color: var(--color-primary); background: rgba(0, 240, 255, 0.05);">
+                            <i data-lucide="map-pin" style="width: 12px; height: 12px;"></i> Obter GPS
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-link-freezer')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-confirm-link-freezer">Vincular & Gerar Comodato</button>
                 </div>
             </form>
         </div>
