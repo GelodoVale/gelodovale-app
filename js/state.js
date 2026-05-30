@@ -30,7 +30,8 @@ export let state = {
     freezers: [],
     rentals: [],
     documents: [],
-    equipments: []
+    equipments: [],
+    comodatos: []
 };
 
 export function updateState(newState) {
@@ -45,7 +46,8 @@ export function normalizeStateArrays() {
     const collections = [
         'clients', 'products', 'orders', 'deliveries', 'freezers', 
         'rentals', 'documents', 'payments', 'suppliers', 'packaging', 
-        'packagingTransactions', 'cargoSettlements', 'users', 'equipments'
+        'packagingTransactions', 'cargoSettlements', 'users', 'equipments',
+        'comodatos'
     ];
     collections.forEach(col => {
         if (state[col]) {

@@ -770,14 +770,17 @@ export function startQRScanner() {
                     return;
                 }
                 
-                // 4. DEFAULT ROUTAS: Freezer ou Tina
+                // 4. DEFAULT ROUTAS: Freezer, Tina ou Equipamento Geral
                 const freezer = state.freezers.find(f => f.code && f.code.trim().toUpperCase() === scanValUpper);
                 const rental = state.rentals.find(r => r.tinaCode && r.tinaCode.trim().toUpperCase() === scanValUpper);
+                const equipment = state.equipments && state.equipments.find(e => e.code && e.code.trim().toUpperCase() === scanValUpper);
                 
                 if (freezer) {
                     openFreezerDetail(freezer.id);
                 } else if (rental) {
                     openRentalModal(rental.id);
+                } else if (equipment) {
+                    openEquipmentDetail(equipment.id);
                 } else {
                     window.showToast(`Código Detectado: "${decodedText}". Item não identificado ou não cadastrado no sistema.`, 'warning');
                 }
