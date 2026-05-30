@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v85';
+const CACHE_NAME = 'gelodovale-v86';
 const ASSETS = [
   'index.html',
   'styles.css',
@@ -29,7 +29,9 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      // Force fetch with cache: 'reload' to bypass browser HTTP cache and get fresh copies
+      const requests = ASSETS.map(url => new Request(url, { cache: 'reload' }));
+      return cache.addAll(requests);
     }).then(() => self.skipWaiting())
   );
 });
@@ -55,20 +57,23 @@ self.addEventListener('fetch', (e) => {
   }
 
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Atualizar cache em segundo plano (stale-while-revalidate)
-        fetch(e.request).then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, networkResponse));
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(e.request);
+    caches.open(CACHE_NAME).then((cache) => {
+      // Scope match exclusively to the current active cache
+      return cache.match(e.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Atualizar cache em segundo plano (stale-while-revalidate) com cache: 'no-cache'
+          fetch(e.request, { cache: 'no-cache' }).then((networkResponse) => {
+            if (networkResponse.status === 200) {
+              cache.put(e.request, networkResponse);
+            }
+          }).catch(() => {});
+          return cachedResponse;
+        }
+        return fetch(e.request);
+      });
     }).catch(() => {
       if (e.request.mode === 'navigate') {
-        return caches.match('index.html');
+        return caches.open(CACHE_NAME).then((cache) => cache.match('index.html'));
       }
     })
   );
