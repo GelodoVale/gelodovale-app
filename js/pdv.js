@@ -201,6 +201,9 @@ export function renderPDVCatalog() {
  * @param {boolean} isUnit 
  */
 export function addToPDVCart(productId, isUnit) {
+    if (window.playSound) window.playSound('tap');
+    if (window.triggerHaptic) window.triggerHaptic('tap');
+
     const product = (state.products || []).find(p => p.id === productId);
     if (!product) return;
     
@@ -222,6 +225,9 @@ export function addToPDVCart(productId, isUnit) {
  * Remove ou atualiza a quantidade de um item no carrinho
  */
 export function updatePDVCartQty(productId, isUnit, newQty) {
+    if (window.playSound) window.playSound('tap');
+    if (window.triggerHaptic) window.triggerHaptic('tap');
+
     const idx = pdvCart.findIndex(item => item.productId === productId && item.isUnit === isUnit);
     if (idx === -1) return;
     
@@ -238,6 +244,9 @@ export function updatePDVCartQty(productId, isUnit, newQty) {
  * Remove um item completamente do carrinho
  */
 export function removeFromPDVCart(productId, isUnit) {
+    if (window.playSound) window.playSound('warning');
+    if (window.triggerHaptic) window.triggerHaptic('warning');
+
     pdvCart = pdvCart.filter(item => !(item.productId === productId && item.isUnit === isUnit));
     renderPDVCart();
 }
@@ -246,6 +255,9 @@ export function removeFromPDVCart(productId, isUnit) {
  * Limpa o carrinho de compras do PDV
  */
 export function clearPDVCart() {
+    if (window.playSound) window.playSound('warning');
+    if (window.triggerHaptic) window.triggerHaptic('warning');
+
     pdvCart = [];
     renderPDVCart();
 }
@@ -452,7 +464,7 @@ export function checkoutPDVSale() {
     
     // Trigger interactive sensory effects
     if (window.playSound) window.playSound('cashRegister');
-    if (window.triggerConfetti) window.triggerConfetti();
+    if (window.triggerConfetti) window.triggerConfetti(items);
     if (window.triggerHaptic) window.triggerHaptic('success');
     
     if (window.showToast) window.showToast(`Venda Balcão finalizada! R$ ${totalVal.toFixed(2)} (${paymentMethod}).`, "success");

@@ -408,9 +408,19 @@ export function renderWeather() {
         if (window.lucide) window.lucide.createIcons();
     }
 
-    // Aplicar temas baseados no clima reativo
+    // Aplicar temas baseados no clima reativo e ciclo dia/noite (Astro-Reativo)
     const weatherThemeEnabled = state.appearance && state.appearance.weatherThemeEnabled !== false;
-    document.body.classList.remove('weather-hot', 'weather-cold', 'weather-mild');
+    document.body.classList.remove('weather-hot', 'weather-cold', 'weather-mild', 'astro-day', 'astro-night');
+    
+    // Ciclo Dia & Noite
+    const hour = new Date().getHours();
+    const isAstroDay = (hour >= 6 && hour < 18);
+    if (isAstroDay) {
+        document.body.classList.add('astro-day');
+    } else {
+        document.body.classList.add('astro-night');
+    }
+
     if (weatherThemeEnabled) {
         if (config.temp >= 30) {
             document.body.classList.add('weather-hot');

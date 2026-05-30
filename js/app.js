@@ -101,6 +101,9 @@ function _dismissToast(toast) {
  * @param {string} confirmText Texto do botão de confirmar (padrão: 'Confirmar')
  */
 export function showConfirm(message, onConfirm, onCancel = null, title = 'Confirmar ação', confirmText = 'Confirmar') {
+    if (window.playSound) window.playSound('warning');
+    if (window.triggerHaptic) window.triggerHaptic('warning');
+
     const overlay = document.getElementById('confirm-overlay');
     if (!overlay) {
         // Fallback para confirm() nativo se o modal não existir no DOM
@@ -371,15 +374,18 @@ export function initNavigation() {
             navItems.forEach(nav => {
                 nav.classList.remove("active");
                 if (nav.getAttribute("data-tab") === targetTab) {
+                    // Som e vibração ao clicar na aba
+                    if (window.playSound) window.playSound('tap');
+                    if (window.triggerHaptic) window.triggerHaptic('tap');
+                    
+                    // Alterar abas visíveis
+                    tabContents.forEach(content => {
+                        content.classList.remove("active", "tab-transitioning");
+                        if (content.id === targetTab) {
+                            content.classList.add("active", "tab-transitioning");
+                        }
+                    });
                     nav.classList.add("active");
-                }
-            });
-            
-            // Alterar abas visíveis
-            tabContents.forEach(content => {
-                content.classList.remove("active");
-                if (content.id === targetTab) {
-                    content.classList.add("active");
                 }
             });
 
@@ -592,6 +598,9 @@ export function renderApp() {
     // Atualizar dropdowns
     if (window.populateClientDropdowns) window.populateClientDropdowns();
     if (window.populateFreezerDropdowns) window.populateFreezerDropdowns();
+
+    // Iniciar 3D Tilt nos novos cards
+    if (window.init3DTilt) window.init3DTilt();
 }
 
 // --- PEDIDOS E SUAS VISITAS SUGERIDAS ---
@@ -2569,10 +2578,18 @@ export function renderOrderModalProducts() {
 }
 
 export function switchPWATab(tabId) {
+    if (window.playSound) window.playSound('tap');
+    if (window.triggerHaptic) window.triggerHaptic('tap');
+
     const contents = document.querySelectorAll(".pwa-tab-content");
     contents.forEach(content => {
+        content.classList.remove("tab-transitioning");
         if (content.id === tabId) {
             content.style.display = "block";
+            content.classList.add("tab-transitioning");
+            setTimeout(() => {
+                if (window.init3DTilt) window.init3DTilt();
+            }, 100);
         } else {
             content.style.display = "none";
         }
@@ -3188,19 +3205,6 @@ window.getProductEmoji = getProductEmoji;
 
 export function getProductEmojiBadge(p) {
     if (!p) return "";
-    const emoji = getProductEmoji(p);
-    const nameLower = (p.name || "").toLowerCase();
-    const typeLower = (p.type || "").toLowerCase();
-    
-    if (typeLower.includes("carv") || nameLower.includes("carv")) {
-        return `<span class="product-icon-badge anim-pulse-fire">${emoji}</span>`;
-    }
-    if (typeLower.includes("gelo") || typeLower.includes("saborizado") || nameLower.includes("gelo")) {
-        return `<span class="product-icon-badge anim-rotate-ice">${emoji}</span>`;
-    }
-    return `<span class="product-icon-badge">${emoji}</span>`;
-}
-
 window.getProductEmojiBadge = getProductEmojiBadge;
 
 // ==========================================
@@ -3279,6 +3283,48 @@ export function playSound(type) {
             gain.connect(ctx.destination);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.09);
+        } else if (type === 'tap') {
+            // Som tátil orgânico (woodblock click)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(900, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.03);
+            gain.gain.setValueAtTime(0.06, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.04);
+        } else if (type === 'warning') {
+            // Sinal sonoro de aviso grave (sino descendente)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(290, ctx.currentTime);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.65);
+        } else if (type === 'error') {
+            // Alerta de erro duplo rápido
+            const playBuzz = (delay) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, ctx.currentTime + delay);
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + delay);
+                osc.stop(ctx.currentTime + delay + 0.13);
+            };
+            playBuzz(0);
+            playBuzz(0.12);
         }
     } catch (e) {
         console.warn("Som não sintetizado:", e);
@@ -3290,20 +3336,43 @@ export function triggerHaptic(type) {
     if (!navigator.vibrate) return;
     
     try {
-        if (type === 'click') {
-            navigator.vibrate(12);
+        if (type === 'click' || type === 'tap') {
+            navigator.vibrate(6); // Micro vibração de clique/teclado
         } else if (type === 'success') {
             navigator.vibrate([35, 45, 35]);
-        } else if (type === 'error' || type === 'warning') {
-            navigator.vibrate([100, 50, 100, 50, 100]);
+        } else if (type === 'warning') {
+            navigator.vibrate(70); // Vibração média
+        } else if (type === 'error') {
+            navigator.vibrate([100, 50, 100]); // Vibração dupla pesada
         }
     } catch (e) {
         console.warn("Haptic não suportado ou bloqueado:", e);
     }
 }
 
-export function triggerConfetti() {
+export function triggerConfetti(items = null) {
     try {
+        let showSnow = true;
+        let showFire = true;
+        let showMoney = true;
+        
+        if (items) {
+            if (typeof items === 'string') {
+                showSnow = (items === 'gelo');
+                showFire = (items === 'carvao');
+                showMoney = (items === 'venda');
+            } else {
+                const keys = Object.keys(items);
+                showSnow = keys.some(k => k.toLowerCase().includes('gelo') || k.toLowerCase().includes('sab_'));
+                showFire = keys.some(k => k.toLowerCase().includes('carvao'));
+                showMoney = keys.some(k => k.toLowerCase().includes('tina') || k.toLowerCase().includes('mesa'));
+                
+                if (!showSnow && !showFire && !showMoney) {
+                    showSnow = showFire = showMoney = true;
+                }
+            }
+        }
+
         const canvas = document.createElement('canvas');
         canvas.style.position = 'fixed';
         canvas.style.top = '0';
@@ -3325,6 +3394,12 @@ export function triggerConfetti() {
 
         const colors = ['#00f0ff', '#0072ff', '#10b981', '#f59e0b', '#ff007f', '#8b5cf6'];
         const particles = [];
+        
+        const typePool = [];
+        if (showSnow) typePool.push('snow');
+        if (showFire) typePool.push('fire');
+        if (showMoney) typePool.push('money');
+        typePool.push('normal');
 
         for (let i = 0; i < 120; i++) {
             particles.push({
@@ -3336,7 +3411,8 @@ export function triggerConfetti() {
                 size: Math.random() * 8 + 4,
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.2,
-                opacity: 1
+                opacity: 1,
+                type: typePool[Math.floor(Math.random() * typePool.length)]
             });
         }
 
@@ -3365,9 +3441,24 @@ export function triggerConfetti() {
                     ctx.save();
                     ctx.translate(p.x, p.y);
                     ctx.rotate(p.rotation);
-                    ctx.fillStyle = p.color;
                     ctx.globalAlpha = p.opacity;
-                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+
+                    if (p.type === 'snow') {
+                        ctx.font = `${p.size * 2.8}px sans-serif`;
+                        ctx.fillStyle = '#b3f0ff';
+                        ctx.fillText('❄️', -p.size, p.size);
+                    } else if (p.type === 'fire') {
+                        ctx.font = `${p.size * 2.8}px sans-serif`;
+                        ctx.fillStyle = '#ff5500';
+                        ctx.fillText('🔥', -p.size, p.size);
+                    } else if (p.type === 'money') {
+                        ctx.font = `${p.size * 2.8}px sans-serif`;
+                        ctx.fillStyle = '#22c55e';
+                        ctx.fillText('💵', -p.size, p.size);
+                    } else {
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    }
                     ctx.restore();
                 }
             });
@@ -3383,6 +3474,36 @@ export function triggerConfetti() {
     } catch (e) {
         console.warn("Confetes falharam:", e);
     }
+}
+
+// Efeito 3D Tilt nos cards
+export function init3DTilt() {
+    const updateTilt = (e, card) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = ((centerY - y) / centerY) * 8;
+        const rotateY = ((x - centerX) / centerX) * 8;
+        
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
+    };
+    
+    const resetTilt = (card) => {
+        card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    };
+    
+    const cards = document.querySelectorAll('.kpi-card, .dashboard-panel, .widgets-setup-panel, [id^="pdv-catalog-grid"] > div');
+    cards.forEach(card => {
+        if (card.classList.contains('tilt-card-active')) return;
+        card.classList.add('tilt-card', 'tilt-card-active');
+        
+        card.addEventListener('mousemove', (e) => updateTilt(e, card));
+        card.addEventListener('mouseleave', () => resetTilt(card));
+    });
 }
 
 // Funções de controle rápido pelo cabeçalho
@@ -3463,7 +3584,7 @@ export function updateQuickTogglesUI() {
 window.playSound = playSound;
 window.triggerHaptic = triggerHaptic;
 window.triggerConfetti = triggerConfetti;
+window.init3DTilt = init3DTilt;
 window.toggleQuickSound = toggleQuickSound;
 window.toggleQuickHaptic = toggleQuickHaptic;
 window.updateQuickTogglesUI = updateQuickTogglesUI;
-
