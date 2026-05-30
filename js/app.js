@@ -490,8 +490,8 @@ export function updateHeaderForTab(tab) {
             globalBtn.innerHTML = `<i data-lucide="plus"></i> Novo Pedido`;
             break;
         case "clientes":
-            pageTitle.innerText = "Clientes & Freezers";
-            pageSubtitle.innerText = "Cadastre novos pontos e monitore os estoques locais";
+            pageTitle.innerText = "Clientes";
+            pageSubtitle.innerText = "Gerencie os clientes cadastrados e seus respectivos estoques locais";
             globalBtn.style.display = "inline-flex";
             globalBtn.innerHTML = `<i data-lucide="user-plus"></i> Novo Cliente`;
             break;

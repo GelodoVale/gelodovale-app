@@ -241,8 +241,8 @@ export function renderClientes() {
                         <i data-lucide="link-2" style="width: 14px; height: 14px;"></i> Desvincular
                     </button>
                     ` : `
-                    <button class="btn btn-secondary" onclick="window.openLinkFreezerModal('${c.id}')" title="Vincular Freezer" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); color: #3b82f6;">
-                        <i data-lucide="link" style="width: 14px; height: 14px;"></i> Vincular Freezer
+                    <button class="btn btn-secondary" onclick="window.openLinkFreezerModal('${c.id}')" title="Novo Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                        <i data-lucide="link" style="width: 14px; height: 14px;"></i> Novo Comodato
                     </button>
                     `}
                     ${c.phone ? `
@@ -308,7 +308,7 @@ export function openClientModal(clientId = null) {
     }
     
     if (clientId) {
-        title.innerText = "Editar Cliente & Freezer";
+        title.innerText = "Editar Cliente";
         const c = state.clients.find(item => item.id === clientId);
         if (c) {
             document.getElementById("form-client-id").value = c.id;
@@ -395,7 +395,7 @@ export function openClientModal(clientId = null) {
             }
         }
     } else {
-        title.innerText = "Novo Cliente & Freezer";
+        title.innerText = "Novo Cliente";
         renderClientModalProducts(null);
         const debtGroup = document.getElementById("client-debt-group");
         if (debtGroup) debtGroup.style.display = "none";
