@@ -968,10 +968,13 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
                 <canvas id="client-portal-canvas" style="background: white;"></canvas>
             </div>
             
-            <div class="client-portal-buttons" style="margin-top: 1rem;">
+            <div class="client-portal-buttons" style="margin-top: 1rem; display: flex; gap: 8px; flex-wrap: wrap;">
                 <button type="button" class="btn btn-secondary" id="btn-portal-clear" style="padding: 8px 16px;">Limpar</button>
                 <button type="button" class="btn btn-primary" id="btn-portal-submit" style="padding: 8px 20px; display: inline-flex; align-items: center; gap: 6px;">
                     <i data-lucide="check" style="width: 14px; height: 14px;"></i> Assinar e Enviar
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-portal-save-only" style="padding: 8px 16px; margin-left: auto; border-color: var(--color-primary); color: var(--color-primary); background: rgba(0, 240, 255, 0.05); display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> Apenas Salvar Dados
                 </button>
             </div>
             <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
@@ -1005,8 +1008,10 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
         
         const btnSubmit = document.getElementById("btn-portal-submit");
         const btnClear = document.getElementById("btn-portal-clear");
+        const btnSaveOnly = document.getElementById("btn-portal-save-only");
         if (btnSubmit) btnSubmit.disabled = true;
         if (btnClear) btnClear.disabled = true;
+        if (btnSaveOnly) btnSaveOnly.disabled = true;
         if (btnSubmit) btnSubmit.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; animation: spin 1s linear infinite;"></span> Enviando...';
         
         const dataUrl = portalCanvas.toDataURL("image/png");
@@ -1023,6 +1028,7 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
             targetComodato.signatureMethod = 'remote';
             targetComodato.clientPhone = phoneVal;
             targetComodato.clientAddress = addressVal;
+            targetComodato.clientDoc = docVal;
         }
         
         const clientsArr = Array.isArray(remoteState.clients)
@@ -1047,7 +1053,72 @@ export function renderPortalInterface(remoteState, comodato, client, deviceKey) 
                 window.showToast("Ocorreu um erro ao enviar sua assinatura para o servidor. Por favor, tente novamente: " + err.message, "error");
                 if (btnSubmit) btnSubmit.disabled = false;
                 if (btnClear) btnClear.disabled = false;
+                if (btnSaveOnly) btnSaveOnly.disabled = false;
                 if (btnSubmit) btnSubmit.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px;"></i> Assinar e Enviar';
+                if (window.lucide) window.lucide.createIcons();
+            });
+    };
+
+    document.getElementById("btn-portal-save-only").onclick = () => {
+        const docVal = document.getElementById("portal-client-doc").value.trim();
+        const phoneVal = document.getElementById("portal-client-phone").value.trim();
+        const addressVal = document.getElementById("portal-client-address").value.trim();
+        
+        if (!docVal) {
+            window.showToast("Por favor, preencha o seu CNPJ ou CPF.", "warning");
+            return;
+        }
+        if (!phoneVal) {
+            window.showToast("Por favor, preencha o seu Telefone/WhatsApp.", "warning");
+            return;
+        }
+        if (!addressVal) {
+            window.showToast("Por favor, preencha o endereço completo de instalação.", "warning");
+            return;
+        }
+        
+        const btnSaveOnly = document.getElementById("btn-portal-save-only");
+        const btnSubmit = document.getElementById("btn-portal-submit");
+        const btnClear = document.getElementById("btn-portal-clear");
+        if (btnSaveOnly) btnSaveOnly.disabled = true;
+        if (btnSubmit) btnSubmit.disabled = true;
+        if (btnClear) btnClear.disabled = true;
+        if (btnSaveOnly) btnSaveOnly.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid var(--color-primary); border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; animation: spin 1s linear infinite;"></span> Salvando...';
+        
+        const comId = comodato.id;
+        const comodatosArr = Array.isArray(remoteState.comodatos)
+            ? remoteState.comodatos
+            : Object.values(remoteState.comodatos || {});
+        const targetComodato = comodatosArr.find(c => c.id === comId);
+        if (targetComodato) {
+            targetComodato.clientPhone = phoneVal;
+            targetComodato.clientAddress = addressVal;
+            targetComodato.clientDoc = docVal;
+        }
+        
+        const clientsArr = Array.isArray(remoteState.clients)
+            ? remoteState.clients
+            : Object.values(remoteState.clients || {});
+        const targetClient = clientsArr.find(c => c.id === comodato.clientId);
+        if (targetClient) {
+            targetClient.document = docVal;
+            targetClient.phone = phoneVal;
+            targetClient.address = addressVal;
+        }
+        
+        remoteState.lastUpdated = Date.now();
+        
+        firebase.database().ref(`factories/${deviceKey}`).set(remoteState)
+            .then(() => {
+                showPortalSuccess(remoteState, targetComodato || comodato, 'only_saved');
+            })
+            .catch(err => {
+                console.error("Erro ao salvar dados cadastrais no Firebase:", err);
+                window.showToast("Ocorreu um erro ao salvar os dados no servidor: " + err.message, "error");
+                if (btnSaveOnly) btnSaveOnly.disabled = false;
+                if (btnSaveOnly) btnSaveOnly.innerHTML = '<i data-lucide="save" style="width: 14px; height: 14px;"></i> Apenas Salvar Dados';
+                if (btnSubmit) btnSubmit.disabled = false;
+                if (btnClear) btnClear.disabled = false;
                 if (window.lucide) window.lucide.createIcons();
             });
     };
@@ -1058,10 +1129,16 @@ export function showPortalSuccess(remoteState, comodato, alreadySigned) {
     if (!root) return;
     
     const facName = remoteState.factorySettings && remoteState.factorySettings.name ? remoteState.factorySettings.name : "Gelo do Vale";
-    const titleText = alreadySigned ? "Contrato Já Assinado!" : "Assinatura Enviada com Sucesso!";
-    const bodyText = alreadySigned 
-        ? `Este termo de comodato para o freezer serial <strong>${comodato.freezerCode}</strong> já foi assinado e encontra-se devidamente ativo no sistema da fábrica.`
-        : `Sua assinatura para o comodato do freezer serial <strong>${comodato.freezerCode}</strong> foi registrada e sincronizada com a fábrica com sucesso.`;
+    let titleText = "Assinatura Enviada com Sucesso!";
+    let bodyText = `Sua assinatura para o comodato do freezer serial <strong>${comodato.freezerCode}</strong> foi registrada e sincronizada com a fábrica com sucesso.`;
+    
+    if (alreadySigned === 'only_saved') {
+        titleText = "Dados Salvos com Sucesso!";
+        bodyText = `Seus dados cadastrais para o freezer serial <strong>${comodato.freezerCode}</strong> foram atualizados no sistema remoto. O contrato agora pode ser impresso pela fábrica com as informações corretas para assinatura física.`;
+    } else if (alreadySigned === true) {
+        titleText = "Contrato Já Assinado!";
+        bodyText = `Este termo de comodato para o freezer serial <strong>${comodato.freezerCode}</strong> já foi assinado e encontra-se devidamente ativo no sistema da fábrica.`;
+    }
         
     root.innerHTML = `
         <div class="client-portal-card" style="text-align: center; border-color: var(--color-success); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1), var(--shadow-neon);">
