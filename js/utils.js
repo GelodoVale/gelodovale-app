@@ -1042,7 +1042,7 @@ export function openWeatherForecastModal() {
     const modal = document.getElementById("modal-weather-forecast");
     if (!modal) return;
 
-    modal.style.display = "flex";
+    modal.classList.add("active");
 
     const cityLabel = document.getElementById("forecast-active-city");
     if (cityLabel) {
@@ -1454,7 +1454,7 @@ export function showLocalPixModal(clientName, amount) {
         }
     }
 
-    modal.style.display = "flex";
+    modal.classList.add("active");
 }
 window.showLocalPixModal = showLocalPixModal;
 
