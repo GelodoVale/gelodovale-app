@@ -324,6 +324,60 @@ export function renderComodatoDetail(comId) {
     
     document.getElementById("det-com-general-notes").value = comodato.notes || "";
     
+    // Renderizar Histórico de Vistorias
+    const inspectionsListEl = document.getElementById("comodato-inspections-list");
+    if (inspectionsListEl) {
+        const inspections = comodato.inspections || [];
+        if (inspections.length === 0) {
+            inspectionsListEl.innerHTML = `<div style="text-align: center; color: var(--color-text-muted); font-style: italic; padding: 1rem 0;">Nenhuma vistoria registrada.</div>`;
+        } else {
+            const sortedInspections = [...inspections].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; color: var(--color-text-muted); font-size: 0.75rem;">
+                            <th style="padding: 6px 4px;">Data</th>
+                            <th style="padding: 6px 4px;">Status</th>
+                            <th style="padding: 6px 4px;">Observações</th>
+                            <th style="padding: 6px 4px; text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            sortedInspections.forEach((ins) => {
+                let statusBadge = '';
+                if (ins.status === 'excelente') {
+                    statusBadge = `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid rgba(16, 185, 129, 0.2);">Excelente</span>`;
+                } else if (ins.status === 'bom') {
+                    statusBadge = `<span style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid rgba(59, 130, 246, 0.2);">Bom</span>`;
+                } else if (ins.status === 'necessita_manutencao') {
+                    statusBadge = `<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid rgba(245, 158, 11, 0.2);">Manutenção</span>`;
+                } else {
+                    statusBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid rgba(239, 68, 68, 0.2);">Sujo / Irregular</span>`;
+                }
+                
+                const formattedInsDate = ins.date ? new Date(ins.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                const originalIndex = inspections.findIndex(x => x.date === ins.date && x.status === ins.status && x.notes === ins.notes);
+
+                html += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; vertical-align: middle;">
+                        <td style="padding: 6px 4px; white-space: nowrap;">${formattedInsDate}</td>
+                        <td style="padding: 6px 4px; white-space: nowrap;">${statusBadge}</td>
+                        <td style="padding: 6px 4px; color: var(--color-text-main); line-height: 1.2;">${ins.notes || '-'}</td>
+                        <td style="padding: 6px 4px; text-align: right;">
+                            <button type="button" class="btn-action" onclick="window.deleteComodatoInspection('${comodato.id}', ${originalIndex})" title="Excluir Vistoria" style="background:none; border:none; color:#ef4444; padding: 2px; cursor:pointer; display: inline-flex; align-items: center;"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `
+                    </tbody>
+                </table>
+            `;
+            inspectionsListEl.innerHTML = html;
+        }
+    }
+    
     // Renderizar as 4 galerias de fotos/documentos categorizadas
     const categories = ['local', 'qrcode', 'motor', 'contract'];
     const freezerCode = comodato.freezerCode || 'SemCod';
@@ -415,6 +469,25 @@ export function renderComodatoDetail(comId) {
                 window.showToast(`Equipamento com código "${comodato.freezerCode}" não encontrado no inventário para gerar etiqueta.`, "warning");
             }
         };
+    }
+
+    const btnDelete = document.getElementById("btn-comodato-delete");
+    if (btnDelete) {
+        btnDelete.onclick = () => {
+            deleteComodatoRecord(comodato.id);
+        };
+    }
+
+    const btnMigrate = document.getElementById("btn-comodato-migrate");
+    if (btnMigrate) {
+        if (comodato.status === 'retirado') {
+            btnMigrate.style.display = "none";
+        } else {
+            btnMigrate.style.display = "inline-flex";
+            btnMigrate.onclick = () => {
+                openMigrateComodatoModal(comodato.id);
+            };
+        }
     }
     
     if (window.lucide) window.lucide.createIcons();
@@ -1047,6 +1120,21 @@ export function showPortalError(msg) {
     if (window.lucide) window.lucide.createIcons();
 }
 
+function getClientQualification(clientName, clientDoc, clientAddress, clientPhone) {
+    const docClean = (clientDoc || '').replace(/\D/g, '');
+    const nameUpper = (clientName || '').toUpperCase();
+    if (docClean.length > 11) {
+        // CNPJ / Pessoa Jurídica
+        return `<strong>COMODATÁRIO:</strong> ${nameUpper}, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ${clientDoc}, com sede e endereço de instalação no endereço: ${clientAddress}, telefone: ${clientPhone}.`;
+    } else if (docClean.length === 11) {
+        // CPF / Pessoa Física
+        return `<strong>COMODATÁRIO:</strong> ${nameUpper}, pessoa física, portadora do CPF sob o nº ${clientDoc}, residente e domiciliada no endereço de instalação: ${clientAddress}, telefone: ${clientPhone}.`;
+    } else {
+        // Fallback
+        return `<strong>COMODATÁRIO:</strong> ${nameUpper}, CNPJ/CPF: ${clientDoc || 'Não informado'}, endereço de instalação: ${clientAddress}, telefone: ${clientPhone}.`;
+    }
+}
+
 export function renderPortalContractTerms(comodato, client, remoteState) {
     const clientName = client ? client.name : comodato.clientName;
     const clientDoc = client ? (client.document || comodato.clientDoc || 'Não informado') : (comodato.clientDoc || 'Não informado');
@@ -1066,7 +1154,7 @@ export function renderPortalContractTerms(comodato, client, remoteState) {
         </div>
         
         <p><strong>COMODANTE:</strong> ${facName.toUpperCase()}, inscrita no CNPJ sob o nº ${facCnpj}, com sede no endereço: ${facAddress}.</p>
-        <p><strong>COMODATÁRIO:</strong> ${clientName.toUpperCase()}, CNPJ/CPF: ${clientDoc}, endereço de instalação: ${clientAddress}, telefone: ${clientPhone}.</p>
+        <p>${getClientQualification(clientName, clientDoc, clientAddress, clientPhone)}</p>
         
         <p style="margin-top: 15px;">As partes qualificadas acima têm entre si justo e avençado o comodato do equipamento abaixo descrito, regulado pelas seguintes condições:</p>
         
@@ -1163,7 +1251,7 @@ export function openComodato(comId) {
         <h2 style="text-align: center; margin-bottom: 20px; font-weight: bold; border-bottom: 2px solid var(--color-primary); padding-bottom: 10px; font-size: 1.25rem;">INSTRUMENTO PARTICULAR DE COMODATO DE EQUIPAMENTO</h2>
         
         <p><strong>COMODANTE:</strong> ${facName.toUpperCase()}, inscrita no CNPJ sob o nº ${facCnpj}, com sede no endereço: ${facAddress}.</p>
-        <p><strong>COMODATÁRIO:</strong> ${client.name.toUpperCase()}, CNPJ/CPF: ${clientDoc}, endereço de instalação: ${client.address || 'Não informado'}, telefone: ${client.phone || 'Não informado'}.</p>
+        <p>${getClientQualification(client.name, clientDoc, client.address || 'Não informado', client.phone || 'Não informado')}</p>
         
         <p style="margin-top: 15px;">As partes qualificadas acima têm entre si justo e avençado o comodato do equipamento abaixo descrito, regulado pelas seguintes condições:</p>
         
@@ -1744,3 +1832,266 @@ export function captureComodatoGPS() {
     );
 }
 window.captureComodatoGPS = captureComodatoGPS;
+
+export function deleteComodatoRecord(comId) {
+    window.showConfirm(
+        "Tem certeza que deseja excluir PERMANENTEMENTE este comodato? Esta ação não pode ser desfeita e removerá todo o histórico deste contrato.",
+        () => {
+            const index = (state.comodatos || []).findIndex(c => c.id === comId);
+            if (index === -1) return;
+            
+            const comodato = state.comodatos[index];
+            
+            // Liberar o freezer se estiver vinculado a este comodato e ainda não tiver sido alocado em outro ativo
+            const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
+            if (freezer && freezer.clientId === comodato.clientId) {
+                freezer.status = 'disponivel';
+                delete freezer.clientId;
+                delete freezer.clientName;
+                delete freezer.deliveryDate;
+            }
+            
+            // Remover o vínculo do freezer no cliente
+            const client = state.clients.find(c => c.id === comodato.clientId);
+            if (client && client.freezerCode === comodato.freezerCode) {
+                delete client.freezerCode;
+                delete client.freezerBrand;
+                delete client.freezerVoltage;
+                delete client.freezerCapacity;
+                delete client.deliveryDate;
+            }
+            
+            // Remover o comodato do array
+            state.comodatos.splice(index, 1);
+            
+            saveState();
+            window.showToast("Comodato excluído com sucesso!", "success");
+            if (window.closeModal) window.closeModal("modal-comodato-detail");
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Excluir Comodato",
+        "Excluir"
+    );
+}
+window.deleteComodatoRecord = deleteComodatoRecord;
+
+export function toggleAddInspectionForm() {
+    const form = document.getElementById("inline-inspection-form");
+    if (!form) return;
+    if (form.style.display === "none") {
+        form.style.display = "block";
+        const today = window.getBrazilTimeISO().split('T')[0];
+        document.getElementById("ins-date").value = today;
+        document.getElementById("ins-status").value = "excelente";
+        document.getElementById("ins-notes").value = "";
+    } else {
+        form.style.display = "none";
+    }
+}
+window.toggleAddInspectionForm = toggleAddInspectionForm;
+
+export function saveComodatoInspection() {
+    const comId = window.currentComodatoId;
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) return;
+
+    const dateVal = document.getElementById("ins-date").value;
+    const statusVal = document.getElementById("ins-status").value;
+    const notesVal = document.getElementById("ins-notes").value.trim();
+
+    if (!dateVal) {
+        window.showToast("Por favor, preencha a data da vistoria.", "warning");
+        return;
+    }
+
+    if (!comodato.inspections) {
+        comodato.inspections = [];
+    }
+
+    comodato.inspections.push({
+        date: dateVal,
+        status: statusVal,
+        notes: notesVal,
+        checker: 'Operador'
+    });
+
+    saveState();
+    window.showToast("Vistoria registrada com sucesso!", "success");
+    
+    const form = document.getElementById("inline-inspection-form");
+    if (form) form.style.display = "none";
+
+    renderComodatoDetail(comId);
+}
+window.saveComodatoInspection = saveComodatoInspection;
+
+export function deleteComodatoInspection(comId, index) {
+    window.showConfirm(
+        "Tem certeza que deseja excluir esta vistoria?",
+        () => {
+            const comodato = (state.comodatos || []).find(c => c.id === comId);
+            if (!comodato) return;
+
+            if (comodato.inspections && comodato.inspections[index] !== undefined) {
+                comodato.inspections.splice(index, 1);
+                saveState();
+                renderComodatoDetail(comId);
+                window.showToast("Vistoria excluída com sucesso!", "success");
+            }
+        },
+        null,
+        "Excluir Vistoria",
+        "Excluir"
+    );
+}
+window.deleteComodatoInspection = deleteComodatoInspection;
+
+export function openMigrateComodatoModal(comId) {
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) return;
+
+    window.currentComodatoId = comId;
+
+    document.getElementById("migrate-comodato-freezer-label").innerText = `${comodato.freezerCode} (${comodato.freezerBrand || 'Sem Marca'})`;
+    document.getElementById("migrate-comodato-date").value = window.getBrazilTimeISO().split('T')[0];
+    document.getElementById("migrate-comodato-notes").value = "";
+
+    const clientSelect = document.getElementById("migrate-comodato-client-select");
+    if (clientSelect) {
+        clientSelect.innerHTML = '<option value="">-- Selecionar Cliente --</option>';
+        
+        const eligibleClients = (state.clients || []).filter(c => {
+            if (c.id === comodato.clientId) return false;
+            if (!c.document || !c.phone || !c.address || !c.latitude || !c.longitude) return false;
+            return true;
+        });
+
+        if (eligibleClients.length === 0) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.disabled = true;
+            opt.innerText = "Nenhum cliente elegível com cadastro completo encontrado.";
+            clientSelect.appendChild(opt);
+        } else {
+            eligibleClients.sort((a, b) => a.name.localeCompare(b.name));
+            eligibleClients.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.innerText = `${c.name} (${c.document})`;
+                clientSelect.appendChild(opt);
+            });
+        }
+    }
+
+    if (window.closeModal) window.closeModal("modal-comodato-detail");
+    document.getElementById("modal-migrate-comodato").classList.add("active");
+}
+window.openMigrateComodatoModal = openMigrateComodatoModal;
+
+export function executeComodatoMigration() {
+    const comId = window.currentComodatoId;
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) {
+        window.showToast("Contrato de comodato original não encontrado.", "error");
+        return;
+    }
+
+    const newClientId = document.getElementById("migrate-comodato-client-select").value;
+    const transferDate = document.getElementById("migrate-comodato-date").value;
+    const migrationNotes = document.getElementById("migrate-comodato-notes").value.trim();
+
+    if (!newClientId) {
+        window.showToast("Por favor, selecione o novo proprietário.", "warning");
+        return;
+    }
+    if (!transferDate) {
+        window.showToast("Por favor, selecione a data da transferência.", "warning");
+        return;
+    }
+
+    const newClient = state.clients.find(c => c.id === newClientId);
+    if (!newClient) {
+        window.showToast("Novo proprietário selecionado é inválido.", "error");
+        return;
+    }
+
+    if (!newClient.document || !newClient.phone || !newClient.address || !newClient.latitude || !newClient.longitude) {
+        window.showToast("O novo proprietário não possui os dados obrigatórios para Comodato (CNPJ/CPF, Telefone, Endereço ou GPS). Complete-os no cadastro antes de migrar.", "warning");
+        return;
+    }
+
+    window.showConfirm(
+        `Confirmar a migração do freezer ${comodato.freezerCode} para o cliente ${newClient.name}? O comodato atual será finalizado e um novo contrato pendente de assinatura será criado.`,
+        () => {
+            const oldClientName = comodato.clientName || 'Cliente Anterior';
+            comodato.status = 'retirado';
+            comodato.returnDate = transferDate;
+            comodato.returnNotes = `Migração de Proprietário: Equipamento transferido para o cliente ${newClient.name} (CNPJ/CPF: ${newClient.document}) em ${new Date(transferDate + 'T00:00:00').toLocaleDateString('pt-BR')}. Obs: ${migrationNotes}`;
+
+            const newCom = {
+                id: 'com_' + Math.random().toString(36).substr(2, 9),
+                clientId: newClient.id,
+                clientName: newClient.name,
+                clientPhone: newClient.phone || '',
+                clientAddress: newClient.address || '',
+                clientDoc: newClient.document || '',
+                latitude: newClient.latitude || comodato.latitude,
+                longitude: newClient.longitude || comodato.longitude,
+                freezerCode: comodato.freezerCode,
+                freezerBrand: comodato.freezerBrand || 'Não informado',
+                freezerVoltage: comodato.freezerVoltage || 'Não informado',
+                freezerCapacity: comodato.freezerCapacity || '',
+                startDate: transferDate,
+                status: 'pendente',
+                signatureBase64: '',
+                signatureDate: '',
+                notes: `Migrado a partir do contrato antigo de ${oldClientName}. Obs: ${migrationNotes}`,
+                photos: comodato.photos || [],
+                photosLocal: comodato.photosLocal || [],
+                photosQRCode: comodato.photosQRCode || [],
+                photosMotor: comodato.photosMotor || [],
+                photosContract: comodato.photosContract || [],
+                createdAt: Date.now()
+            };
+
+            if (!state.comodatos) state.comodatos = [];
+            state.comodatos.push(newCom);
+
+            const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
+            if (freezer) {
+                freezer.status = 'alocado';
+                freezer.clientId = newClient.id;
+                freezer.clientName = newClient.name;
+                freezer.deliveryDate = transferDate;
+                freezer.maintenanceNotes = `Migrado do cliente ${oldClientName}. Obs: ${migrationNotes}`;
+            }
+
+            const oldClient = state.clients.find(c => c.id === comodato.clientId);
+            if (oldClient) {
+                delete oldClient.freezerCode;
+                delete oldClient.freezerBrand;
+                delete oldClient.freezerVoltage;
+                delete oldClient.freezerCapacity;
+                delete oldClient.deliveryDate;
+            }
+
+            newClient.freezerCode = comodato.freezerCode;
+            newClient.freezerBrand = comodato.freezerBrand || 'Não informado';
+            newClient.freezerVoltage = comodato.freezerVoltage || 'Não informado';
+            newClient.freezerCapacity = comodato.freezerCapacity || '';
+            newClient.deliveryDate = transferDate;
+            newClient.maintenanceNotes = `Migrado do cliente ${oldClientName}. Obs: ${migrationNotes}`;
+
+            saveState();
+            
+            window.showToast("Migração concluída com sucesso! Novo comodato gerado como pendente de assinatura.", "success");
+            if (window.closeModal) window.closeModal("modal-migrate-comodato");
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Confirmar Migração",
+        "Confirmar"
+    );
+}
+window.executeComodatoMigration = executeComodatoMigration;

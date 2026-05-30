@@ -2797,6 +2797,48 @@
                     <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Observações da Devolução:</span> <span id="hist-det-return-notes">-</span></p>
                 </div>
 
+                <!-- Histórico de Vistorias e Inspeções -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h4 style="color: var(--color-primary); font-size: 0.9rem; margin: 0; font-weight: 700;">Vistorias & Inspeções Periódicas</h4>
+                        <button type="button" class="btn btn-secondary" onclick="window.toggleAddInspectionForm()" style="font-size: 0.7rem; padding: 2px 6px; height: auto;">
+                            <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px;"></i> Registrar Vistoria
+                        </button>
+                    </div>
+                    
+                    <!-- Formulário Inline para Registrar Vistoria (Oculto por padrão) -->
+                    <div id="inline-inspection-form" style="display: none; background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                            <div>
+                                <label style="font-size: 0.7rem; display: block; margin-bottom: 2px;">Data da Vistoria</label>
+                                <input type="date" id="ins-date" class="form-control" style="font-size: 0.8rem; padding: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7rem; display: block; margin-bottom: 2px;">Status do Freezer</label>
+                                <select id="ins-status" class="form-control" style="font-size: 0.8rem; padding: 4px;">
+                                    <option value="excelente">Excelente (Limpo e Conservado)</option>
+                                    <option value="bom">Bom (Uso Normal)</option>
+                                    <option value="necessita_manutencao">Necessita de Manutenção</option>
+                                    <option value="sujo_irregular">Sujo / Irregularidades</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <label style="font-size: 0.7rem; display: block; margin-bottom: 2px;">Observações (Exclusividade, QR Code, Limpeza...)</label>
+                            <input type="text" id="ins-notes" class="form-control" placeholder="Ex: QR Code legível, exclusividade respeitada, freezer limpo." style="font-size: 0.8rem; padding: 4px 6px;">
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="window.toggleAddInspectionForm()" style="font-size: 0.7rem; padding: 2px 6px;">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="window.saveComodatoInspection()" style="font-size: 0.7rem; padding: 2px 6px;">Salvar Vistoria</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela/Lista de Vistorias -->
+                    <div id="comodato-inspections-list" style="max-height: 150px; overflow-y: auto; font-size: 0.8rem;">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
                 <!-- Observações e Notas Gerais -->
                 <div class="form-group">
                     <label for="det-com-general-notes">Notas / Observações Gerais do Comodato (Edição Dinâmica)</label>
@@ -2804,16 +2846,69 @@
                 </div>
 
             </div>
-            <div class="form-actions" style="margin-top: 1.5rem; padding: 0 1rem 1rem 1rem;">
+            <div class="form-actions" style="margin-top: 1.5rem; padding: 0 1rem 1rem 1rem; display: flex; flex-wrap: wrap; gap: 8px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('modal-comodato-detail')">Fechar</button>
                 <button type="button" class="btn btn-primary" id="btn-comodato-save-notes" style="display: inline-flex; align-items: center; gap: 6px;">
                     <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Notas
                 </button>
+                <button type="button" class="btn btn-secondary" id="btn-comodato-migrate" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="arrow-left-right" style="width: 14px; height: 14px;"></i> Migrar Proprietário
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-comodato-delete" style="display: inline-flex; align-items: center; gap: 6px; background: #b91c1c; border-color: #b91c1c;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Excluir Comodato
+                </button>
+                
                 <button type="button" class="btn btn-secondary" id="btn-comodato-print-sticker" style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
                     <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> Gerar Etiqueta QR
                 </button>
                 <button type="button" class="btn btn-secondary" id="btn-comodato-print-doc" style="display: inline-flex; align-items: center; gap: 6px;">
                     <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Ver e Imprimir Contrato
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Migrar Proprietário de Comodato -->
+    <div class="modal-backdrop" id="modal-migrate-comodato">
+        <div class="modal-content" style="width: 500px; max-width: 95vw;">
+            <div class="modal-header">
+                <h3>Migrar Proprietário do Comodato</h3>
+                <button class="close-btn" onclick="closeModal('modal-migrate-comodato')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">
+                    Esta operação transferirá o freezer comodado atual para um novo proprietário <strong>sem movimentar o equipamento fisicamente</strong>. O contrato anterior será finalizado como transferido e um novo contrato pendente será gerado para o cliente selecionado abaixo.
+                </p>
+                
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 6px;">
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Freezer Serial a Transferir:</span>
+                    <strong id="migrate-comodato-freezer-label" style="font-size: 0.95rem; color: var(--color-primary);">-</strong>
+                </div>
+                
+                <div class="form-group">
+                    <label for="migrate-comodato-client-select">Selecionar Novo Proprietário *</label>
+                    <select id="migrate-comodato-client-select" class="form-control" required>
+                        <!-- Preenchido via JS -->
+                    </select>
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-top: 4px;">Apenas clientes com cadastro completo (CNPJ/CPF, Telefone, Endereço e GPS) são elegíveis para migração.</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="migrate-comodato-date">Data de Transferência / Início *</label>
+                    <input type="date" id="migrate-comodato-date" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="migrate-comodato-notes">Observações da Transferência</label>
+                    <textarea id="migrate-comodato-notes" class="form-control" rows="2" placeholder="Ex: Ponto de venda trocou de dono, freezer mantido no mesmo local." style="font-family: inherit; font-size: 0.85rem; padding: 0.5rem;"></textarea>
+                </div>
+            </div>
+            <div class="form-actions" style="padding: 0 1rem 1rem 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-migrate-comodato')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="window.executeComodatoMigration()" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="check" style="width: 14px; height: 14px;"></i> Confirmar Migração
                 </button>
             </div>
         </div>
