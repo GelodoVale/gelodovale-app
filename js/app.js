@@ -581,6 +581,9 @@ export function renderTabContent(tab) {
             if (window.updateSupportTabStatus) window.updateSupportTabStatus();
             break;
     }
+    
+    // Sempre re-inicializar o efeito 3D Tilt para novos elementos renderizados
+    if (window.init3DTilt) window.init3DTilt();
 }
 
 export function renderApp() {
