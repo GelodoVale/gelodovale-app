@@ -610,6 +610,49 @@ export function toggleSelectAllPermissions(checked) {
     });
 }
 
+export function recoverAdminPassword() {
+    const confirmMessage = "Deseja redefinir a senha do Administrador ('admin') para a senha de fábrica (1120M@z@dr1)? Isso restaurará seu acesso caso a senha tenha sido esquecida ou perdida.";
+    const proceedReset = () => {
+        if (!state.users) state.users = [];
+        let adminUser = state.users.find(u => u.username === "admin");
+        if (!adminUser) {
+            adminUser = {
+                id: "admin",
+                username: "admin",
+                name: "Administrador",
+                password: "1120M@z@dr1",
+                permissions: {}
+            };
+            state.users.unshift(adminUser);
+        } else {
+            adminUser.password = "1120M@z@dr1";
+        }
+        state.adminPassword = "1120M@z@dr1";
+        saveState();
+        
+        if (window.showToast) {
+            window.showToast("Senha do Administrador redefinida para: 1120M@z@dr1", "success");
+        } else {
+            alert("Senha do Administrador redefinida para: 1120M@z@dr1");
+        }
+        
+        // Limpar campo de senha
+        const pwdEl = document.getElementById("login-password");
+        if (pwdEl) {
+            pwdEl.value = "";
+            pwdEl.focus();
+        }
+    };
+
+    if (window.showConfirm) {
+        window.showConfirm(confirmMessage, proceedReset, null, "Redefinir Senha", "Redefinir");
+    } else {
+        if (confirm(confirmMessage)) {
+            proceedReset();
+        }
+    }
+}
+
 // Bind to window for HTML accessibility
 window.initUserAccessControl = initUserAccessControl;
 window.initLoginScreen = initLoginScreen;
@@ -623,3 +666,4 @@ window.openUserModal = openUserModal;
 window.saveUser = saveUser;
 window.deleteUser = deleteUser;
 window.toggleSelectAllPermissions = toggleSelectAllPermissions;
+window.recoverAdminPassword = recoverAdminPassword;

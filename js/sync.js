@@ -150,11 +150,9 @@ function pushToFirebaseImediato() {
     isSyncing = true;
     updateSyncStatusUI('syncing');
 
-    // Sanitizar dados sensíveis antes de enviar ao Firebase
-    const { adminPassword: _ap, ...safeState } = state;
-    if (safeState.users) {
-        safeState.users = safeState.users.map(({ password: _pw, ...u }) => u);
-    }
+    // Para permitir login de colaboradores e manter a mesma senha de administrador
+    // em múltiplos aparelhos conectados, sincronizamos o estado com as senhas preservadas.
+    const safeState = JSON.parse(JSON.stringify(state));
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
             updateSyncStatusUI('success');
