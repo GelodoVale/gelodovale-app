@@ -177,6 +177,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Carregar dados do localStorage
     loadState();
     applyAppearanceTheme();
+    initVolumeSlider();
+    updateQuickTogglesUI();
     initFirebase();
     checkOneDriveSync();
 
@@ -2328,6 +2330,7 @@ export function initForms() {
             const tilt3DEnabled = document.getElementById("cfg-3d-tilt-enabled") ? document.getElementById("cfg-3d-tilt-enabled").checked : true;
             
             state.appearance = {
+                ...state.appearance,
                 themeName: preset,
                 primaryColor,
                 primaryColorRgb,
@@ -3220,6 +3223,15 @@ export function playSound(type) {
         if (!AudioContextClass) return;
         const ctx = new AudioContextClass();
         
+        // Criar nó de volume master baseado nas configurações da aparência
+        const masterGain = ctx.createGain();
+        let volumeVal = 0.5; // padrão 50%
+        if (state && state.appearance && state.appearance.soundVolume !== undefined) {
+            volumeVal = state.appearance.soundVolume;
+        }
+        masterGain.gain.setValueAtTime(volumeVal, ctx.currentTime);
+        masterGain.connect(ctx.destination);
+        
         if (type === 'cashRegister') {
             // Som de caixa registradora (metal cha-ching)
             const osc1 = ctx.createOscillator();
@@ -3230,7 +3242,7 @@ export function playSound(type) {
             gain1.gain.setValueAtTime(0.15, ctx.currentTime);
             gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
             osc1.connect(gain1);
-            gain1.connect(ctx.destination);
+            gain1.connect(masterGain);
             osc1.start(ctx.currentTime);
             osc1.stop(ctx.currentTime + 0.4);
 
@@ -3243,7 +3255,7 @@ export function playSound(type) {
             gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.12);
             gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
             osc2.connect(gain2);
-            gain2.connect(ctx.destination);
+            gain2.connect(masterGain);
             osc2.start(ctx.currentTime + 0.12);
             osc2.stop(ctx.currentTime + 0.5);
             
@@ -3256,7 +3268,7 @@ export function playSound(type) {
             gain1.gain.setValueAtTime(0.1, ctx.currentTime);
             gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
             osc1.connect(gain1);
-            gain1.connect(ctx.destination);
+            gain1.connect(masterGain);
             osc1.start(ctx.currentTime);
             osc1.stop(ctx.currentTime + 0.16);
 
@@ -3268,7 +3280,7 @@ export function playSound(type) {
             gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.08);
             gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
             osc2.connect(gain2);
-            gain2.connect(ctx.destination);
+            gain2.connect(masterGain);
             osc2.start(ctx.currentTime + 0.08);
             osc2.stop(ctx.currentTime + 0.26);
             
@@ -3281,7 +3293,7 @@ export function playSound(type) {
             gain.gain.setValueAtTime(0.05, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.09);
         } else if (type === 'tap') {
@@ -3294,7 +3306,7 @@ export function playSound(type) {
             gain.gain.setValueAtTime(0.06, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.04);
         } else if (type === 'warning') {
@@ -3306,7 +3318,7 @@ export function playSound(type) {
             gain.gain.setValueAtTime(0.12, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 0.65);
         } else if (type === 'error') {
@@ -3320,7 +3332,7 @@ export function playSound(type) {
                 gain.gain.setValueAtTime(0.08, ctx.currentTime + delay);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(masterGain);
                 osc.start(ctx.currentTime + delay);
                 osc.stop(ctx.currentTime + delay + 0.13);
             };
@@ -3527,10 +3539,69 @@ export function init3DTilt() {
 }
 
 // Funções de controle rápido pelo cabeçalho
+export function initVolumeSlider() {
+    const slider = document.getElementById("input-volume-slider");
+    if (!slider) return;
+
+    if (!state.appearance) state.appearance = {};
+    
+    // Definir volume inicial
+    let volumeVal = 0.5;
+    if (state.appearance.soundVolume !== undefined) {
+        volumeVal = state.appearance.soundVolume;
+    } else {
+        state.appearance.soundVolume = volumeVal;
+    }
+    
+    // Se o som está desativado, o slider deve começar em 0 visualmente
+    const soundEnabled = state.appearance.soundEnabled !== false;
+    slider.value = soundEnabled ? volumeVal : 0;
+
+    let debouncePlaySound;
+
+    const handleVolumeInput = (e) => {
+        const val = parseFloat(e.target.value);
+        if (!state.appearance) state.appearance = {};
+        
+        state.appearance.soundVolume = val;
+        
+        // Se o usuário aumentou o volume de 0 para algo ativo, ativar o som
+        if (val > 0 && state.appearance.soundEnabled === false) {
+            state.appearance.soundEnabled = true;
+            const chk = document.getElementById("cfg-sound-enabled");
+            if (chk) chk.checked = true;
+        } else if (val === 0 && state.appearance.soundEnabled !== false) {
+            state.appearance.soundEnabled = false;
+            const chk = document.getElementById("cfg-sound-enabled");
+            if (chk) chk.checked = false;
+        }
+
+        saveState();
+        updateQuickTogglesUI();
+
+        // Feedback sonoro rápido ao arrastar
+        clearTimeout(debouncePlaySound);
+        if (state.appearance.soundEnabled && val > 0) {
+            debouncePlaySound = setTimeout(() => {
+                playSound('click');
+            }, 80);
+        }
+    };
+
+    slider.addEventListener("input", handleVolumeInput);
+    slider.addEventListener("change", handleVolumeInput);
+}
+
 export function toggleQuickSound() {
     if (!state.appearance) state.appearance = {};
     const enabled = !(state.appearance.soundEnabled !== false);
     state.appearance.soundEnabled = enabled;
+    
+    // Se ativou o som e o volume atual estiver em 0, definir para um volume audível padrão (ex: 0.5)
+    if (enabled && (state.appearance.soundVolume === undefined || state.appearance.soundVolume === 0)) {
+        state.appearance.soundVolume = 0.5;
+    }
+    
     saveState();
     updateQuickTogglesUI();
     
@@ -3569,13 +3640,28 @@ export function toggleQuickHaptic() {
 export function updateQuickTogglesUI() {
     const soundEnabled = state.appearance && state.appearance.soundEnabled !== false;
     const hapticEnabled = state.appearance && state.appearance.hapticEnabled !== false;
+    
+    // Pegar volume real
+    const volumeVal = (state.appearance && state.appearance.soundVolume !== undefined) ? state.appearance.soundVolume : 0.5;
 
     const btnSound = document.getElementById("btn-quick-toggle-sound");
     const iconSound = document.getElementById("icon-quick-toggle-sound");
+    const slider = document.getElementById("input-volume-slider");
+    
+    if (slider) {
+        slider.value = soundEnabled ? volumeVal : 0;
+    }
+
     if (btnSound && iconSound) {
-        if (soundEnabled) {
-            btnSound.title = "Sons Ativados (Clique para Silenciar)";
-            iconSound.setAttribute("data-lucide", "volume-2");
+        if (soundEnabled && volumeVal > 0) {
+            btnSound.title = `Sons Ativados - Volume: ${Math.round(volumeVal * 100)}% (Clique para Silenciar)`;
+            
+            // Alterar ícone com base no nível do volume
+            if (volumeVal <= 0.5) {
+                iconSound.setAttribute("data-lucide", "volume-1");
+            } else {
+                iconSound.setAttribute("data-lucide", "volume-2");
+            }
             iconSound.style.color = "var(--color-primary)";
         } else {
             btnSound.title = "Sons Silenciados (Clique para Ativar)";
@@ -3605,6 +3691,7 @@ window.playSound = playSound;
 window.triggerHaptic = triggerHaptic;
 window.triggerConfetti = triggerConfetti;
 window.init3DTilt = init3DTilt;
+window.initVolumeSlider = initVolumeSlider;
 window.toggleQuickSound = toggleQuickSound;
 window.toggleQuickHaptic = toggleQuickHaptic;
 window.updateQuickTogglesUI = updateQuickTogglesUI;
