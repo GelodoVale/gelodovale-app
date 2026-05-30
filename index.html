@@ -2642,17 +2642,20 @@
                         <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Telefone:</span> <span id="det-com-client-phone">-</span></p>
                         <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Endereço:</span> <span id="det-com-client-address">-</span></p>
                     </div>
-                    <div>
-                        <h4 style="color: var(--color-primary); font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: 700;">Dados do Freezer</h4>
-                        <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Código/Serial:</span> <strong id="det-com-freezer-code">-</strong></p>
-                        <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Marca/Modelo:</span> <span id="det-com-freezer-brand">-</span></p>
-                        <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Capacidade:</span> <span id="det-com-freezer-cap">-</span></p>
-                        <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Voltagem:</span> <span id="det-com-freezer-voltage">-</span></p>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--color-primary); font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: 700;">Dados do Freezer</h4>
+                            <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Código/Serial:</span> <strong id="det-com-freezer-code">-</strong></p>
+                            <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Marca/Modelo:</span> <span id="det-com-freezer-brand">-</span></p>
+                            <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Capacidade:</span> <span id="det-com-freezer-cap">-</span></p>
+                            <p style="margin: 0.25rem 0; font-size: 0.85rem;"><span style="color: var(--color-text-muted);">Voltagem:</span> <span id="det-com-freezer-voltage">-</span></p>
+                        </div>
+                        <div id="det-com-qrcode-render" style="padding: 4px; background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; box-sizing: border-box; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.5); align-self: center;"></div>
                     </div>
                 </div>
 
-                <!-- Datas e Status -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                <!-- Datas, Status e Localização GPS -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
                     <div>
                         <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Data de Início</span>
                         <strong id="det-com-start-date" style="font-size: 0.95rem;">-</strong>
@@ -2660,6 +2663,15 @@
                     <div>
                         <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Status do Comodato</span>
                         <span id="det-com-status-badge" class="badge" style="font-size: 0.8rem; padding: 4px 8px;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">GPS do Freezer (Instalação)</span>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                            <strong id="det-com-gps-coords" style="font-size: 0.8rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</strong>
+                            <button type="button" class="btn btn-secondary" onclick="window.captureComodatoGPS()" style="padding: 2px 6px; font-size: 0.65rem; height: auto; display: inline-flex; align-items: center; gap: 2px;" title="Capturar Localização Física Atual">
+                                <i data-lucide="map-pin" style="width: 10px; height: 10px;"></i> GPS
+                            </button>
+                        </div>
                     </div>
                     <div id="det-com-return-container" style="display: none;">
                         <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Data de Retirada</span>

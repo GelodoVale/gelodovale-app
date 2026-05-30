@@ -179,6 +179,9 @@ export function saveNewComodato(e) {
         clientName: client.name,
         clientPhone: client.phone || '',
         clientAddress: client.address || '',
+        clientDoc: client.document || '',
+        latitude: client.latitude || '',
+        longitude: client.longitude || '',
         freezerCode: freezerCode,
         freezerBrand: freezer.brand || 'Não informado',
         freezerVoltage: freezer.voltage || 'Não informado',
@@ -237,6 +240,41 @@ export function renderComodatoDetail(comId) {
     document.getElementById("det-com-freezer-voltage").innerText = comodato.freezerVoltage || 'Não informado';
     
     document.getElementById("det-com-start-date").innerText = comodato.startDate ? new Date(comodato.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+
+    // Auto-preenchimento retroativo de campos vindos do cliente se vazios no comodato
+    let hasUpdated = false;
+    if (!comodato.latitude && client && client.latitude) {
+        comodato.latitude = client.latitude;
+        comodato.longitude = client.longitude;
+        hasUpdated = true;
+    }
+    if (!comodato.clientDoc && client && client.document) {
+        comodato.clientDoc = client.document;
+        hasUpdated = true;
+    }
+    if (hasUpdated) {
+        saveState();
+    }
+
+    // Exibir coordenadas de GPS
+    const gpsText = (comodato.latitude && comodato.longitude) ? `${comodato.latitude}, ${comodato.longitude}` : 'Não registrada';
+    document.getElementById("det-com-gps-coords").innerText = gpsText;
+
+    // Renderizar QR Code na ficha técnica de detalhes do comodato
+    setTimeout(() => {
+        const qrContainer = document.getElementById("det-com-qrcode-render");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: comodato.freezerCode,
+                width: 60,
+                height: 60,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
     
     const badge = document.getElementById("det-com-status-badge");
     badge.className = "badge";
@@ -1006,11 +1044,12 @@ export function showPortalError(msg) {
 
 export function renderPortalContractTerms(comodato, client, remoteState) {
     const clientName = client ? client.name : comodato.clientName;
-    const clientDoc = client ? (client.document || 'Não informado') : 'Não informado';
-    const clientPhone = client ? (client.phone || 'Não informado') : (comodato.clientPhone || 'Não informado');
-    const clientAddress = client ? (client.address || 'Não informado') : (comodato.clientAddress || 'Não informado');
+    const clientDoc = client ? (client.document || comodato.clientDoc || 'Não informado') : (comodato.clientDoc || 'Não informado');
+    const clientPhone = client ? (client.phone || comodato.clientPhone || 'Não informado') : (comodato.clientPhone || 'Não informado');
+    const clientAddress = client ? (client.address || comodato.clientAddress || 'Não informado') : (comodato.clientAddress || 'Não informado');
     const dataEntrega = comodato.startDate ? new Date(comodato.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
     const dataAtual = window.formatDateBrazil(window.getBrazilTimeISO());
+    const gpsCoords = (comodato.latitude && comodato.longitude) ? `${comodato.latitude}, ${comodato.longitude}` : (client && client.latitude ? `${client.latitude}, ${client.longitude}` : 'Não registrada');
     
     const facName = remoteState.factorySettings && remoteState.factorySettings.name ? remoteState.factorySettings.name : "GELO DO VALE";
     const facCnpj = remoteState.factorySettings && remoteState.factorySettings.cnpj ? remoteState.factorySettings.cnpj : "00.000.000/0000-00";
@@ -1022,32 +1061,52 @@ export function renderPortalContractTerms(comodato, client, remoteState) {
         </div>
         
         <p><strong>COMODANTE:</strong> ${facName.toUpperCase()}, inscrita no CNPJ sob o nº ${facCnpj}, com sede no endereço: ${facAddress}.</p>
-        <p><strong>COMODATÁRIO:</strong> ${clientName.toUpperCase()}, CNPJ/CPF: ${clientDoc}, endereço: ${clientAddress}, telefone: ${clientPhone}.</p>
+        <p><strong>COMODATÁRIO:</strong> ${clientName.toUpperCase()}, CNPJ/CPF: ${clientDoc}, endereço de instalação: ${clientAddress}, telefone: ${clientPhone}.</p>
         
         <p style="margin-top: 15px;">As partes qualificadas acima têm entre si justo e avençado o comodato do equipamento abaixo descrito, regulado pelas seguintes condições:</p>
         
         <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 1ª - DO OBJETO E CARACTERÍSTICAS</h4>
         <p>O presente contrato tem por objeto o empréstimo gratuito (comodato) de 01 (um) freezer para conservação de gelo, de propriedade da COMODANTE, com as seguintes características:</p>
-        <ul style="margin: 10px 0; padding-left: 20px; list-style-type: square; color: #cbd5e1;">
-            <li><strong>Código do Freezer (Serial):</strong> ${comodato.freezerCode}</li>
-            <li><strong>Marca / Modelo:</strong> ${comodato.freezerBrand || 'Não informado'}</li>
-            <li><strong>Voltagem de Operação:</strong> ${comodato.freezerVoltage || 'Não informado'}</li>
-            <li><strong>Capacidade (Volume):</strong> ${comodato.freezerCapacity ? comodato.freezerCapacity + (comodato.freezerCapacity.toString().toLowerCase().includes('litros') ? '' : ' Litros') : 'Não informado'}</li>
-            <li><strong>Data de Entrega ao Cliente:</strong> ${dataEntrega}</li>
-        </ul>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0; gap: 15px;">
+            <div style="flex: 1;">
+                <ul style="margin: 0; padding-left: 20px; list-style-type: square; color: #cbd5e1;">
+                    <li><strong>Código do Freezer (Serial):</strong> ${comodato.freezerCode}</li>
+                    <li><strong>Marca / Modelo:</strong> ${comodato.freezerBrand || 'Não informado'}</li>
+                    <li><strong>Voltagem de Operação:</strong> ${comodato.freezerVoltage || 'Não informado'}</li>
+                    <li><strong>Capacidade (Volume):</strong> ${comodato.freezerCapacity ? comodato.freezerCapacity + (comodato.freezerCapacity.toString().toLowerCase().includes('litros') ? '' : ' Litros') : 'Não informado'}</li>
+                    <li><strong>Data de Entrega ao Cliente:</strong> ${dataEntrega}</li>
+                    <li><strong>Coordenadas GPS de Instalação:</strong> ${gpsCoords}</li>
+                </ul>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; border: 1px solid rgba(255,255,255,0.1); padding: 6px; border-radius: 4px; background: #fff; width: 88px; height: 102px; box-sizing: border-box; flex-shrink: 0; align-self: center;">
+                <div id="portal-comodato-qrcode" style="width: 76px; height: 76px; display: flex; align-items: center; justify-content: center;"></div>
+                <span style="font-size: 0.5rem; color: #000; font-family: sans-serif; font-weight: bold; margin-top: 2px;">COD: ${comodato.freezerCode}</span>
+            </div>
+        </div>
         <p>O COMODATÁRIO declara receber o equipamento em perfeitas condições de uso, funcionamento, limpeza e conservação.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 2ª - DO USO E EXCLUSIVIDADE</h4>
-        <p>O equipamento destina-se <strong>exclusivamente</strong> ao armazenamento e venda de gelo fornecido pela COMODANTE. Fica expressamente vedada a colocação de produtos de outras marcas ou quaisquer outros alimentos e bebidas no freezer comodado, sob pena de rescisão contratual imediata e retirada do equipamento.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 2ª - DO USO E EXCLUSIVIDADE ABSOLUTA</h4>
+        <p>O equipamento destina-se <strong>exclusivamente</strong> ao acondicionamento e comercialização de gelo e carvão fornecidos pela COMODANTE. Fica expressamente vedada a colocação de produtos de outras marcas, concorrentes, bebidas, carnes ou quaisquer outros alimentos no freezer comodado, sob pena de rescisão contratual de pleno direito e recolhimento imediato do equipamento.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 3ª - DAS OBRIGAÇÕES E CONSERVAÇÃO</h4>
-        <p>O COMODATÁRIO obriga-se a zelar pela conservação do freezer como se fosse seu próprio bem. A energia elétrica consumida para o funcionamento do equipamento correrá por conta exclusiva do COMODATÁRIO.</p>
-        <p>Qualquer defeito técnico ou necessidade de manutenção deverá ser comunicado imediatamente à COMODANTE. Fica vedada a intervenção de terceiros não autorizados para reparos no equipamento.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 3ª - DA CONSERVAÇÃO E PRESERVAÇÃO DURANTE O USO</h4>
+        <p>O COMODATÁRIO obriga-se a zelar pelo perfeito estado de conservação, higiene e limpeza do freezer durante todo o período de uso. O equipamento deve ser mantido em local coberto, seco, ventilado e protegido das intempéries (sol e chuva). As despesas de energia elétrica para o seu funcionamento correm por conta exclusiva do COMODATÁRIO, que responderá também por eventuais perdas, furtos, roubos ou danos causados por mau uso, negligência ou vandalismo.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 4ª - DO PRAZO E RESCISÃO</h4>
-        <p>O comodato é por prazo indeterminado. A COMODANTE reserva-se o direito de solicitar a devolução do equipamento a qualquer momento, mediante aviso prévio por escrito com antecedência mínima de 05 (cinco) dias, sem que caiba ao COMODATÁRIO qualquer tipo de indenização ou direito de devolução tardia.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 4ª - DA RASTREABILIDADE (QR CODE E GPS)</h4>
+        <p>O freezer está cadastrado com número serial rastreável via QR Code e geolocalização física por satélite (GPS). Fica expressamente proibido ao COMODATÁRIO mudar o equipamento do endereço de instalação acordado neste instrumento, bem como emprestar, sublocar ou transferir a posse a terceiros, sem autorização prévia e expressa por escrito da COMODANTE.</p>
         
-        <p style="margin-top: 25px; text-align: center; color: var(--color-text-muted);">Local e data: Vale do Paraíba - SP, ${dataAtual}.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 5ª - DA MANUTENÇÃO EXCLUSIVA</h4>
+        <p>Toda e qualquer manutenção mecânica ou elétrica do freezer deve ser realizada exclusivamente pela equipe credenciada da COMODANTE. O COMODATÁRIO deve comunicar qualquer falha técnica imediatamente e fica proibido de efetuar reparos por conta própria ou através de terceiros não autorizados.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 6ª - DA VIABILIDADE (COMPRA MÍNIMA)</h4>
+        <p>A permanência do freezer no ponto de venda está vinculada à sua viabilidade econômica. O COMODATÁRIO compromete-se a manter uma média de compras mensais mínimas de produtos da COMODANTE. A inatividade operacional ou a ausência de pedidos por período superior a 30 (trinta) dias ensejará o recolhimento do ativo pela COMODANTE.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 7ª - DA VISTORIA E FISCALIZAÇÃO</h4>
+        <p>A COMODANTE poderá realizar vistorias técnicas e comerciais periódicas no equipamento, a qualquer tempo durante o horário comercial de funcionamento do estabelecimento, para verificar o cumprimento das cláusulas de higiene, exclusividade de gelo e leitura do QR Code patrimonial.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.85rem;">CLÁUSULA 8ª - DO PRAZO E RESCISÃO</h4>
+        <p>O presente contrato é por prazo indeterminado. Qualquer das partes poderá rescindi-lo imotivadamente mediante aviso prévio de 05 (cinco) dias. Em caso de devolução, o freezer deverá ser entregue devidamente higienizado e em perfeito estado de funcionamento.</p>
+        
+        <p style="margin-top: 25px; text-align: center; color: var(--color-text-muted);">Vale do Paraíba - SP, ${dataAtual}.</p>
     `;
 }
 
@@ -1085,44 +1144,71 @@ export function openComodato(comId) {
         signatureHTML = `<img src="${comodato.signatureBase64}" style="max-height: 80px; max-width: 100%; display: block; margin: 0 auto -10px auto; pointer-events: none; filter: contrast(1.2);">`;
     }
 
+    const gpsCoords = (comodato && comodato.latitude && comodato.longitude) ? `${comodato.latitude}, ${comodato.longitude}` : (client.latitude ? `${client.latitude}, ${client.longitude}` : 'Não registrada');
+    const clientDoc = client.document || (comodato && comodato.clientDoc) || 'Não informado';
+
+    const facName = state.factorySettings && state.factorySettings.name ? state.factorySettings.name : FACTORY_INFO.name;
+    const facCnpj = state.factorySettings && state.factorySettings.cnpj ? state.factorySettings.cnpj : FACTORY_INFO.cnpj;
+    const facAddress = state.factorySettings && state.factorySettings.address ? state.factorySettings.address : FACTORY_INFO.address;
+
     const contractHTML = `
         <div style="text-align: center; margin-bottom: 20px;">
             <img src="${state.factorySettings && state.factorySettings.logo ? state.factorySettings.logo : 'logo_vertical.png'}" alt="Gelo do Vale" style="max-height: 100px; object-fit: contain;">
         </div>
         <h2 style="text-align: center; margin-bottom: 20px; font-weight: bold; border-bottom: 2px solid var(--color-primary); padding-bottom: 10px; font-size: 1.25rem;">INSTRUMENTO PARTICULAR DE COMODATO DE EQUIPAMENTO</h2>
         
-        <p><strong>COMODANTE:</strong> ${state.factorySettings && state.factorySettings.name ? state.factorySettings.name : FACTORY_INFO.name}, inscrita no CNPJ sob o nº ${state.factorySettings && state.factorySettings.cnpj ? state.factorySettings.cnpj : FACTORY_INFO.cnpj}, com sede no endereço: ${state.factorySettings && state.factorySettings.address ? state.factorySettings.address : FACTORY_INFO.address}.</p>
-        <p><strong>COMODATÁRIO:</strong> ${client.name.toUpperCase()}, CNPJ/CPF: ${client.document || 'Não informado'}, endereço: ${client.address || 'Não informado'}, telefone: ${client.phone || 'Não informado'}.</p>
+        <p><strong>COMODANTE:</strong> ${facName.toUpperCase()}, inscrita no CNPJ sob o nº ${facCnpj}, com sede no endereço: ${facAddress}.</p>
+        <p><strong>COMODATÁRIO:</strong> ${client.name.toUpperCase()}, CNPJ/CPF: ${clientDoc}, endereço de instalação: ${client.address || 'Não informado'}, telefone: ${client.phone || 'Não informado'}.</p>
         
         <p style="margin-top: 15px;">As partes qualificadas acima têm entre si justo e avençado o comodato do equipamento abaixo descrito, regulado pelas seguintes condições:</p>
         
         <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 1ª - DO OBJETO E CARACTERÍSTICAS</h4>
         <p>O presente contrato tem por objeto o empréstimo gratuito (comodato) de 01 (um) freezer para conservação de gelo, de propriedade da COMODANTE, com as seguintes características:</p>
-        <ul style="margin: 10px 0; padding-left: 20px; list-style-type: square;">
-            <li><strong>Código do Freezer (Serial):</strong> ${freezerCode}</li>
-            <li><strong>Marca / Modelo:</strong> ${freezerBrand}</li>
-            <li><strong>Voltagem de Operação:</strong> ${freezerVoltage}</li>
-            <li><strong>Capacidade (Volume):</strong> ${freezerCapacity ? freezerCapacity + (freezerCapacity.toString().toLowerCase().includes('litros') ? '' : ' Litros') : 'Não informado'}</li>
-            <li><strong>Data de Entrega ao Cliente:</strong> ${dataEntrega}</li>
-        </ul>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 10px 0; gap: 15px;">
+            <div style="flex: 1;">
+                <ul style="margin: 0; padding-left: 20px; list-style-type: square;">
+                    <li><strong>Código do Freezer (Serial):</strong> ${freezerCode}</li>
+                    <li><strong>Marca / Modelo:</strong> ${freezerBrand}</li>
+                    <li><strong>Voltagem de Operação:</strong> ${freezerVoltage}</li>
+                    <li><strong>Capacidade (Volume):</strong> ${freezerCapacity ? freezerCapacity + (freezerCapacity.toString().toLowerCase().includes('litros') ? '' : ' Litros') : 'Não informado'}</li>
+                    <li><strong>Data de Entrega ao Cliente:</strong> ${dataEntrega}</li>
+                    <li><strong>Coordenadas GPS de Instalação:</strong> ${gpsCoords}</li>
+                </ul>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; border: 1px solid #ccc; padding: 6px; border-radius: 4px; background: #fff; width: 88px; height: 102px; box-sizing: border-box; flex-shrink: 0; align-self: center;">
+                <div id="print-comodato-qrcode" style="width: 76px; height: 76px; display: flex; align-items: center; justify-content: center;"></div>
+                <span style="font-size: 0.5rem; color: #000; font-family: sans-serif; font-weight: bold; margin-top: 2px;">COD: ${freezerCode}</span>
+            </div>
+        </div>
         <p>O COMODATÁRIO declara receber o equipamento em perfeitas condições de uso, funcionamento, limpeza e conservação.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 2ª - DO USO E EXCLUSIVIDADE</h4>
-        <p>O equipamento destina-se <strong>exclusivamente</strong> ao armazenamento e venda de gelo fornecido pela COMODANTE. Fica expressamente vedada a colocação de produtos de outras marcas ou quaisquer outros alimentos e bebidas no freezer comodado, sob pena de rescisão contratual imediata e retirada do equipamento.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 2ª - DO USO E EXCLUSIVIDADE ABSOLUTA</h4>
+        <p>O equipamento destina-se <strong>exclusivamente</strong> ao acondicionamento e comercialização de gelo e carvão fornecidos pela COMODANTE. Fica expressamente vedada a colocação de produtos de outras marcas, concorrentes, bebidas, carnes ou quaisquer outros alimentos no freezer comodado, sob pena de rescisão contratual de pleno direito e recolhimento imediato do equipamento.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 3ª - DAS OBRIGAÇÕES E CONSERVAÇÃO</h4>
-        <p>O COMODATÁRIO obriga-se a zelar pela conservação do freezer como se fosse seu próprio bem. A energia elétrica consumida para o funcionamento do equipamento correrá por conta exclusiva do COMODATÁRIO.</p>
-        <p>Qualquer defeito técnico ou necessidade de manutenção deverá ser comunicado imediatamente à COMODANTE. Fica vedada a intervenção de terceiros não autorizados para reparos no equipamento.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 3ª - DA CONSERVAÇÃO E PRESERVAÇÃO DURANTE O USO</h4>
+        <p>O COMODATÁRIO obriga-se a zelar pelo perfeito estado de conservação, higiene e limpeza do freezer durante todo o período de uso. O equipamento deve ser mantido em local coberto, seco, ventilado e protegido das intempéries (sol e chuva). As despesas de energia elétrica para o seu funcionamento correm por conta exclusiva do COMODATÁRIO, que responderá também por eventuais perdas, furtos, roubos ou danos causados por mau uso, negligência ou vandalismo.</p>
         
-        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 4ª - DO PRAZO E RESCISÃO</h4>
-        <p>O comodato é por prazo indeterminado. A COMODANTE reserva-se o direito de solicitar a devolução do equipamento a qualquer momento, mediante aviso prévio por escrito com antecedência mínima de 05 (cinco) dias, sem que caiba ao COMODATÁRIO qualquer tipo de indenização ou direito de devolução tardia.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 4ª - DA RASTREABILIDADE (QR CODE E GPS)</h4>
+        <p>O freezer está cadastrado com número serial rastreável via QR Code e geolocalização física por satélite (GPS). Fica expressamente proibido ao COMODATÁRIO mudar o equipamento do endereço de instalação acordado neste instrumento, bem como emprestar, sublocar ou transferir a posse a terceiros, sem autorização prévia e expressa por escrito da COMODANTE.</p>
         
-        <p style="margin-top: 25px; text-align: center;">Local e data: Vale do Paraíba - SP, ${comodato && comodato.signatureDate ? new Date(comodato.signatureDate).toLocaleDateString('pt-BR') : dataAtual}.</p>
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 5ª - DA MANUTENÇÃO EXCLUSIVA</h4>
+        <p>Toda e qualquer manutenção mecânica ou elétrica do freezer deve ser realizada exclusivamente pela equipe credenciada da COMODANTE. O COMODATÁRIO deve comunicar qualquer falha técnica imediatamente e fica proibido de efetuar reparos por conta própria ou através de terceiros não autorizados.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 6ª - DA VIABILIDADE (COMPRA MÍNIMA)</h4>
+        <p>A permanência do freezer no ponto de venda está vinculada à sua viabilidade econômica. O COMODATÁRIO compromete-se a manter uma média de compras mensais mínimas de produtos da COMODANTE. A inatividade operacional ou a ausência de pedidos por período superior a 30 (trinta) dias ensejará o recolhimento do ativo pela COMODANTE.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 7ª - DA VISTORIA E FISCALIZAÇÃO</h4>
+        <p>A COMODANTE poderá realizar vistorias técnicas e comerciais periódicas no equipamento, a qualquer tempo durante o horário comercial de funcionamento do estabelecimento, para verificar o cumprimento das cláusulas de higiene, exclusividade de gelo e leitura do QR Code patrimonial.</p>
+        
+        <h4 style="margin-top: 15px; font-weight: bold; color: var(--color-primary); font-size: 0.95rem;">CLÁUSULA 8ª - DO PRAZO E RESCISÃO</h4>
+        <p>O presente contrato é por prazo indeterminado. Qualquer das partes poderá rescindi-lo imotivadamente mediante aviso prévio de 05 (cinco) dias. Em caso de devolução, o freezer deverá ser entregue devidamente higienizado e em perfeito estado de funcionamento.</p>
+        
+        <p style="margin-top: 25px; text-align: center;">Vale do Paraíba - SP, ${comodato && comodato.signatureDate ? new Date(comodato.signatureDate).toLocaleDateString('pt-BR') : dataAtual}.</p>
         
         <div style="margin-top: 40px; display: flex; justify-content: space-between;">
             <div style="width: 45%; border-top: 1px solid #ccc; text-align: center; padding-top: 5px;">
                 <p style="font-size: 0.8rem; margin: 0; color: #000;"><strong>COMODANTE</strong></p>
-                <p style="font-size: 0.75rem; color: #666; margin: 0;">${state.factorySettings && state.factorySettings.name ? state.factorySettings.name : FACTORY_INFO.name}</p>
+                <p style="font-size: 0.75rem; color: #666; margin: 0;">${facName}</p>
             </div>
             <div style="width: 45%; border-top: 1px solid #ccc; text-align: center; padding-top: 5px; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
@@ -1138,6 +1224,22 @@ export function openComodato(comId) {
 
     document.getElementById("comodato-content").innerHTML = contractHTML;
     document.getElementById("modal-comodato").classList.add("active");
+    
+    // Desenhar QR Code na folha de impressão
+    setTimeout(() => {
+        const qrContainer = document.getElementById("print-comodato-qrcode");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: freezerCode,
+                width: 76,
+                height: 76,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
 }
 
 export function printComodato() {
@@ -1593,3 +1695,47 @@ export function triggerComodatoSignatureForClient(clientId) {
     }
 }
 window.triggerComodatoSignatureForClient = triggerComodatoSignatureForClient;
+
+export function captureComodatoGPS() {
+    const comId = window.currentComodatoId;
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) return;
+
+    if (!navigator.geolocation) {
+        window.showToast("Geolocalização não é suportada por este navegador.", "error");
+        return;
+    }
+
+    window.showToast("Obtendo localização de alta precisão...", "info");
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            
+            comodato.latitude = lat;
+            comodato.longitude = lng;
+            
+            // Sincronizar com o cliente, caso ele não tenha coordenadas salvas
+            const client = state.clients.find(c => c.id === comodato.clientId);
+            if (client && (!client.latitude || !client.longitude)) {
+                client.latitude = lat;
+                client.longitude = lng;
+            }
+
+            saveState();
+            window.showToast("Localização GPS do freezer registrada com sucesso!", "success");
+            renderComodatoDetail(comId);
+            if (window.renderApp) window.renderApp();
+        },
+        (error) => {
+            let msg = "Erro ao capturar GPS.";
+            if (error.code === error.PERMISSION_DENIED) msg = "Permissão para acessar GPS negada.";
+            else if (error.code === error.POSITION_UNAVAILABLE) msg = "Sinal de GPS indisponível.";
+            else if (error.code === error.TIMEOUT) msg = "Tempo limite atingido para obter sinal GPS.";
+            window.showToast(msg, "error");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+window.captureComodatoGPS = captureComodatoGPS;
