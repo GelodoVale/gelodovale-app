@@ -460,6 +460,53 @@ export function openRentalStickerModal(rentalId) {
     if (modal) modal.classList.add("active");
 }
 
+export function openTinaPermanentStickerModal(rentalId) {
+    const rental = state.rentals.find(r => r.id === rentalId);
+    if (!rental) return;
+    
+    const matchingProd = state.products.find(p => p.id === rental.itemType);
+    const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
+    
+    const printableContent = document.getElementById("printable-sticker-content");
+    if (!printableContent) return;
+    printableContent.innerHTML = `
+        <div class="sticker-header">
+            <span class="sticker-logo-text">❄️ Gelo do Vale</span>
+            <span style="font-size: 0.75rem; font-weight: bold; border: 1px solid #000; padding: 2px 5px; border-radius: 3px; background: #fff; color: #000;">PATRIMÔNIO</span>
+        </div>
+        <div class="sticker-body" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 8px;">
+            <div class="sticker-specs" style="font-size: 0.75rem; line-height: 1.4; color: #000; text-align: left;">
+                <div style="font-size: 1rem; font-weight: 900; margin-bottom: 4px; color: #000;">CÓD: ${rental.tinaCode}</div>
+                <div><strong>Equipamento:</strong> ${itemLabel}</div>
+                <div><strong>Propriedade de:</strong> Gelo do Vale</div>
+                <div style="font-size: 0.55rem; font-weight: bold; margin-top: 5px; color: #0072ff; border: 1px dashed #0072ff; padding: 1px 3px; display: inline-block;">Propriedade Exclusiva</div>
+            </div>
+            <div class="sticker-qrcode" id="sticker-qrcode-render" style="padding: 4px; background: #fff; border: 1px solid #000; display: flex; align-items: center; justify-content: center;"></div>
+        </div>
+        <div class="sticker-footer" style="margin-top: 8px; border-top: 1px solid #000; padding-top: 4px; font-size: 0.6rem; font-weight: bold; text-align: center; color: #000;">
+            CONTATO / SUPORTE: ${FACTORY_INFO.phone}
+        </div>
+    `;
+    
+    setTimeout(() => {
+        const qrContainer = document.getElementById("sticker-qrcode-render");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: rental.tinaCode,
+                width: 80,
+                height: 80,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
+    
+    const modal = document.getElementById("modal-sticker");
+    if (modal) modal.classList.add("active");
+}
+
 export function printSticker() {
     const content = document.getElementById("printable-sticker-content").innerHTML;
     const printWindow = window.open("", "_blank");
@@ -784,6 +831,7 @@ window.openMoveFreezerModal = openMoveFreezerModal;
 window.toggleMoveClientSelect = toggleMoveClientSelect;
 window.openStickerModal = openStickerModal;
 window.openRentalStickerModal = openRentalStickerModal;
+window.openTinaPermanentStickerModal = openTinaPermanentStickerModal;
 window.printSticker = printSticker;
 window.getWarrantyInfo = getWarrantyInfo;
 window.handleImageUpload = handleImageUpload;

@@ -205,8 +205,11 @@ export function renderTinas() {
                             <i data-lucide="check" style="width: 14px; height: 14px;"></i> Receber
                         </button>
                     ` : ''}
-                    <button class="btn btn-secondary btn-icon-only" onclick="openRentalStickerModal('${r.id}')" title="Gerar Etiqueta QR" style="${r.status === "returned" ? "margin-right: auto;" : ""}">
+                    <button class="btn btn-secondary btn-icon-only" onclick="openRentalStickerModal('${r.id}')" title="Gerar Etiqueta QR de Locação">
                         <i data-lucide="qr-code" style="width: 15px; height: 15px;"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openTinaPermanentStickerModal('${r.id}')" title="Gerar Etiqueta QR Permanente (Sem dados de aluguel)" style="${r.status === "returned" ? "margin-right: auto;" : ""}">
+                        <i data-lucide="tag" style="width: 15px; height: 15px; color: var(--color-primary);"></i>
                     </button>
                     <button class="btn btn-secondary btn-icon-only" onclick="openRentalContract('${r.id}')" title="Contrato de Aluguel">
                         <i data-lucide="file-text" style="width: 15px; height: 15px;"></i>
