@@ -100,6 +100,9 @@ export function renderInventario() {
                     <button class="btn btn-secondary" onclick="openFreezerDetail('${f.id}')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
                         <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Detalhes
                     </button>
+                    <button class="btn btn-secondary" onclick="openStickerModal('${f.id}')" title="Gerar Etiqueta QR" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.15); color: var(--color-primary);">
+                        <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> Etiqueta QR
+                    </button>
                     <button class="btn btn-secondary btn-icon-only" onclick="openFreezerModal('${f.id}')" title="Editar Freezer">
                         <i data-lucide="edit-3" style="width: 15px; height: 15px;"></i>
                     </button>

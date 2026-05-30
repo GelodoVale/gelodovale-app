@@ -1535,6 +1535,7 @@ export function initForms() {
                 return;
             }
             
+            let targetFreezerId = freezerId;
             if (freezerId) {
                 const idx = state.freezers.findIndex(f => f.id === freezerId);
                 if (idx !== -1) {
@@ -1588,8 +1589,10 @@ export function initForms() {
                     }
                 }
             } else {
+                const newId = "f-" + Date.now();
+                targetFreezerId = newId;
                 const newFreezer = {
-                    id: "f-" + Date.now(),
+                    id: newId,
                     code, brand, voltage, capacity, purchaseDate, warrantyMonths,
                     status: "disponivel",
                     clientId: "",
@@ -1613,6 +1616,20 @@ export function initForms() {
             saveState();
             closeModal("modal-freezer");
             renderApp();
+
+            // Perguntar se quer gerar/imprimir a etiqueta patrimonial QR Code
+            window.showConfirm(
+                `Equipamento "${code}" salvo com sucesso! Deseja gerar e imprimir a etiqueta QR Code patrimonial agora?`,
+                () => {
+                    if (window.openStickerModal) {
+                        window.openStickerModal(targetFreezerId);
+                    }
+                },
+                null,
+                "Imprimir Etiqueta QR",
+                "Gerar Etiqueta",
+                "Agora Não"
+            );
         });
     }
 
