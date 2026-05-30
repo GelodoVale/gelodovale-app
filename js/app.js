@@ -147,12 +147,29 @@ document.addEventListener("DOMContentLoaded", () => {
         initClientSigningPortal(urlParams);
         return;
     }
-    
+    // Recarregar a página automaticamente se o Service Worker for atualizado
+    let refreshing = false;
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                console.log('[PWA] Nova versão detectada! Recarregando...');
+                window.location.reload();
+            }
+        });
+    }
+
     // Registro do Service Worker do PWA para carregamento offline instantâneo
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker do Gelo do Vale registrado com sucesso no escopo:', reg.scope))
+                .then(reg => {
+                    console.log('Service Worker do Gelo do Vale registrado com sucesso no escopo:', reg.scope);
+                    window.swRegistration = reg;
+                    
+                    // Forçar busca de atualização do SW na abertura do app
+                    reg.update().catch(err => console.log('Erro ao buscar atualização do SW no boot:', err));
+                })
                 .catch(err => console.error('Erro ao registrar Service Worker do Gelo do Vale:', err));
         });
     }

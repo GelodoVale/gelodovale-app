@@ -172,6 +172,11 @@ export function initPasswordTogglers() {
 }
 
 export function loginUser(userId, password) {
+    // Buscar atualizações do Service Worker ao fazer login
+    if (window.swRegistration) {
+        window.swRegistration.update().catch(err => console.log('Erro ao atualizar SW no login:', err));
+    }
+
     // Se chamada sem argumentos (ex: submit do form), ler valores do DOM
     if (!userId) {
         const selectEl = document.getElementById("login-user-select");
