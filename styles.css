@@ -3764,3 +3764,16 @@ body.astro-day.weather-hot {
     justify-content: center;
     background: rgba(255, 255, 255, 0.01);
 }
+
+/* Efeito de hover e botões de ação nas miniaturas de fotos do comodato */
+.comodato-photo-card:hover .photo-card-actions {
+    opacity: 1 !important;
+}
+.comodato-photo-card .photo-card-actions button,
+.comodato-photo-card .photo-card-actions a {
+    transition: transform 0.1s;
+}
+.comodato-photo-card .photo-card-actions button:hover,
+.comodato-photo-card .photo-card-actions a:hover {
+    transform: scale(1.2);
+}

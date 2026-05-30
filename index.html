@@ -2667,18 +2667,55 @@
                     </div>
                 </div>
 
-                <!-- Fotos do Produto -->
-                <div>
-                    <h4 style="color: var(--color-primary); font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
-                        <span>Fotos do Produto em Comodato</span>
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('comodato-photo-upload-input').click()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;" id="btn-comodato-upload-photo">
-                            <i data-lucide="camera" style="width: 12px; height: 12px; margin-right: 4px;"></i> Anexar Foto
-                        </button>
-                    </h4>
-                    <input type="file" id="comodato-photo-upload-input" accept="image/*" style="display: none;" onchange="uploadComodatoPhotos(event)">
+                <!-- Upload de Fotos Categorizadas do Comodato -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; margin-top: 1rem;">
+                    <h4 style="color: var(--color-primary); font-size: 0.95rem; margin-bottom: 1rem; font-weight: 700;">Galeria e Arquivos do Comodato (Fotos & Documentos)</h4>
+                    <input type="file" id="comodato-photo-upload-input" accept="image/*" multiple style="display: none;" onchange="uploadComodatoPhotos(event)">
                     
-                    <div class="comodato-photos-gallery" id="comodato-photos-gallery-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                        <!-- Fotos via JS -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                        <!-- Categoria 1: Geladeira no Local -->
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: #fff;">1. Geladeira no Local</span>
+                                <button type="button" class="btn btn-secondary" onclick="triggerComodatoPhotoUpload('local')" id="btn-upload-local" style="font-size: 0.7rem; padding: 2px 6px; height: auto;">
+                                    <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px;"></i> Adicionar
+                                </button>
+                            </div>
+                            <div id="comodato-gallery-local" style="display: flex; gap: 6px; flex-wrap: wrap; min-height: 50px; align-items: center;"></div>
+                        </div>
+
+                        <!-- Categoria 2: Geladeira com QR Code -->
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: #fff;">2. Geladeira com QR Code</span>
+                                <button type="button" class="btn btn-secondary" onclick="triggerComodatoPhotoUpload('qrcode')" id="btn-upload-qrcode" style="font-size: 0.7rem; padding: 2px 6px; height: auto;">
+                                    <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px;"></i> Adicionar
+                                </button>
+                            </div>
+                            <div id="comodato-gallery-qrcode" style="display: flex; gap: 6px; flex-wrap: wrap; min-height: 50px; align-items: center;"></div>
+                        </div>
+
+                        <!-- Categoria 3: Etiqueta do Motor / Garantia -->
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: #fff;">3. Etiqueta do Motor (Garantia)</span>
+                                <button type="button" class="btn btn-secondary" onclick="triggerComodatoPhotoUpload('motor')" id="btn-upload-motor" style="font-size: 0.7rem; padding: 2px 6px; height: auto;">
+                                    <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px;"></i> Adicionar
+                                </button>
+                            </div>
+                            <div id="comodato-gallery-motor" style="display: flex; gap: 6px; flex-wrap: wrap; min-height: 50px; align-items: center;"></div>
+                        </div>
+
+                        <!-- Categoria 4: Contrato de Comodato Assinado -->
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: #fff;">4. Contrato Assinado</span>
+                                <button type="button" class="btn btn-secondary" onclick="triggerComodatoPhotoUpload('contract')" id="btn-upload-contract" style="font-size: 0.7rem; padding: 2px 6px; height: auto;">
+                                    <i data-lucide="plus" style="width: 10px; height: 10px; margin-right: 2px;"></i> Adicionar
+                                </button>
+                            </div>
+                            <div id="comodato-gallery-contract" style="display: flex; gap: 6px; flex-wrap: wrap; min-height: 50px; align-items: center;"></div>
+                        </div>
                     </div>
                 </div>
 

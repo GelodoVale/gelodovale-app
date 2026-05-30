@@ -281,42 +281,49 @@ export function renderComodatoDetail(comId) {
     
     document.getElementById("det-com-general-notes").value = comodato.notes || "";
     
-    const gallery = document.getElementById("comodato-photos-gallery-container");
-    gallery.innerHTML = "";
-    if (comodato.photos && comodato.photos.length > 0) {
-        comodato.photos.forEach((photo, index) => {
-            const card = document.createElement("div");
-            card.className = "comodato-photo-card";
-            card.style.position = "relative";
-            card.style.width = "100px";
-            card.style.height = "100px";
-            card.style.border = "1px solid rgba(255,255,255,0.1)";
-            card.style.borderRadius = "6px";
-            card.style.overflow = "hidden";
-            card.style.background = "rgba(0,0,0,0.2)";
-            
-            card.innerHTML = `
-                <img src="${photo}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
-                <button type="button" class="btn-delete-photo" style="position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.85); border: none; border-radius: 4px; width: 22px; height: 22px; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                    <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
-                </button>
-            `;
-            
-            card.querySelector("img").onclick = () => {
-                const viewer = window.open();
-                viewer.document.write(`<img src="${photo}" style="max-width:100%; max-height:100vh; display:block; margin:auto;">`);
-            };
-            
-            card.querySelector(".btn-delete-photo").onclick = (e) => {
-                e.stopPropagation();
-                deleteComodatoPhoto(comodato.id, index);
-            };
-            
-            gallery.appendChild(card);
-        });
-    } else {
-        gallery.innerHTML = `<p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Nenhuma foto anexada.</p>`;
-    }
+    // Renderizar as 4 galerias de fotos/documentos categorizadas
+    const categories = ['local', 'qrcode', 'motor', 'contract'];
+    const freezerCode = comodato.freezerCode || 'SemCod';
+    
+    categories.forEach(cat => {
+        let arr = [];
+        if (cat === 'local') arr = (comodato.photosLocal || []).concat(comodato.photos || []); // Mesclar legadas em local
+        else if (cat === 'qrcode') arr = comodato.photosQRCode || [];
+        else if (cat === 'motor') arr = comodato.photosMotor || [];
+        else if (cat === 'contract') arr = comodato.photosContract || [];
+        
+        const galleryEl = document.getElementById(`comodato-gallery-${cat}`);
+        if (!galleryEl) return;
+        
+        galleryEl.innerHTML = "";
+        if (arr.length > 0) {
+            arr.forEach((photo, index) => {
+                const card = document.createElement("div");
+                card.className = "comodato-photo-card";
+                card.style.position = "relative";
+                card.style.width = "64px";
+                card.style.height = "64px";
+                card.style.border = "1px solid rgba(255,255,255,0.1)";
+                card.style.borderRadius = "4px";
+                card.style.overflow = "hidden";
+                card.style.background = "rgba(0,0,0,0.2)";
+                card.style.flexShrink = "0";
+                
+                card.innerHTML = `
+                    <img src="${photo}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="photo-card-actions" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: space-around; padding: 2px 0; opacity: 0; transition: opacity 0.2s;">
+                        <button type="button" class="btn-action" onclick="window.viewPhoto('${photo}')" title="Visualizar" style="background:none; border:none; color:#00f0ff; padding: 2px; cursor:pointer; display: flex; align-items: center;"><i data-lucide="eye" style="width: 12px; height: 12px;"></i></button>
+                        <a href="${photo}" download="comodato_${freezerCode}_${cat}_${index + 1}.jpg" class="btn-action" title="Download" style="color:#00ff64; padding: 2px; cursor:pointer; display: flex; align-items: center;"><i data-lucide="download" style="width: 12px; height: 12px;"></i></a>
+                        <button type="button" class="btn-action" onclick="window.printPhoto('${photo}')" title="Imprimir" style="background:none; border:none; color:#ffb703; padding: 2px; cursor:pointer; display: flex; align-items: center;"><i data-lucide="printer" style="width: 12px; height: 12px;"></i></button>
+                        <button type="button" class="btn-action" onclick="window.deleteComodatoCategoryPhoto('${comodato.id}', '${cat}', ${index})" title="Excluir" style="background:none; border:none; color:#ef4444; padding: 2px; cursor:pointer; display: flex; align-items: center;"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
+                    </div>
+                `;
+                galleryEl.appendChild(card);
+            });
+        } else {
+            galleryEl.innerHTML = `<span style="font-size: 0.7rem; color: var(--color-text-muted); font-style: italic;">Nenhuma foto</span>`;
+        }
+    });
     
     const sigPending = document.getElementById("comodato-sig-pending-actions");
     const sigSigned = document.getElementById("comodato-sig-signed-container");
@@ -392,21 +399,28 @@ export function uploadComodatoPhotos(event) {
     const comodato = (state.comodatos || []).find(c => c.id === comId);
     if (!comodato) return;
     
+    const category = window.currentUploadCategory || 'local';
+    let arrName = "";
+    if (category === 'local') arrName = 'photosLocal';
+    else if (category === 'qrcode') arrName = 'photosQRCode';
+    else if (category === 'motor') arrName = 'photosMotor';
+    else if (category === 'contract') arrName = 'photosContract';
+    
+    if (!comodato[arrName]) comodato[arrName] = [];
+    
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
-    if (!comodato.photos) comodato.photos = [];
-    
-    if (comodato.photos.length + files.length > 10) {
-        window.showToast("Limite de 10 fotos por comodato atingido.", "warning");
+    if (comodato[arrName].length + files.length > 10) {
+        window.showToast("Limite de 10 fotos por categoria atingido.", "warning");
         return;
     }
     
-    const btn = document.getElementById("btn-comodato-upload-photo");
+    const btn = document.getElementById(`btn-upload-${category}`);
     const originalHTML = btn ? btn.innerHTML : "";
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; animation: spin 1s linear infinite;"></span> Carregando...';
+        btn.innerHTML = '<span class="spin-anim" style="display:inline-block; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; animation: spin 1s linear infinite;"></span>...';
     }
     
     let loadedCount = 0;
@@ -438,7 +452,7 @@ export function uploadComodatoPhotos(event) {
                 ctx.drawImage(img, 0, 0, width, height);
                 
                 const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-                comodato.photos.push(compressedBase64);
+                comodato[arrName].push(compressedBase64);
                 
                 loadedCount++;
                 if (loadedCount === files.length) {
@@ -1372,6 +1386,172 @@ export function printRentalContract() {
     printWindow.document.close();
 }
 
+export function deleteComodatoCategoryPhoto(comId, category, index) {
+    window.showConfirm(
+        "Tem certeza que deseja excluir esta foto?",
+        () => {
+            const comodato = (state.comodatos || []).find(c => c.id === comId);
+            if (!comodato) return;
+            
+            if (category === 'local') {
+                const localLen = (comodato.photosLocal || []).length;
+                if (index < localLen) {
+                    comodato.photosLocal.splice(index, 1);
+                } else {
+                    const legacyIndex = index - localLen;
+                    if (comodato.photos && comodato.photos[legacyIndex] !== undefined) {
+                        comodato.photos.splice(legacyIndex, 1);
+                    }
+                }
+            } else {
+                let arrName = "";
+                if (category === 'qrcode') arrName = 'photosQRCode';
+                else if (category === 'motor') arrName = 'photosMotor';
+                else if (category === 'contract') arrName = 'photosContract';
+                
+                if (comodato[arrName] && comodato[arrName][index] !== undefined) {
+                    comodato[arrName].splice(index, 1);
+                }
+            }
+            
+            saveState();
+            renderComodatoDetail(comId);
+            if (window.renderApp) window.renderApp();
+            window.showToast("Foto excluída com sucesso!", "success");
+        },
+        null,
+        "Excluir Foto",
+        "Excluir"
+    );
+}
+
+export function triggerComodatoPhotoUpload(category) {
+    window.currentUploadCategory = category;
+    const input = document.getElementById("comodato-photo-upload-input");
+    if (input) {
+        input.click();
+    }
+}
+
+export function viewPhoto(photoBase64) {
+    const viewWindow = window.open("", "_blank");
+    if (!viewWindow) {
+        window.showToast("Bloqueador de pop-ups ativo! Permita pop-ups para visualizar a foto.", "warning");
+        return;
+    }
+    viewWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Visualizar Imagem - Gelo do Vale</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #0b0f19;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
+                .container {
+                    position: relative;
+                    max-width: 95vw;
+                    max-height: 95vh;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(0, 240, 255, 0.2);
+                    border: 1px solid rgba(0, 240, 255, 0.3);
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background: #111827;
+                }
+                img {
+                    display: block;
+                    max-width: 100%;
+                    max-height: 90vh;
+                    object-fit: contain;
+                }
+                .close-btn {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(0, 0, 0, 0.7);
+                    border: 1px solid rgba(0, 240, 255, 0.5);
+                    color: #00f0ff;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    font-size: 18px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+                .close-btn:hover {
+                    background: #00f0ff;
+                    color: #000;
+                    box-shadow: 0 0 10px #00f0ff;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <button class="close-btn" onclick="window.close()">×</button>
+                <img src="${photoBase64}">
+            </div>
+        </body>
+        </html>
+    `);
+    viewWindow.document.close();
+}
+
+export function printPhoto(photoBase64) {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+        window.showToast("Bloqueador de pop-ups ativo! Permita pop-ups para imprimir a foto.", "warning");
+        return;
+    }
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Imprimir Imagem - Gelo do Vale</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    background: #fff;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                }
+                img {
+                    max-width: 100%;
+                    max-height: 100vh;
+                    object-fit: contain;
+                }
+                @media print {
+                    body {
+                        margin: 0;
+                    }
+                    img {
+                        max-width: 100%;
+                        max-height: 100vh;
+                        page-break-inside: avoid;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <img src="${photoBase64}" onload="window.print(); window.close();">
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
 // Expose functions to window
 window.migrateLegacyComodatos = migrateLegacyComodatos;
 window.renderComodatosAdmin = renderComodatosAdmin;
@@ -1397,6 +1577,10 @@ window.printComodato = printComodato;
 window.openRentalContract = openRentalContract;
 window.updateRentalContractPreview = updateRentalContractPreview;
 window.printRentalContract = printRentalContract;
+window.deleteComodatoCategoryPhoto = deleteComodatoCategoryPhoto;
+window.triggerComodatoPhotoUpload = triggerComodatoPhotoUpload;
+window.viewPhoto = viewPhoto;
+window.printPhoto = printPhoto;
  
 export function triggerComodatoSignatureForClient(clientId) {
     const comodato = (state.comodatos || []).find(c => c.clientId === clientId && c.status === 'pendente');
