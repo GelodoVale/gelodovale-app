@@ -3509,7 +3509,7 @@ export function init3DTilt() {
         card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
     };
     
-    const cards = document.querySelectorAll('.kpi-card, .dashboard-panel, .widgets-setup-panel, [id^="pdv-catalog-grid"] > div');
+    const cards = document.querySelectorAll('.kpi-card, [id^="pdv-catalog-grid"] > div');
     cards.forEach(card => {
         if (card.classList.contains('tilt-card-active')) return;
         card.classList.add('tilt-card', 'tilt-card-active');
