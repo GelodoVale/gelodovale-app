@@ -390,6 +390,9 @@ export function renderPrecos() {
 
         const chkWeather = document.getElementById("cfg-weather-theme-enabled");
         if (chkWeather) chkWeather.checked = state.appearance.weatherThemeEnabled !== false;
+
+        const chkTilt = document.getElementById("cfg-3d-tilt-enabled");
+        if (chkTilt) chkTilt.checked = state.appearance.tilt3DEnabled !== false;
     }
 
     // 7. Preencher inputs de configuração de impressão

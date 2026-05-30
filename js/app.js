@@ -2339,6 +2339,7 @@ export function initForms() {
             const soundEnabled = document.getElementById("cfg-sound-enabled") ? document.getElementById("cfg-sound-enabled").checked : true;
             const hapticEnabled = document.getElementById("cfg-haptic-enabled") ? document.getElementById("cfg-haptic-enabled").checked : true;
             const weatherThemeEnabled = document.getElementById("cfg-weather-theme-enabled") ? document.getElementById("cfg-weather-theme-enabled").checked : true;
+            const tilt3DEnabled = document.getElementById("cfg-3d-tilt-enabled") ? document.getElementById("cfg-3d-tilt-enabled").checked : true;
             
             state.appearance = {
                 themeName: preset,
@@ -2351,7 +2352,8 @@ export function initForms() {
                 glowIntensity,
                 soundEnabled,
                 hapticEnabled,
-                weatherThemeEnabled
+                weatherThemeEnabled,
+                tilt3DEnabled
             };
             
             saveState();
@@ -3491,7 +3493,21 @@ export function triggerConfetti(items = null) {
 
 // Efeito 3D Tilt nos cards
 export function init3DTilt() {
+    const tiltEnabled = !(state.appearance && state.appearance.tilt3DEnabled === false);
+    const cards = document.querySelectorAll('.kpi-card, [id^="pdv-catalog-grid"] > div');
+
+    if (!tiltEnabled) {
+        cards.forEach(card => {
+            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        });
+        return;
+    }
+
     const updateTilt = (e, card) => {
+        if (state.appearance && state.appearance.tilt3DEnabled === false) {
+            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            return;
+        }
         const rect = card.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -3509,7 +3525,6 @@ export function init3DTilt() {
         card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
     };
     
-    const cards = document.querySelectorAll('.kpi-card, [id^="pdv-catalog-grid"] > div');
     cards.forEach(card => {
         if (card.classList.contains('tilt-card-active')) return;
         card.classList.add('tilt-card', 'tilt-card-active');
