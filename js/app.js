@@ -3494,7 +3494,7 @@ export function triggerConfetti(items = null) {
 // Efeito 3D Tilt nos cards
 export function init3DTilt() {
     const tiltEnabled = !(state.appearance && state.appearance.tilt3DEnabled === false);
-    const cards = document.querySelectorAll('.kpi-card, [id^="pdv-catalog-grid"] > div');
+    const cards = document.querySelectorAll('.kpi-card, .dashboard-panel, .widgets-setup-panel, [id^="pdv-catalog-grid"] > div');
 
     if (!tiltEnabled) {
         cards.forEach(card => {
@@ -3526,6 +3526,12 @@ export function init3DTilt() {
     };
     
     cards.forEach(card => {
+        // Ignorar painéis que contêm campos interativos de formulário para evitar incômodo ao digitar/selecionar
+        if (card.querySelector('input, textarea, select, form')) {
+            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            return;
+        }
+        
         if (card.classList.contains('tilt-card-active')) return;
         card.classList.add('tilt-card', 'tilt-card-active');
         
