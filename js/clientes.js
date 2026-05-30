@@ -357,7 +357,52 @@ export function openClientModal(clientId = null) {
     }
     
     modal.classList.add("active");
+
+    // --- Inicializar validação de CPF / busca de CNPJ ---
+    // Limpar feedback anterior ao abrir
+    const docFeedback = document.getElementById('client-document-feedback');
+    if (docFeedback) docFeedback.innerHTML = '';
+
+    if (window.initDocumentField) {
+        window.initDocumentField('client-document', 'client-document-feedback', (cnpjData) => {
+            // Callback de auto-preenchimento ao clicar em "Preencher automaticamente"
+            const nameEl   = document.getElementById('client-name');
+            const addrEl   = document.getElementById('client-address');
+            const phoneEl  = document.getElementById('client-phone');
+
+            if (nameEl && cnpjData.razao_social) {
+                nameEl.value = cnpjData.nome_fantasia || cnpjData.razao_social;
+            }
+
+            // Montar endereço completo
+            if (addrEl) {
+                const parts = [
+                    cnpjData.logradouro,
+                    cnpjData.numero ? ', ' + cnpjData.numero : '',
+                    cnpjData.complemento ? ' - ' + cnpjData.complemento : '',
+                    cnpjData.bairro ? ' - ' + cnpjData.bairro : '',
+                    cnpjData.municipio ? ' - ' + cnpjData.municipio : '',
+                    cnpjData.uf ? '/' + cnpjData.uf : ''
+                ];
+                const fullAddr = parts.join('').replace(/^,\s*/, '').trim();
+                if (fullAddr) addrEl.value = fullAddr;
+            }
+
+            // Telefone: formatar DDD+número
+            if (phoneEl && cnpjData.ddd_telefone_1) {
+                phoneEl.value = cnpjData.ddd_telefone_1
+                    .replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
+            }
+
+            // E-mail (se tiver campo)
+            const emailEl = document.getElementById('client-email');
+            if (emailEl && cnpjData.email) emailEl.value = cnpjData.email;
+
+            window.showToast('Dados do CNPJ preenchidos automaticamente! Verifique antes de salvar.', 'success');
+        });
+    }
 }
+
 
 export function deleteClient(clientId) {
     window.showConfirm(
@@ -668,3 +713,37 @@ window.editClient = editClient;
 window.openSalesModal = openSalesModal;
 window.populateClientDropdowns = populateClientDropdowns;
 window.captureClientGPS = captureClientGPS;
+
+// Inicializar campo de documento do fornecedor quando o modal abrir
+document.addEventListener('DOMContentLoaded', () => {
+    // Observar abertura do modal de fornecedor
+    const supplierModal = document.getElementById('modal-supplier');
+    if (supplierModal) {
+        new MutationObserver((mutations) => {
+            mutations.forEach(m => {
+                if (m.attributeName === 'class' && supplierModal.classList.contains('active')) {
+                    const fb = document.getElementById('supplier-document-feedback');
+                    if (fb) fb.innerHTML = '';
+                    if (window.initDocumentField) {
+                        window.initDocumentField('supplier-cnpj-cpf', 'supplier-document-feedback', (data) => {
+                            // Preencher nome do fornecedor se o campo existir
+                            const nameEl = document.getElementById('supplier-name');
+                            if (nameEl && data.razao_social) nameEl.value = data.nome_fantasia || data.razao_social;
+                            const phoneEl = document.getElementById('supplier-phone');
+                            if (phoneEl && data.ddd_telefone_1) {
+                                phoneEl.value = data.ddd_telefone_1.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
+                            }
+                            const addrEl = document.getElementById('supplier-address');
+                            if (addrEl) {
+                                const parts = [data.logradouro, data.numero ? ', '+data.numero:'', data.bairro?' - '+data.bairro:'', data.municipio?' - '+data.municipio:'', data.uf?'/'+data.uf:''];
+                                const addr = parts.join('').trim();
+                                if (addr) addrEl.value = addr;
+                            }
+                            window.showToast('Dados do CNPJ preenchidos para o fornecedor!', 'success');
+                        });
+                    }
+                }
+            });
+        }).observe(supplierModal, { attributes: true });
+    }
+});

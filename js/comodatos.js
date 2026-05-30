@@ -1658,6 +1658,63 @@ export function printRentalContract() {
     printWindow.document.close();
 }
 
+export function sendRentalContractWhatsApp() {
+    const rentalId = document.getElementById("contract-rental-id").value;
+    const rental = (state.rentals || []).find(r => r.id === rentalId);
+    if (!rental) return;
+
+    const dataEntrega = rental.deliveryDate ? new Date(rental.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
+    const dataPrevisaoRetirada = rental.expectedReturnDate ? new Date(rental.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
+    const matchingProd = (state.products || []).find(p => p.id === rental.itemType);
+    const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
+    const totalGeral = rental.totalRevenue || (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));
+
+    // Formatar texto de contrato resumido e limpo para WhatsApp
+    let text = `❄️ *GELO DO VALE - CONTRATO DE LOCAÇÃO DE EQUIPAMENTO*\n\n`;
+    text += `*LOCADOR:* ${FACTORY_INFO.name.toUpperCase()}\n`;
+    text += `*LOCATÁRIO:* ${rental.clientName.toUpperCase()}\n`;
+    if (rental.phone) text += `*Contato:* ${rental.phone}\n`;
+    if (rental.address) text += `*Endereço:* ${rental.address}\n\n`;
+    
+    text += `📋 *DETALHES DO EQUIPAMENTO:*\n`;
+    text += `• *Equipamento:* ${itemLabel}\n`;
+    text += `• *Identificação (Cód):* ${rental.tinaCode}\n`;
+    text += `• *Período:* ${rental.rentalDays || 7} dias\n`;
+    text += `• *Data de Entrega:* ${dataEntrega}\n`;
+    text += `• *Previsão de Retirada:* ${dataPrevisaoRetirada}\n\n`;
+    
+    text += `💰 *VALORES:* \n`;
+    text += `• *Taxa de Locação:* R$ ${(rental.rentalFee || 0).toFixed(2)}\n`;
+    if (rental.deliveryFee || rental.pickupFee) {
+        text += `• *Fretes (Ida+Volta):* R$ ${((rental.deliveryFee || 0) + (rental.pickupFee || 0)).toFixed(2)}\n`;
+    }
+    if (rental.extraDayFee) {
+        text += `• *Diária Extra:* R$ ${rental.extraDayFee.toFixed(2)} / dia\n`;
+    }
+    text += `• *TOTAL DA LOCAÇÃO:* R$ ${totalGeral.toFixed(2)}\n\n`;
+    
+    if (rental.rentalTerms) {
+        text += `📜 *NORMAS E CONDIÇÕES CONTRATUAIS:*\n`;
+        const normsClean = rental.rentalTerms
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line !== '')
+            .slice(0, 4) // Show first 4 norms in preview
+            .join('\n');
+        text += `${normsClean}\n... (Termo completo disponível no arquivo impresso)\n\n`;
+    }
+    
+    text += `*Declaração de Aceite:* Ao responder "DE ACORDO" a esta mensagem, o Locatário declara estar ciente de todas as cláusulas e concorda com os termos de locação descritos acima, recebendo o equipamento em perfeitas condições.`;
+
+    const cleanPhone = (rental.phone || '').replace(/\D/g, '');
+    const waUrl = cleanPhone.length >= 10 
+        ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+    window.open(waUrl, "_blank");
+    window.showToast("Contrato formatado e direcionado para o WhatsApp!", "success");
+}
+
 export function deleteComodatoCategoryPhoto(comId, category, index) {
     window.showConfirm(
         "Tem certeza que deseja excluir esta foto?",
@@ -1849,6 +1906,7 @@ window.printComodato = printComodato;
 window.openRentalContract = openRentalContract;
 window.updateRentalContractPreview = updateRentalContractPreview;
 window.printRentalContract = printRentalContract;
+window.sendRentalContractWhatsApp = sendRentalContractWhatsApp;
 window.deleteComodatoCategoryPhoto = deleteComodatoCategoryPhoto;
 window.triggerComodatoPhotoUpload = triggerComodatoPhotoUpload;
 window.viewPhoto = viewPhoto;

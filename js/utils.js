@@ -1010,3 +1010,200 @@ export function copyLocalPixPayload() {
 }
 window.copyLocalPixPayload = copyLocalPixPayload;
 window.renderWeather = renderWeather;
+
+// =====================================================================
+// CPF / CNPJ — Validação e Busca Automática (BrasilAPI + CNPJá Fallback)
+// =====================================================================
+
+/** Valida CPF usando algoritmo de módulo 11 */
+export function validateCPF(cpf) {
+    const c = cpf.replace(/\D/g, '');
+    if (c.length !== 11) return false;
+    if (/^(\d)\1+$/.test(c)) return false; // todos dígitos iguais
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += parseInt(c[i]) * (10 - i);
+    let r = (sum * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    if (r !== parseInt(c[9])) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += parseInt(c[i]) * (11 - i);
+    r = (sum * 10) % 11;
+    if (r === 10 || r === 11) r = 0;
+    return r === parseInt(c[10]);
+}
+
+/** Valida CNPJ usando algoritmo de módulo 11 */
+export function validateCNPJ(cnpj) {
+    const c = cnpj.replace(/\D/g, '');
+    if (c.length !== 14) return false;
+    if (/^(\d)\1+$/.test(c)) return false;
+    const calc = (str, weights) => {
+        let s = 0;
+        for (let i = 0; i < weights.length; i++) s += parseInt(str[i]) * weights[i];
+        const r = s % 11;
+        return r < 2 ? 0 : 11 - r;
+    };
+    const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    return calc(c, w1) === parseInt(c[12]) && calc(c, w2) === parseInt(c[13]);
+}
+
+/** Detecta tipo de documento pelos dígitos */
+export function detectDocumentType(raw) {
+    const d = raw.replace(/\D/g, '');
+    if (d.length <= 11) return 'cpf';
+    return 'cnpj';
+}
+
+/** Aplica máscara automática CPF ou CNPJ conforme digita */
+export function maskDocumentInput(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 14);
+    if (v.length <= 11) {
+        v = v.replace(/^(\d{3})(\d)/, '$1.$2')
+              .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+              .replace(/\.(\d{3})(\d)$/, '.$1-$2');
+    } else {
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2')
+              .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+              .replace(/\.(\d{3})(\d)/, '.$1/$2')
+              .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    input.value = v;
+}
+
+/** Busca dados do CNPJ na BrasilAPI (fallback: CNPJá) */
+export async function fetchCNPJData(cnpj) {
+    const c = cnpj.replace(/\D/g, '');
+    try {
+        const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${c}`);
+        if (!res.ok) throw new Error('brasilapi_fail');
+        return await res.json();
+    } catch (e) {
+        // Fallback: CNPJá Open API
+        try {
+            const res2 = await fetch(`https://open.cnpja.com/office/${c}`);
+            if (!res2.ok) throw new Error('cnpja_fail');
+            const d = await res2.json();
+            // Normalizar para o mesmo formato da BrasilAPI
+            return {
+                cnpj: c,
+                razao_social: d.company?.name || '',
+                nome_fantasia: d.alias || '',
+                descricao_situacao_cadastral: d.status?.text || '',
+                logradouro: d.address?.street || '',
+                numero: d.address?.number || '',
+                complemento: d.address?.details || '',
+                bairro: d.address?.district || '',
+                municipio: d.address?.city || '',
+                uf: d.address?.state || '',
+                cep: d.address?.zip || '',
+                ddd_telefone_1: d.phones?.[0]?.number || '',
+                email: d.emails?.[0]?.address || '',
+                natureza_juridica: d.company?.nature?.text || '',
+                qsa: (d.members || []).map(m => ({ nome_socio: m.person?.name || '', qualificacao_socio: m.role?.text || '' }))
+            };
+        } catch (e2) {
+            throw new Error('Não foi possível consultar o CNPJ. Verifique sua conexão.');
+        }
+    }
+}
+
+/**
+ * Inicializa validação/busca em um campo de documento.
+ * @param {string} inputId       - ID do input
+ * @param {string} feedbackId    - ID do elemento de feedback (criado abaixo do input)
+ * @param {Function} onFillFn   - Callback chamado com os dados do CNPJ para auto-preencher
+ */
+export function initDocumentField(inputId, feedbackId, onFillFn = null) {
+    const input = document.getElementById(inputId);
+    const feedback = document.getElementById(feedbackId);
+    if (!input || !feedback) return;
+
+    let debounceTimer = null;
+
+    input.addEventListener('input', () => {
+        maskDocumentInput(input);
+        clearTimeout(debounceTimer);
+        const raw = input.value.replace(/\D/g, '');
+        const type = detectDocumentType(raw);
+
+        if (type === 'cpf' && raw.length === 11) {
+            const ok = validateCPF(raw);
+            feedback.innerHTML = ok
+                ? `<div class="doc-feedback doc-valid">✅ CPF válido</div>`
+                : `<div class="doc-feedback doc-invalid">❌ CPF inválido — verifique os dígitos</div>`;
+        } else if (type === 'cnpj' && raw.length === 14) {
+            if (!validateCNPJ(raw)) {
+                feedback.innerHTML = `<div class="doc-feedback doc-invalid">❌ CNPJ inválido — verifique os dígitos</div>`;
+                return;
+            }
+            feedback.innerHTML = `<div class="doc-feedback doc-searching">🔍 Consultando Receita Federal...</div>`;
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const data = await fetchCNPJData(raw);
+                    const sit = (data.descricao_situacao_cadastral || '').toUpperCase();
+                    const isAtiva = sit === 'ATIVA';
+                    const sitColor = isAtiva ? '#22c55e' : '#ef4444';
+                    const sitIcon = isAtiva ? '✅' : '⚠️';
+
+                    // Montar endereço
+                    const addr = [
+                        data.descricao_tipo_de_logradouro ? data.descricao_tipo_de_logradouro + ' ' : '',
+                        data.logradouro,
+                        data.numero ? ', ' + data.numero : '',
+                        data.complemento ? ' - ' + data.complemento : '',
+                        data.bairro ? ' - ' + data.bairro : '',
+                        data.municipio ? ' - ' + data.municipio : '',
+                        data.uf ? '/' + data.uf : '',
+                        data.cep ? ' (CEP: ' + data.cep.replace(/(\d{5})(\d{3})/, '$1-$2') + ')' : ''
+                    ].join('').trim();
+
+                    // Telefone formatado
+                    const fone = data.ddd_telefone_1
+                        ? data.ddd_telefone_1.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')
+                        : '';
+
+                    // Sócios
+                    const socios = (data.qsa || []).slice(0, 3).map(s =>
+                        `${s.nome_socio}${s.qualificacao_socio ? ' (' + s.qualificacao_socio + ')' : ''}`
+                    ).join('<br>');
+
+                    // Guardar dados no input para uso pelo callback
+                    input._cnpjData = data;
+
+                    feedback.innerHTML = `
+                        <div class="doc-feedback doc-cnpj-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-weight:700; font-size:0.85rem; color:#fff;">${data.razao_social || 'Razão Social não informada'}</span>
+                                <span style="font-size:0.75rem; font-weight:600; color:${sitColor};">${sitIcon} ${sit || 'Situação desconhecida'}</span>
+                            </div>
+                            ${data.nome_fantasia ? `<div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:4px;">🏷️ <em>${data.nome_fantasia}</em></div>` : ''}
+                            ${addr ? `<div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:3px;">📍 ${addr}</div>` : ''}
+                            ${fone ? `<div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:3px;">📞 ${fone}</div>` : ''}
+                            ${data.email ? `<div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:3px;">✉️ ${data.email}</div>` : ''}
+                            ${socios ? `<div style="font-size:0.75rem; color:var(--color-text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:5px; margin-top:5px;">👥 ${socios}</div>` : ''}
+                            ${!isAtiva ? `<div style="margin-top:6px; font-size:0.75rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:4px; padding:5px 8px; color:#ef4444;">⚠️ Empresa com situação <strong>${sit}</strong> na Receita Federal. Verifique antes de prosseguir.</div>` : ''}
+                            ${onFillFn ? `<button type="button" class="btn btn-primary" style="margin-top:8px; width:100%; font-size:0.78rem; padding:6px;" onclick="this.closest('.doc-cnpj-card')._fillFn()">✨ Preencher dados automaticamente</button>` : ''}
+                        </div>
+                    `;
+                    // Associar callback ao botão (sem eval)
+                    if (onFillFn) {
+                        const card = feedback.querySelector('.doc-cnpj-card');
+                        if (card) card._fillFn = () => onFillFn(data);
+                    }
+                } catch (err) {
+                    feedback.innerHTML = `<div class="doc-feedback doc-invalid">❌ ${err.message}</div>`;
+                }
+            }, 600);
+        } else if (raw.length < 11) {
+            feedback.innerHTML = '';
+        }
+    });
+}
+
+window.validateCPF = validateCPF;
+window.validateCNPJ = validateCNPJ;
+window.detectDocumentType = detectDocumentType;
+window.maskDocumentInput = maskDocumentInput;
+window.fetchCNPJData = fetchCNPJData;
+window.initDocumentField = initDocumentField;
