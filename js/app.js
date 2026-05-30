@@ -3205,6 +3205,19 @@ window.getProductEmoji = getProductEmoji;
 
 export function getProductEmojiBadge(p) {
     if (!p) return "";
+    const emoji = getProductEmoji(p);
+    const nameLower = (p.name || "").toLowerCase();
+    const typeLower = (p.type || "").toLowerCase();
+    
+    if (typeLower.includes("carv") || nameLower.includes("carv")) {
+        return `<span class="product-icon-badge anim-pulse-fire">${emoji}</span>`;
+    }
+    if (typeLower.includes("gelo") || typeLower.includes("saborizado") || nameLower.includes("gelo")) {
+        return `<span class="product-icon-badge anim-rotate-ice">${emoji}</span>`;
+    }
+    return `<span class="product-icon-badge">${emoji}</span>`;
+}
+
 window.getProductEmojiBadge = getProductEmojiBadge;
 
 // ==========================================
