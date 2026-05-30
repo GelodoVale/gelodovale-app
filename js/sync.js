@@ -328,23 +328,16 @@ function mostrarToastSync() {
 export function updateOneDriveStatusUI(status) {
     const indicator = document.getElementById("onedrive-sync-status");
     if (!indicator) return;
-    if (status === "connected") {
-        const title = "OneDrive: Conectado (Clique para Gravar Backup)";
-        indicator.title = title;
-        indicator.setAttribute("data-title", title);
-        indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
-        indicator.style.background = "rgba(0, 240, 255, 0.05)";
-        indicator.innerHTML = `<i data-lucide="cloud" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
-        indicator.classList.add("pulse-glow-onedrive");
-    } else {
-        const title = "OneDrive Desconectado";
-        indicator.title = title;
-        indicator.setAttribute("data-title", title);
-        indicator.style.borderColor = "rgba(255, 255, 255, 0.08)";
-        indicator.style.background = "rgba(255, 255, 255, 0.03)";
-        indicator.innerHTML = `<i data-lucide="cloud-off" style="width: 18px; height: 18px; color: var(--color-text-muted);"></i>`;
-        indicator.classList.remove("pulse-glow-onedrive");
-    }
+    
+    // Sempre mostrar ativo e pronto para backup (azul pulsante)
+    const title = "OneDrive: Pronto (Clique para Backup)";
+    indicator.title = title;
+    indicator.setAttribute("data-title", title);
+    indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
+    indicator.style.background = "rgba(0, 240, 255, 0.05)";
+    indicator.innerHTML = `<i data-lucide="cloud" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
+    indicator.classList.add("pulse-glow-onedrive");
+    
     if (window.lucide) window.lucide.createIcons();
 }
 
