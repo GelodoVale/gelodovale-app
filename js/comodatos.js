@@ -353,6 +353,19 @@ export function renderComodatoDetail(comId) {
     document.getElementById("btn-comodato-print-doc").onclick = () => {
         openComodato(comodato.id);
     };
+
+    const btnSticker = document.getElementById("btn-comodato-print-sticker");
+    if (btnSticker) {
+        btnSticker.onclick = () => {
+            if (window.closeModal) window.closeModal("modal-comodato-detail");
+            const f = (state.freezers || []).find(item => item.code.trim().toUpperCase() === comodato.freezerCode.trim().toUpperCase());
+            if (f) {
+                if (window.openStickerModal) window.openStickerModal(f.id);
+            } else {
+                window.showToast(`Equipamento com código "${comodato.freezerCode}" não encontrado no inventário para gerar etiqueta.`, "warning");
+            }
+        };
+    }
     
     if (window.lucide) window.lucide.createIcons();
 }

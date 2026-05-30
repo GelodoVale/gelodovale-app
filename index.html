@@ -2737,7 +2737,10 @@
                 <button type="button" class="btn btn-primary" id="btn-comodato-save-notes" style="display: inline-flex; align-items: center; gap: 6px;">
                     <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Notas
                 </button>
-                <button type="button" class="btn btn-secondary" id="btn-comodato-print-doc" style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
+                <button type="button" class="btn btn-secondary" id="btn-comodato-print-sticker" style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
+                    <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> Gerar Etiqueta QR
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-comodato-print-doc" style="display: inline-flex; align-items: center; gap: 6px;">
                     <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Ver e Imprimir Contrato
                 </button>
             </div>
@@ -2929,13 +2932,18 @@
                 <!-- Informações do Freezer -->
                 <div>
                     <div class="detail-section-title">Especificações</div>
-                    <div class="freezer-specs-inline" style="grid-template-columns: 1fr; margin-bottom: 1.5rem; gap: 0.75rem; padding: 1rem;">
-                        <div><strong>Marca/Modelo:</strong> <span id="detail-brand">Metalfrio 500L</span></div>
-                        <div><strong>Voltagem:</strong> <span id="detail-voltage">220V</span></div>
-                        <div><strong>Capacidade:</strong> <span id="detail-capacity">N/I</span></div>
-                        <div><strong>Data Compra:</strong> <span id="detail-purchase-date">15/10/2025</span></div>
-                        <div><strong>Garantia:</strong> <span id="detail-warranty"></span> <div id="detail-warranty-badge" style="display: inline-block; margin-left: 5px;"></div></div>
-                        <div><strong>Localização Atual:</strong> <span id="detail-location" style="font-weight: 700; color: #fff;">Supermercado Rondon</span></div>
+                    <div style="display: flex; gap: 1.2rem; align-items: flex-start; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <!-- QR Code Container -->
+                        <div id="detail-qrcode-render" style="padding: 6px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; width: 92px; height: 92px; box-sizing: border-box; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></div>
+                        <!-- Specs -->
+                        <div class="freezer-specs-inline" style="flex: 1; grid-template-columns: 1fr; margin-bottom: 0; gap: 0.6rem; padding: 0.5rem; background: transparent; border: none;">
+                            <div><strong>Marca/Modelo:</strong> <span id="detail-brand">Metalfrio 500L</span></div>
+                            <div><strong>Voltagem:</strong> <span id="detail-voltage">220V</span></div>
+                            <div><strong>Capacidade:</strong> <span id="detail-capacity">N/I</span></div>
+                            <div><strong>Data Compra:</strong> <span id="detail-purchase-date">15/10/2025</span></div>
+                            <div><strong>Garantia:</strong> <span id="detail-warranty"></span> <div id="detail-warranty-badge" style="display: inline-block; margin-left: 5px;"></div></div>
+                            <div><strong>Localização Atual:</strong> <span id="detail-location" style="font-weight: 700; color: #fff;">Supermercado Rondon</span></div>
+                        </div>
                     </div>
 
                     <div class="detail-section-title">Anexos / Imagens</div>

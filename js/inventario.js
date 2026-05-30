@@ -205,6 +205,22 @@ export function openFreezerDetail(freezerId) {
     document.getElementById("detail-purchase-date").innerText = freezer.purchaseDate ? new Date(freezer.purchaseDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
     document.getElementById("detail-warranty").innerText = freezer.warrantyMonths ? `${freezer.warrantyMonths} meses` : 'Sem garantia';
     
+    // Renderizar QR Code na ficha de detalhes
+    setTimeout(() => {
+        const qrContainer = document.getElementById("detail-qrcode-render");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: freezer.code,
+                width: 80,
+                height: 80,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
+    
     const warranty = getWarrantyInfo(freezer.purchaseDate, freezer.warrantyMonths);
     const detailWarrantyBadge = document.getElementById("detail-warranty-badge");
     if (detailWarrantyBadge) {
