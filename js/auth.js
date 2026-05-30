@@ -44,6 +44,7 @@ export function initUserAccessControl() {
         "tab-dashboard": true,
         "tab-clientes": true,
         "tab-inventario": true,
+        "tab-equipamentos": true,
         "tab-tinas": true,
         "tab-documentos": true,
         "tab-pedidos": true,

@@ -29,7 +29,8 @@ export let state = {
     deliveries: [],
     freezers: [],
     rentals: [],
-    documents: []
+    documents: [],
+    equipments: []
 };
 
 export function updateState(newState) {
@@ -44,7 +45,7 @@ export function normalizeStateArrays() {
     const collections = [
         'clients', 'products', 'orders', 'deliveries', 'freezers', 
         'rentals', 'documents', 'payments', 'suppliers', 'packaging', 
-        'packagingTransactions', 'cargoSettlements', 'users'
+        'packagingTransactions', 'cargoSettlements', 'users', 'equipments'
     ];
     collections.forEach(col => {
         if (state[col]) {
@@ -505,6 +506,7 @@ export function loadState() {
             if (!state.deliveries) state.deliveries = [];
             if (!state.history) state.history = [];
             if (!state.localBackups) state.localBackups = [];
+            if (!state.equipments) state.equipments = [];
             
             // Retrocompatibilidade para catálogo dinâmico de produtos
             if (!state.products) {
@@ -720,6 +722,7 @@ export function loadState() {
     if (!state.packaging) { state.packaging = []; newFieldsChanged = true; }
     if (!state.packagingTransactions) { state.packagingTransactions = []; newFieldsChanged = true; }
     if (!state.comodatos) { state.comodatos = []; newFieldsChanged = true; }
+    if (!state.equipments) { state.equipments = []; newFieldsChanged = true; }
     if (state.clients) {
         state.clients.forEach(c => {
             if (c.outstandingDebt === undefined) { c.outstandingDebt = 0; newFieldsChanged = true; }

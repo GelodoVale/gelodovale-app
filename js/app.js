@@ -554,6 +554,9 @@ export function renderTabContent(tab) {
         case "inventario":
             if (window.renderInventario) window.renderInventario();
             break;
+        case "equipamentos":
+            if (window.renderEquipamentos) window.renderEquipamentos();
+            break;
         case "tinas":
             if (window.renderTinas) window.renderTinas();
             break;
@@ -1633,6 +1636,152 @@ export function initForms() {
         });
     }
 
+    const equipmentForm = document.getElementById("equipment-form");
+    if (equipmentForm) {
+        equipmentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const equipId = document.getElementById("form-equipment-id").value;
+            const type = document.getElementById("equipment-type-select").value;
+            const code = document.getElementById("equipment-code-input").value.trim();
+            const status = document.getElementById("equipment-status-select").value;
+            const brand = document.getElementById("equipment-brand-input").value.trim();
+            const color = document.getElementById("equipment-color-select").value;
+            const capacity = parseInt(document.getElementById("equipment-capacity-input").value) || null;
+            const purchaseDate = document.getElementById("equipment-purchase-date").value;
+            const warrantyMonths = parseInt(document.getElementById("equipment-warranty").value) || 0;
+            
+            const photoEquipment = document.getElementById("photo-equipment-data").value || "";
+            const photoInvoice = document.getElementById("photo-equipment-invoice-data").value || "";
+            const photoEstablishment = document.getElementById("photo-equipment-establishment-data").value || "";
+            
+            if (!code) {
+                showToast("Código do equipamento é obrigatório!", "warning");
+                return;
+            }
+            
+            if (!state.equipments) state.equipments = [];
+            const codeExists = state.equipments.some(eq => eq.code.toUpperCase() === code.toUpperCase() && eq.id !== equipId);
+            if (codeExists) {
+                showToast(`Já existe um equipamento de aluguel cadastrado com o código "${code}"!`, "error");
+                return;
+            }
+            
+            let targetEquipId = equipId;
+            if (equipId) {
+                const idx = state.equipments.findIndex(eq => eq.id === equipId);
+                if (idx !== -1) {
+                    const currentStatus = state.equipments[idx].status;
+                    const currentClientId = state.equipments[idx].clientId;
+                    const currentClientName = state.equipments[idx].clientName;
+                    
+                    state.equipments[idx] = {
+                        ...state.equipments[idx],
+                        type, code, brand, color, capacity, purchaseDate, warrantyMonths,
+                        photoEquipment: photoEquipment || state.equipments[idx].photoEquipment,
+                        photoInvoice: photoInvoice || state.equipments[idx].photoInvoice,
+                        photoEstablishment: photoEstablishment || state.equipments[idx].photoEstablishment
+                    };
+                    
+                    if (status !== currentStatus) {
+                        if (currentStatus === 'alocado') {
+                            showToast(`Este equipamento está alocado a um aluguel ativo. Faça a devolução antes de alterar seu status!`, 'warning');
+                            return;
+                        }
+                        
+                        state.equipments[idx].status = status;
+                        if (status !== 'alocado') {
+                            state.equipments[idx].clientId = "";
+                            state.equipments[idx].clientName = "";
+                            
+                            let destName = "Fábrica";
+                            if (status === 'manutencao') destName = "Oficina/Manutenção";
+                            if (status === 'inativo') destName = "Inativo";
+                            
+                            if (!state.equipments[idx].movementHistory) state.equipments[idx].movementHistory = [];
+                            state.equipments[idx].movementHistory.push({
+                                date: formatDateBrazil(getBrazilTimeISO()),
+                                from: currentStatus === 'alocado' ? currentClientName : "Fábrica",
+                                to: destName,
+                                reason: "Alteração manual de status no cadastro de equipamentos"
+                            });
+                        }
+                    }
+                }
+            } else {
+                const newId = "eq-" + Date.now();
+                targetEquipId = newId;
+                const newEquip = {
+                    id: newId,
+                    type, code, status, brand, color, capacity, purchaseDate, warrantyMonths,
+                    clientId: "",
+                    clientName: "",
+                    photoEquipment,
+                    photoInvoice,
+                    photoEstablishment,
+                    maintenanceLogs: [],
+                    movementHistory: [
+                        {
+                            date: formatDateBrazil(getBrazilTimeISO()),
+                            from: "Aquisição",
+                            to: status === 'manutencao' ? "Oficina/Manutenção" : "Fábrica",
+                            reason: "Cadastro inicial do equipamento"
+                        }
+                    ]
+                };
+                state.equipments.push(newEquip);
+            }
+            
+            saveState();
+            closeModal("modal-equipment");
+            renderApp();
+            
+            window.showConfirm(
+                `Equipamento "${code}" salvo com sucesso! Deseja gerar e imprimir a etiqueta QR Code patrimonial agora?`,
+                () => {
+                    if (window.openEquipmentStickerModal) {
+                        window.openEquipmentStickerModal(targetEquipId);
+                    }
+                },
+                null,
+                "Imprimir Etiqueta QR",
+                "Gerar Etiqueta",
+                "Agora Não"
+            );
+        });
+    }
+
+    const equipNoteForm = document.getElementById("equip-note-form");
+    if (equipNoteForm) {
+        equipNoteForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const equipId = document.getElementById("equip-note-equipment-id").value;
+            const type = document.getElementById("equip-maint-type").value;
+            const cost = parseFloat(document.getElementById("equip-maint-cost").value) || 0;
+            const note = document.getElementById("equip-note-text").value.trim();
+            
+            const equip = (state.equipments || []).find(item => item.id === equipId);
+            if (equip) {
+                if (!equip.maintenanceLogs) equip.maintenanceLogs = [];
+                equip.maintenanceLogs.push({
+                    date: formatDateBrazil(getBrazilTimeISO()),
+                    type,
+                    cost,
+                    note
+                });
+                
+                saveState();
+                
+                document.getElementById("equip-maint-cost").value = "0.00";
+                document.getElementById("equip-note-text").value = "";
+                
+                if (window.openEquipmentDetail) window.openEquipmentDetail(equipId);
+                renderApp();
+            }
+        });
+    }
+
     const moveFreezerForm = document.getElementById("move-freezer-form");
     if (moveFreezerForm) {
         moveFreezerForm.addEventListener("submit", (e) => {
@@ -1808,7 +1957,7 @@ export function initForms() {
             const address = document.getElementById("rental-address").value.trim();
             const phone = document.getElementById("rental-phone").value.trim();
             const itemType = document.getElementById("rental-item-type").value;
-            const tinaCode = document.getElementById("rental-tina-code").value.trim();
+            const tinaCode = document.getElementById("rental-tina-code-select").value.trim();
             const tinaColor = document.getElementById("rental-tina-color").value;
             const rentalFee = parseFloat(document.getElementById("rental-fee").value) || 0;
             const shippingType = document.getElementById("rental-shipping-type").value;
@@ -1858,6 +2007,25 @@ export function initForms() {
             if (rentalId) {
                 const idx = state.rentals.findIndex(r => r.id === rentalId);
                 if (idx !== -1) {
+                    const previousCode = state.rentals[idx].tinaCode;
+                    
+                    // Se mudou de equipamento, liberar o anterior
+                    if (previousCode && previousCode !== tinaCode && state.equipments) {
+                        const prevEquip = state.equipments.find(eq => eq.code && eq.code.trim().toUpperCase() === previousCode.trim().toUpperCase());
+                        if (prevEquip) {
+                            prevEquip.status = "disponivel";
+                            prevEquip.clientId = "";
+                            prevEquip.clientName = "";
+                            if (!prevEquip.movementHistory) prevEquip.movementHistory = [];
+                            prevEquip.movementHistory.push({
+                                date: formatDateBrazil(getBrazilTimeISO()),
+                                from: clientName,
+                                to: "Fábrica (Disponível)",
+                                reason: `Liberado por alteração de equipamento no aluguel ${rentalId}`
+                            });
+                        }
+                    }
+
                     state.rentals[idx] = {
                         ...state.rentals[idx],
                         clientId, clientName, address, phone, itemType, tinaCode, tinaColor, rentalFee, shippingType, extraDayFee, deliveryFee, pickupFee, deliveryDate, expectedReturnDate, rentalDays, notes,
@@ -1865,6 +2033,26 @@ export function initForms() {
                         photoRentalLocation: photoRentalLocation || state.rentals[idx].photoRentalLocation,
                         logisticsDistance, logisticsAvgSpeed, logisticsVehicleType, logisticsTollBase, logisticsTollMultiplier, logisticsFuelPrice, logisticsFuelConsumption, logisticsMarkupPercent, logisticsMarkupFixed, logisticsTollReturn
                     };
+
+                    // Alocar o novo equipamento
+                    if (state.equipments && tinaCode) {
+                        const newEquip = state.equipments.find(eq => eq.code && eq.code.trim().toUpperCase() === tinaCode.trim().toUpperCase());
+                        if (newEquip) {
+                            newEquip.status = "alocado";
+                            newEquip.clientId = clientId || "";
+                            newEquip.clientName = clientName;
+                            if (!newEquip.movementHistory) newEquip.movementHistory = [];
+                            const wasAlreadyAlocado = newEquip.status === "alocado" && newEquip.clientName === clientName && previousCode === tinaCode;
+                            if (!wasAlreadyAlocado) {
+                                newEquip.movementHistory.push({
+                                    date: formatDateBrazil(getBrazilTimeISO()),
+                                    from: "Fábrica (Disponível)",
+                                    to: clientName,
+                                    reason: `Alocado via edição no aluguel ${rentalId}`
+                                });
+                            }
+                        }
+                    }
                 }
             } else {
                 const newId = "r-" + Date.now();
@@ -1882,13 +2070,29 @@ export function initForms() {
                 };
                 if (!state.rentals) state.rentals = [];
                 state.rentals.push(newRental);
+
+                // Alocar o equipamento
+                if (state.equipments && tinaCode) {
+                    const equip = state.equipments.find(eq => eq.code && eq.code.trim().toUpperCase() === tinaCode.trim().toUpperCase());
+                    if (equip) {
+                        equip.status = "alocado";
+                        equip.clientId = clientId || "";
+                        equip.clientName = clientName;
+                        if (!equip.movementHistory) equip.movementHistory = [];
+                        equip.movementHistory.push({
+                            date: formatDateBrazil(getBrazilTimeISO()),
+                            from: "Fábrica (Disponível)",
+                            to: clientName,
+                            reason: `Alocado via novo aluguel ${newId}`
+                        });
+                    }
+                }
             }
 
             saveState();
             closeModal("modal-rental");
             renderApp();
 
-            // Perguntar se quer gerar/imprimir a etiqueta QR Code de locação
             window.showConfirm(
                 `Aluguel do item "${tinaCode}" salvo com sucesso! Deseja gerar e imprimir a etiqueta QR Code agora?`,
                 () => {
@@ -2285,6 +2489,7 @@ export function initForms() {
     if (rentalItemTypeEl) {
         rentalItemTypeEl.addEventListener("change", () => {
             if (window.updateRentalFee) window.updateRentalFee();
+            if (window.populateRentalEquipmentDropdown) window.populateRentalEquipmentDropdown();
         });
     }
 

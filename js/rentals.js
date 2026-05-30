@@ -346,12 +346,12 @@ export function openRentalModal(rentalId = null) {
     document.getElementById("rental-phone").value = "";
     
     renderRentalModalProducts(null);
+    populateRentalEquipmentDropdown(null);
 
     const itemTypeEl = document.getElementById("rental-item-type");
     if (itemTypeEl && defaultEquipId) {
         itemTypeEl.value = defaultEquipId;
     }
-    document.getElementById("rental-tina-code").value = "";
     document.getElementById("rental-tina-color").value = "Azul";
     document.getElementById("rental-fee").value = defaultEquipPrice.toFixed(2);
     document.getElementById("rental-delivery-fee").value = "0.00";
@@ -406,7 +406,7 @@ export function openRentalModal(rentalId = null) {
             document.getElementById("rental-phone").value = r.phone || "";
             renderRentalModalProducts(r);
             if (itemTypeEl) itemTypeEl.value = r.itemType;
-            document.getElementById("rental-tina-code").value = r.tinaCode;
+            populateRentalEquipmentDropdown(r.tinaCode);
             document.getElementById("rental-tina-color").value = r.tinaColor || "Azul";
             document.getElementById("rental-fee").value = r.rentalFee;
             document.getElementById("rental-delivery-fee").value = r.deliveryFee;
@@ -523,6 +523,22 @@ export function returnRental(rentalId) {
                 rental.extraFee = extraFee;
                 rental.totalRevenue = (rental.totalRevenue || 0) + extraFee;
             }
+            // Atualizar status do equipamento associado
+            if (state.equipments && rental.tinaCode) {
+                const equip = state.equipments.find(eq => eq.code && eq.code.trim().toUpperCase() === rental.tinaCode.trim().toUpperCase());
+                if (equip) {
+                    equip.status = "disponivel";
+                    equip.clientId = "";
+                    equip.clientName = "";
+                    if (!equip.movementHistory) equip.movementHistory = [];
+                    equip.movementHistory.push({
+                        date: returnDateStr,
+                        from: rental.clientName || "Cliente",
+                        to: "Fábrica (Disponível)",
+                        reason: `Devolução do aluguel ${rental.id}`
+                    });
+                }
+            }
             saveState();
             if (window.renderApp) window.renderApp();
             window.showToast("Item devolvido com sucesso!", "success");
@@ -534,9 +550,28 @@ export function returnRental(rentalId) {
 }
 
 export function deleteRental(rentalId) {
+    const rental = (state.rentals || []).find(r => r.id === rentalId);
+    if (!rental) return;
+
     window.showConfirm(
         "Deseja realmente excluir este registro de aluguel?",
         () => {
+            // Se o aluguel ainda estava ativo, devolver o equipamento associado
+            if (rental.status !== "returned" && state.equipments && rental.tinaCode) {
+                const equip = state.equipments.find(eq => eq.code && eq.code.trim().toUpperCase() === rental.tinaCode.trim().toUpperCase());
+                if (equip) {
+                    equip.status = "disponivel";
+                    equip.clientId = "";
+                    equip.clientName = "";
+                    if (!equip.movementHistory) equip.movementHistory = [];
+                    equip.movementHistory.push({
+                        date: window.getBrazilTimeISO().split('T')[0],
+                        from: rental.clientName || "Cliente",
+                        to: "Fábrica (Disponível)",
+                        reason: `Cancelamento / Exclusão do aluguel ${rental.id}`
+                    });
+                }
+            }
             state.rentals = (state.rentals || []).filter(r => r.id !== rentalId);
             saveState();
             if (window.renderApp) window.renderApp();
@@ -585,6 +620,60 @@ export function renderRentalModalProducts(rental = null) {
     container.innerHTML = html;
 }
 
+export function populateRentalEquipmentDropdown(currentTinaCode = null) {
+    const itemTypeEl = document.getElementById("rental-item-type");
+    const selectEl = document.getElementById("rental-tina-code-select");
+    if (!itemTypeEl || !selectEl) return;
+
+    const itemType = itemTypeEl.value;
+
+    const rowTinaDetails = document.getElementById("rental-row-tina-details");
+    if (rowTinaDetails) {
+        rowTinaDetails.style.display = (itemType === "tina") ? "grid" : "none";
+    }
+
+    let targetEquipType = "outros";
+    if (itemType === "tina") {
+        targetEquipType = "tina";
+    } else if (itemType === "mesa" || itemType === "mesa_cadeiras") {
+        targetEquipType = "mesa_cadeiras";
+    }
+
+    const availableEquips = (state.equipments || []).filter(e => {
+        const matchesType = e.type === targetEquipType;
+        const isAvailable = e.status === "disponivel";
+        const isCurrent = currentTinaCode && e.code && e.code.trim().toUpperCase() === currentTinaCode.trim().toUpperCase();
+        return matchesType && (isAvailable || isCurrent);
+    });
+
+    selectEl.innerHTML = '<option value="">-- Selecione o Equipamento --</option>';
+    availableEquips.forEach(e => {
+        const selectedAttr = (currentTinaCode && e.code && e.code.trim().toUpperCase() === currentTinaCode.trim().toUpperCase()) ? 'selected' : '';
+        const label = `${e.code} - ${e.brand || (e.type === "tina" ? "Tina" : "Mesa/Cadeiras")} (${e.color || 'sem cor'})`;
+        selectEl.innerHTML += `<option value="${e.code}" ${selectedAttr}>${label}</option>`;
+    });
+
+    if (availableEquips.length === 0) {
+        selectEl.innerHTML = '<option value="">-- Nenhum equipamento disponível para este tipo --</option>';
+    }
+
+    onRentalTinaCodeSelectChange();
+}
+
+export function onRentalTinaCodeSelectChange() {
+    const selectEl = document.getElementById("rental-tina-code-select");
+    const colorEl = document.getElementById("rental-tina-color");
+    if (!selectEl || !colorEl) return;
+
+    const selectedCode = selectEl.value;
+    if (selectedCode && state.equipments) {
+        const equip = state.equipments.find(e => e.code && e.code.trim().toUpperCase() === selectedCode.trim().toUpperCase());
+        if (equip && equip.color) {
+            colorEl.value = equip.color;
+        }
+    }
+}
+
 // Bind to window for HTML accessibility
 window.renderTinas = renderTinas;
 window.quickCreateRentalItem = quickCreateRentalItem;
@@ -596,3 +685,5 @@ window.populateRentalClientDetails = populateRentalClientDetails;
 window.returnRental = returnRental;
 window.deleteRental = deleteRental;
 window.renderRentalModalProducts = renderRentalModalProducts;
+window.populateRentalEquipmentDropdown = populateRentalEquipmentDropdown;
+window.onRentalTinaCodeSelectChange = onRentalTinaCodeSelectChange;

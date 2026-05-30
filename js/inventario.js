@@ -855,3 +855,418 @@ window.stopQRScanner = stopQRScanner;
 window.closeQRScannerModal = closeQRScannerModal;
 window.populateFreezerDropdowns = populateFreezerDropdowns;
 window.autoPopulateFreezerDetailsInClientForm = autoPopulateFreezerDetailsInClientForm;
+
+export function renderEquipamentos() {
+    const equipGrid = document.getElementById("equipment-grid-container");
+    if (!equipGrid) return;
+    equipGrid.innerHTML = "";
+    
+    const searchQuery = (document.getElementById("search-equipment") ? document.getElementById("search-equipment").value.toLowerCase().trim() : "");
+    const filterStatus = (document.getElementById("filter-equipment-status") ? document.getElementById("filter-equipment-status").value : "");
+    const filterType = (document.getElementById("filter-equipment-type") ? document.getElementById("filter-equipment-type").value : "");
+    
+    const filteredEquips = (state.equipments || []).filter(e => {
+        const codeText = e.code || "";
+        const brandText = e.brand || "";
+        const clientNameText = e.clientName || "";
+        const statusText = e.status || "disponivel";
+        const typeText = e.type || "tina";
+        
+        const matchesSearch = codeText.toLowerCase().includes(searchQuery) ||
+                              brandText.toLowerCase().includes(searchQuery) ||
+                              clientNameText.toLowerCase().includes(searchQuery);
+                              
+        const matchesStatus = !filterStatus || statusText === filterStatus;
+        const matchesType = !filterType || typeText === filterType;
+        
+        return matchesSearch && matchesStatus && matchesType;
+    });
+    
+    if (filteredEquips.length === 0) {
+        equipGrid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i data-lucide="package" style="width: 48px; height: 48px;"></i>
+                <p>Nenhum equipamento de aluguel encontrado com os filtros aplicados.</p>
+                <button class="btn btn-primary" style="margin-top: 1rem;" onclick="openEquipmentModal()">
+                    <i data-lucide="plus"></i> Cadastrar Novo Equipamento
+                </button>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+    
+    filteredEquips.forEach(e => {
+        const warranty = getWarrantyInfo(e.purchaseDate, e.warrantyMonths);
+        const warrantyBadgeHTML = `<span class="warranty-badge ${warranty.class}">${warranty.text}</span>`;
+        
+        let statusBadge = '';
+        if (e.status === 'disponivel') {
+            statusBadge = '<span class="status-badge completed" style="background: rgba(16,185,129,0.15); color: #10b981;">Disponível</span>';
+        } else if (e.status === 'alocado') {
+            statusBadge = '<span class="status-badge pending" style="background: rgba(0,114,255,0.15); color: var(--color-primary);">Alocado</span>';
+        } else if (e.status === 'manutencao') {
+            statusBadge = '<span class="status-badge pending" style="background: rgba(245,158,11,0.15); color: #f59e0b;">Em Manutenção</span>';
+        } else if (e.status === 'inativo') {
+            statusBadge = '<span class="status-badge expired" style="background: rgba(239,68,68,0.15); color: var(--color-danger);">Inativo</span>';
+        }
+        
+        let locationHTML = '';
+        if (e.status === 'alocado') {
+            locationHTML = `<div style="margin-bottom: 0.5rem;"><i data-lucide="map-pin" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;"></i> Alocado em: <strong>${e.clientName}</strong></div>`;
+        } else if (e.status === 'disponivel') {
+            locationHTML = `<div style="margin-bottom: 0.5rem; color: #10b981;"><i data-lucide="home" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;"></i> Local: Fábrica (Disponível)</div>`;
+        } else if (e.status === 'manutencao') {
+            locationHTML = `<div style="margin-bottom: 0.5rem; color: #f59e0b;"><i data-lucide="wrench" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;"></i> Local: Oficina / Assistência</div>`;
+        } else {
+            locationHTML = `<div style="margin-bottom: 0.5rem; color: var(--color-danger);"><i data-lucide="slash" style="width: 14px; height: 14px; display: inline; vertical-align: middle; margin-right: 4px;"></i> Equipamento Desativado</div>`;
+        }
+        
+        let imageSnippet = '';
+        if (e.photoEquipment) {
+            imageSnippet = `<div class="freezer-img-thumbnail" style="background-image: url('${e.photoEquipment}')"></div>`;
+        } else {
+            imageSnippet = `<div class="freezer-img-thumbnail-placeholder"><i data-lucide="image" style="width: 24px; height: 24px; opacity: 0.3;"></i></div>`;
+        }
+        
+        let labelTipo = e.type === "tina" ? "Tina" : (e.type === "mesa_cadeiras" ? "Mesa/Cadeiras" : "Outros");
+        let specHTML = '';
+        if (e.type === 'tina') {
+            specHTML = `
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Cor: <strong>${e.color || 'Não inf.'}</strong></span>
+                    <span>Capacidade: <strong>${e.capacity ? e.capacity + ' L' : 'Não inf.'}</strong></span>
+                </div>
+            `;
+        } else {
+            specHTML = `
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Cor: <strong>${e.color || 'Não inf.'}</strong></span>
+                    <span>Tipo: <strong>${labelTipo}</strong></span>
+                </div>
+            `;
+        }
+        
+        equipGrid.innerHTML += `
+            <div class="freezer-card">
+                <div class="freezer-card-header">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        ${imageSnippet}
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #fff;">${e.code}</h3>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 2px 0 0 0;">${e.brand || labelTipo}</p>
+                        </div>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div class="freezer-card-body" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                    ${specHTML}
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Aquisição: <strong>${e.purchaseDate ? new Date(e.purchaseDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada'}</strong></span>
+                    </div>
+                    ${warrantyBadgeHTML}
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; padding-top: 8px;">
+                        ${locationHTML}
+                    </div>
+                </div>
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                    <button class="btn btn-secondary" onclick="openEquipmentDetail('${e.id}')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
+                        <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Detalhes
+                    </button>
+                    <button class="btn btn-secondary" onclick="openEquipmentStickerModal('${e.id}')" title="Gerar Etiqueta QR" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.15); color: var(--color-primary);">
+                        <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> Etiqueta QR
+                    </button>
+                    <button class="btn btn-secondary btn-icon-only" onclick="openEquipmentModal('${e.id}')" title="Editar Equipamento">
+                        <i data-lucide="edit-3" style="width: 15px; height: 15px;"></i>
+                    </button>
+                    <button class="btn btn-danger btn-icon-only" onclick="deleteEquipment('${e.id}')" title="Remover Equipamento">
+                        <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (window.lucide) window.lucide.createIcons();
+}
+
+export function openEquipmentModal(equipmentId = null) {
+    const modal = document.getElementById("modal-equipment");
+    const form = document.getElementById("equipment-form");
+    const title = document.getElementById("equipment-modal-title");
+    if (!modal || !form) return;
+    
+    form.reset();
+    document.getElementById("form-equipment-id").value = "";
+    document.getElementById("photo-equipment-data").value = "";
+    document.getElementById("photo-equipment-invoice-data").value = "";
+    document.getElementById("photo-equipment-establishment-data").value = "";
+    document.getElementById("preview-equipment").innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
+    document.getElementById("preview-equipment-invoice").innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma nota carregada</p>";
+    document.getElementById("preview-equipment-establishment").innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
+    
+    if (equipmentId) {
+        title.innerText = "Editar Equipamento";
+        const e = (state.equipments || []).find(item => item.id === equipmentId);
+        if (e) {
+            document.getElementById("form-equipment-id").value = e.id;
+            document.getElementById("equipment-type-select").value = e.type || "tina";
+            document.getElementById("equipment-code-input").value = e.code;
+            document.getElementById("equipment-status-select").value = e.status;
+            document.getElementById("equipment-brand-input").value = e.brand || "";
+            document.getElementById("equipment-color-select").value = e.color || "";
+            document.getElementById("equipment-capacity-input").value = e.capacity || "";
+            document.getElementById("equipment-purchase-date").value = e.purchaseDate || "";
+            document.getElementById("equipment-warranty").value = e.warrantyMonths || 12;
+            
+            if (e.photoEquipment) {
+                document.getElementById("photo-equipment-data").value = e.photoEquipment;
+                document.getElementById("preview-equipment").innerHTML = `<img src="${e.photoEquipment}" style="max-height: 80px; border-radius: 4px;">`;
+            }
+            if (e.photoInvoice) {
+                document.getElementById("photo-equipment-invoice-data").value = e.photoInvoice;
+                document.getElementById("preview-equipment-invoice").innerHTML = `<img src="${e.photoInvoice}" style="max-height: 80px; border-radius: 4px;">`;
+            }
+            if (e.photoEstablishment) {
+                document.getElementById("photo-equipment-establishment-data").value = e.photoEstablishment;
+                document.getElementById("preview-equipment-establishment").innerHTML = `<img src="${e.photoEstablishment}" style="max-height: 80px; border-radius: 4px;">`;
+            }
+        }
+    } else {
+        title.innerText = "Novo Equipamento de Aluguel";
+    }
+    
+    toggleEquipmentModalFields();
+    modal.classList.add("active");
+}
+
+export function toggleEquipmentModalFields() {
+    const type = document.getElementById("equipment-type-select").value;
+    const colorContainer = document.getElementById("equip-modal-color-container");
+    const capacityContainer = document.getElementById("equip-modal-capacity-container");
+    
+    if (type === "tina") {
+        if (colorContainer) colorContainer.style.display = "block";
+        if (capacityContainer) capacityContainer.style.display = "block";
+    } else if (type === "mesa_cadeiras") {
+        if (colorContainer) colorContainer.style.display = "block";
+        if (capacityContainer) capacityContainer.style.display = "none";
+    } else { // outros
+        if (colorContainer) colorContainer.style.display = "block";
+        if (capacityContainer) capacityContainer.style.display = "none";
+    }
+}
+
+export function deleteEquipment(equipmentId) {
+    const e = (state.equipments || []).find(item => item.id === equipmentId);
+    if (!e) return;
+    
+    if (e.status === 'alocado') {
+        window.showToast(`O equipamento ${e.code} está alocado a um aluguel ativo. Receba a devolução do aluguel antes de remover do inventário!`, 'warning');
+        return;
+    }
+    
+    window.showConfirm(
+        `Deseja realmente excluir o equipamento ${e.code} do inventário? Esta ação é irreversível.`,
+        () => {
+            state.equipments = state.equipments.filter(item => item.id !== equipmentId);
+            saveState();
+            if (window.renderApp) window.renderApp();
+            window.showToast("Equipamento removido com sucesso!", "success");
+        },
+        null,
+        "Excluir Equipamento",
+        "Excluir"
+    );
+}
+
+export function openEquipmentDetail(equipmentId) {
+    const e = (state.equipments || []).find(item => item.id === equipmentId);
+    if (!e) return;
+    
+    let labelTipo = e.type === "tina" ? "Tina" : (e.type === "mesa_cadeiras" ? "Mesa/Cadeira" : "Outros");
+    
+    document.getElementById("equip-detail-code").innerText = e.code;
+    document.getElementById("equip-detail-type").innerText = labelTipo;
+    document.getElementById("equip-detail-brand").innerText = e.brand || 'Não informado';
+    document.getElementById("equip-detail-color").innerText = e.color || 'Não informada';
+    document.getElementById("equip-detail-capacity").innerText = e.capacity ? `${e.capacity} Litros` : 'Não informada';
+    document.getElementById("equip-detail-purchase-date").innerText = e.purchaseDate ? new Date(e.purchaseDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informada';
+    document.getElementById("equip-detail-warranty").innerText = e.warrantyMonths ? `${e.warrantyMonths} meses` : 'Sem garantia';
+    
+    const colorRow = document.getElementById("equip-detail-color-row");
+    const capacityRow = document.getElementById("equip-detail-capacity-row");
+    if (colorRow) colorRow.style.display = e.color ? "block" : "none";
+    if (capacityRow) capacityRow.style.display = e.type === "tina" ? "block" : "none";
+    
+    // Renderizar QR Code
+    setTimeout(() => {
+        const qrContainer = document.getElementById("equip-detail-qrcode-render");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: e.code,
+                width: 80,
+                height: 80,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
+    
+    const warranty = getWarrantyInfo(e.purchaseDate, e.warrantyMonths);
+    const detailWarrantyBadge = document.getElementById("equip-detail-warranty-badge");
+    if (detailWarrantyBadge) {
+        detailWarrantyBadge.innerText = warranty.text;
+        detailWarrantyBadge.className = `warranty-badge ${warranty.class}`;
+    }
+    
+    document.getElementById("btn-equip-gerar-etiqueta").onclick = () => openEquipmentStickerModal(e.id);
+    const noteIdEl = document.getElementById("equip-note-equipment-id");
+    if (noteIdEl) noteIdEl.value = e.id;
+    
+    let statusText = '';
+    if (e.status === 'disponivel') statusText = '📍 Fábrica (Disponível)';
+    else if (e.status === 'alocado') statusText = `🏪 Alocado em: <strong>${e.clientName}</strong>`;
+    else if (e.status === 'manutencao') statusText = '🔧 Oficina / Em Manutenção';
+    else statusText = '❌ Inativo';
+    document.getElementById("equip-detail-location").innerHTML = statusText;
+    
+    const photoSection = document.getElementById("equip-detail-photos-gallery");
+    if (photoSection) {
+        photoSection.innerHTML = "";
+        
+        if (e.photoEquipment) {
+            photoSection.innerHTML += `
+                <div style="flex: 1; min-width: 120px;">
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Foto</span>
+                    <img src="${e.photoEquipment}" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.open('${e.photoEquipment}', '_blank')">
+                </div>
+            `;
+        }
+        if (e.photoInvoice) {
+            photoSection.innerHTML += `
+                <div style="flex: 1; min-width: 120px;">
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Nota Fiscal</span>
+                    <img src="${e.photoInvoice}" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.open('${e.photoInvoice}', '_blank')">
+                </div>
+            `;
+        }
+        if (e.photoEstablishment) {
+            photoSection.innerHTML += `
+                <div style="flex: 1; min-width: 120px;">
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Foto Local</span>
+                    <img src="${e.photoEstablishment}" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.open('${e.photoEstablishment}', '_blank')">
+                </div>
+            `;
+        }
+        if (!e.photoEquipment && !e.photoInvoice && !e.photoEstablishment) {
+            photoSection.innerHTML = "<p style='font-size: 0.8rem; color: var(--color-text-muted); width: 100%; text-align: center; padding: 1rem;'>Nenhuma foto anexada.</p>";
+        }
+    }
+    
+    const timeline = document.getElementById("equip-movement-timeline");
+    if (timeline) {
+        timeline.innerHTML = "";
+        if (e.movementHistory && e.movementHistory.length > 0) {
+            const sortedHistory = [...e.movementHistory].reverse();
+            sortedHistory.forEach(log => {
+                timeline.innerHTML += `
+                    <div class="timeline-item">
+                        <div class="timeline-date">${log.date}</div>
+                        <div class="timeline-content">
+                            <strong>De:</strong> ${log.from} &rarr; <strong>Para:</strong> ${log.to}
+                            <div style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 2px;">${log.reason}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            timeline.innerHTML = "<p style='font-size: 0.8rem; color: var(--color-text-muted); padding: 0.5rem;'>Sem histórico.</p>";
+        }
+    }
+    
+    const maintenanceList = document.getElementById("equip-maintenance-notes-list");
+    if (maintenanceList) {
+        maintenanceList.innerHTML = "";
+        if (e.maintenanceLogs && e.maintenanceLogs.length > 0) {
+            const sortedLogs = [...e.maintenanceLogs].reverse();
+            sortedLogs.forEach(log => {
+                maintenanceList.innerHTML += `
+                    <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 6px; border-left: 4px solid var(--color-primary); font-size: 0.8rem; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); border-left-color: var(--color-primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                            <span style="font-weight: bold; color: var(--color-primary);">${log.type}</span>
+                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">${log.date}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; font-size: 0.75rem; color: var(--color-text-muted);">
+                            <div><strong>Custo:</strong> R$ ${(parseFloat(log.cost) || 0).toFixed(2).replace(".", ",")}</div>
+                        </div>
+                        <div style="font-size: 0.8rem; line-height: 1.3; color: #fff;">${log.note}</div>
+                    </div>
+                `;
+            });
+        } else {
+            maintenanceList.innerHTML = "<p style='font-size: 0.8rem; color: var(--color-text-muted); padding: 0.5rem;'>Nenhuma manutenção registrada.</p>";
+        }
+    }
+    
+    if (window.lucide) window.lucide.createIcons();
+    const modal = document.getElementById("modal-equipment-detail");
+    if (modal) modal.classList.add("active");
+}
+
+export function openEquipmentStickerModal(equipmentId) {
+    const e = (state.equipments || []).find(item => item.id === equipmentId);
+    if (!e) return;
+    
+    let labelTipo = e.type === "tina" ? "Tina" : (e.type === "mesa_cadeiras" ? "Mesa/Cadeira" : "Outros");
+    const specLabel = labelTipo + (e.color ? ` (${e.color})` : "") + (e.capacity ? ` - ${e.capacity}L` : "");
+    
+    const printableContent = document.getElementById("printable-sticker-content");
+    if (!printableContent) return;
+    printableContent.innerHTML = `
+        <div class="sticker-header">
+            <span class="sticker-logo-text">❄️ Gelo do Vale</span>
+            <span style="font-size: 0.75rem; font-weight: bold; border: 1px solid #000; padding: 2px 5px; border-radius: 3px; background: #fff; color: #000;">PATRIMÔNIO</span>
+        </div>
+        <div class="sticker-body" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 8px;">
+            <div class="sticker-specs" style="font-size: 0.75rem; line-height: 1.4; color: #000; text-align: left;">
+                <div style="font-size: 1rem; font-weight: 900; margin-bottom: 4px; color: #000;">CÓD: ${e.code}</div>
+                <div><strong>Equipamento:</strong> ${specLabel}</div>
+                <div><strong>Propriedade de:</strong> Gelo do Vale</div>
+                <div style="font-size: 0.55rem; font-weight: bold; margin-top: 5px; color: #0072ff; border: 1px dashed #0072ff; padding: 1px 3px; display: inline-block;">Propriedade Exclusiva</div>
+            </div>
+            <div class="sticker-qrcode" id="sticker-qrcode-render" style="padding: 4px; background: #fff; border: 1px solid #000; display: flex; align-items: center; justify-content: center;"></div>
+        </div>
+        <div class="sticker-footer" style="margin-top: 8px; border-top: 1px solid #000; padding-top: 4px; font-size: 0.6rem; font-weight: bold; text-align: center; color: #000;">
+            CONTATO / SUPORTE: ${FACTORY_INFO.phone}
+        </div>
+    `;
+    
+    setTimeout(() => {
+        const qrContainer = document.getElementById("sticker-qrcode-render");
+        if (qrContainer) {
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: e.code,
+                width: 80,
+                height: 80,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+    }, 100);
+    
+    const modal = document.getElementById("modal-sticker");
+    if (modal) modal.classList.add("active");
+}
+
+window.renderEquipamentos = renderEquipamentos;
+window.openEquipmentModal = openEquipmentModal;
+window.toggleEquipmentModalFields = toggleEquipmentModalFields;
+window.deleteEquipment = deleteEquipment;
+window.openEquipmentDetail = openEquipmentDetail;
+window.openEquipmentStickerModal = openEquipmentStickerModal;
+

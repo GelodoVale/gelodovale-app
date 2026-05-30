@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -131,6 +131,10 @@
                 <a class="nav-item" data-tab="inventario">
                     <i data-lucide="box" class="anim-rotate-ice"></i>
                     <span>🧊 Inventário de Freezers</span>
+                </a>
+                <a class="nav-item" data-tab="equipamentos">
+                    <i data-lucide="package"></i>
+                    <span>📦 Inventário de Equipamentos</span>
                 </a>
                 <a class="nav-item" data-tab="tinas">
                     <i data-lucide="archive"></i>
@@ -441,6 +445,88 @@
                 
                 <div class="freezer-grid" id="freezer-grid-container">
                     <!-- Freezers inseridos dinamicamente via JS -->
+                </div>
+            </section>
+
+            <!-- ================= TELA: INVENTÃRIO DE EQUIPAMENTOS ================= -->
+            <section id="equipamentos" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>InventÃ¡rio de Equipamentos (Aluguel)</h2>
+                    <button class="btn btn-primary" onclick="openEquipmentModal()">
+                        <i data-lucide="plus"></i> Novo Equipamento
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="filter-bar">
+                    <div class="filter-group" style="flex: 1; min-width: 200px;">
+                        <label for="search-equipment">Buscar por CÃ³digo ou Modelo</label>
+                        <input type="text" id="search-equipment" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-equipment-type">Filtrar por Tipo</label>
+                        <select class="filter-input" id="filter-equipment-type">
+                            <option value="">Todos os Tipos</option>
+                            <option value="tina">Tina</option>
+                            <option value="mesa_cadeiras">Mesa/Cadeira</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-equipment-status">Filtrar por Status</label>
+                        <select class="filter-input" id="filter-equipment-status">
+                            <option value="">Todos os Status</option>
+                            <option value="disponivel">DisponÃ­vel / FÃ¡brica</option>
+                            <option value="alocado">Alocado (Em Cliente)</option>
+                            <option value="manutencao">Em ManutenÃ§Ã£o</option>
+                            <option value="inativo">Inativo / Descartado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="freezer-grid" id="equipment-grid-container">
+                    <!-- Equipamentos inseridos dinamicamente via JS -->
+                </div>
+            </section>
+
+            <!-- ================= TELA: INVENTÁRIO DE EQUIPAMENTOS ================= -->
+            <section id="equipamentos" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem;">
+                    <h2>Inventário de Equipamentos (Aluguel)</h2>
+                    <button class="btn btn-primary" onclick="openEquipmentModal()">
+                        <i data-lucide="plus"></i> Novo Equipamento
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="filter-bar">
+                    <div class="filter-group" style="flex: 1; min-width: 200px;">
+                        <label for="search-equipment">Buscar por Código ou Modelo</label>
+                        <input type="text" id="search-equipment" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-equipment-type">Filtrar por Tipo</label>
+                        <select class="filter-input" id="filter-equipment-type">
+                            <option value="">Todos os Tipos</option>
+                            <option value="tina">Tina</option>
+                            <option value="mesa_cadeiras">Mesa/Cadeira</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-equipment-status">Filtrar por Status</label>
+                        <select class="filter-input" id="filter-equipment-status">
+                            <option value="">Todos os Status</option>
+                            <option value="disponivel">Disponível / Fábrica</option>
+                            <option value="alocado">Alocado (Em Cliente)</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="inativo">Inativo / Descartado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="freezer-grid" id="equipment-grid-container">
+                    <!-- Equipamentos inseridos dinamicamente via JS -->
                 </div>
             </section>
 
@@ -1986,7 +2072,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                                     <div>
-                                        <h2>Gerenciar Usu�rios & Senhas</h2>
+                                        <h2>Gerenciar Usu�rios & Senhas</h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Crie perfis de colaboradores e configure quais abas e ferramentas administrativas cada nível de acesso pode visualizar ou alterar.</p>
                                     </div>
                                     <button type="button" class="btn btn-primary" onclick="openUserModal()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -3333,6 +3419,202 @@
     </div>
 
     <!-- 7. Modal de Movimentação do Freezer -->
+    <!-- Modal de Cadastro/Edição de Equipamento de Aluguel -->
+    <div class="modal-backdrop" id="modal-equipment">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="equipment-modal-title">Novo Equipamento</h3>
+                <button class="close-btn" onclick="closeModal('modal-equipment')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="equipment-form">
+                <input type="hidden" id="form-equipment-id">
+                <input type="hidden" id="photo-equipment-data">
+                <input type="hidden" id="photo-equipment-invoice-data">
+                <input type="hidden" id="photo-equipment-establishment-data">
+                
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="equipment-type-select">Tipo *</label>
+                        <select id="equipment-type-select" class="form-control" required onchange="toggleEquipmentModalFields()">
+                            <option value="tina">Tina</option>
+                            <option value="mesa_cadeiras">Mesa/Cadeira</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment-code-input">Código Único (Patrimônio) *</label>
+                        <input type="text" id="equipment-code-input" class="form-control" placeholder="Ex: TINA-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment-status-select">Status Inicial *</label>
+                        <select id="equipment-status-select" class="form-control" required>
+                            <option value="disponivel">Disponível / Fábrica</option>
+                            <option value="manutencao">Em Manutenção</option>
+                            <option value="inativo">Inativo / Descartado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-three">
+                    <div class="form-group">
+                        <label for="equipment-brand-input">Marca / Modelo</label>
+                        <input type="text" id="equipment-brand-input" class="form-control" placeholder="Ex: Tina 360L Rotomoldada">
+                    </div>
+                    <div class="form-group" id="equip-modal-color-container">
+                        <label for="equipment-color-select">Cor</label>
+                        <select id="equipment-color-select" class="form-control">
+                            <option value="">Selecione...</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Vermelha">Vermelha</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Preta">Preta</option>
+                            <option value="Cinza">Cinza</option>
+                            <option value="Branca">Branca</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="equip-modal-capacity-container">
+                        <label for="equipment-capacity-input">Capacidade (Litros)</label>
+                        <input type="number" id="equipment-capacity-input" class="form-control" placeholder="Ex: 360" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="equipment-purchase-date">Data da Compra</label>
+                        <input type="date" id="equipment-purchase-date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipment-warranty">Meses de Garantia</label>
+                        <input type="number" id="equipment-warranty" class="form-control" min="0" placeholder="Ex: 12" value="12">
+                    </div>
+                </div>
+
+                <!-- Fotos -->
+                <div class="form-row-three" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Foto do Equipamento</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-equipment').click()">
+                            <i data-lucide="image" style="width: 20px; height: 20px;"></i>
+                            <p>Selecionar Foto</p>
+                            <input type="file" id="input-photo-equipment" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-equipment', 'photo-equipment-data')">
+                        </div>
+                        <div class="preview-box-container" id="preview-equipment"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Foto da Nota Fiscal</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-equipment-invoice').click()">
+                            <i data-lucide="file" style="width: 20px; height: 20px;"></i>
+                            <p>Selecionar Nota</p>
+                            <input type="file" id="input-photo-equipment-invoice" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-equipment-invoice', 'photo-equipment-invoice-data')">
+                        </div>
+                        <div class="preview-box-container" id="preview-equipment-invoice"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Foto do Local (Se Alocado)</label>
+                        <div class="upload-dropzone" onclick="document.getElementById('input-photo-equipment-establishment').click()">
+                            <i data-lucide="map-pin" style="width: 20px; height: 20px;"></i>
+                            <p>Selecionar Local</p>
+                            <input type="file" id="input-photo-equipment-establishment" accept="image/*" style="display: none;" onchange="handleImageUpload(this, 'preview-equipment-establishment', 'photo-equipment-establishment-data')">
+                        </div>
+                        <div class="preview-box-container" id="preview-equipment-establishment"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-equipment')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Equipamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhado do Equipamento de Aluguel -->
+    <div class="modal-backdrop" id="modal-equipment-detail">
+        <div class="modal-content" style="width: 750px; max-width: 95vw;">
+            <div class="modal-header">
+                <h3 id="equip-detail-code" style="color: var(--color-primary);">Equipamento: TINA-001</h3>
+                <button class="close-btn" onclick="closeModal('modal-equipment-detail')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="freezer-detail-grid">
+                <div>
+                    <div class="detail-section-title">Especificações</div>
+                    <div style="display: flex; gap: 1.2rem; align-items: flex-start; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <!-- QR Code Container -->
+                        <div id="equip-detail-qrcode-render" style="padding: 6px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; width: 92px; height: 92px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></div>
+                        <!-- Specs -->
+                        <div class="freezer-specs-inline" style="flex: 1; grid-template-columns: 1fr; margin-bottom: 0; gap: 0.6rem; padding: 0.5rem; background: transparent; border: none;">
+                            <div><strong>Tipo:</strong> <span id="equip-detail-type">Tina</span></div>
+                            <div><strong>Marca/Modelo:</strong> <span id="equip-detail-brand">Tina 360L</span></div>
+                            <div id="equip-detail-color-row"><strong>Cor:</strong> <span id="equip-detail-color">Verde</span></div>
+                            <div id="equip-detail-capacity-row"><strong>Capacidade:</strong> <span id="equip-detail-capacity">360 Litros</span></div>
+                            <div><strong>Data Compra:</strong> <span id="equip-detail-purchase-date">15/10/2025</span></div>
+                            <div><strong>Garantia:</strong> <span id="equip-detail-warranty"></span> <div id="equip-detail-warranty-badge" style="display: inline-block; margin-left: 5px;"></div></div>
+                            <div><strong>Localização Atual:</strong> <span id="equip-detail-location" style="font-weight: 700; color: #fff;">Fábrica (Disponível)</span></div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section-title">Anexos / Imagens</div>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;" id="equip-detail-photos-gallery">
+                        <!-- Inserido dinamicamente via JS -->
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-secondary" id="btn-equip-gerar-etiqueta" style="width: 100%;">
+                            <i data-lucide="printer"></i> Gerar Etiqueta de Identificação
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Histórico e Manutenções -->
+                <div style="border-left: 1px solid rgba(255,255,255,0.05); padding-left: 1.5rem;">
+                    <div class="detail-section-title">Histórico de Movimentação</div>
+                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem; padding-right: 0.5rem;">
+                        <div class="movement-timeline" id="equip-movement-timeline">
+                            <!-- Inserido dinamicamente -->
+                        </div>
+                    </div>
+
+                    <div class="detail-section-title">Notas de Manutenção</div>
+                    <div style="max-height: 250px; overflow-y: auto; margin-bottom: 1rem; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);" id="equip-maintenance-notes-list">
+                        <!-- Notas inseridas dinamicamente -->
+                    </div>
+                    <form id="equip-note-form" style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 6px;">
+                        <input type="hidden" id="equip-note-equipment-id">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="equip-maint-type" style="font-size: 0.7rem; color: var(--color-text-muted);">Tipo de Serviço</label>
+                                <select id="equip-maint-type" class="form-control" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; height: auto;" required>
+                                    <option value="Limpeza">Limpeza</option>
+                                    <option value="Pintura/Reforma">Pintura/Reforma</option>
+                                    <option value="Conserto">Conserto</option>
+                                    <option value="Ajuste/Outro">Ajuste/Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="equip-maint-cost" style="font-size: 0.7rem; color: var(--color-text-muted);">Custo (R$)</label>
+                                <input type="number" step="0.01" id="equip-maint-cost" class="form-control" value="0.00" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; height: auto;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 0;">
+                            <label for="equip-note-text" style="font-size: 0.7rem; color: var(--color-text-muted);">Observações / Descrição</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="equip-note-text" class="form-control" placeholder="Descrever serviço..." style="font-size: 0.75rem; padding: 0.3rem 0.5rem; flex: 1; height: auto;" required>
+                                <button type="submit" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center; height: auto;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modal-move-freezer">
         <div class="modal-content">
             <div class="modal-header">
@@ -3471,8 +3753,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="rental-tina-code">Código / Identificação *</label>
-                        <input type="text" id="rental-tina-code" class="form-control" placeholder="Ex: Tina #03 / Conjunto #10" required>
+                        <label for="rental-tina-code-select">Código / Identificação *</label>
+                        <select id="rental-tina-code-select" class="form-control" required onchange="onRentalTinaCodeSelectChange()">
+                            <option value="">-- Selecione o Equipamento --</option>
+                        </select>
                     </div>
                 </div>
 
@@ -4543,6 +4827,10 @@
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
                                     <input type="checkbox" class="perm-checkbox" data-perm="tab-inventario" style="accent-color: var(--color-primary);">
                                     <span>Inventário de Freezers</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
+                                    <input type="checkbox" class="perm-checkbox" data-perm="tab-equipamentos" style="accent-color: var(--color-primary);">
+                                    <span>Inventário de Equipamentos</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
                                     <input type="checkbox" class="perm-checkbox" data-perm="tab-tinas" style="accent-color: var(--color-primary);">
