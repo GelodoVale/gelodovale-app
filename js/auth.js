@@ -137,6 +137,38 @@ export function initPasswordTogglers() {
             if (window.lucide) window.lucide.createIcons();
         });
     }
+
+    const btnCurrent = document.getElementById("btn-toggle-cfg-current-pwd");
+    if (btnCurrent) {
+        btnCurrent.addEventListener("click", () => {
+            const input = document.getElementById("cfg-current-pwd");
+            const icon = btnCurrent.querySelector("i");
+            if (input.type === "password") {
+                input.type = "text";
+                if (icon) icon.setAttribute("data-lucide", "eye-off");
+            } else {
+                input.type = "password";
+                if (icon) icon.setAttribute("data-lucide", "eye");
+            }
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
+
+    const btnNew = document.getElementById("btn-toggle-cfg-new-pwd");
+    if (btnNew) {
+        btnNew.addEventListener("click", () => {
+            const input = document.getElementById("cfg-new-pwd");
+            const icon = btnNew.querySelector("i");
+            if (input.type === "password") {
+                input.type = "text";
+                if (icon) icon.setAttribute("data-lucide", "eye-off");
+            } else {
+                input.type = "password";
+                if (icon) icon.setAttribute("data-lucide", "eye");
+            }
+            if (window.lucide) window.lucide.createIcons();
+        });
+    }
 }
 
 export function loginUser(userId, password) {
