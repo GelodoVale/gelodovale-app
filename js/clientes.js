@@ -3,6 +3,18 @@ import { state, saveState } from './state.js';
 import { openComodato } from './comodatos.js';
 import { openReceivePaymentModal } from './admin.js';
 
+export function getClientDocStatus(c) {
+    const hasDoc = c.document && c.document.trim().length > 0;
+    const hasPhoto = c.photoDoc && c.photoDoc.trim().length > 0;
+    if (hasDoc && hasPhoto) {
+        return "completo";
+    } else if (hasDoc) {
+        return "sem_foto";
+    } else {
+        return "incompleto";
+    }
+}
+
 export function renderClientes() {
     const clientsContainer = document.getElementById("clients-grid-container");
     if (!clientsContainer) return;
@@ -10,6 +22,7 @@ export function renderClientes() {
     
     const searchVal = document.getElementById("client-search-input") ? document.getElementById("client-search-input").value.toLowerCase().trim() : "";
     const filterVal = document.getElementById("client-activity-filter") ? document.getElementById("client-activity-filter").value : "all";
+    const docFilterVal = document.getElementById("client-doc-filter") ? document.getElementById("client-doc-filter").value : "all";
 
     let filteredClients = (state.clients || []);
     
@@ -47,6 +60,11 @@ export function renderClientes() {
     // Filtro de atividade
     if (filterVal !== "all") {
         filteredClients = filteredClients.filter(c => clientActivityInfo[c.id].status === filterVal);
+    }
+
+    // Filtro por documentação
+    if (docFilterVal !== "all") {
+        filteredClients = filteredClients.filter(c => getClientDocStatus(c) === docFilterVal);
     }
 
     if (filteredClients.length === 0) {
@@ -92,6 +110,17 @@ export function renderClientes() {
             activityBadgeHTML = `<span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 8px rgba(239,68,68,0.25);"><span style="width: 6px; height: 6px; background: #ef4444; border-radius: 50%;"></span>Inativo (${activity.daysSinceLast} dias)</span>`;
         } else {
             activityBadgeHTML = `<span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">Novo Cliente</span>`;
+        }
+
+        // Document Badge
+        const docStatus = getClientDocStatus(c);
+        let docBadgeHTML = "";
+        if (docStatus === "completo") {
+            docBadgeHTML = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Documentação completa"><i data-lucide="file-check-2" style="width: 13px; height: 13px;"></i> Doc OK</span>`;
+        } else if (docStatus === "sem_foto") {
+            docBadgeHTML = `<span class="badge" style="background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Possui CPF/CNPJ, mas falta foto do documento"><i data-lucide="file-warning" style="width: 13px; height: 13px;"></i> Sem Foto</span>`;
+        } else {
+            docBadgeHTML = `<span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Sem documentação informada"><i data-lucide="file-x-2" style="width: 13px; height: 13px;"></i> Sem Doc</span>`;
         }
 
         let stockSectionHTML = '';
@@ -140,6 +169,7 @@ export function renderClientes() {
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <h3 style="margin: 0; font-size: 1rem; color: #fff;">${c.fantasyName || c.name}</h3>
                                 ${activityBadgeHTML}
+                                ${docBadgeHTML}
                             </div>
                             ${c.fantasyName ? `<p style="margin-top: 1px; font-size: 0.72rem; color: var(--color-text-muted); font-style: italic;">${c.name}</p>` : ''}
                             <p style="margin-top: 4px; font-size: 0.75rem; color: var(--color-text-muted);">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
@@ -270,24 +300,12 @@ export function openClientModal(clientId = null) {
     
     // Limpar checkboxes de visita
     document.querySelectorAll('input[name="visit-days"]').forEach(cb => cb.checked = false);
-    
-    // Popular o dropdown de freezers
-    const freezerSelect = document.getElementById("client-freezer-id-select");
-    freezerSelect.innerHTML = '<option value="">Nenhum freezer alocado</option>';
-    
-    let currentFreezer = null;
-    if (clientId) {
-        currentFreezer = state.freezers.find(f => f.clientId === clientId);
-        if (currentFreezer) {
-            freezerSelect.innerHTML += `<option value="${currentFreezer.id}" selected>${currentFreezer.code} - ${currentFreezer.brand}</option>`;
-        }
+    if (document.getElementById("client-birthdate")) {
+        document.getElementById("client-birthdate").value = "";
     }
-    
-    state.freezers.forEach(f => {
-        if (f.status === "disponivel" && (!currentFreezer || f.id !== currentFreezer.id)) {
-            freezerSelect.innerHTML += `<option value="${f.id}">${f.code} - ${f.brand}</option>`;
-        }
-    });
+    if (document.getElementById("client-doc-expiry")) {
+        document.getElementById("client-doc-expiry").value = "";
+    }
     
     if (clientId) {
         title.innerText = "Editar Cliente & Freezer";
@@ -336,20 +354,17 @@ export function openClientModal(clientId = null) {
             if (document.getElementById("client-longitude")) {
                 document.getElementById("client-longitude").value = c.longitude || "";
             }
-            document.getElementById("freezer-code").value = c.freezerCode || "";
-            document.getElementById("alert-threshold").value = c.alertThreshold || 20;
-            
-            document.getElementById("freezer-brand").value = c.freezerBrand || "";
-            document.getElementById("freezer-voltage").value = c.freezerVoltage || "";
-            document.getElementById("freezer-capacity").value = c.freezerCapacity ? c.freezerCapacity + " Litros" : "";
-            document.getElementById("freezer-delivery-date").value = c.deliveryDate || "";
-            document.getElementById("freezer-maintenance").value = c.maintenanceNotes || "";
+            if (document.getElementById("client-birthdate")) {
+                document.getElementById("client-birthdate").value = c.birthDate || "";
+            }
+            if (document.getElementById("client-doc-expiry")) {
+                document.getElementById("client-doc-expiry").value = c.docExpiry || "";
+            }
+            if (document.getElementById("alert-threshold")) {
+                document.getElementById("alert-threshold").value = c.alertThreshold || 20;
+            }
             
             renderClientModalProducts(c);
-            
-            if (currentFreezer) {
-                freezerSelect.value = currentFreezer.id;
-            }
 
             // Exibir saldo devedor
             const debtGroup = document.getElementById("client-debt-group");
@@ -926,6 +941,7 @@ export function handleLinkFreezerSubmit(e) {
     }
     
     const deliveryDate = document.getElementById("link-freezer-delivery-date").value;
+    const expectedReturnDate = document.getElementById("link-freezer-expected-return-date") ? document.getElementById("link-freezer-expected-return-date").value : "";
     const notes = document.getElementById("link-freezer-notes").value.trim();
     
     // Atualizar dados do freezer
@@ -933,6 +949,7 @@ export function handleLinkFreezerSubmit(e) {
     freezer.clientId = client.id;
     freezer.clientName = client.name;
     freezer.deliveryDate = deliveryDate;
+    freezer.expectedReturnDate = expectedReturnDate;
     freezer.maintenanceNotes = notes;
     if (!freezer.movementHistory) freezer.movementHistory = [];
     freezer.movementHistory.push({
@@ -948,6 +965,7 @@ export function handleLinkFreezerSubmit(e) {
     client.freezerVoltage = freezer.voltage || "Não informado";
     client.freezerCapacity = freezer.capacity || "";
     client.deliveryDate = deliveryDate;
+    client.expectedReturnDate = expectedReturnDate;
     client.maintenanceNotes = notes;
     
     // Gerar o Comodato pendente automaticamente!
@@ -965,6 +983,7 @@ export function handleLinkFreezerSubmit(e) {
         freezerVoltage: freezer.voltage || 'Não informado',
         freezerCapacity: freezer.capacity || '',
         startDate: deliveryDate,
+        expectedReturnDate: expectedReturnDate,
         status: 'pendente',
         signatureBase64: '',
         signatureDate: '',

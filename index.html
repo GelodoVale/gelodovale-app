@@ -372,14 +372,20 @@
                         <h2>Lista de Clientes e Status de Estoque</h2>
                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie os clientes cadastrados, níveis de estoque de gelo e risco de inatividade (churn).</p>
                     </div>
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; max-width: 580px; justify-content: flex-end; margin-left: auto; align-items: center;">
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; max-width: 720px; justify-content: flex-end; margin-left: auto; align-items: center;">
                         <input type="text" id="client-search-input" class="form-control" placeholder="Buscar por nome ou endereço..." style="flex: 1.5; min-width: 180px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" oninput="renderClientes()">
-                        <select id="client-activity-filter" class="form-control" style="flex: 1; min-width: 130px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
-                            <option value="all">Todos os Status</option>
+                        <select id="client-activity-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
+                            <option value="all">Status: Todos</option>
                             <option value="active">🟢 Ativos (≤ 7 dias)</option>
                             <option value="warning">🟡 Alerta (8-14 dias)</option>
                             <option value="inactive">🔴 Inativos (> 14 dias)</option>
                             <option value="new">🔵 Novos (Sem compras)</option>
+                        </select>
+                        <select id="client-doc-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
+                            <option value="all">Doc.: Todos</option>
+                            <option value="completo">📄 Completo</option>
+                            <option value="sem_foto">⚠️ Faltando Foto</option>
+                            <option value="incompleto">❌ Sem Documento</option>
                         </select>
                         <button class="btn btn-primary" id="btn-add-client" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; height: 36px; font-size: 0.85rem;">
                             <i data-lucide="user-plus" style="width: 15px; height: 15px;"></i> Adicionar
@@ -1123,6 +1129,7 @@
                                                     <th style="padding: 10px;">Freezer (Código)</th>
                                                     <th style="padding: 10px;">Marca / Modelo</th>
                                                     <th style="padding: 10px;">Data Início</th>
+                                                    <th style="padding: 10px;">Previsão Retorno</th>
                                                     <th style="padding: 10px; width: 150px; text-align: center;">Assinatura</th>
                                                     <th style="padding: 10px; width: 140px; text-align: center;">Status</th>
                                                     <th style="padding: 10px; width: 150px; text-align: center;">Ações</th>
@@ -2362,15 +2369,21 @@
                         <span style="font-size:0.68rem; font-weight:normal; color:var(--color-text-muted);">(RG, CNH ou CPF — com consentimento do titular)</span>
                     </label>
                     <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-                        <div class="form-group" style="margin-bottom:0; min-width: 130px; flex: 0 0 auto;">
-                            <label for="client-doc-type" style="font-size:0.73rem;">Tipo</label>
-                            <select id="client-doc-type" class="form-control" style="font-size:0.8rem; padding: 6px 8px;">
-                                <option value="">Selecione...</option>
-                                <option value="RG">RG</option>
-                                <option value="CNH">CNH</option>
-                                <option value="CPF">CPF (Cartão Físico)</option>
-                                <option value="Outro">Outro</option>
-                            </select>
+                        <div style="display: flex; flex-direction: column; gap: 8px; min-width: 130px; flex: 0 0 auto;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="client-doc-type" style="font-size:0.73rem;">Tipo</label>
+                                <select id="client-doc-type" class="form-control" style="font-size:0.8rem; padding: 6px 8px;">
+                                    <option value="">Selecione...</option>
+                                    <option value="RG">RG</option>
+                                    <option value="CNH">CNH</option>
+                                    <option value="CPF">CPF (Cartão Físico)</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="client-doc-expiry" style="font-size:0.73rem;">Validade do Doc.</label>
+                                <input type="date" id="client-doc-expiry" class="form-control" style="font-size:0.8rem; padding: 6px 8px;">
+                            </div>
                         </div>
                         <div style="flex: 1; min-width: 180px;">
                             <label style="font-size:0.73rem; display:block; margin-bottom:4px;">Foto do Documento</label>
@@ -2390,9 +2403,15 @@
                     <input type="text" id="client-address" class="form-control" placeholder="Ex: Av. Principal, 123">
                 </div>
                 
-                <div class="form-group">
-                    <label for="client-phone">Telefone / Contato <span style="color: var(--color-danger); font-size: 0.75rem; font-weight: normal; margin-left: 4px;">* (Obrigatório para Comodato)</span></label>
-                    <input type="text" id="client-phone" class="form-control" placeholder="Ex: (11) 98765-4321">
+                <div class="form-row-grid">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="client-phone">Telefone / Contato <span style="color: var(--color-danger); font-size: 0.75rem; font-weight: normal; margin-left: 4px;">* (Obrigatório para Comodato)</span></label>
+                        <input type="text" id="client-phone" class="form-control" placeholder="Ex: (11) 98765-4321">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="client-birthdate">Data de Nascimento (Aniversário)</label>
+                        <input type="date" id="client-birthdate" class="form-control">
+                    </div>
                 </div>
 
                 <div class="form-row-grid" style="margin-top: 1rem;">
@@ -2539,6 +2558,11 @@
                 <div class="form-group">
                     <label for="link-freezer-delivery-date">Data de Entrega *</label>
                     <input type="date" id="link-freezer-delivery-date" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="link-freezer-expected-return-date">Previsão de Retorno (Opcional)</label>
+                    <input type="date" id="link-freezer-expected-return-date" class="form-control">
                 </div>
 
                 <div class="form-group">
@@ -2716,6 +2740,10 @@
                     <input type="date" id="comodato-start-date" class="form-control" required>
                 </div>
                 <div class="form-group">
+                    <label for="comodato-expected-return-date">Previsão de Retorno (Opcional)</label>
+                    <input type="date" id="comodato-expected-return-date" class="form-control">
+                </div>
+                <div class="form-group">
                     <label for="comodato-notes">Observações</label>
                     <textarea id="comodato-notes" class="form-control" placeholder="Ex: Equipamento novo entregue com cabo alongado..." rows="3" style="font-family: inherit; font-size: 0.85rem; padding: 0.5rem;"></textarea>
                 </div>
@@ -2764,6 +2792,10 @@
                     <div>
                         <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Data de Início</span>
                         <strong id="det-com-start-date" style="font-size: 0.95rem;">-</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Previsão de Retorno</span>
+                        <strong id="det-com-expected-return-date" style="font-size: 0.95rem;">-</strong>
                     </div>
                     <div>
                         <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Status do Comodato</span>

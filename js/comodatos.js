@@ -83,6 +83,7 @@ export function renderComodatosAdmin() {
         tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
         
         const dateStr = c.startDate ? new Date(c.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+        const expectedDateStr = c.expectedReturnDate ? new Date(c.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Indeterminado';
         
         let sigHTML = '';
         if (c.signatureBase64) {
@@ -100,17 +101,34 @@ export function renderComodatosAdmin() {
             statusBadge = `<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">Retirado</span>`;
         }
         
+        let actionButtonsHTML = `
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openComodatoDetail('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;" title="Ver Detalhes">
+                <i data-lucide="eye" style="width: 13px; height: 13px;"></i> Detalhes
+            </button>
+        `;
+        if (c.status !== 'retirado') {
+            actionButtonsHTML += `
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.renewComodatoDate('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem; border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary); background: rgba(0, 240, 255, 0.05); display: inline-flex; align-items: center; gap: 4px;" title="Renovar Prazo">
+                    <i data-lucide="calendar" style="width: 13px; height: 13px;"></i> Renovar
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.quickEndComodato('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.05); display: inline-flex; align-items: center; gap: 4px;" title="Encerrar/Retirar">
+                    <i data-lucide="x-circle" style="width: 13px; height: 13px;"></i> Encerrar
+                </button>
+            `;
+        }
+        
         tr.innerHTML = `
             <td style="padding: 10px;"><strong>${c.clientName || 'N/A'}</strong></td>
             <td style="padding: 10px;"><code>${c.freezerCode}</code></td>
             <td style="padding: 10px;">${c.freezerBrand || ''} ${c.freezerCapacity || ''}</td>
             <td style="padding: 10px;">${dateStr}</td>
+            <td style="padding: 10px;">${expectedDateStr}</td>
             <td style="padding: 10px; text-align: center;">${sigHTML}</td>
             <td style="padding: 10px; text-align: center;">${statusBadge}</td>
             <td style="padding: 10px; text-align: center;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="openComodatoDetail('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem;" title="Ver Detalhes">
-                    <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
-                </button>
+                <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
+                    ${actionButtonsHTML}
+                </div>
             </td>
         `;
         tableBody.appendChild(tr);
@@ -154,6 +172,7 @@ export function saveNewComodato(e) {
     const clientId = document.getElementById("comodato-client-select").value;
     const freezerCode = document.getElementById("comodato-freezer-select").value;
     const startDate = document.getElementById("comodato-start-date").value;
+    const expectedReturnDate = document.getElementById("comodato-expected-return-date") ? document.getElementById("comodato-expected-return-date").value : "";
     const notes = document.getElementById("comodato-notes").value.trim();
     
     if (!clientId || !freezerCode || !startDate) {
@@ -192,6 +211,7 @@ export function saveNewComodato(e) {
         freezerVoltage: freezer.voltage || 'Não informado',
         freezerCapacity: freezer.capacity || '',
         startDate: startDate,
+        expectedReturnDate: expectedReturnDate,
         status: 'pendente',
         signatureBase64: '',
         signatureDate: '',
@@ -207,6 +227,7 @@ export function saveNewComodato(e) {
     freezer.clientId = client.id;
     freezer.clientName = client.name;
     freezer.deliveryDate = startDate;
+    freezer.expectedReturnDate = expectedReturnDate;
     freezer.maintenanceNotes = notes;
     
     client.freezerCode = freezerCode;
@@ -214,6 +235,7 @@ export function saveNewComodato(e) {
     client.freezerVoltage = freezer.voltage || 'Não informado';
     client.freezerCapacity = freezer.capacity || '';
     client.deliveryDate = startDate;
+    client.expectedReturnDate = expectedReturnDate;
     client.maintenanceNotes = notes;
     
     saveState();
@@ -245,6 +267,10 @@ export function renderComodatoDetail(comId) {
     document.getElementById("det-com-freezer-voltage").innerText = comodato.freezerVoltage || 'Não informado';
     
     document.getElementById("det-com-start-date").innerText = comodato.startDate ? new Date(comodato.startDate + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+    const expRetDateEl = document.getElementById("det-com-expected-return-date");
+    if (expRetDateEl) {
+        expRetDateEl.innerText = comodato.expectedReturnDate ? new Date(comodato.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Indeterminado';
+    }
 
     // Auto-preenchimento retroativo de campos vindos do cliente se vazios no comodato
     let hasUpdated = false;
@@ -697,6 +723,19 @@ export function sendComodatoWhatsAppLink(comId) {
     
     const cleanPhone = clientPhone.replace(/\D/g, "");
     const formattedPhone = (cleanPhone.length === 10 || cleanPhone.length === 11) ? "55" + cleanPhone : cleanPhone;
+    
+    // Log the WhatsApp send action in the client history notes
+    if (client) {
+        if (!client.notes) client.notes = [];
+        const authorUser = (state.users && state.currentUser) ? (state.users.find(u => u.id === state.currentUser) || {}).name || 'Admin' : 'Admin';
+        client.notes.unshift({
+            id: 'n-' + Date.now(),
+            text: `💬 Link de assinatura do contrato de comodato enviado por WhatsApp (Freezer: ${comodato.freezerCode})`,
+            date: new Date().toISOString(),
+            author: authorUser
+        });
+        saveState();
+    }
     
     const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
@@ -2230,3 +2269,81 @@ export function executeComodatoMigration() {
     );
 }
 window.executeComodatoMigration = executeComodatoMigration;
+
+export function renewComodatoDate(comId) {
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) return;
+    const today = new Date();
+    const nextYear = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+    const nextYearISO = nextYear.toISOString().split('T')[0];
+    const newDate = window.prompt("Digite a nova data de previsão de retorno (formato AAAA-MM-DD):", comodato.expectedReturnDate || nextYearISO);
+    if (newDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+            window.showToast("Formato de data inválido. Use AAAA-MM-DD.", "error");
+            return;
+        }
+        comodato.expectedReturnDate = newDate;
+        const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
+        if (freezer) freezer.expectedReturnDate = newDate;
+        const client = state.clients.find(c => c.id === comodato.clientId);
+        if (client) client.expectedReturnDate = newDate;
+        
+        saveState();
+        renderComodatosAdmin();
+        window.showToast("Prazo do comodato renovado com sucesso!", "success");
+    }
+}
+window.renewComodatoDate = renewComodatoDate;
+
+export function quickEndComodato(comId) {
+    const comodato = (state.comodatos || []).find(c => c.id === comId);
+    if (!comodato) return;
+    
+    const todayStr = window.getBrazilTimeISO().split('T')[0];
+    const returnDate = window.prompt("Confirme a data de encerramento/retirada (AAAA-MM-DD):", todayStr);
+    if (!returnDate) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(returnDate)) {
+        window.showToast("Formato de data inválido. Use AAAA-MM-DD.", "error");
+        return;
+    }
+    
+    const returnNotes = window.prompt("Notas de devolução (Opcional):", "Encerrado via atalho rápido.");
+    if (returnNotes === null) return;
+    
+    window.showConfirm(
+        `Confirmar o encerramento do comodato do freezer ${comodato.freezerCode} com ${comodato.clientName}?`,
+        () => {
+            comodato.status = 'retirado';
+            comodato.returnDate = returnDate;
+            comodato.returnNotes = returnNotes;
+            
+            const freezer = state.freezers ? state.freezers.find(f => f.code === comodato.freezerCode) : null;
+            if (freezer) {
+                freezer.status = 'disponivel';
+                delete freezer.clientId;
+                delete freezer.clientName;
+                delete freezer.deliveryDate;
+                delete freezer.expectedReturnDate;
+            }
+            
+            const client = state.clients.find(c => c.id === comodato.clientId);
+            if (client) {
+                delete client.freezerCode;
+                delete client.freezerBrand;
+                delete client.freezerVoltage;
+                delete client.freezerCapacity;
+                delete client.deliveryDate;
+                delete client.expectedReturnDate;
+            }
+            
+            saveState();
+            window.showToast("Comodato encerrado com sucesso!", "success");
+            renderComodatosAdmin();
+            if (window.renderApp) window.renderApp();
+        },
+        null,
+        "Encerrar Comodato",
+        "Confirmar"
+    );
+}
+window.quickEndComodato = quickEndComodato;

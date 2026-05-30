@@ -315,6 +315,64 @@ export function renderDashboardAlerts() {
                 desc: `Comodato com <strong>${c.clientName}</strong> aguardando assinatura eletrônica do contrato.`
             });
         }
+        
+        if (c.status !== "retirado") {
+            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            if (c.expectedReturnDate) {
+                const expectedDate = new Date(c.expectedReturnDate + 'T00:00:00');
+                const diffTime = expectedDate - todayDateOnly;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) {
+                    assetAlerts.push({
+                        type: 'danger',
+                        icon: 'alert-circle',
+                        title: `Comodato Vencido: Freezer ${c.freezerCode}`,
+                        desc: `O prazo de comodato para <strong>${c.clientName}</strong> venceu em ${expectedDate.toLocaleDateString('pt-BR')} (atrasado há ${Math.abs(diffDays)} dias).`
+                    });
+                } else if (diffDays <= 30) {
+                    assetAlerts.push({
+                        type: 'warning',
+                        icon: 'clock',
+                        title: `Comodato a Vencer: Freezer ${c.freezerCode}`,
+                        desc: `Contrato com <strong>${c.clientName}</strong> vence em ${diffDays} dias (${expectedDate.toLocaleDateString('pt-BR')}).`
+                    });
+                }
+            } else {
+                assetAlerts.push({
+                    type: 'info',
+                    icon: 'help-circle',
+                    title: `Sem Previsão de Retorno: Freezer ${c.freezerCode}`,
+                    desc: `Equipamento alocado para <strong>${c.clientName}</strong> sob contrato por prazo indeterminado (sem data de retorno definida).`
+                });
+            }
+        }
+    });
+
+    // Alertas de Validade de Documentos do Cliente (CNH/RG <= 60 dias)
+    (state.clients || []).forEach(client => {
+        if (client.docExpiry) {
+            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const expiryDate = new Date(client.docExpiry + 'T00:00:00');
+            const diffTime = expiryDate - todayDateOnly;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                assetAlerts.push({
+                    type: 'danger',
+                    icon: 'file-x-2',
+                    title: `Doc. Expirado: ${client.name}`,
+                    desc: `O documento (CNH/RG) de identificação do cliente está expirado desde ${expiryDate.toLocaleDateString('pt-BR')}.`
+                });
+            } else if (diffDays <= 60) {
+                assetAlerts.push({
+                    type: 'warning',
+                    icon: 'file-warning',
+                    title: `Doc. Expirando: ${client.name}`,
+                    desc: `O documento (CNH/RG) vence em ${diffDays} dias (${expiryDate.toLocaleDateString('pt-BR')}).`
+                });
+            }
+        }
     });
 
     if (assetAlerts.length > 0) {
@@ -324,17 +382,20 @@ export function renderDashboardAlerts() {
                     <i data-lucide="package" style="width:13px;height:13px;"></i> Alertas de Ativos & Comodatos
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    ${assetAlerts.map(alert => `
-                        <div style="display: flex; gap: 8px; font-size: 0.75rem; padding: 6px; background: rgba(255,255,255,0.01); border-radius: 4px; border-left: 3px solid ${alert.type === 'danger' ? '#ff4d4d' : '#f59e0b'};">
-                            <div style="color: ${alert.type === 'danger' ? '#ff4d4d' : '#f59e0b'}; display: flex; align-items: flex-start; padding-top: 2px;">
-                                <i data-lucide="${alert.icon}" style="width: 14px; height: 14px;"></i>
+                    ${assetAlerts.map(alert => {
+                        const alertColor = alert.type === 'danger' ? '#ff4d4d' : alert.type === 'warning' ? '#f59e0b' : '#3b82f6';
+                        return `
+                            <div style="display: flex; gap: 8px; font-size: 0.75rem; padding: 6px; background: rgba(255,255,255,0.01); border-radius: 4px; border-left: 3px solid ${alertColor};">
+                                <div style="color: ${alertColor}; display: flex; align-items: flex-start; padding-top: 2px;">
+                                    <i data-lucide="${alert.icon}" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div>
+                                    <span style="color: #fff; font-weight: 700; display:block;">${alert.title}</span>
+                                    <span style="color: var(--color-text-muted);">${alert.desc}</span>
+                                </div>
                             </div>
-                            <div>
-                                <span style="color: #fff; font-weight: 700; display:block;">${alert.title}</span>
-                                <span style="color: var(--color-text-muted);">${alert.desc}</span>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;

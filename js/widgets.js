@@ -9,8 +9,11 @@ function initWidgetsState() {
     if (!state.widgets.notepad) state.widgets.notepad = { enabled: true, theme: 'notepad-glass-sticky', text: '' };
     if (!state.widgets.salesCalc) state.widgets.salesCalc = { enabled: true };
     if (!state.widgets.salesGoal) state.widgets.salesGoal = { enabled: true, monthlyGoal: 10000 };
+    if (!state.widgets.birthdays) state.widgets.birthdays = { enabled: true };
     if (!state.widgetOrder) {
-        state.widgetOrder = ['clock', 'weather', 'salesGoal', 'salesCalc', 'notepad'];
+        state.widgetOrder = ['clock', 'weather', 'salesGoal', 'salesCalc', 'notepad', 'birthdays'];
+    } else if (!state.widgetOrder.includes('birthdays')) {
+        state.widgetOrder.push('birthdays');
     }
 }
 
@@ -81,6 +84,14 @@ export function renderWidgetsSetupPanel() {
                 <input type="number" class="widget-style-select" style="width: 80px; text-align: right;" value="${state.widgets.salesGoal.monthlyGoal}" onchange="window.updateWidgetConfig('salesGoal', 'monthlyGoal', Number(this.value))" placeholder="Meta">
                 <button type="button" class="btn ${state.widgets.salesGoal.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('salesGoal')">
                     ${state.widgets.salesGoal.enabled ? 'Desativar' : 'Ativar'}
+                </button>
+            `;
+        } else if (key === 'birthdays') {
+            name = '🎂 Aniversários';
+            desc = 'Mostra os clientes fazendo aniversário nesta semana.';
+            actionsHTML = `
+                <button type="button" class="btn ${state.widgets.birthdays.enabled ? 'btn-danger' : 'btn-success'} btn-sm" onclick="window.toggleWidget('birthdays')">
+                    ${state.widgets.birthdays.enabled ? 'Desativar' : 'Ativar'}
                 </button>
             `;
         }
@@ -186,6 +197,7 @@ export function renderWidgets() {
         else if (key === 'salesGoal') html += getSalesGoalHTML();
         else if (key === 'salesCalc') html += getSalesCalcHTML();
         else if (key === 'notepad') html += getNotepadHTML(state.widgets.notepad.theme);
+        else if (key === 'birthdays') html += getBirthdaysHTML();
     });
 
     container.innerHTML = html;
@@ -615,4 +627,110 @@ export function initWidgetDragAndDrop() {
             }
         }
     });
+}
+
+// 6. Aniversariantes da Semana
+function getBirthdaysHTML() {
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    
+    // Obter data de início e fim da semana corrente (de domingo a sábado)
+    const currentDayOfWeek = today.getDay();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - currentDayOfWeek);
+    startOfWeek.setHours(0,0,0,0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23,59,59,999);
+
+    const upcomingBirthdays = [];
+
+    (state.clients || []).forEach(c => {
+        if (!c.birthDate) return;
+        
+        const parts = c.birthDate.split('-');
+        if (parts.length !== 3) return;
+        const bMonth = parseInt(parts[1]) - 1;
+        const bDay = parseInt(parts[2]);
+
+        const bdateThisYear = new Date(todayYear, bMonth, bDay);
+        
+        let isThisWeek = false;
+        let targetBdate = bdateThisYear;
+        
+        if (bdateThisYear >= startOfWeek && bdateThisYear <= endOfWeek) {
+            isThisWeek = true;
+        } else {
+            const bdateNextYear = new Date(todayYear + 1, bMonth, bDay);
+            if (bdateNextYear >= startOfWeek && bdateNextYear <= endOfWeek) {
+                isThisWeek = true;
+                targetBdate = bdateNextYear;
+            }
+            const bdatePrevYear = new Date(todayYear - 1, bMonth, bDay);
+            if (bdatePrevYear >= startOfWeek && bdatePrevYear <= endOfWeek) {
+                isThisWeek = true;
+                targetBdate = bdatePrevYear;
+            }
+        }
+
+        if (isThisWeek) {
+            const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            const dayName = weekdays[targetBdate.getDay()];
+            
+            upcomingBirthdays.push({
+                clientName: c.name,
+                fantasyName: c.fantasyName,
+                phone: c.phone,
+                dateStr: `${String(bDay).padStart(2, '0')}/${String(bMonth + 1).padStart(2, '0')}`,
+                dayName: dayName,
+                dayIndex: targetBdate.getDay(),
+                bDay: bDay
+            });
+        }
+    });
+
+    upcomingBirthdays.sort((a, b) => a.dayIndex - b.dayIndex);
+
+    let listHTML = '';
+    if (upcomingBirthdays.length === 0) {
+        listHTML = `
+            <div style="text-align: center; padding: 15px; color: var(--color-text-muted); font-size: 0.78rem;">
+                🎂 Nenhum aniversariante nesta semana.
+            </div>
+        `;
+    } else {
+        listHTML = upcomingBirthdays.map(b => {
+            const displayName = b.fantasyName || b.clientName;
+            const waButton = b.phone ? `
+                <a href="https://api.whatsapp.com/send?phone=55${b.phone.replace(/\D/g,'')}&text=Parab%C3%A9ns,%20${encodeURIComponent(displayName)}!%20Desejamos%20muito%20sucesso%20e%20parceria%20com%20a%20Gelo%20do%20Vale.%20%F0%9F%8E%82%F0%9F%8E%89" target="_blank" class="btn btn-secondary btn-icon-only" style="padding: 2px; width: 22px; height: 22px; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); color: #00f0ff; display: inline-flex; align-items: center; justify-content: center;" title="Enviar parabéns">
+                    <i data-lucide="message-circle" style="width: 12px; height: 12px;"></i>
+                </a>
+            ` : '';
+            
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; font-size: 0.78rem;">
+                    <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
+                        <strong style="color: #fff; display: block; overflow: hidden; text-overflow: ellipsis;">${displayName}</strong>
+                        <span style="color: var(--color-text-muted); font-size: 0.7rem;">${b.dayName} (${b.dateStr})</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        <span class="status-badge completed" style="font-size: 0.65rem; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 5px;">🎂 Parabéns</span>
+                        ${waButton}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    return `
+        <div class="widget-card size-small" draggable="true" data-widget-key="birthdays">
+            <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+                <h3><i data-lucide="cake" style="color: #ff5e00;"></i> Aniversários da Semana</h3>
+            </div>
+            <div class="widget-body" style="padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;">
+                ${listHTML}
+            </div>
+        </div>
+    `;
 }

@@ -1276,6 +1276,8 @@ export function initForms() {
             const docType     = document.getElementById("client-doc-type")   ? document.getElementById("client-doc-type").value   : "";
             const latitude = document.getElementById("client-latitude") ? document.getElementById("client-latitude").value.trim() : "";
             const longitude = document.getElementById("client-longitude") ? document.getElementById("client-longitude").value.trim() : "";
+            const birthDate = document.getElementById("client-birthdate") ? document.getElementById("client-birthdate").value : "";
+            const docExpiry = document.getElementById("client-doc-expiry") ? document.getElementById("client-doc-expiry").value : "";
             
             const alertThreshold = parseInt(document.getElementById("alert-threshold").value) || 20;
             
@@ -1309,7 +1311,9 @@ export function initForms() {
                         photoDoc,
                         docType,
                         latitude,
-                        longitude
+                        longitude,
+                        birthDate,
+                        docExpiry
                     };
                 }
             } else {
@@ -1330,7 +1334,9 @@ export function initForms() {
                     photoDoc,
                     docType,
                     latitude,
-                    longitude
+                    longitude,
+                    birthDate,
+                    docExpiry
                 };
                 state.clients.push(newClient);
             }
