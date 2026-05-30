@@ -1267,6 +1267,7 @@ export function initForms() {
             
             const clientId = document.getElementById("form-client-id").value;
             const name = document.getElementById("client-name").value;
+            const fantasyName = document.getElementById("client-fantasy-name") ? document.getElementById("client-fantasy-name").value.trim() : "";
             const address = document.getElementById("client-address").value;
             const phone = document.getElementById("client-phone").value;
             const clientDoc = document.getElementById("client-document") ? document.getElementById("client-document").value.trim() : "";
@@ -1360,7 +1361,7 @@ export function initForms() {
                 if (idx !== -1) {
                     state.clients[idx] = {
                         ...state.clients[idx],
-                        name, address, phone, freezerCode, alertThreshold, capacities, stock,
+                        name, fantasyName, address, phone, freezerCode, alertThreshold, capacities, stock,
                         freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
                         visitDays,
                         document: clientDoc,
@@ -1372,7 +1373,7 @@ export function initForms() {
             } else {
                 const newClient = {
                     id: targetClientId,
-                    name, address, phone, freezerCode, alertThreshold, capacities, stock,
+                    name, fantasyName, address, phone, freezerCode, alertThreshold, capacities, stock,
                     freezerBrand, freezerVoltage, freezerCapacity, deliveryDate, maintenanceNotes,
                     outstandingDebt: 0,
                     visitDays,

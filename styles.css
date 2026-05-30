@@ -3801,6 +3801,18 @@ body.astro-day.weather-hot {
     color: #10b981;
 }
 
+/* CPF válido matematicamente, mas sem verificação de identidade */
+.doc-valid-warn {
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-left: 3px solid #f59e0b;
+    color: #10b981;
+    line-height: 1.5;
+}
+.doc-valid-warn span {
+    color: #f59e0b;
+}
+
 .doc-invalid {
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.3);

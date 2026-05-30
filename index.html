@@ -2332,9 +2332,19 @@
                 <input type="hidden" id="photo-facade-data">
                 
                 <!-- Informações Básicas -->
-                <div class="form-group">
-                    <label for="client-name">Nome do Cliente / Ponto de Venda *</label>
-                    <input type="text" id="client-name" class="form-control" placeholder="Ex: Mercearia do Zé" required>
+                <div class="form-row-grid">
+                    <div class="form-group">
+                        <label for="client-name">Razão Social / Nome Completo *
+                            <span style="font-size: 0.68rem; font-weight: normal; color: var(--color-text-muted); margin-left: 4px;">(Nome Jurídico)</span>
+                        </label>
+                        <input type="text" id="client-name" class="form-control" placeholder="Ex: Mercearia do Zé LTDA ou João da Silva" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-fantasy-name">Nome Fantasia
+                            <span style="font-size: 0.68rem; font-weight: normal; color: var(--color-text-muted); margin-left: 4px;">(Nome Comercial / Como é conhecido)</span>
+                        </label>
+                        <input type="text" id="client-fantasy-name" class="form-control" placeholder="Ex: Mercearia do Zé">
+                    </div>
                 </div>
 
                 <div class="form-group">

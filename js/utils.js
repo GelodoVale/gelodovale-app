@@ -1130,8 +1130,11 @@ export function initDocumentField(inputId, feedbackId, onFillFn = null) {
         if (type === 'cpf' && raw.length === 11) {
             const ok = validateCPF(raw);
             feedback.innerHTML = ok
-                ? `<div class="doc-feedback doc-valid">✅ CPF válido</div>`
-                : `<div class="doc-feedback doc-invalid">❌ CPF inválido — verifique os dígitos</div>`;
+                ? `<div class="doc-feedback doc-valid-warn">
+                       ✅ CPF <strong>matematicamente válido</strong> — os dígitos verificadores estão corretos.<br>
+                       <span style="font-size:0.72rem; opacity:0.85;">⚠️ A validação <u>não confirma a identidade</u> do titular. Verifique um documento com foto antes de cadastrar.</span>
+                   </div>`
+                : `<div class="doc-feedback doc-invalid">❌ CPF inválido — os dígitos verificadores não conferem. Confira se foi digitado corretamente.</div>`;
         } else if (type === 'cnpj' && raw.length === 14) {
             if (!validateCNPJ(raw)) {
                 feedback.innerHTML = `<div class="doc-feedback doc-invalid">❌ CNPJ inválido — verifique os dígitos</div>`;

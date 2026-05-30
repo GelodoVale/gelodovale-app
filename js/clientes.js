@@ -138,9 +138,10 @@ export function renderClientes() {
                         ${facadeSnippet}
                         <div class="client-name-details">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <h3 style="margin: 0; font-size: 1rem; color: #fff;">${c.name}</h3>
+                                <h3 style="margin: 0; font-size: 1rem; color: #fff;">${c.fantasyName || c.name}</h3>
                                 ${activityBadgeHTML}
                             </div>
+                            ${c.fantasyName ? `<p style="margin-top: 1px; font-size: 0.72rem; color: var(--color-text-muted); font-style: italic;">${c.name}</p>` : ''}
                             <p style="margin-top: 4px; font-size: 0.75rem; color: var(--color-text-muted);">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
                         </div>
                     </div>
@@ -279,6 +280,8 @@ export function openClientModal(clientId = null) {
         if (c) {
             document.getElementById("form-client-id").value = c.id;
             document.getElementById("client-name").value = c.name;
+            const fantasyEl = document.getElementById("client-fantasy-name");
+            if (fantasyEl) fantasyEl.value = c.fantasyName || "";
             document.getElementById("client-address").value = c.address || "";
             document.getElementById("client-phone").value = c.phone || "";
             if (document.getElementById("client-document")) {
@@ -365,16 +368,20 @@ export function openClientModal(clientId = null) {
 
     if (window.initDocumentField) {
         window.initDocumentField('client-document', 'client-document-feedback', (cnpjData) => {
-            // Callback de auto-preenchimento ao clicar em "Preencher automaticamente"
-            const nameEl   = document.getElementById('client-name');
-            const addrEl   = document.getElementById('client-address');
-            const phoneEl  = document.getElementById('client-phone');
-
+            // Razao Social → campo principal (nome juridico)
+            const nameEl = document.getElementById('client-name');
             if (nameEl && cnpjData.razao_social) {
-                nameEl.value = cnpjData.nome_fantasia || cnpjData.razao_social;
+                nameEl.value = cnpjData.razao_social;
+            }
+
+            // Nome Fantasia → campo separado
+            const fantasyEl = document.getElementById('client-fantasy-name');
+            if (fantasyEl) {
+                fantasyEl.value = cnpjData.nome_fantasia || '';
             }
 
             // Montar endereço completo
+            const addrEl = document.getElementById('client-address');
             if (addrEl) {
                 const parts = [
                     cnpjData.logradouro,
@@ -388,7 +395,8 @@ export function openClientModal(clientId = null) {
                 if (fullAddr) addrEl.value = fullAddr;
             }
 
-            // Telefone: formatar DDD+número
+            // Telefone
+            const phoneEl = document.getElementById('client-phone');
             if (phoneEl && cnpjData.ddd_telefone_1) {
                 phoneEl.value = cnpjData.ddd_telefone_1
                     .replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
@@ -402,7 +410,6 @@ export function openClientModal(clientId = null) {
         });
     }
 }
-
 
 export function deleteClient(clientId) {
     window.showConfirm(
