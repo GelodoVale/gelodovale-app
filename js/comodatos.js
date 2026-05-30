@@ -167,6 +167,11 @@ export function saveNewComodato(e) {
         return;
     }
     
+    if (!client.document || !client.phone || !client.address || !client.latitude || !client.longitude) {
+        window.showToast("Não é possível salvar: O cadastro deste cliente está sem os dados obrigatórios para Comodato (CNPJ/CPF, Telefone, Endereço ou GPS). Complete-os no cadastro do cliente antes de prosseguir.", "warning");
+        return;
+    }
+    
     const freezer = state.freezers ? state.freezers.find(f => f.code === freezerCode) : null;
     if (!freezer) {
         window.showToast("Freezer selecionado inválido.", "error");
