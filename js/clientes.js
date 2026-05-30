@@ -238,14 +238,22 @@ export function openClientModal(clientId = null) {
     form.reset();
     document.getElementById("form-client-id").value = "";
     
-    // Resetar novos campos de facade e GPS
+    // Resetar novos campos de facade, documento e GPS
     if (document.getElementById("photo-facade-data")) {
         document.getElementById("photo-facade-data").value = "";
+    }
+    if (document.getElementById("photo-doc-data")) {
+        document.getElementById("photo-doc-data").value = "";
+    }
+    if (document.getElementById("client-doc-type")) {
+        document.getElementById("client-doc-type").value = "";
     }
     const previewFacade = document.getElementById("preview-facade");
     if (previewFacade) {
         previewFacade.innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
     }
+    const previewDocReset = document.getElementById("preview-doc");
+    if (previewDocReset) previewDocReset.innerHTML = "";
     if (document.getElementById("client-latitude")) {
         document.getElementById("client-latitude").value = "";
     }
@@ -291,6 +299,21 @@ export function openClientModal(clientId = null) {
             // Carregar novos campos de facade e GPS
             if (document.getElementById("photo-facade-data")) {
                 document.getElementById("photo-facade-data").value = c.photoFacade || "";
+            }
+            // Foto do documento de identidade
+            if (document.getElementById("photo-doc-data")) {
+                document.getElementById("photo-doc-data").value = c.photoDoc || "";
+            }
+            if (document.getElementById("client-doc-type")) {
+                document.getElementById("client-doc-type").value = c.docType || "";
+            }
+            const previewDoc = document.getElementById("preview-doc");
+            if (previewDoc) {
+                if (c.photoDoc) {
+                    previewDoc.innerHTML = `<img src="${c.photoDoc}" style="max-height: 140px; max-width: 100%; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">`;
+                } else {
+                    previewDoc.innerHTML = "";
+                }
             }
             const previewFacade = document.getElementById("preview-facade");
             if (previewFacade) {

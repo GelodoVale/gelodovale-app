@@ -591,7 +591,7 @@ export function getWarrantyInfo(purchaseDateStr, months) {
     }
 }
 
-export function handleImageUpload(inputEl, previewId) {
+export function handleImageUpload(inputEl, previewId, hiddenInputId = null) {
     const file = inputEl.files[0];
     if (!file) return;
     
@@ -604,7 +604,11 @@ export function handleImageUpload(inputEl, previewId) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement("canvas");
-            const maxDimension = 320;
+
+            // Documentos de identidade precisam de mais resolução para o texto ser legível
+            const isDocPhoto = hiddenInputId === 'photo-doc-data' || previewId === 'preview-doc';
+            const maxDimension = isDocPhoto ? 900 : 320;
+
             let width = img.width;
             let height = img.height;
             
@@ -626,9 +630,15 @@ export function handleImageUpload(inputEl, previewId) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
             
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+            // Qualidade maior para documentos (precisa ler texto)
+            const quality = isDocPhoto ? 0.82 : 0.6;
+            const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
             
-            if (previewId === "preview-freezer") {
+            // Se passou hiddenInputId diretamente, usa ele
+            if (hiddenInputId) {
+                const hiddenEl = document.getElementById(hiddenInputId);
+                if (hiddenEl) hiddenEl.value = compressedBase64;
+            } else if (previewId === "preview-freezer") {
                 document.getElementById("photo-freezer-data").value = compressedBase64;
             } else if (previewId === "preview-invoice") {
                 document.getElementById("photo-invoice-data").value = compressedBase64;
@@ -640,7 +650,9 @@ export function handleImageUpload(inputEl, previewId) {
                 document.getElementById("photo-facade-data").value = compressedBase64;
             }
             
-            previewContainer.innerHTML = `<img src="${compressedBase64}" style="max-height: 80px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">`;
+            // Preview — documentos mostram maior para conferir legibilidade
+            const previewHeight = isDocPhoto ? 140 : 80;
+            previewContainer.innerHTML = `<img src="${compressedBase64}" style="max-height: ${previewHeight}px; max-width: 100%; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">`;
         };
         img.src = event.target.result;
     };

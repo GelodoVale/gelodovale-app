@@ -2330,6 +2330,7 @@
             <form id="client-form">
                 <input type="hidden" id="form-client-id">
                 <input type="hidden" id="photo-facade-data">
+                <input type="hidden" id="photo-doc-data">
                 
                 <!-- Informações Básicas -->
                 <div class="form-row-grid">
@@ -2352,7 +2353,37 @@
                     <input type="text" id="client-document" class="form-control" placeholder="Digite o CPF (000.000.000-00) ou CNPJ (00.000.000/0001-00)" maxlength="18" autocomplete="off">
                     <div id="client-document-feedback" style="margin-top: 6px;"></div>
                 </div>
-                
+
+                <!-- Foto do Documento de Identidade -->
+                <div class="form-group" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 14px;">
+                    <label style="font-weight: 600; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                        <i data-lucide="id-card" style="width:15px;height:15px;color:var(--color-primary);"></i>
+                        Foto do Documento de Identidade
+                        <span style="font-size:0.68rem; font-weight:normal; color:var(--color-text-muted);">(RG, CNH ou CPF — com consentimento do titular)</span>
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom:0; min-width: 130px; flex: 0 0 auto;">
+                            <label for="client-doc-type" style="font-size:0.73rem;">Tipo</label>
+                            <select id="client-doc-type" class="form-control" style="font-size:0.8rem; padding: 6px 8px;">
+                                <option value="">Selecione...</option>
+                                <option value="RG">RG</option>
+                                <option value="CNH">CNH</option>
+                                <option value="CPF">CPF (Cartão Físico)</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 180px;">
+                            <label style="font-size:0.73rem; display:block; margin-bottom:4px;">Foto do Documento</label>
+                            <div class="upload-dropzone" style="padding: 10px; min-height: 60px;" onclick="document.getElementById('input-photo-doc').click()">
+                                <i data-lucide="camera" style="width: 18px; height: 18px;"></i>
+                                <p style="font-size: 0.75rem; margin: 2px 0 0;">Tirar foto / Selecionar imagem</p>
+                                <input type="file" id="input-photo-doc" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(this, 'preview-doc', 'photo-doc-data')">
+                            </div>
+                            <div class="preview-box-container" id="preview-doc" style="margin-top: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="client-address">Endereço <span style="color: var(--color-danger); font-size: 0.75rem; font-weight: normal; margin-left: 4px;">* (Obrigatório para Comodato)</span></label>
                     <input type="text" id="client-address" class="form-control" placeholder="Ex: Av. Principal, 123">

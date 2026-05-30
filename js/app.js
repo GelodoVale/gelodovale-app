@@ -1272,6 +1272,8 @@ export function initForms() {
             const phone = document.getElementById("client-phone").value;
             const clientDoc = document.getElementById("client-document") ? document.getElementById("client-document").value.trim() : "";
             const photoFacade = document.getElementById("photo-facade-data") ? document.getElementById("photo-facade-data").value : "";
+            const photoDoc    = document.getElementById("photo-doc-data")    ? document.getElementById("photo-doc-data").value    : "";
+            const docType     = document.getElementById("client-doc-type")   ? document.getElementById("client-doc-type").value   : "";
             const latitude = document.getElementById("client-latitude") ? document.getElementById("client-latitude").value.trim() : "";
             const longitude = document.getElementById("client-longitude") ? document.getElementById("client-longitude").value.trim() : "";
             
@@ -1366,6 +1368,8 @@ export function initForms() {
                         visitDays,
                         document: clientDoc,
                         photoFacade,
+                        photoDoc,
+                        docType,
                         latitude,
                         longitude
                     };
@@ -1379,6 +1383,8 @@ export function initForms() {
                     visitDays,
                     document: clientDoc,
                     photoFacade,
+                    photoDoc,
+                    docType,
                     latitude,
                     longitude
                 };
