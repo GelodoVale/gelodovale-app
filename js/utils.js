@@ -1049,7 +1049,11 @@ export function openWeatherForecastModal() {
         cityLabel.innerText = (state.weatherConfig && state.weatherConfig.city) || "São José dos Campos - SP";
     }
 
-    let forecast = state.weatherForecast || [];
+    let forecast = state.weatherForecast;
+    if (!Array.isArray(forecast)) {
+        forecast = [];
+    }
+    forecast = forecast.filter(d => d && typeof d === 'object' && d.date && d.max !== undefined && d.min !== undefined);
     if (forecast.length === 0) {
         forecast = getFallbackForecast();
     }
