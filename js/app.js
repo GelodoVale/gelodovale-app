@@ -4156,6 +4156,9 @@ export function confirmUpcomingEvent(eventId, occurrenceId) {
 }
 
 export function renderEventosLocaisTable() {
+    // Renderizar o calendário visual da aba de configurações
+    renderAdminEventCalendar(adminCalendarYear, adminCalendarMonth);
+
     const tbody = document.getElementById("eventos-locais-table-body");
     if (!tbody) return;
 
@@ -4216,3 +4219,121 @@ window.saveSpikeAsEvent = saveSpikeAsEvent;
 window.ignoreSpike = ignoreSpike;
 window.confirmUpcomingEvent = confirmUpcomingEvent;
 window.renderEventosLocaisTable = renderEventosLocaisTable;
+
+// ==========================================
+// CALENDÁRIO VISUAL ADMINISTRATIVO DE EVENTOS
+// ==========================================
+let adminCalendarYear = new Date().getFullYear();
+let adminCalendarMonth = new Date().getMonth();
+
+export function renderAdminEventCalendar(year = adminCalendarYear, month = adminCalendarMonth) {
+    adminCalendarYear = year;
+    adminCalendarMonth = month;
+
+    const monthYearEl = document.getElementById("admin-calendar-month-year");
+    if (monthYearEl) {
+        const MONTH_NAMES = [
+            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+        monthYearEl.innerText = `${MONTH_NAMES[month]} ${year}`;
+    }
+
+    const container = document.getElementById("admin-calendar-days-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const prevMonthTotalDays = new Date(year, month, 0).getDate();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    // Buscar feriados e eventos dinâmicos do ano
+    const yearHolidays = window.getBrazilianHolidays ? window.getBrazilianHolidays(year) : {};
+
+    // 1. Renderizar dias do mês anterior
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const prevDay = prevMonthTotalDays - i;
+        const dayEl = document.createElement("span");
+        dayEl.className = "calendar-day other-month";
+        dayEl.innerText = prevDay;
+        container.appendChild(dayEl);
+    }
+
+    // 2. Renderizar dias do mês atual
+    for (let day = 1; day <= totalDays; day++) {
+        const dayStr = String(day).padStart(2, '0');
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+        const dayEl = document.createElement("span");
+        dayEl.className = "calendar-day";
+        dayEl.innerText = day;
+
+        if (dateStr === todayStr) {
+            dayEl.classList.add("today");
+        }
+
+        // Marcar feriados e datas festivas
+        const holiday = yearHolidays[dateStr];
+        let localEventId = null;
+        if (holiday) {
+            if (holiday.type === 'holiday') {
+                dayEl.classList.add("is-holiday");
+            } else if (holiday.type === 'festive') {
+                dayEl.classList.add("is-festive");
+            }
+            dayEl.title = holiday.name;
+            if (holiday.isLocalEvent && holiday.eventId) {
+                localEventId = holiday.eventId;
+            }
+        }
+
+        // Click handler: se for evento local, edita. Senão, cria um novo evento para este dia.
+        dayEl.addEventListener("click", () => {
+            if (localEventId) {
+                window.openEditLocalEventModal(localEventId);
+            } else {
+                window.openEditLocalEventModal("", dateStr);
+            }
+        });
+
+        container.appendChild(dayEl);
+    }
+
+    // 3. Renderizar dias do próximo mês
+    const totalRendered = firstDayIndex + totalDays;
+    const remaining = 7 - (totalRendered % 7);
+    if (remaining < 7) {
+        for (let i = 1; i <= remaining; i++) {
+            const dayEl = document.createElement("span");
+            dayEl.className = "calendar-day other-month";
+            dayEl.innerText = i;
+            container.appendChild(dayEl);
+        }
+    }
+    
+    // Forçar Lucide a renderizar ícones que possam ter surgido
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+export function changeAdminCalendarMonth(dir) {
+    adminCalendarMonth += dir;
+    if (adminCalendarMonth < 0) {
+        adminCalendarMonth = 11;
+        adminCalendarYear--;
+    } else if (adminCalendarMonth > 11) {
+        adminCalendarMonth = 0;
+        adminCalendarYear++;
+    }
+    renderAdminEventCalendar(adminCalendarYear, adminCalendarMonth);
+}
+
+// Bind methods to window
+window.renderAdminEventCalendar = renderAdminEventCalendar;
+window.changeAdminCalendarMonth = changeAdminCalendarMonth;
+window.refreshAdminCalendar = () => renderAdminEventCalendar(adminCalendarYear, adminCalendarMonth);

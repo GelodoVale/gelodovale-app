@@ -1551,7 +1551,7 @@ export function renderWeatherTempChart(forecastDays) {
     });
 }
 
-export function openEditLocalEventModal(eventId = "") {
+export function openEditLocalEventModal(eventId = "", clickedDateStr = "") {
     const titleEl = document.getElementById("local-event-modal-title");
     const idInput = document.getElementById("form-event-id");
     const nameInput = document.getElementById("event-name");
@@ -1588,7 +1588,9 @@ export function openEditLocalEventModal(eventId = "") {
         if (locationInput) locationInput.value = "";
         if (deleteBtn) deleteBtn.style.display = "none";
         
-        if (selectedCalendarDateStr && startDateInput) {
+        if (clickedDateStr && startDateInput) {
+            startDateInput.value = clickedDateStr;
+        } else if (selectedCalendarDateStr && startDateInput) {
             startDateInput.value = selectedCalendarDateStr;
         }
     }
