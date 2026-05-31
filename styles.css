@@ -4082,3 +4082,27 @@ body.astro-day.weather-hot {
     line-height: 1.5;
     animation: docFadeIn 0.25s ease;
 }
+
+/* Heatmap de Demanda no Calendário */
+.calendar-day.demand-low:not(.selected):not(.today):not(.other-month) {
+    background: rgba(14, 165, 233, 0.12) !important;
+    border-color: rgba(14, 165, 233, 0.35) !important;
+    color: #38bdf8 !important;
+}
+.calendar-day.demand-normal:not(.selected):not(.today):not(.other-month) {
+    background: rgba(16, 185, 129, 0.06) !important;
+    border-color: rgba(16, 185, 129, 0.25) !important;
+    color: #34d399 !important;
+}
+.calendar-day.demand-high:not(.selected):not(.today):not(.other-month) {
+    background: rgba(234, 179, 8, 0.12) !important;
+    border-color: rgba(234, 179, 8, 0.45) !important;
+    color: #facc15 !important;
+}
+.calendar-day.demand-boom:not(.selected):not(.today):not(.other-month) {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.65) !important;
+    color: #f87171 !important;
+    font-weight: 700;
+    box-shadow: inset 0 0 5px rgba(239, 68, 68, 0.2), 0 0 8px rgba(239, 68, 68, 0.15);
+}

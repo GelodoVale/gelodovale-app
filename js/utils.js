@@ -954,6 +954,9 @@ export function renderCalendar(year, month) {
         dayEl.className = "calendar-day";
         dayEl.innerText = day;
 
+        const demandLevel = getDayDemandLevel(dateStr);
+        dayEl.classList.add(`demand-${demandLevel}`);
+
         if (dateStr === todayStr) {
             dayEl.classList.add("today");
         }
@@ -2018,3 +2021,96 @@ window.detectDocumentType = detectDocumentType;
 window.maskDocumentInput = maskDocumentInput;
 window.fetchCNPJData = fetchCNPJData;
 window.initDocumentField = initDocumentField;
+
+// ==========================================
+// CÁLCULO DE HEATMAP PREDITIVO DE DEMANDA
+// ==========================================
+export function getDayDemandLevel(dateStr) {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return "normal";
+    
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1; // 0-indexed
+    const day = parseInt(parts[2]);
+    const dateObj = new Date(year, month, day);
+
+    // 1. Determinar temperatura máxima
+    let maxTemp = 25; // Padrão
+    // Tentar pegar do forecast se disponível
+    const forecast = state.weatherForecast || [];
+    const forecastDay = forecast.find(f => f && f.date === dateStr);
+    if (forecastDay && forecastDay.max !== undefined) {
+        maxTemp = forecastDay.max;
+    } else {
+        // Estimativa sazonal
+        if (month === 11 || month === 0 || month === 1) maxTemp = 31; // Verão
+        else if (month === 5 || month === 6 || month === 7) maxTemp = 19; // Inverno
+    }
+
+    // 2. Base de variação por temperatura
+    let baseChange = 0;
+    if (maxTemp >= 32) {
+        baseChange = 80;
+    } else if (maxTemp >= 27) {
+        baseChange = 40;
+    } else if (maxTemp <= 19) {
+        baseChange = -25;
+    }
+
+    // 3. Ajustes de calendário
+    let adjustment = 0;
+    const yearHolidays = getBrazilianHolidays(year);
+    const holiday = yearHolidays[dateStr];
+    let hasHolidayOrEvent = false;
+
+    if (holiday) {
+        hasHolidayOrEvent = true;
+        if (holiday.isLocalEvent) {
+            const evt = state.localEvents.find(e => e.id === holiday.eventId);
+            const multiplier = evt ? parseFloat(evt.salesMultiplier) || 1.6 : 1.6;
+            adjustment += Math.round((multiplier - 1) * 100);
+        } else {
+            adjustment += 20;
+        }
+
+        if (holiday.name.toLowerCase().includes("carnaval") || holiday.name.toLowerCase().includes("cinzas")) {
+            adjustment += 35;
+        }
+    }
+
+    // Réveillon / Natal
+    const m = month + 1;
+    const d = day;
+    let isReveillonPeriod = false;
+    let isCarnavalPeriod = holiday && (holiday.name.toLowerCase().includes("carnaval") || holiday.name.toLowerCase().includes("cinzas"));
+    
+    if ((m === 12 && d >= 24) || (m === 1 && d <= 2)) {
+        isReveillonPeriod = true;
+        adjustment += 45;
+    }
+
+    // Fim de semana
+    const wday = dateObj.getDay();
+    if (wday === 0 || wday === 6) {
+        adjustment += 10;
+    }
+
+    let finalChange = baseChange + adjustment;
+
+    // 4. Classificação final
+    let isExplosao = false;
+    if (maxTemp >= 30 && (hasHolidayOrEvent || isCarnavalPeriod || isReveillonPeriod)) {
+        isExplosao = true;
+    }
+
+    if (isExplosao || finalChange >= 70) {
+        return "boom";
+    } else if (finalChange >= 25) {
+        return "high";
+    } else if (finalChange <= -15) {
+        return "low";
+    } else {
+        return "normal";
+    }
+}
+window.getDayDemandLevel = getDayDemandLevel;

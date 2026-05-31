@@ -4272,6 +4272,10 @@ export function renderAdminEventCalendar(year = adminCalendarYear, month = admin
         dayEl.className = "calendar-day";
         dayEl.innerText = day;
 
+        // Aplicar heatmap de demanda preditiva
+        const demandLevel = window.getDayDemandLevel ? window.getDayDemandLevel(dateStr) : "normal";
+        dayEl.classList.add(`demand-${demandLevel}`);
+
         if (dateStr === todayStr) {
             dayEl.classList.add("today");
         }
