@@ -58,6 +58,9 @@ goto END
 
 :PUSH_SUCCESS
 echo.
+echo Otimizando e limpando arquivos temporarios para o OneDrive...
+%GIT_PATH% gc --prune=now --quiet
+echo.
 echo ===================================================
 echo   ARQUIVOS ENVIADOS COM SUCESSO PARA O GITHUB!
 echo   Seu app estara online em alguns minutos.
