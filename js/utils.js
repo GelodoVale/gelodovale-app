@@ -860,6 +860,58 @@ export function getBrazilianHolidays(year) {
         }
     }
 
+    // Integrar Eventos Locais Dinâmicos (state.localEvents)
+    if (state.localEvents && Array.isArray(state.localEvents)) {
+        state.localEvents.forEach(evt => {
+            if (!evt.startDate || !evt.name) return;
+            const duration = parseInt(evt.durationDays) || 4;
+            
+            const parts = evt.startDate.split("-");
+            if (parts.length !== 3) return;
+            const evtYear = parseInt(parts[0]);
+            const evtMonth = parseInt(parts[1]) - 1; // 0-indexed
+            const evtDay = parseInt(parts[2]);
+
+            // Se for do tipo "Apenas uma vez" e o ano não bate com o ano atual sendo renderizado
+            if (evt.recurrence === 'none' && evtYear !== year) return;
+
+            const pad = n => String(n).padStart(2, '0');
+
+            let startDt;
+            if (evt.recurrence === 'monthly') {
+                for (let m = 0; m < 12; m++) {
+                    startDt = new Date(year, m, evtDay);
+                    for (let d = 0; d < duration; d++) {
+                        const currentDt = new Date(startDt);
+                        currentDt.setDate(startDt.getDate() + d);
+                        if (currentDt.getFullYear() === year) {
+                            holidays[`${currentDt.getFullYear()}-${pad(currentDt.getMonth() + 1)}-${pad(currentDt.getDate())}`] = {
+                                name: evt.name,
+                                type: "festive",
+                                isLocalEvent: true,
+                                eventId: evt.id
+                            };
+                        }
+                    }
+                }
+            } else {
+                startDt = new Date(year, evtMonth, evtDay);
+                for (let d = 0; d < duration; d++) {
+                    const currentDt = new Date(startDt);
+                    currentDt.setDate(startDt.getDate() + d);
+                    if (currentDt.getFullYear() === year) {
+                        holidays[`${currentDt.getFullYear()}-${pad(currentDt.getMonth() + 1)}-${pad(currentDt.getDate())}`] = {
+                            name: evt.name,
+                            type: "festive",
+                            isLocalEvent: true,
+                            eventId: evt.id
+                        };
+                    }
+                }
+            }
+        });
+    }
+
     return holidays;
 }
 
@@ -979,10 +1031,21 @@ export function selectCalendarDay(dateStr) {
         if (holiday) {
             const badgeClass = holiday.type === 'holiday' ? 'badge-holiday' : 'badge-festive';
             const iconName = holiday.type === 'holiday' ? 'calendar-days' : 'sparkles';
+            
+            let editBtn = "";
+            if (holiday.isLocalEvent && holiday.eventId) {
+                editBtn = `
+                    <button type="button" class="btn btn-secondary btn-mini" onclick="window.openEditLocalEventModal('${holiday.eventId}')" style="font-size: 0.6rem; padding: 2px 6px; margin-left: 8px; border-color: rgba(0, 240, 255, 0.3); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; height: auto; width: auto;">
+                        <i data-lucide="edit-3" style="width: 10px; height: 10px;"></i> Editar Evento
+                    </button>
+                `;
+            }
+            
             holidayHtml = `
-                <div class="holiday-badge ${badgeClass}" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                <div class="holiday-badge ${badgeClass}" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;">
                     <i data-lucide="${iconName}" style="width: 14px; height: 14px;"></i>
                     <span>${holiday.name}</span>
+                    ${editBtn}
                 </div>
             `;
         }
@@ -1110,6 +1173,9 @@ export function openWeatherForecastModal() {
     }
 
     calculatePredictiveDemand(daysToShow);
+    setTimeout(() => {
+        renderWeatherTempChart(daysToShow);
+    }, 100);
 }
 
 function getFallbackForecast() {
@@ -1190,8 +1256,16 @@ function calculatePredictiveDemand(forecastDays) {
         const holiday = yearHolidays[day.date];
 
         if (holiday) {
-            holidaysList.push({ name: holiday.name, date: day.date });
-            adjustment += 20;
+            holidaysList.push({ name: holiday.name, date: day.date, isLocalEvent: holiday.isLocalEvent });
+            
+            if (holiday.isLocalEvent) {
+                const evt = state.localEvents.find(e => e.id === holiday.eventId);
+                const multiplier = evt ? parseFloat(evt.salesMultiplier) || 1.6 : 1.6;
+                const boostPercent = Math.round((multiplier - 1) * 100);
+                adjustment += boostPercent;
+            } else {
+                adjustment += 20;
+            }
 
             if (holiday.name.toLowerCase().includes("carnaval") || holiday.name.toLowerCase().includes("cinzas")) {
                 isCarnavalPeriod = true;
@@ -1276,10 +1350,10 @@ function calculatePredictiveDemand(forecastDays) {
         let analysisText = `🌡️ **Resumo do Clima:** Média máxima de **${avgMaxTemp.toFixed(1)}°C** nos próximos 5 dias.\n`;
         
         if (holidaysList.length > 0) {
-            analysisText += `🎉 **Feriados no Período:**\n`;
+            analysisText += `🎉 **Feriados/Eventos no Período:**\n`;
             holidaysList.forEach(h => {
                 const [y, m, d] = h.date.split("-");
-                analysisText += `   • **${h.name}** no dia ${d}/${m}\n`;
+                analysisText += `   • **${h.name}** no dia ${d}/${m}${h.isLocalEvent ? ' (Evento Local)' : ''}\n`;
             });
         }
 
@@ -1352,6 +1426,251 @@ window.openWeatherForecastModal = openWeatherForecastModal;
 
 window.getBrazilTimeISO = getBrazilTimeISO;
 window.formatDateBrazil = formatDateBrazil;
+
+let weatherChartInstance = null;
+
+export function renderWeatherTempChart(forecastDays) {
+    const canvas = document.getElementById("weather-temp-chart");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (weatherChartInstance) {
+        weatherChartInstance.destroy();
+    }
+
+    const labels = forecastDays.map(day => {
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const dayMonth = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        const weekday = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+        return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${dayMonth}`;
+    });
+
+    const maxTemps = forecastDays.map(day => day.max);
+    const minTemps = forecastDays.map(day => day.min);
+
+    const primaryColor = (state.appearance && state.appearance.primaryColor) || "#00f0ff";
+    const primaryColorRgb = (state.appearance && state.appearance.primaryColorRgb) || "0, 240, 255";
+
+    if (typeof Chart === "undefined") {
+        console.warn("Chart.js não carregado.");
+        return;
+    }
+
+    weatherChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Máxima (°C)',
+                    data: maxTemps,
+                    borderColor: primaryColor,
+                    backgroundColor: `rgba(${primaryColorRgb}, 0.15)`,
+                    borderWidth: 2.5,
+                    pointBackgroundColor: primaryColor,
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.35,
+                    fill: true
+                },
+                {
+                    label: 'Mínima (°C)',
+                    data: minTemps,
+                    borderColor: 'rgba(255, 255, 255, 0.4)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    pointBackgroundColor: '#94a3b8',
+                    pointBorderColor: 'transparent',
+                    pointRadius: 3,
+                    tension: 0.35,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: { size: 9 },
+                        boxWidth: 12
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(9, 13, 22, 0.95)',
+                    titleColor: primaryColor,
+                    bodyColor: '#fff',
+                    borderColor: `rgba(${primaryColorRgb}, 0.2)`,
+                    borderWidth: 1,
+                    titleFont: { size: 10, weight: 'bold' },
+                    bodyFont: { size: 9 }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        font: { size: 8 }
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        font: { size: 8 },
+                        callback: function(value) {
+                            return value + '°C';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+export function openEditLocalEventModal(eventId = "") {
+    const titleEl = document.getElementById("local-event-modal-title");
+    const idInput = document.getElementById("form-event-id");
+    const nameInput = document.getElementById("event-name");
+    const startDateInput = document.getElementById("event-start-date");
+    const durationInput = document.getElementById("event-duration");
+    const recurrenceInput = document.getElementById("event-recurrence");
+    const multiplierInput = document.getElementById("event-multiplier");
+    const deleteBtn = document.getElementById("btn-delete-local-event");
+    
+    document.getElementById("local-event-form").reset();
+    
+    if (eventId) {
+        const evt = state.localEvents.find(e => e.id === eventId);
+        if (!evt) return;
+        
+        titleEl.innerHTML = `<i data-lucide="edit-3" style="width: 20px; height: 20px;"></i> Editar Evento Local`;
+        idInput.value = evt.id;
+        nameInput.value = evt.name;
+        startDateInput.value = evt.startDate;
+        durationInput.value = evt.durationDays !== undefined ? evt.durationDays.toString() : "4";
+        recurrenceInput.value = evt.recurrence || "annual";
+        
+        const mult = evt.salesMultiplier !== undefined ? parseFloat(evt.salesMultiplier) : 1.6;
+        if (mult >= 2.0) multiplierInput.value = "2.0";
+        else if (mult >= 1.6) multiplierInput.value = "1.6";
+        else multiplierInput.value = "1.3";
+        
+        if (deleteBtn) deleteBtn.style.display = "block";
+    } else {
+        titleEl.innerHTML = `<i data-lucide="calendar-days" style="width: 20px; height: 20px;"></i> Configurar Evento Local`;
+        idInput.value = "";
+        if (deleteBtn) deleteBtn.style.display = "none";
+        
+        if (selectedCalendarDateStr && startDateInput) {
+            startDateInput.value = selectedCalendarDateStr;
+        }
+    }
+    
+    if (window.lucide) window.lucide.createIcons();
+    const modal = document.getElementById("modal-edit-local-event");
+    if (modal) modal.classList.add("active");
+}
+
+export function saveLocalEventForm(event) {
+    if (event) event.preventDefault();
+    
+    const id = document.getElementById("form-event-id").value;
+    const name = document.getElementById("event-name").value.trim();
+    const startDate = document.getElementById("event-start-date").value;
+    const durationDays = parseInt(document.getElementById("event-duration").value) || 4;
+    const recurrence = document.getElementById("event-recurrence").value;
+    const salesMultiplier = parseFloat(document.getElementById("event-multiplier").value) || 1.6;
+    
+    if (!name || !startDate) {
+        window.showToast("Preencha todos os campos obrigatórios.", "warning");
+        return;
+    }
+    
+    if (id) {
+        const index = state.localEvents.findIndex(e => e.id === id);
+        if (index !== -1) {
+            state.localEvents[index].name = name;
+            state.localEvents[index].startDate = startDate;
+            state.localEvents[index].durationDays = durationDays;
+            state.localEvents[index].recurrence = recurrence;
+            state.localEvents[index].salesMultiplier = salesMultiplier;
+        }
+    } else {
+        const newEvt = {
+            id: "evt_" + Date.now(),
+            name: name,
+            startDate: startDate,
+            durationDays: durationDays,
+            recurrence: recurrence,
+            salesMultiplier: salesMultiplier
+        };
+        state.localEvents.push(newEvt);
+    }
+    
+    saveState();
+    closeModal("modal-edit-local-event");
+    window.showToast("Evento local salvo com sucesso!", "success");
+    
+    if (window.renderCalendar && currentCalendarYear !== undefined && currentCalendarMonth !== undefined) {
+        window.renderCalendar(currentCalendarYear, currentCalendarMonth);
+    }
+    if (selectedCalendarDateStr) {
+        selectCalendarDay(selectedCalendarDateStr);
+    }
+    if (window.checkUpcomingLocalEvents) {
+        window.checkUpcomingLocalEvents();
+    }
+}
+
+export function deleteLocalEventFromForm() {
+    const id = document.getElementById("form-event-id").value;
+    if (!id) return;
+    
+    const evt = state.localEvents.find(e => e.id === id);
+    if (!evt) return;
+    
+    window.showConfirm(
+        `Tem certeza que deseja excluir o evento "${evt.name}"? Ele deixará de ser considerado nas projeções de demanda.`,
+        () => {
+            state.localEvents = state.localEvents.filter(e => e.id !== id);
+            saveState();
+            closeModal("modal-edit-local-event");
+            window.showToast("Evento excluído com sucesso!", "success");
+            
+            if (window.renderCalendar && currentCalendarYear !== undefined && currentCalendarMonth !== undefined) {
+                window.renderCalendar(currentCalendarYear, currentCalendarMonth);
+            }
+            if (selectedCalendarDateStr) {
+                selectCalendarDay(selectedCalendarDateStr);
+            }
+            if (window.checkUpcomingLocalEvents) {
+                window.checkUpcomingLocalEvents();
+            }
+        },
+        null,
+        "Excluir Evento",
+        "Excluir"
+    );
+}
+
+window.renderWeatherTempChart = renderWeatherTempChart;
+window.openEditLocalEventModal = openEditLocalEventModal;
+window.saveLocalEventForm = saveLocalEventForm;
+window.deleteLocalEventFromForm = deleteLocalEventFromForm;
 
 function cleanStringForPix(str) {
     if (!str) return "";

@@ -21,7 +21,7 @@ import {
 import { migrateLegacyComodatos, initClientSigningPortal } from './comodatos.js';
 import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal } from './admin.js';
 import { initFirebase, checkOneDriveSync } from './sync.js';
-import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil } from './utils.js';
+import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil, getBrazilianHolidays } from './utils.js';
 import { runClientDiagnostics } from './diagnostics.js';
 import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './pdv.js';
 import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry } from './carne.js';
@@ -280,6 +280,8 @@ export function loadState() {
             if (!parsed.factorySettings) parsed.factorySettings = {};
             if (!parsed.backupSettings) parsed.backupSettings = {};
             if (!parsed.appearance) parsed.appearance = {};
+            if (!parsed.localEvents) parsed.localEvents = [];
+            if (!parsed.ignoredSpikes) parsed.ignoredSpikes = [];
             
             // Garantir usuário Administrador Padrão caso não exista nenhum usuário
             if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
@@ -3934,3 +3936,222 @@ window.initVolumeSlider = initVolumeSlider;
 window.toggleQuickSound = toggleQuickSound;
 window.toggleQuickHaptic = toggleQuickHaptic;
 window.updateQuickTogglesUI = updateQuickTogglesUI;
+
+// --- DETECÇÃO DE PICOS DE FATURAMENTO E ALERTAS DE EVENTOS LOCAIS ---
+export function updateDashboardSpikeAlerts() {
+    const alertsContainer = document.getElementById("dashboard-spike-alerts");
+    if (!alertsContainer) return;
+
+    alertsContainer.innerHTML = "";
+
+    // 1. Alertas de Eventos Recorrentes Próximos (30 dias antes)
+    let upcomingHtml = "";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (state.localEvents && Array.isArray(state.localEvents)) {
+        state.localEvents.forEach(evt => {
+            if (!evt.startDate || !evt.name) return;
+            const parts = evt.startDate.split("-");
+            if (parts.length !== 3) return;
+
+            const evtMonth = parseInt(parts[1]) - 1; // 0-indexed
+            const evtDay = parseInt(parts[2]);
+
+            let expectedDate = null;
+            let occurrenceId = "";
+            let daysDiff = -999;
+
+            if (evt.recurrence === 'annual') {
+                let targetYear = today.getFullYear();
+                let occurrenceDate = new Date(targetYear, evtMonth, evtDay);
+                let diff = (occurrenceDate - today) / (1000 * 60 * 60 * 24);
+
+                if (diff < -30) {
+                    targetYear += 1;
+                    occurrenceDate = new Date(targetYear, evtMonth, evtDay);
+                    diff = (occurrenceDate - today) / (1000 * 60 * 60 * 24);
+                }
+
+                expectedDate = occurrenceDate;
+                occurrenceId = String(targetYear);
+                daysDiff = diff;
+            } else if (evt.recurrence === 'monthly') {
+                let occurrenceDate = new Date(today.getFullYear(), today.getMonth(), evtDay);
+                let diff = (occurrenceDate - today) / (1000 * 60 * 60 * 24);
+
+                if (diff < -5) {
+                    occurrenceDate = new Date(today.getFullYear(), today.getMonth() + 1, evtDay);
+                    diff = (occurrenceDate - today) / (1000 * 60 * 60 * 24);
+                }
+
+                expectedDate = occurrenceDate;
+                occurrenceId = `${occurrenceDate.getFullYear()}-${String(occurrenceDate.getMonth() + 1).padStart(2, '0')}`;
+                daysDiff = diff;
+            }
+
+            if (expectedDate && daysDiff >= 0 && daysDiff <= 30) {
+                const confirmed = evt.confirmedOccurrences || [];
+                if (!confirmed.includes(occurrenceId)) {
+                    const daysRemaining = Math.ceil(daysDiff);
+                    const expectedDateStr = `${String(expectedDate.getDate()).padStart(2, '0')}/${String(expectedDate.getMonth() + 1).padStart(2, '0')}/${expectedDate.getFullYear()}`;
+                    const recurrenceText = evt.recurrence === 'annual' ? 'anual' : 'mensal';
+                    const daysText = daysRemaining === 0 ? "Começa hoje!" : daysRemaining === 1 ? "Amanhã!" : `Em ${daysRemaining} dias`;
+
+                    upcomingHtml += `
+                        <div class="upcoming-event-card" style="background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.20); border-left: 4px solid var(--color-primary); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease-out; margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="display: flex; gap: 8px; align-items: center; color: var(--color-primary);">
+                                    <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+                                    <strong style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Confirmação de Evento Próximo</strong>
+                                </div>
+                                <span style="font-size: 0.72rem; color: #ffb703; font-weight: 700;">${daysText}</span>
+                            </div>
+                            <p style="font-size: 0.78rem; line-height: 1.4; color: var(--color-text-main); margin: 0;">
+                                O evento recorrente <strong>${evt.name}</strong> está previsto para o dia <strong>${expectedDateStr}</strong> (recorrência ${recurrenceText}). A data e os detalhes do evento estão confirmados para este período?
+                            </p>
+                            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                <button onclick="window.confirmUpcomingEvent('${evt.id}', '${occurrenceId}')" class="btn btn-primary" style="font-size: 0.75rem; padding: 6px 12px; background: var(--color-primary); color: #000; border: none; font-weight: 700; height: auto;">Confirmar Data</button>
+                                <button onclick="window.openEditLocalEventModal('${evt.id}')" class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; border-color: rgba(255,255,255,0.15); height: auto;">Ajustar Detalhes</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+
+    // 2. Alertas de Picos de Vendas não Identificados
+    let spikesHtml = "";
+    if (state.deliveries && state.deliveries.length > 0) {
+        const dailyRevenue = {};
+        state.deliveries.forEach(d => {
+            if (!d.date || !d.revenue) return;
+            const dayDate = d.date.split("T")[0];
+            dailyRevenue[dayDate] = (dailyRevenue[dayDate] || 0) + (parseFloat(d.revenue) || 0);
+        });
+
+        const daysWithSales = Object.keys(dailyRevenue);
+        if (daysWithSales.length > 0) {
+            const totalRevenue = Object.values(dailyRevenue).reduce((sum, val) => sum + val, 0);
+            const baseline = totalRevenue / daysWithSales.length;
+
+            daysWithSales.forEach(dayDate => {
+                const rev = dailyRevenue[dayDate];
+                if (rev < 300.00) return;
+                if (rev < 1.5 * baseline) return;
+
+                const parts = dayDate.split("-");
+                const year = parseInt(parts[0]);
+                if (isNaN(year)) return;
+
+                const holidays = getBrazilianHolidays(year);
+                if (holidays[dayDate]) return;
+
+                if (state.ignoredSpikes && state.ignoredSpikes.includes(dayDate)) return;
+
+                const [y, m, d] = parts;
+                const formattedDate = `${d}/${m}/${y}`;
+
+                spikesHtml += `
+                    <div class="spike-alert-card" style="background: rgba(255, 183, 3, 0.04); border: 1px solid rgba(255, 183, 3, 0.2); border-left: 4px solid #ffb703; border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease-out; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="display: flex; gap: 8px; align-items: center; color: #ffb703;">
+                                <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
+                                <strong style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Faturamento Atípico Detectado</strong>
+                            </div>
+                            <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: 500;">${formattedDate}</span>
+                        </div>
+                        <p style="font-size: 0.78rem; line-height: 1.4; color: var(--color-text-main); margin: 0;">
+                            Identificamos faturamento de <strong>R$ ${rev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> em <strong>${formattedDate}</strong>, superando a média diária de R$ ${baseline.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Havia algum evento local (festa, quermesse, rodeio) nesta data?
+                        </p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; width: 100%;">
+                            <input type="text" id="spike-name-${dayDate}" placeholder="Nome do Evento (ex: Festa do Peão)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff; flex-grow: 1; min-width: 150px;" required>
+                            <select id="spike-recurrence-${dayDate}" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff;">
+                                <option value="annual" selected>Recorrência Anual</option>
+                                <option value="monthly">Recorrência Mensal</option>
+                                <option value="none">Apenas uma vez</option>
+                            </select>
+                            <button onclick="window.saveSpikeAsEvent('${dayDate}', ${rev})" class="btn btn-primary" style="font-size: 0.75rem; padding: 6px 12px; background: var(--color-primary); color: #000; border: none; font-weight: 700; height: auto;">Salvar Evento</button>
+                            <button onclick="window.ignoreSpike('${dayDate}')" class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; border-color: rgba(255,255,255,0.15); height: auto;">Ignorar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    alertsContainer.innerHTML = upcomingHtml + spikesHtml;
+
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
+export function saveSpikeAsEvent(dateStr, revenue) {
+    const input = document.getElementById(`spike-name-${dateStr}`);
+    const name = input ? input.value.trim() : "";
+    if (!name) {
+        window.showToast("Por favor, informe o nome do evento.", "warning");
+        return;
+    }
+    const recurrenceSelect = document.getElementById(`spike-recurrence-${dateStr}`);
+    const recurrence = recurrenceSelect ? recurrenceSelect.value : "annual";
+
+    const newEvt = {
+        id: "evt_" + Date.now(),
+        name: name,
+        startDate: dateStr,
+        durationDays: 4, // 4 dias por padrão
+        recurrence: recurrence,
+        salesMultiplier: 1.6, // Multiplicador padrão (+60% de impacto na demanda)
+        confirmedOccurrences: []
+    };
+
+    // Auto-confirmar para o ano/mês atual
+    const parts = dateStr.split("-");
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]);
+    const occurrenceId = recurrence === 'monthly' ? `${year}-${String(month).padStart(2, '0')}` : `${year}`;
+    newEvt.confirmedOccurrences.push(occurrenceId);
+
+    if (!state.localEvents) state.localEvents = [];
+    state.localEvents.push(newEvt);
+    saveState();
+
+    window.showToast(`Evento "${name}" registrado com sucesso!`, "success");
+
+    // Recalcular alertas e re-renderizar dashboard/calendário
+    window.updateDashboardSpikeAlerts();
+    if (window.renderDashboard) window.renderDashboard();
+    if (window.renderCalendar && window.currentCalendarYear !== undefined && window.currentCalendarMonth !== undefined) {
+        window.renderCalendar(window.currentCalendarYear, window.currentCalendarMonth);
+    }
+}
+
+export function ignoreSpike(dateStr) {
+    if (!state.ignoredSpikes) state.ignoredSpikes = [];
+    if (!state.ignoredSpikes.includes(dateStr)) {
+        state.ignoredSpikes.push(dateStr);
+    }
+    saveState();
+    window.showToast("Pico de vendas ignorado.", "info");
+    window.updateDashboardSpikeAlerts();
+}
+
+export function confirmUpcomingEvent(eventId, occurrenceId) {
+    const evt = state.localEvents.find(e => e.id === eventId);
+    if (!evt) return;
+    if (!evt.confirmedOccurrences) evt.confirmedOccurrences = [];
+    if (!evt.confirmedOccurrences.includes(occurrenceId)) {
+        evt.confirmedOccurrences.push(occurrenceId);
+    }
+    saveState();
+    window.showToast(`Evento "${evt.name}" confirmado para este período!`, "success");
+    window.updateDashboardSpikeAlerts();
+}
+
+window.updateDashboardSpikeAlerts = updateDashboardSpikeAlerts;
+window.saveSpikeAsEvent = saveSpikeAsEvent;
+window.ignoreSpike = ignoreSpike;
+window.confirmUpcomingEvent = confirmUpcomingEvent;

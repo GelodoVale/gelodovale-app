@@ -110,6 +110,11 @@ export function renderDashboard() {
 
     // 6. Renderizar Pré-Pedidos Agendados
     renderScheduledOrders();
+
+    // 7. Renderizar Alertas de Picos de Vendas e Eventos Locais
+    if (window.updateDashboardSpikeAlerts) {
+        window.updateDashboardSpikeAlerts();
+    }
 }
 
 export function renderDashboardAlerts() {
