@@ -67,7 +67,11 @@ export function startSyncListener() {
         if (isFirstLoad) {
             // ── Primeira carga: quem tiver timestamp mais recente ganha ──
             isFirstLoad = false;
-            if (remoteTs > localTs) {
+            const hasLocalData = !!localStorage.getItem("gelcontrol_state");
+            if (!hasLocalData) {
+                console.log('[Sync] Novo dispositivo ou cache limpo detectado — puxando dados da nuvem...');
+                aplicarDadosRemoto(remoteData);
+            } else if (remoteTs > localTs) {
                 console.log('[Sync] Nuvem mais recente na abertura — aplicando dados da nuvem...');
                 aplicarDadosRemoto(remoteData);
             } else if (localTs > remoteTs) {
@@ -134,8 +138,9 @@ function pushToFirebaseImediato() {
 
     // SAFEGUARD: Não enviar para a nuvem se o estado local for um estado virgem/vazio (ex: primeira abertura no PC novo)
     // para não correr o risco de zerar os dados que já estão salvos lá.
-    if (!state.lastUpdated || state.lastUpdated === 0) {
-        console.warn('[Sync] Abortado: estado local parece virgem (sem lastUpdated). Não vamos sobrescrever a nuvem com dados vazios.');
+    const hasLocalData = !!localStorage.getItem("gelcontrol_state");
+    if (!hasLocalData || !state.lastUpdated || state.lastUpdated === 0) {
+        console.warn('[Sync] Abortado: estado local parece virgem ou sem dados no localStorage. Não vamos sobrescrever a nuvem com dados vazios.');
         return;
     }
 
