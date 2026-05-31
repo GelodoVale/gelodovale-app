@@ -671,6 +671,29 @@ export function recoverAdminPassword() {
     }
 }
 
+export function clearAppCacheAndReload() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
+    if (window.caches) {
+        caches.keys().then(keys => {
+            return Promise.all(keys.map(key => caches.delete(key)));
+        }).then(() => {
+            sessionStorage.clear();
+            localStorage.removeItem("gelcontrol_state"); // clear corrupted local state to force cloud fetch
+            window.location.reload();
+        });
+    } else {
+        sessionStorage.clear();
+        localStorage.removeItem("gelcontrol_state");
+        window.location.reload();
+    }
+}
+
 // Bind to window for HTML accessibility
 window.initUserAccessControl = initUserAccessControl;
 window.initLoginScreen = initLoginScreen;
@@ -685,3 +708,4 @@ window.saveUser = saveUser;
 window.deleteUser = deleteUser;
 window.toggleSelectAllPermissions = toggleSelectAllPermissions;
 window.recoverAdminPassword = recoverAdminPassword;
+window.clearAppCacheAndReload = clearAppCacheAndReload;

@@ -82,6 +82,9 @@
                             <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                         </button>
                     </div>
+                    <div style="text-align: right; margin-top: 4px;">
+                        <a href="#" onclick="recoverAdminPassword(); return false;" style="color: var(--color-primary); font-size: 0.72rem; text-decoration: underline; opacity: 0.85;">Esqueceu a senha do Admin?</a>
+                    </div>
                 </div>
                 
                 <div id="login-error-msg" style="color: var(--color-danger); font-size: 0.8rem; text-align: center; display: none; font-weight: bold; margin-bottom: 0.25rem;">
@@ -100,6 +103,9 @@
                 </div>
                 <a href="#" onclick="openModal('modal-pwa-tutorial'); return false;" style="color: var(--color-primary); text-decoration: underline; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;">
                     <i data-lucide="help-circle" style="width: 12px; height: 12px;"></i> Como instalar no Celular/Tablet?
+                </a>
+                <a href="#" onclick="clearAppCacheAndReload(); return false;" style="color: var(--color-danger); text-decoration: underline; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem;">
+                    <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Limpar Cache e Forçar Recarga
                 </a>
             </div>
         </div>

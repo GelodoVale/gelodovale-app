@@ -289,7 +289,7 @@ export function loadState() {
                     id: "user_admin_001",
                     name: "Administrador Sistema",
                     username: "admin",
-                    password: parsed.adminPassword || "admin123", // fallback para a senha antiga
+                    password: parsed.adminPassword || "1120M@z@dr1", // fallback para a senha antiga
                     role: "Master",
                     permissions: {
                         "admin-tab-dados-fabrica": true,
@@ -334,7 +334,7 @@ export function loadState() {
             id: "user_admin_001",
             name: "Administrador Sistema",
             username: "admin",
-            password: "admin123",
+            password: "1120M@z@dr1",
             role: "Master",
             permissions: {
                 "admin-tab-dados-fabrica": true,
