@@ -625,6 +625,9 @@ export function renderApp() {
     // Atualizar dropdowns
     if (window.populateClientDropdowns) window.populateClientDropdowns();
     if (window.populateFreezerDropdowns) window.populateFreezerDropdowns();
+    
+    // Atualizar tela de login e usuários
+    initLoginScreen();
 
     // Iniciar 3D Tilt nos novos cards
     if (window.init3DTilt) window.init3DTilt();

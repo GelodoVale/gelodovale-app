@@ -42,6 +42,7 @@ export function updateState(newState) {
     Object.keys(state).forEach(k => delete state[k]);
     Object.assign(state, newState);
     normalizeStateArrays();
+    initUserAccessControl();
 }
 
 export function normalizeStateArrays() {

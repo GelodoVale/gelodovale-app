@@ -68,7 +68,19 @@ export function initUserAccessControl() {
 export function initLoginScreen() {
     const select = document.getElementById("login-user-select");
     if (select && state.users) {
+        const currentSelectedId = select.value;
+        const currentSelectedUser = state.users.find(u => u.id === currentSelectedId);
+        const currentSelectedUsername = currentSelectedUser ? currentSelectedUser.username : null;
+
         select.innerHTML = state.users.map(u => `<option value="${u.id}">${u.name} (${u.username})</option>`).join("");
+        
+        // Restaurar seleção pelo username se o ID mudou (ex: de user_admin_001 para admin)
+        if (currentSelectedUsername) {
+            const newUser = state.users.find(u => u.username === currentSelectedUsername);
+            if (newUser) {
+                select.value = newUser.id;
+            }
+        }
     }
     
     // Password visibility togglers
