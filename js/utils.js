@@ -1555,6 +1555,7 @@ export function openEditLocalEventModal(eventId = "") {
     const titleEl = document.getElementById("local-event-modal-title");
     const idInput = document.getElementById("form-event-id");
     const nameInput = document.getElementById("event-name");
+    const locationInput = document.getElementById("event-location");
     const startDateInput = document.getElementById("event-start-date");
     const durationInput = document.getElementById("event-duration");
     const recurrenceInput = document.getElementById("event-recurrence");
@@ -1570,6 +1571,7 @@ export function openEditLocalEventModal(eventId = "") {
         titleEl.innerHTML = `<i data-lucide="edit-3" style="width: 20px; height: 20px;"></i> Editar Evento Local`;
         idInput.value = evt.id;
         nameInput.value = evt.name;
+        if (locationInput) locationInput.value = evt.location || "";
         startDateInput.value = evt.startDate;
         durationInput.value = evt.durationDays !== undefined ? evt.durationDays.toString() : "4";
         recurrenceInput.value = evt.recurrence || "annual";
@@ -1583,6 +1585,7 @@ export function openEditLocalEventModal(eventId = "") {
     } else {
         titleEl.innerHTML = `<i data-lucide="calendar-days" style="width: 20px; height: 20px;"></i> Configurar Evento Local`;
         idInput.value = "";
+        if (locationInput) locationInput.value = "";
         if (deleteBtn) deleteBtn.style.display = "none";
         
         if (selectedCalendarDateStr && startDateInput) {
@@ -1594,18 +1597,20 @@ export function openEditLocalEventModal(eventId = "") {
     const modal = document.getElementById("modal-edit-local-event");
     if (modal) modal.classList.add("active");
 }
-
+ 
 export function saveLocalEventForm(event) {
     if (event) event.preventDefault();
     
     const id = document.getElementById("form-event-id").value;
     const name = document.getElementById("event-name").value.trim();
+    const locationInput = document.getElementById("event-location");
+    const location = locationInput ? locationInput.value.trim() : "";
     const startDate = document.getElementById("event-start-date").value;
     const durationDays = parseInt(document.getElementById("event-duration").value) || 4;
     const recurrence = document.getElementById("event-recurrence").value;
     const salesMultiplier = parseFloat(document.getElementById("event-multiplier").value) || 1.6;
     
-    if (!name || !startDate) {
+    if (!name || !startDate || !location) {
         window.showToast("Preencha todos os campos obrigatórios.", "warning");
         return;
     }
@@ -1614,6 +1619,7 @@ export function saveLocalEventForm(event) {
         const index = state.localEvents.findIndex(e => e.id === id);
         if (index !== -1) {
             state.localEvents[index].name = name;
+            state.localEvents[index].location = location;
             state.localEvents[index].startDate = startDate;
             state.localEvents[index].durationDays = durationDays;
             state.localEvents[index].recurrence = recurrence;
@@ -1623,6 +1629,7 @@ export function saveLocalEventForm(event) {
         const newEvt = {
             id: "evt_" + Date.now(),
             name: name,
+            location: location,
             startDate: startDate,
             durationDays: durationDays,
             recurrence: recurrence,

@@ -4066,7 +4066,8 @@ export function updateDashboardSpikeAlerts() {
                             Identificamos faturamento de <strong>R$ ${rev.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> em <strong>${formattedDate}</strong>, superando a média diária de R$ ${baseline.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Havia algum evento local (festa, quermesse, rodeio) nesta data?
                         </p>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; width: 100%;">
-                            <input type="text" id="spike-name-${dayDate}" placeholder="Nome do Evento (ex: Festa do Peão)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff; flex-grow: 1; min-width: 150px;" required>
+                            <input type="text" id="spike-name-${dayDate}" placeholder="Nome do Evento (ex: Festa do Peão)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff; flex-grow: 2; min-width: 150px;" required>
+                            <input type="text" id="spike-location-${dayDate}" placeholder="Local/Cidade" value="${(state.weatherConfig && state.weatherConfig.city) || 'S.J. Campos'}" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff; flex-grow: 1; min-width: 100px;" required>
                             <select id="spike-recurrence-${dayDate}" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff;">
                                 <option value="annual" selected>Recorrência Anual</option>
                                 <option value="monthly">Recorrência Mensal</option>
@@ -4091,8 +4092,10 @@ export function updateDashboardSpikeAlerts() {
 export function saveSpikeAsEvent(dateStr, revenue) {
     const input = document.getElementById(`spike-name-${dateStr}`);
     const name = input ? input.value.trim() : "";
-    if (!name) {
-        window.showToast("Por favor, informe o nome do evento.", "warning");
+    const inputLoc = document.getElementById(`spike-location-${dateStr}`);
+    const location = inputLoc ? inputLoc.value.trim() : "";
+    if (!name || !location) {
+        window.showToast("Por favor, informe o nome e o local do evento.", "warning");
         return;
     }
     const recurrenceSelect = document.getElementById(`spike-recurrence-${dateStr}`);
@@ -4101,6 +4104,7 @@ export function saveSpikeAsEvent(dateStr, revenue) {
     const newEvt = {
         id: "evt_" + Date.now(),
         name: name,
+        location: location,
         startDate: dateStr,
         durationDays: 4, // 4 dias por padrão
         recurrence: recurrence,
@@ -4160,7 +4164,7 @@ export function renderEventosLocaisTable() {
     if (!state.localEvents || state.localEvents.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px; color: var(--color-text-muted); font-size: 0.8rem;">
+                <td colspan="7" style="text-align: center; padding: 20px; color: var(--color-text-muted); font-size: 0.8rem;">
                     Nenhum evento local cadastrado. Clique em "Cadastrar Evento" para começar.
                 </td>
             </tr>
@@ -4188,6 +4192,7 @@ export function renderEventosLocaisTable() {
         row.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
         row.innerHTML = `
             <td style="padding: 10px; font-weight: 700; color: #fff; font-size: 0.8rem;">${evt.name}</td>
+            <td style="padding: 10px; color: var(--color-text-muted); font-size: 0.8rem;">${evt.location || "-"}</td>
             <td style="padding: 10px; color: var(--color-text-muted); font-size: 0.8rem;">${formattedDate}</td>
             <td style="padding: 10px; text-align: center; color: var(--color-text-muted); font-size: 0.8rem;">${duration} Dia${duration !== 1 ? 's' : ''}</td>
             <td style="padding: 10px; color: var(--color-text-muted); font-size: 0.8rem;">${recurrenceText}</td>
