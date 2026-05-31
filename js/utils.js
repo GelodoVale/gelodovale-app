@@ -1050,6 +1050,16 @@ export function selectCalendarDay(dateStr) {
             `;
         }
 
+        if (!holiday || !holiday.isLocalEvent) {
+            holidayHtml += `
+                <div style="margin-bottom: 8px;">
+                    <button type="button" class="btn btn-secondary btn-mini" onclick="window.openEditLocalEventModal()" style="font-size: 0.6rem; padding: 4px 8px; border-color: rgba(0, 240, 255, 0.3); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); display: inline-flex; align-items: center; gap: 4px; height: auto; width: auto;">
+                        <i data-lucide="plus" style="width: 11px; height: 11px;"></i> Agendar Evento Local
+                    </button>
+                </div>
+            `;
+        }
+
         let indicatorEl = document.getElementById("selected-day-holiday-badge");
         if (!indicatorEl) {
             indicatorEl = document.createElement("div");
@@ -1634,6 +1644,9 @@ export function saveLocalEventForm(event) {
     if (window.checkUpcomingLocalEvents) {
         window.checkUpcomingLocalEvents();
     }
+    if (window.renderEventosLocaisTable) {
+        window.renderEventosLocaisTable();
+    }
 }
 
 export function deleteLocalEventFromForm() {
@@ -1659,6 +1672,9 @@ export function deleteLocalEventFromForm() {
             }
             if (window.checkUpcomingLocalEvents) {
                 window.checkUpcomingLocalEvents();
+            }
+            if (window.renderEventosLocaisTable) {
+                window.renderEventosLocaisTable();
             }
         },
         null,

@@ -722,6 +722,10 @@
                                     <i data-lucide="package"></i>
                                     <span>Insumos & Compras</span>
                                 </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-eventos-locais')">
+                                    <i data-lucide="calendar-days"></i>
+                                    <span>Eventos Locais</span>
+                                </button>
                             </div>
 
                             <!-- Categoria 3: Configurações & Fábrica -->
@@ -1324,6 +1328,41 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- sub-aba: Eventos Locais -->
+                        <div id="tab-eventos-locais" class="admin-subtab-content">
+                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <h2>Gestão de Eventos Locais (Impacto de Demanda)</h2>
+                                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie eventos festivos da região para projeção inteligente e alertas automatizados.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="window.openEditLocalEventModal('')" style="font-size: 0.8rem; padding: 8px 16px;">
+                                        <i data-lucide="plus" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i>
+                                        Cadastrar Evento
+                                    </button>
+                                </div>
+                                <div class="panel-body" style="padding-top: 1rem;">
+                                    <div class="table-responsive">
+                                        <table class="data-table" style="width: 100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left; padding: 10px;">Nome do Evento</th>
+                                                    <th style="text-align: left; padding: 10px;">Data de Início</th>
+                                                    <th style="text-align: center; padding: 10px;">Duração (Dias)</th>
+                                                    <th style="text-align: left; padding: 10px;">Recorrência</th>
+                                                    <th style="text-align: center; padding: 10px;">Impacto na Demanda</th>
+                                                    <th style="text-align: right; padding: 10px;">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="eventos-locais-table-body">
+                                                <!-- Preenchido dinamicamente via JS -->
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

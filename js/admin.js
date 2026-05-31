@@ -43,6 +43,10 @@ export function switchAdminSubTab(subTabId) {
         window.renderFreezerRentability();
     }
     
+    if (subTabId === "tab-eventos-locais" && typeof window.renderEventosLocaisTable === "function") {
+        window.renderEventosLocaisTable();
+    }
+    
     // Renderizar tabela de usuários se a aba for a correspondente
     if (subTabId === "tab-usuarios" && typeof window.renderUsersTable === "function") {
         window.renderUsersTable();

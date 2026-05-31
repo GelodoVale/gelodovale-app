@@ -4151,7 +4151,63 @@ export function confirmUpcomingEvent(eventId, occurrenceId) {
     window.updateDashboardSpikeAlerts();
 }
 
+export function renderEventosLocaisTable() {
+    const tbody = document.getElementById("eventos-locais-table-body");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!state.localEvents || state.localEvents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px; color: var(--color-text-muted); font-size: 0.8rem;">
+                    Nenhum evento local cadastrado. Clique em "Cadastrar Evento" para começar.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const sorted = [...state.localEvents].sort((a, b) => a.name.localeCompare(b.name));
+
+    sorted.forEach(evt => {
+        const parts = evt.startDate.split("-");
+        const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : evt.startDate;
+        const duration = evt.durationDays !== undefined ? evt.durationDays : 4;
+        
+        let recurrenceText = "Apenas uma vez";
+        if (evt.recurrence === 'annual') recurrenceText = "Anual";
+        else if (evt.recurrence === 'monthly') recurrenceText = "Mensal";
+
+        const mult = evt.salesMultiplier !== undefined ? parseFloat(evt.salesMultiplier) : 1.6;
+        let impactText = "Grande (+60%)";
+        if (mult >= 2.0) impactText = "Explosão (+100%)";
+        else if (mult <= 1.3) impactText = "Médio (+30%)";
+
+        const row = document.createElement("tr");
+        row.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
+        row.innerHTML = `
+            <td style="padding: 10px; font-weight: 700; color: #fff; font-size: 0.8rem;">${evt.name}</td>
+            <td style="padding: 10px; color: var(--color-text-muted); font-size: 0.8rem;">${formattedDate}</td>
+            <td style="padding: 10px; text-align: center; color: var(--color-text-muted); font-size: 0.8rem;">${duration} Dia${duration !== 1 ? 's' : ''}</td>
+            <td style="padding: 10px; color: var(--color-text-muted); font-size: 0.8rem;">${recurrenceText}</td>
+            <td style="padding: 10px; text-align: center; color: var(--color-primary); font-weight: 600; font-size: 0.8rem;">${impactText}</td>
+            <td style="padding: 10px; text-align: right;">
+                <button type="button" class="btn btn-secondary btn-mini" onclick="window.openEditLocalEventModal('${evt.id}')" style="font-size: 0.7rem; padding: 4px 8px; border-color: rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.03); color: var(--color-primary); display: inline-flex; align-items: center; gap: 2px; height: auto; width: auto;">
+                    <i data-lucide="edit-3" style="width: 10px; height: 10px;"></i> Editar
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
+
 window.updateDashboardSpikeAlerts = updateDashboardSpikeAlerts;
 window.saveSpikeAsEvent = saveSpikeAsEvent;
 window.ignoreSpike = ignoreSpike;
 window.confirmUpcomingEvent = confirmUpcomingEvent;
+window.renderEventosLocaisTable = renderEventosLocaisTable;
