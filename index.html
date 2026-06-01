@@ -2200,6 +2200,65 @@
                                     </form>
                                 </div>
                             </div>
+                            
+                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem; margin-top: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                                    <h2>Integração WhatsApp API (Envio Automático)</h2>
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure sua API/Gateway de WhatsApp para disparar lembretes, recibos e rotas automaticamente.</p>
+                                </div>
+                                <div style="padding: 1.5rem 0 0 0;">
+                                    <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); padding: 1.25rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                                        <h4 style="color: var(--color-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="info" style="width: 18px; height: 18px;"></i> Provedores de API de WhatsApp
+                                        </h4>
+                                        <div style="font-size: 0.85rem; color: var(--color-text-light); line-height: 1.6;">
+                                            <p style="margin-bottom: 8px;">Esta integração permite disparar mensagens automáticas de rotas, cobranças do carnê e assinatura de comodatos.</p>
+                                            <ul style="padding-left: 1.5rem; margin-bottom: 0;">
+                                                <li style="margin-bottom: 4px;"><strong>Z-API:</strong> Plataforma paga estável. Forneça a URL de envio (Endpoint) e o Client-Token/Instance-Token da instância.</li>
+                                                <li style="margin-bottom: 4px;"><strong>Evolution API:</strong> Gateway open-source econômico. Insira a URL base de mensagens da instância e a chave de autenticação (apikey).</li>
+                                                <li><strong>Genérico (Baileys / Outros):</strong> Envio padrão HTTP POST JSON via endpoint customizado.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <form id="form-wa-integration" onsubmit="event.preventDefault(); saveWhatsAppSettings();">
+                                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="wa-api-enabled" onchange="toggleWaFields()">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <span style="font-weight: bold; color: var(--color-text-light);">Ativar Envio Automático de WhatsApp</span>
+                                        </div>
+
+                                        <div id="wa-credentials-box" style="display: none; padding: 1rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(0,0,0,0.2); margin-top: 1rem;">
+                                            <div class="form-group" style="margin-bottom: 1rem;">
+                                                <label for="wa-api-provider">Provedor de API *</label>
+                                                <select id="wa-api-provider" class="form-control" style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--border-input); height: 42px; font-size: 0.9rem;" required>
+                                                    <option value="z-api">Z-API (Oficial / Broker)</option>
+                                                    <option value="evolution">Evolution API (Baileys)</option>
+                                                    <option value="generic">Genérico (Custom HTTP POST)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="form-group" style="margin-bottom: 1rem;">
+                                                <label for="wa-api-url">URL da Instância / Endpoint de Envio *</label>
+                                                <input type="text" id="wa-api-url" class="form-control" placeholder="https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text" style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--border-input);">
+                                                <small style="color: var(--color-text-muted);">URL exata da requisição HTTP POST para envio de mensagens de texto.</small>
+                                            </div>
+
+                                            <div class="form-group" style="margin-bottom: 1rem;">
+                                                <label for="wa-api-token">Token / API Key / Chave de Segurança</label>
+                                                <input type="password" id="wa-api-token" class="form-control" placeholder="Digite a chave secreta de autenticação da API" style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--border-input);">
+                                                <small style="color: var(--color-text-muted);">Client-Token ou chave de cabeçalho (Header Token/X-API-Key) exigida pelo provedor.</small>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                                                <i data-lucide="save"></i> Salvar Configurações
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </main>
                 </div>

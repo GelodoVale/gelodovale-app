@@ -52,9 +52,14 @@ export function switchAdminSubTab(subTabId) {
         window.renderUsersTable();
     }
     
-    // Carregar configurações do Mercado Pago
-    if (subTabId === "tab-integracoes" && typeof window.loadMercadoPagoSettings === "function") {
-        window.loadMercadoPagoSettings();
+    // Carregar configurações do Mercado Pago e WhatsApp
+    if (subTabId === "tab-integracoes") {
+        if (typeof window.loadMercadoPagoSettings === "function") {
+            window.loadMercadoPagoSettings();
+        }
+        if (typeof window.loadWhatsAppSettings === "function") {
+            window.loadWhatsAppSettings();
+        }
     }
     
     // Renderizar painel de widgets
@@ -3549,6 +3554,63 @@ export function renderDriverCommissionsReport() {
     if (comEl) comEl.textContent = "R$ " + totalCommission.toFixed(2).replace(".", ",");
 }
 window.renderDriverCommissionsReport = renderDriverCommissionsReport;
+
+export function loadWhatsAppSettings() {
+    if (!state.whatsapp) {
+        state.whatsapp = { enabled: false, provider: "z-api", url: "", token: "" };
+    }
+    
+    const waEnabled = document.getElementById("wa-api-enabled");
+    const waProvider = document.getElementById("wa-api-provider");
+    const waUrl = document.getElementById("wa-api-url");
+    const waToken = document.getElementById("wa-api-token");
+    
+    if (waEnabled && waProvider && waUrl && waToken) {
+        waEnabled.checked = state.whatsapp.enabled || false;
+        waProvider.value = state.whatsapp.provider || "z-api";
+        waUrl.value = state.whatsapp.url || "";
+        waToken.value = state.whatsapp.token || "";
+        toggleWaFields();
+    }
+}
+
+export function toggleWaFields() {
+    const input = document.getElementById("wa-api-enabled");
+    if (!input) return;
+    const isEnabled = input.checked;
+    const box = document.getElementById("wa-credentials-box");
+    if (box) {
+        box.style.display = isEnabled ? "block" : "none";
+    }
+}
+
+export function saveWhatsAppSettings() {
+    const input = document.getElementById("wa-api-enabled");
+    if (!input) return;
+    const isEnabled = input.checked;
+    const provider = document.getElementById("wa-api-provider").value;
+    const url = document.getElementById("wa-api-url").value.trim();
+    const token = document.getElementById("wa-api-token").value.trim();
+    
+    if (isEnabled && !url) {
+        window.showToast("Para ativar a integração, é obrigatório informar a URL do servidor.", "warning");
+        return;
+    }
+    
+    if (!state.whatsapp) state.whatsapp = {};
+    
+    state.whatsapp.enabled = isEnabled;
+    state.whatsapp.provider = provider;
+    state.whatsapp.url = url;
+    state.whatsapp.token = token;
+    
+    saveState();
+    window.showToast("Configurações do WhatsApp salvas com sucesso!", "success");
+}
+
+window.toggleWaFields = toggleWaFields;
+window.loadWhatsAppSettings = loadWhatsAppSettings;
+window.saveWhatsAppSettings = saveWhatsAppSettings;
 
 
 

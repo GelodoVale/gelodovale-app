@@ -2114,3 +2114,149 @@ export function getDayDemandLevel(dateStr) {
     }
 }
 window.getDayDemandLevel = getDayDemandLevel;
+
+export async function sendWhatsAppMessageAPI(phone, message, mediaBase64 = null, filename = null) {
+    if (!state.whatsapp || !state.whatsapp.enabled) {
+        return false;
+    }
+
+    const provider = state.whatsapp.provider || 'z-api';
+    let url = state.whatsapp.url || '';
+    const token = state.whatsapp.token || '';
+
+    if (!url) {
+        window.showToast("WhatsApp API ativa, mas sem URL configurada.", "warning");
+        return false;
+    }
+
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) {
+        window.showToast("Número de celular inválido.", "warning");
+        return false;
+    }
+    // Garante DDI do Brasil se tiver 10 ou 11 dígitos
+    if (cleanPhone.length >= 10 && cleanPhone.length <= 11 && !cleanPhone.startsWith('55')) {
+        cleanPhone = '55' + cleanPhone;
+    }
+
+    try {
+        let fetchUrl = url;
+        let bodyData = {};
+        let headers = {
+            "Content-Type": "application/json"
+        };
+
+        // Adicionar o token nos headers de forma adaptável
+        if (token) {
+            headers["Client-Token"] = token;
+            headers["Authorization"] = `Bearer ${token}`;
+            headers["apikey"] = token;
+            headers["X-API-Key"] = token;
+        }
+
+        if (mediaBase64) {
+            // Se mediaBase64 já tiver o cabeçalho data:..., extrair se necessário ou enviar inteiro
+            if (provider === 'z-api') {
+                // Modificar URL de /send-text para /send-document
+                fetchUrl = url.replace(/\/send-text(\?|$)/, '/send-document$1');
+                if (fetchUrl === url) {
+                    fetchUrl = url.endsWith('/') ? url + 'send-document' : url.replace(/\/([^\/]+)$/, '/send-document');
+                }
+                
+                bodyData = {
+                    phone: cleanPhone,
+                    document: mediaBase64,
+                    extension: "pdf",
+                    fileName: filename || "documento.pdf"
+                };
+                if (message) {
+                    bodyData.caption = message;
+                }
+            } else if (provider === 'evolution') {
+                // Modificar URL de /sendText/ para /sendMedia/
+                fetchUrl = url.replace(/\/sendText\//i, '/sendMedia/');
+                if (fetchUrl === url) {
+                    fetchUrl = url.endsWith('/') ? url + 'sendMedia' : url.replace(/\/([^\/]+)$/, '/sendMedia');
+                }
+                
+                let base64Data = mediaBase64;
+                if (mediaBase64.includes('base64,')) {
+                    base64Data = mediaBase64.split('base64,')[1];
+                }
+
+                bodyData = {
+                    number: cleanPhone,
+                    options: {
+                        delay: 1000,
+                        presence: "composing"
+                    },
+                    mediaMessage: {
+                        mediatype: "document",
+                        fileName: filename || "documento.pdf",
+                        caption: message || "",
+                        media: base64Data
+                    }
+                };
+            } else {
+                // Genérico
+                bodyData = {
+                    phone: cleanPhone,
+                    message: message || "",
+                    media: mediaBase64,
+                    fileName: filename || "documento.pdf",
+                    isDocument: true
+                };
+            }
+        } else {
+            // Apenas texto
+            if (provider === 'z-api') {
+                bodyData = {
+                    phone: cleanPhone,
+                    message: message
+                };
+            } else if (provider === 'evolution') {
+                bodyData = {
+                    number: cleanPhone,
+                    options: {
+                        delay: 1000,
+                        presence: "composing"
+                    },
+                    textMessage: {
+                        text: message
+                    }
+                };
+            } else {
+                // Genérico
+                bodyData = {
+                    phone: cleanPhone,
+                    message: message
+                };
+            }
+        }
+
+        const response = await fetch(fetchUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(bodyData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result && (result.error === true || result.success === false)) {
+            throw new Error(result.message || "Erro retornado pela API");
+        }
+
+        window.showToast("Mensagem enviada com sucesso via WhatsApp API!", "success");
+        return true;
+    } catch (error) {
+        console.error("Erro ao enviar mensagem pelo WhatsApp API:", error);
+        window.showToast(`Falha no envio automático via API (${error.message}). Tentando canal manual...`, "warning");
+        return false;
+    }
+}
+window.sendWhatsAppMessageAPI = sendWhatsAppMessageAPI;
+

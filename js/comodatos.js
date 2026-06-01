@@ -737,8 +737,17 @@ export function sendComodatoWhatsAppLink(comId) {
         saveState();
     }
     
-    const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`;
-    window.open(waUrl, "_blank");
+    if (state.whatsapp && state.whatsapp.enabled && typeof window.sendWhatsAppMessageAPI === "function") {
+        window.sendWhatsAppMessageAPI(formattedPhone, message).then(success => {
+            if (!success) {
+                const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`;
+                window.open(waUrl, "_blank");
+            }
+        });
+    } else {
+        const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`;
+        window.open(waUrl, "_blank");
+    }
 }
 
 export function sendComodatoEmailLink(comId) {
@@ -1746,11 +1755,23 @@ export function sendRentalContractWhatsApp() {
     text += `*Declaração de Aceite:* Ao responder "DE ACORDO" a esta mensagem, o Locatário declara estar ciente de todas as cláusulas e concorda com os termos de locação descritos acima, recebendo o equipamento em perfeitas condições.`;
 
     const cleanPhone = (rental.phone || '').replace(/\D/g, '');
-    const waUrl = cleanPhone.length >= 10 
-        ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
-        : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    const phoneWithDDI = cleanPhone.length >= 10 && !cleanPhone.startsWith('55') ? '55' + cleanPhone : cleanPhone;
 
-    window.open(waUrl, "_blank");
+    if (state.whatsapp && state.whatsapp.enabled && typeof window.sendWhatsAppMessageAPI === "function") {
+        window.sendWhatsAppMessageAPI(phoneWithDDI, text).then(success => {
+            if (!success) {
+                const waUrl = phoneWithDDI 
+                    ? `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodeURIComponent(text)}`
+                    : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                window.open(waUrl, "_blank");
+            }
+        });
+    } else {
+        const waUrl = phoneWithDDI 
+            ? `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodeURIComponent(text)}`
+            : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, "_blank");
+    }
     window.showToast("Contrato formatado e direcionado para o WhatsApp!", "success");
 }
 

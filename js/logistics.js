@@ -884,6 +884,23 @@ export async function shareOptimizedRouteWhatsApp() {
         return;
     }
     
+    if (state.whatsapp && state.whatsapp.enabled && typeof window.sendWhatsAppMessageAPI === "function") {
+        const inputPhone = window.prompt("Enviar Roteiro Automático via API:\nDigite o WhatsApp do motorista (com DDD, apenas números) ou clique em OK sem digitar para usar o WhatsApp Web manual:", "");
+        if (inputPhone === null) return; // Cancelou o prompt
+        
+        const cleanPhone = inputPhone.replace(/\D/g, '');
+        if (cleanPhone) {
+            const phoneWithDDI = (cleanPhone.length === 10 || cleanPhone.length === 11) ? "55" + cleanPhone : cleanPhone;
+            window.sendWhatsAppMessageAPI(phoneWithDDI, msg).then(success => {
+                if (!success) {
+                    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodeURIComponent(msg)}`;
+                    window.open(whatsappUrl, "_blank");
+                }
+            });
+            return;
+        }
+    }
+
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
     window.open(whatsappUrl, "_blank");
 }

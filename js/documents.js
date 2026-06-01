@@ -586,30 +586,73 @@ export function shareDocumentWhatsApp() {
     text += `\n*Valor Total: R$ ${(parseFloat(d.total) || 0).toFixed(2)}*\n\n`;
     text += `Obrigado pela parceria!`;
 
-    const encodedText = encodeURIComponent(text);
     const cleanPhone = d.phone ? d.phone.replace(/\D/g, '') : '';
-    
-    if (!navigator.onLine) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                window.showToast("📶 Você está offline!\nO texto do recibo foi copiado para a sua área de transferência para que você possa colar no WhatsApp manualmente.", "info");
-            })
-            .catch(() => {
-                window.showToast("Erro ao copiar o texto para a área de transferência.", "error");
-            });
-        return;
+    let phoneWithDDI = cleanPhone;
+    if (cleanPhone && (cleanPhone.length === 10 || cleanPhone.length === 11)) {
+        phoneWithDDI = '55' + cleanPhone;
     }
-    
-    let whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
-    if (cleanPhone) {
-        let phoneWithDDI = cleanPhone;
-        if (cleanPhone.length === 10 || cleanPhone.length === 11) {
-            phoneWithDDI = '55' + cleanPhone;
+
+    const fallbackSend = () => {
+        const encodedText = encodeURIComponent(text);
+        if (!navigator.onLine) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    window.showToast("📶 Você está offline!\nO texto do recibo foi copiado para a sua área de transferência para que você possa colar no WhatsApp manualmente.", "info");
+                })
+                .catch(() => {
+                    window.showToast("Erro ao copiar o texto para a área de transferência.", "error");
+                });
+            return;
         }
-        whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodedText}`;
+        
+        let whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+        if (phoneWithDDI) {
+            whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodedText}`;
+        }
+        window.open(whatsappUrl, '_blank');
+    };
+
+    if (state.whatsapp && state.whatsapp.enabled && typeof window.sendWhatsAppMessageAPI === "function" && typeof html2pdf !== "undefined") {
+        const element = document.getElementById('printable-document-content');
+        if (element) {
+            window.showToast("Gerando PDF e enviando via WhatsApp...", "info");
+            
+            const prefix = d.type === "orcamento" ? "orcamento" : (d.type === "nota" ? "nota" : "recibo");
+            const clientNameFmt = d.clientName.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_");
+            const filename = `${prefix}_${d.id}_${clientNameFmt}.pdf`;
+
+            const printFormat = (state.printSettings && state.printSettings.format) || "a4";
+            const opt = {
+                margin:       10,
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            if (printFormat === "thermal80") {
+                opt.margin = [5, 2, 5, 2];
+                opt.jsPDF = { unit: 'mm', format: [80, 200], orientation: 'portrait' };
+            } else if (printFormat === "thermal58") {
+                opt.margin = [3, 1, 3, 1];
+                opt.jsPDF = { unit: 'mm', format: [58, 150], orientation: 'portrait' };
+            }
+
+            html2pdf().set(opt).from(element).output('datauristring').then(pdfBase64 => {
+                window.sendWhatsAppMessageAPI(phoneWithDDI, text, pdfBase64, filename).then(success => {
+                    if (!success) {
+                        fallbackSend();
+                    }
+                });
+            }).catch(err => {
+                console.error("Erro ao gerar PDF para envio automático:", err);
+                fallbackSend();
+            });
+            return;
+        }
     }
-    
-    window.open(whatsappUrl, '_blank');
+
+    fallbackSend();
 }
 
 export function shareDocumentEmail() {

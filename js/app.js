@@ -282,6 +282,7 @@ export function loadState() {
             if (!parsed.appearance) parsed.appearance = {};
             if (!parsed.localEvents) parsed.localEvents = [];
             if (!parsed.ignoredSpikes) parsed.ignoredSpikes = [];
+            if (!parsed.whatsapp) parsed.whatsapp = { enabled: false, provider: "z-api", url: "", token: "" };
             
             // Garantir usuário Administrador Padrão caso não exista nenhum usuário
             if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
