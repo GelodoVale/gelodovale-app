@@ -9,8 +9,8 @@ echo para sincronizar suas conversas com a Antigravity IDE
 echo entre o computador do Trabalho e o de Casa via OneDrive.
 echo.
 
-set LOCAL_DIR=C:\Users\kissn\.gemini\antigravity-ide
-set ONEDRIVE_DIR=C:\Users\kissn\OneDrive\antigravity-ide
+set LOCAL_DIR=%USERPROFILE%\.gemini\antigravity-ide
+set ONEDRIVE_DIR=%USERPROFILE%\OneDrive\antigravity-ide
 
 REM 1. Verificar se a pasta do OneDrive ja existe, se nao, criar e copiar dados locais
 if exist "%ONEDRIVE_DIR%" (
