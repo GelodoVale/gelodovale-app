@@ -45,7 +45,7 @@ Uma vez conectado, o painel da Z-API vai te mostrar duas chaves essenciais:
 
 ### Passo 4: Colar no GelControl
 1. Acesse o link do **GelControl** no navegador.
-2. Vá em **Configurações & Fábrica** (menu esquerdo) -> **Integração Pix (M. Pago)**.
+2. Vá em **Configurações & Fábrica** (menu esquerdo) -> **Integrações (Pix & WhatsApp)**.
 3. Marque a caixinha **Ativar Envio Automático de WhatsApp**.
 4. No campo **Provedor de API**, selecione **Z-API**.
 5. No campo **URL da Instância**, cole a URL copiada.

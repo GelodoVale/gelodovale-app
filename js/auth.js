@@ -404,6 +404,7 @@ export function renderUsersTable() {
                 else if (p === "Aba: pedidos") name = "Pedidos";
                 else if (p === "Aba: historico") name = "Histórico";
                 else if (p === "Aba: precos") name = "Ajustes";
+                else if (p === "Admin: integracoes") name = "Adm Integrações";
                 else if (p.startsWith("Admin: ")) name = p.replace("Admin: ", "Adm ");
                 return `<span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--color-text-muted); margin-right: 4px; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px;">${name}</span>`;
             }).join("");

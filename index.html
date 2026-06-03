@@ -758,8 +758,8 @@
                                     <span>Gerenciar Usuários & Senhas</span>
                                 </button>
                                 <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-integracoes')">
-                                    <i data-lucide="credit-card"></i>
-                                    <span>Integração Pix (M. Pago)</span>
+                                    <i data-lucide="link-2"></i>
+                                    <span>Integrações (Pix & WhatsApp)</span>
                                 </button>
                             </div>
                         </div>
@@ -2202,9 +2202,14 @@
                             </div>
                             
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem; margin-top: 1.5rem;">
-                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                                    <h2>Integração WhatsApp API (Envio Automático)</h2>
-                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure sua API/Gateway de WhatsApp para disparar lembretes, recibos e rotas automaticamente.</p>
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <h2>Integração WhatsApp API (Envio Automático)</h2>
+                                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure sua API/Gateway de WhatsApp para disparar lembretes, recibos e rotas automaticamente.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-whatsapp-manual').classList.add('active')" style="display: inline-flex; align-items: center; gap: 6px; border-color: rgba(0, 240, 255, 0.2); color: #00f0ff; background: rgba(0, 240, 255, 0.05); font-size: 0.8rem; padding: 6px 12px; height: auto;">
+                                        <i data-lucide="help-circle"></i> Ler Manual de Automação
+                                    </button>
                                 </div>
                                 <div style="padding: 1.5rem 0 0 0;">
                                     <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); padding: 1.25rem; border-radius: 6px; margin-bottom: 1.5rem;">
@@ -2255,9 +2260,7 @@
                                             <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
                                                 <i data-lucide="save"></i> Salvar Configurações
                                             </button>
-                                             <a href="https://github.com/GelodoVale/gelodovale-app/blob/main/manual_whatsapp_automacao.md" target="_blank" class="btn btn-secondary" style="margin-top: 1rem; margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; border-color: rgba(0, 240, 255, 0.2); color: #00f0ff; background: rgba(0, 240, 255, 0.05); text-decoration: none;">
-                                                 <i data-lucide="help-circle"></i> Ler Manual Completo
-                                             </a>
+
                                         </div>
                                     </form>
                                 </div>
@@ -5005,9 +5008,13 @@
                                     <span>Preços de Fábrica / Clientes</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
-                                    <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-dados-fabrica" style="accent-color: var(--color-primary);">
-                                    <span>Fábrica & Aparência (Config)</span>
-                                </label>
+                                     <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-usuarios" style="accent-color: var(--color-primary);">
+                                     <span>Gestão de Níveis de Acesso</span>
+                                 </label>
+                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
+                                     <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-integracoes" style="accent-color: var(--color-primary);">
+                                     <span>Integrações (Pix & WhatsApp)</span>
+                                 </label>
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
                                     <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-impressao" style="accent-color: var(--color-primary);">
                                     <span>Config. Impressão</span>
@@ -5581,6 +5588,71 @@
                 <div class="form-actions" style="margin-top: 0.5rem;">
                     <button type="button" class="btn btn-primary" onclick="closeModal('modal-pwa-tutorial')" style="width: 100%;">Entendido</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 23. Modal do Manual de Automação do WhatsApp -->
+    <div class="modal-backdrop" id="modal-whatsapp-manual">
+        <div class="modal-content" style="width: 800px; max-width: 95vw;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                <h3 style="display: flex; align-items: center; gap: 8px; color: var(--color-primary);">
+                    <i data-lucide="message-square" style="color: var(--color-primary); width: 22px; height: 22px;"></i>
+                    Manual de Automação do WhatsApp - Gelo do Vale
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-whatsapp-manual')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 1.5rem 2rem; color: var(--color-text-light); line-height: 1.6; font-size: 0.88rem;">
+                <h4 style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-top: 0; margin-bottom: 10px;">1. Como Funciona a Automação</h4>
+                <p style="margin-bottom: 1rem; color: var(--color-text-muted);">
+                    No modelo tradicional, quando você clica em enviar uma cobrança, o sistema abre uma nova aba do WhatsApp Web para que você clique em "Enviar". 
+                    Com a <strong>API de Envio Automático</strong>, o GelControl conversa diretamente com o servidor da API contratada. As mensagens, os PDFs de recibos e as rotas dos motoristas são enviados em segundo plano, <strong>de forma invisível e instantânea</strong>, sem que você precise dar nenhum clique extra no WhatsApp Web.
+                </p>
+                <p style="margin-bottom: 1.5rem; color: var(--color-text-muted);">
+                    Se a API estiver desativada ou sofrer alguma falha, o GelControl ativa o <strong>Fallback de Segurança</strong>, abrindo a janela convencional do WhatsApp Web para garantir que nenhuma mensagem deixe de ser enviada.
+                </p>
+
+                <h4 style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 10px;">2. Passo a Passo: Configurando o Z-API (Recomendado/Pronto)</h4>
+                <p style="margin-bottom: 8px; color: var(--color-text-muted);">O <strong>Z-API</strong> é o provedor comercial mais popular e estável. Ele não exige conhecimentos técnicos de servidor para funcionar.</p>
+                <ol style="padding-left: 1.2rem; margin-bottom: 1.5rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Criar sua Conta:</strong> Acesse o site oficial <a href="https://www.z-api.io/" target="_blank" style="color: var(--color-primary); text-decoration: underline;">https://www.z-api.io/</a> e cadastre-se. Eles oferecem testes grátis.</li>
+                    <li><strong>Conectar a Instância:</strong> No painel da Z-API, clique em <strong>Criar Instância</strong>. No celular da fábrica, abra o WhatsApp -> Aparelhos Conectados e escaneie o QR Code exibido.</li>
+                    <li><strong>Pegar os Dados:</strong> Copie a <strong>URL de Envio</strong> (ex: <code>https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text</code>) e o <strong>Client-Token</strong>.</li>
+                    <li><strong>Colar no GelControl:</strong> Marque a caixinha <strong>Ativar Envio Automático</strong>, escolha o provedor <strong>Z-API</strong>, cole a URL e o Token, e clique em <strong>Salvar Configurações</strong>.</li>
+                </ol>
+
+                <h4 style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 10px;">3. Passo a Passo: Configurando a Evolution API (Baixo Custo)</h4>
+                <p style="margin-bottom: 8px; color: var(--color-text-muted);">A <strong>Evolution API</strong> é open-source (gratuita), o que remove mensalidades sobre o volume de mensagens.</p>
+                <ol style="padding-left: 1.2rem; margin-bottom: 1.5rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Aluguel do Servidor (VPS):</strong> Precisa de um servidor em nuvem (ex: Hetzner ou DigitalOcean) por cerca de R$ 20/mês. Instalamos usando Docker.</li>
+                    <li><strong>Conectar o WhatsApp:</strong> Acesse o painel da sua Evolution, crie a instância e escaneie o QR Code no celular da fábrica.</li>
+                    <li><strong>Colar no GelControl:</strong> Pegue a URL da instância (ex: <code>https://seu-servidor.com/message/sendText/fabrica-gelo</code>) e a Apikey. Insira-as nos campos correspondentes no painel de Integrações e salve.</li>
+                </ol>
+
+                <h4 style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 10px;">4. Como a Automação Funciona nas Telas</h4>
+                <ul style="padding-left: 1.2rem; margin-bottom: 1.5rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 8px;">
+                    <li><strong>Recibos e Orçamentos:</strong> O sistema converte o cupom em PDF e o envia como anexo oficial no privado do cliente de forma automática.</li>
+                    <li><strong>Contas a Receber (Carnê/Fiado):</strong> Envia um lembrete amigável personalizado com o valor do débito atualizado.</li>
+                    <li><strong>Comodato de Freezers e Tinas:</strong> Envia o link do Portal do Cliente para assinatura digital direta no celular do cliente.</li>
+                    <li><strong>Logística e Roteirização:</strong> Envia o roteiro de paradas e o link do Google Maps direto no WhatsApp do motorista.</li>
+                </ul>
+
+                <h4 style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 10px;">5. Dicas para Evitar Bloqueios no WhatsApp</h4>
+                <ol style="padding-left: 1.2rem; margin-bottom: 0; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 6px;">
+                    <li>Não envie mensagens para contatos frios que nunca falaram com seu número.</li>
+                    <li>O GelControl já personaliza com o nome do cliente. Evite mensagens 100% idênticas em lote.</li>
+                    <li>Ao enviar em lote (como promoções), espace os envios para evitar gatilhos de spam.</li>
+                    <li>Use o chip principal da fábrica (antigo e aquecido). Evite chips novos recém-comprados.</li>
+                    <li>Estimule a resposta do cliente terminando com uma pergunta. Respostas sinalizam legitimidade.</li>
+                </ol>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); gap: 10px;">
+                <a href="https://github.com/GelodoVale/gelodovale-app/blob/main/manual_whatsapp_automacao.md" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                    <i data-lucide="github" style="width: 14px; height: 14px;"></i> Abrir no GitHub (Online)
+                </a>
+                <button type="button" class="btn btn-primary" onclick="closeModal('modal-whatsapp-manual')">Fechar</button>
             </div>
         </div>
     </div>

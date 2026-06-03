@@ -22,7 +22,7 @@ $Matches = [regex]::Matches($HtmlContent, $EventRegex)
 foreach ($Match in $Matches) {
     $FuncName = $Match.Groups[1].Value
     # Ignorar palavras-chaves reservadas do JS ou inline simples (como closeConfirm, this, event, etc.)
-    if ($FuncName -notin @("closeConfirm", "closeModal", "this", "event", "preventExtensions", "preventDefault", "stopPropagation")) {
+    if ($FuncName -notin @("closeConfirm", "closeModal", "this", "event", "preventExtensions", "preventDefault", "stopPropagation", "document", "const", "let", "var", "console")) {
         $HtmlEvents.Add($FuncName) | Out-Null
     }
 }
