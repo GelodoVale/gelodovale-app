@@ -2513,6 +2513,12 @@ export function initForms() {
             state.factorySettings.pixKey = (document.getElementById("cfg-factory-pix") ? document.getElementById("cfg-factory-pix").value.trim() : "");
             state.factorySettings.rentalTerms = (document.getElementById("cfg-factory-rental-terms") ? document.getElementById("cfg-factory-rental-terms").value.trim() : "");
             
+            // Sincronizar com o campo de Integração PIX Manual se ele estiver no DOM
+            const integrationPixEl = document.getElementById("integration-pix-static-key");
+            if (integrationPixEl) {
+                integrationPixEl.value = state.factorySettings.pixKey;
+            }
+            
             saveState();
             showToast("Dados comerciais atualizados com sucesso!", "success");
             if (window.renderPrecos) window.renderPrecos();

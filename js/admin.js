@@ -2881,6 +2881,12 @@ export function loadMercadoPagoSettings() {
         mpToken.value = state.mercadoPago.accessToken || "";
         toggleMpFields();
     }
+
+    // Carregar Chave PIX Manual
+    const staticPixKeyInput = document.getElementById("integration-pix-static-key");
+    if (staticPixKeyInput) {
+        staticPixKeyInput.value = (state.factorySettings && state.factorySettings.pixKey) || "";
+    }
 }
 
 export function toggleMpFields() {
@@ -2913,9 +2919,28 @@ export function saveMercadoPagoSettings() {
     window.showToast("Configurações do Mercado Pago salvas com sucesso!", "success");
 }
 
+export function saveManualPixSettings() {
+    const keyInput = document.getElementById("integration-pix-static-key");
+    if (!keyInput) return;
+    const key = keyInput.value.trim();
+    
+    if (!state.factorySettings) state.factorySettings = {};
+    state.factorySettings.pixKey = key;
+    
+    // Sincronizar com o campo de Dados da Fábrica se ele estiver no DOM
+    const factoryPixEl = document.getElementById("cfg-factory-pix");
+    if (factoryPixEl) {
+        factoryPixEl.value = key;
+    }
+    
+    saveState();
+    window.showToast("Chave PIX Manual salva com sucesso!", "success");
+}
+
 window.toggleMpFields = toggleMpFields;
 window.loadMercadoPagoSettings = loadMercadoPagoSettings;
 window.saveMercadoPagoSettings = saveMercadoPagoSettings;
+window.saveManualPixSettings = saveManualPixSettings;
 
 export async function generateAndSendMP(event, clientId, amount) {
     if (typeof event === 'string') {
