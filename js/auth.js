@@ -283,6 +283,8 @@ export function logoutUser() {
 export function applyUserPermissions(user) {
     if (!user) return;
     
+    const isAdmin = user.username === "admin";
+
     // 1. Sidebar tabs filtering
     const navItems = document.querySelectorAll(".nav-item");
     navItems.forEach(item => {
@@ -302,6 +304,13 @@ export function applyUserPermissions(user) {
         const match = onclickAttr.match(new RegExp("switchAdminSubTab\\('([^']+)'\\)"));
         if (match && match[1]) {
             const subTabId = match[1];
+            
+            // REGRA: aba de usuários/senhas EXCLUSIVA do administrador
+            if (subTabId === "tab-usuarios" && !isAdmin) {
+                btn.style.display = "none";
+                return;
+            }
+            
             const hasPerm = (user.permissions || {})["admin-tab-" + subTabId.replace("tab-", "")];
             if (hasPerm === false) {
                 btn.style.display = "none";
