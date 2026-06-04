@@ -1,5 +1,6 @@
 import { state, saveState, FACTORY_INFO, recalculateClientDebts, APP_VERSION } from './state.js';
 import { renderWidgetsSetupPanel } from './widgets.js';
+import { applyCurrentLayout } from './layout.js';
 
 // 1. Alternador de Sub-abas Administrativas
 export function switchAdminSubTab(subTabId) {
@@ -396,7 +397,16 @@ export function generateBackup(isAuto = false) {
             users: state.users || [],
             factorySettings: state.factorySettings || {},
             appearance: state.appearance || {},
-            widgets: state.widgets || {}
+            widgets: state.widgets || {},
+            layoutSettings: state.layoutSettings || {},
+            printSettings: state.printSettings || {},
+            logisticsSettings: state.logisticsSettings || {},
+            firebaseConfig: state.firebaseConfig || {},
+            adminPassword: state.adminPassword || "1234qwer",
+            notepadText: state.notepadText || "",
+            calendarNotes: state.calendarNotes || {},
+            localEvents: state.localEvents || [],
+            ignoredSpikes: state.ignoredSpikes || []
         }
     };
 
@@ -492,6 +502,15 @@ export function applyBackupData(payload) {
             applyAppearanceTheme(state.appearance);
         }
         if (d.widgets) state.widgets = d.widgets;
+        if (d.layoutSettings) state.layoutSettings = d.layoutSettings;
+        if (d.printSettings) state.printSettings = d.printSettings;
+        if (d.logisticsSettings) state.logisticsSettings = d.logisticsSettings;
+        if (d.firebaseConfig) state.firebaseConfig = d.firebaseConfig;
+        if (d.adminPassword) state.adminPassword = d.adminPassword;
+        if (d.notepadText !== undefined) state.notepadText = d.notepadText;
+        if (d.calendarNotes) state.calendarNotes = d.calendarNotes;
+        if (d.localEvents) state.localEvents = d.localEvents;
+        if (d.ignoredSpikes) state.ignoredSpikes = d.ignoredSpikes;
 
         if (payload.version && state.backupSettings) {
             state.backupSettings.currentVersion = payload.version;
@@ -499,6 +518,9 @@ export function applyBackupData(payload) {
 
         saveState();
         if (window.renderApp) window.renderApp();
+        if (typeof applyCurrentLayout === "function") {
+            applyCurrentLayout();
+        }
         window.showToast("Backup restaurado com sucesso! Os dados foram atualizados.", "success");
     } catch (e) {
         console.error(e);
