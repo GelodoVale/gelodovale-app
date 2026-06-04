@@ -1,5 +1,5 @@
 // --- CENTRAL DE CONTROLE E BOOTSTRAPPER (GELO DO VALE) ---
-import { state, saveState, MOCK_DATA, APP_VERSION } from './state.js';
+import { state, saveState, updateState, MOCK_DATA, APP_VERSION } from './state.js';
 import { initLoginScreen, initUserAccessControl } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { renderClientes, openClientModal, populateClientDropdowns, openSalesModal, renderSalesModalProducts } from './clientes.js';
@@ -218,11 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
             window.showConfirm(
                 "Deseja carregar os dados de demonstração? Isso substituirá as informações atuais.",
                 () => {
-                    // Atualizar estado global importado (atribuição por propriedades para manter a reatividade)
                     const mockCopy = JSON.parse(JSON.stringify(MOCK_DATA));
-                    Object.keys(state).forEach(key => delete state[key]);
-                    Object.assign(state, mockCopy);
-                    
+                    updateState(mockCopy);
                     saveState();
                     renderApp();
                     window.showToast("Dados de demonstração carregados com sucesso!", "success");

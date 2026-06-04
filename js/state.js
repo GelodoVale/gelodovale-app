@@ -42,6 +42,7 @@ export function updateState(newState) {
     Object.keys(state).forEach(k => delete state[k]);
     Object.assign(state, newState);
     normalizeStateArrays();
+    initializeDefaultFields();
     initUserAccessControl();
 }
 
@@ -502,143 +503,76 @@ export function loadState() {
             Object.keys(state).forEach(k => delete state[k]);
             Object.assign(state, parsed);
             normalizeStateArrays();
-            // Retrocompatibilidade para arrays operacionais
-            if (!state.clients) state.clients = [];
-            if (!state.freezers) state.freezers = [];
-            if (!state.rentals) state.rentals = [];
-            if (!state.documents) state.documents = [];
-            if (!state.orders) state.orders = [];
-            if (!state.deliveries) state.deliveries = [];
-            if (!state.history) state.history = [];
-            if (!state.localBackups) state.localBackups = [];
-            if (!state.equipments) state.equipments = [];
-            if (!state.localEvents) state.localEvents = [];
-            if (!state.ignoredSpikes) state.ignoredSpikes = [];
-            
-            // Retrocompatibilidade para catálogo dinâmico de produtos
-            if (!state.products) {
-                state.products = [
-                    { id: "gelo5kg", name: "Pacote Gelo 5kg (Cubo)", type: "Gelo", subtype: "cubo", weight: 5, defaultPrice: (state.prices && state.prices.gelo5kg) || 10.00, active: true },
-                    { id: "gelo2kg", name: "Pacote Gelo 2kg (Cubo)", type: "Gelo", subtype: "cubo", weight: 2, defaultPrice: (state.prices && state.prices.gelo2kg) || 5.00, active: true },
-                    { id: "triturado20kg", name: "Gelo Triturado 20kg", type: "Gelo", subtype: "triturado", weight: 20, defaultPrice: (state.prices && state.prices.triturado20kg) || 30.00, active: true },
-                    { id: "carvao", name: "Saco de Carvão 5kg", type: "Carvão", subtype: "comum", weight: 5, defaultPrice: (state.prices && state.prices.carvao) || 15.00, active: true },
-                    { id: "tina", name: "Aluguel Tina 360L", type: "Equipamento", subtype: "tina", weight: 0, defaultPrice: (state.prices && state.prices.tina) || 50.00, active: true },
-                    { id: "mesa", name: "Aluguel Mesa + 4 Cad.", type: "Equipamento", subtype: "mesa_cadeiras", weight: 0, defaultPrice: (state.prices && state.prices.mesa) || 30.00, active: true }
-                ];
-            }
-
-            // Retrocompatibilidade para preços de fábrica
-            if (!state.prices) state.prices = {};
-            if (state.prices.gelo5kg === undefined) state.prices.gelo5kg = 10.00;
-            if (state.prices.gelo2kg === undefined) state.prices.gelo2kg = 5.00;
-            if (state.prices.triturado20kg === undefined) state.prices.triturado20kg = 30.00;
-            if (state.prices.carvao === undefined) state.prices.carvao = 15.00;
-            if (state.prices.tina === undefined) state.prices.tina = 50.00;
-            if (state.prices.mesa === undefined) state.prices.mesa = 30.00;
-            // Atualizar senha padrão do administrador se necessário
-            if (!state.adminPassword || state.adminPassword === "admin") {
-                state.adminPassword = "1120M@z@dr1";
-            }
-            
-            // Backup e versões retrocompatíveis
-            if (!state.backupSettings) {
-                state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
-            } else {
-                if (state.backupSettings.frequencyDays === undefined) state.backupSettings.frequencyDays = 7;
-                if (state.backupSettings.lastBackupDate === undefined) state.backupSettings.lastBackupDate = "";
-                if (state.backupSettings.currentVersion === undefined || 
-                    state.backupSettings.currentVersion === "1.0" || 
-                    state.backupSettings.currentVersion === "2.5" || 
-                    state.backupSettings.currentVersion === "2.6" || 
-                    state.backupSettings.currentVersion === "2.7" ||
-                    state.backupSettings.currentVersion === "3.0" ||
-                    state.backupSettings.currentVersion === "3.1") {
-                     state.backupSettings.currentVersion = APP_VERSION;
-                }
-            }
-
-            // Inicializar dados cadastrais se vazios
-            if (!state.factorySettings) {
-                state.factorySettings = {
-                    name: "GELO DO VALE INDÚSTRIA DE GELO LTDA.",
-                    cnpj: "65.007.307/0001-60",
-                    address: "Vale do Paraíba, São José dos Campos - SP",
-                    phone: "(12) 99887-6655",
-                    email: "contato@gelodovale.com.br",
-                    logo: ""
-                };
-            }
-            if (!state.factorySettings.rentalTerms) {
-                state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
-            }
-
-            // Inicializar aparência se vazia
-            if (!state.appearance) {
-                state.appearance = {
-                    themeName: "ciano",
-                    primaryColor: "#00f0ff",
-                    primaryColorRgb: "0, 240, 255",
-                    secondaryColor: "#0072ff",
-                    soundEnabled: true,
-                    hapticEnabled: true,
-                    weatherThemeEnabled: true
-                };
-            }
-            if (state.appearance.soundEnabled === undefined) state.appearance.soundEnabled = true;
-            if (state.appearance.hapticEnabled === undefined) state.appearance.hapticEnabled = true;
-            if (state.appearance.weatherThemeEnabled === undefined) state.appearance.weatherThemeEnabled = true;
-
-            // Inicializar configurações de impressão se vazias
-            if (!state.printSettings) {
-                state.printSettings = {
-                    format: "a4",
-                    showLogo: true,
-                    showSignatures: true
-                };
-            }
-
-            // Inicializar configurações de logística se vazias
-            if (!state.logisticsSettings) {
-                state.logisticsSettings = {
-                    fuelPrice: 5.80,
-                    fuelConsumption: 10.0,
-                    avgSpeed: 60,
-                    tollBase: 0.00,
-                    vehicleType: "passeio",
-                    tollMultiplier: 1.0,
-                    markupPercent: 0,
-                    markupFixed: 0.00,
-                    tollReturn: true
-                };
-            }
-
-            // Adicionar os sabores padrão de gelo saborizado caso não existam
-            if (state.products && !state.products.some(p => p.type === "Gelo Saborizado")) {
-                const defaultFlavored = [
-                    { id: "sab_coco", name: "Gelo Saborizado Água de Coco (12 un)", type: "Gelo Saborizado", flavor: "Água de Coco", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_melancia", name: "Gelo Saborizado Melancia (12 un)", type: "Gelo Saborizado", flavor: "Melancia", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_maracuja", name: "Gelo Saborizado Maracujá (12 un)", type: "Gelo Saborizado", flavor: "Maracujá", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_maca_verde", name: "Gelo Saborizado Maçã Verde (12 un)", type: "Gelo Saborizado", flavor: "Maçã Verde", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_morango", name: "Gelo Saborizado Morango (12 un)", type: "Gelo Saborizado", flavor: "Morango", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_sal_limao", name: "Gelo Saborizado Sal e Limão (12 un)", type: "Gelo Saborizado", flavor: "Sal e Limão", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_frutas_vermelhas", name: "Gelo Saborizado Frutas Vermelhas (12 un)", type: "Gelo Saborizado", flavor: "Frutas Vermelhas", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_uva", name: "Gelo Saborizado Uva (12 un)", type: "Gelo Saborizado", flavor: "Uva", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_limao_hortela", name: "Gelo Saborizado Limão com Hortelã (12 un)", type: "Gelo Saborizado", flavor: "Limão com Hortelã", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
-                    { id: "sab_abacaxi", name: "Gelo Saborizado Abacaxi (12 un)", type: "Gelo Saborizado", flavor: "Abacaxi", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true }
-                ];
-                state.products.push(...defaultFlavored);
-                saveStateLocalOnly();
-            }
+            initializeDefaultFields();
         } catch (e) {
             console.error("Erro ao carregar dados salvos. Iniciando limpo.", e);
         }
     } else {
-        // ⚠️ Nunca reatribuir state = ..., pois quebra a referência compartilhada!
-        // Usar Object.assign para preservar o objeto original e atualizar seus dados.
         Object.keys(state).forEach(k => delete state[k]);
         Object.assign(state, JSON.parse(JSON.stringify(MOCK_DATA)));
+        initializeDefaultFields();
+        saveStateLocalOnly();
+    }
+    
+    migrateLegacyDebtsToCarnet();
+    migrateLegacyComodatos();
+    initUserAccessControl();
+}
+
+export function initializeDefaultFields() {
+    // Retrocompatibilidade para arrays operacionais
+    if (!state.clients) state.clients = [];
+    if (!state.freezers) state.freezers = [];
+    if (!state.rentals) state.rentals = [];
+    if (!state.documents) state.documents = [];
+    if (!state.orders) state.orders = [];
+    if (!state.deliveries) state.deliveries = [];
+    if (!state.history) state.history = [];
+    if (!state.localBackups) state.localBackups = [];
+    if (!state.equipments) state.equipments = [];
+    if (!state.localEvents) state.localEvents = [];
+    if (!state.ignoredSpikes) state.ignoredSpikes = [];
+    
+    // Retrocompatibilidade para catálogo dinâmico de produtos
+    if (!state.products) {
+        state.products = [
+            { id: "gelo5kg", name: "Pacote Gelo 5kg (Cubo)", type: "Gelo", subtype: "cubo", weight: 5, defaultPrice: 10.00, active: true },
+            { id: "gelo2kg", name: "Pacote Gelo 2kg (Cubo)", type: "Gelo", subtype: "cubo", weight: 2, defaultPrice: 5.00, active: true },
+            { id: "triturado20kg", name: "Gelo Triturado 20kg", type: "Gelo", subtype: "triturado", weight: 20, defaultPrice: 30.00, active: true },
+            { id: "carvao", name: "Saco de Carvão 5kg", type: "Carvão", subtype: "comum", weight: 5, defaultPrice: 15.00, active: true },
+            { id: "tina", name: "Aluguel Tina 360L", type: "Equipamento", subtype: "tina", weight: 0, defaultPrice: 50.00, active: true },
+            { id: "mesa", name: "Aluguel Mesa + 4 Cad.", type: "Equipamento", subtype: "mesa_cadeiras", weight: 0, defaultPrice: 30.00, active: true }
+        ];
+    }
+
+    // Retrocompatibilidade para preços de fábrica
+    if (!state.prices) state.prices = {};
+    if (state.prices.gelo5kg === undefined) state.prices.gelo5kg = 10.00;
+    if (state.prices.gelo2kg === undefined) state.prices.gelo2kg = 5.00;
+    if (state.prices.triturado20kg === undefined) state.prices.triturado20kg = 30.00;
+    if (state.prices.carvao === undefined) state.prices.carvao = 15.00;
+    if (state.prices.tina === undefined) state.prices.tina = 50.00;
+    if (state.prices.mesa === undefined) state.prices.mesa = 30.00;
+
+    // Senha padrão do admin
+    if (!state.adminPassword || state.adminPassword === "admin") {
         state.adminPassword = "1120M@z@dr1";
+    }
+    
+    // Configurações de backup
+    if (!state.backupSettings) {
         state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
+    } else {
+        if (state.backupSettings.frequencyDays === undefined) state.backupSettings.frequencyDays = 7;
+        if (state.backupSettings.lastBackupDate === undefined) state.backupSettings.lastBackupDate = "";
+        if (state.backupSettings.currentVersion === undefined || 
+            ["1.0", "2.5", "2.6", "2.7", "3.0", "3.1"].includes(state.backupSettings.currentVersion)) {
+             state.backupSettings.currentVersion = APP_VERSION;
+        }
+    }
+
+    // Dados cadastrais
+    if (!state.factorySettings) {
         state.factorySettings = {
             name: "GELO DO VALE INDÚSTRIA DE GELO LTDA.",
             cnpj: "65.007.307/0001-60",
@@ -647,6 +581,13 @@ export function loadState() {
             email: "contato@gelodovale.com.br",
             logo: ""
         };
+    }
+    if (!state.factorySettings.rentalTerms) {
+        state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
+    }
+
+    // Configurações visuais / Aparência
+    if (!state.appearance) {
         state.appearance = {
             themeName: "ciano",
             primaryColor: "#00f0ff",
@@ -656,11 +597,22 @@ export function loadState() {
             hapticEnabled: true,
             weatherThemeEnabled: true
         };
+    }
+    if (state.appearance.soundEnabled === undefined) state.appearance.soundEnabled = true;
+    if (state.appearance.hapticEnabled === undefined) state.appearance.hapticEnabled = true;
+    if (state.appearance.weatherThemeEnabled === undefined) state.appearance.weatherThemeEnabled = true;
+
+    // Impressão
+    if (!state.printSettings) {
         state.printSettings = {
             format: "a4",
             showLogo: true,
             showSignatures: true
         };
+    }
+
+    // Logística
+    if (!state.logisticsSettings) {
         state.logisticsSettings = {
             fuelPrice: 5.80,
             fuelConsumption: 10.0,
@@ -672,16 +624,29 @@ export function loadState() {
             markupFixed: 0.00,
             tollReturn: true
         };
-        state.localBackups = [];
-        saveStateLocalOnly();
+    }
+
+    // Sabores saborizados
+    if (state.products && !state.products.some(p => p.type === "Gelo Saborizado")) {
+        const defaultFlavored = [
+            { id: "sab_coco", name: "Gelo Saborizado Água de Coco (12 un)", type: "Gelo Saborizado", flavor: "Água de Coco", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_melancia", name: "Gelo Saborizado Melancia (12 un)", type: "Gelo Saborizado", flavor: "Melancia", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_maracuja", name: "Gelo Saborizado Maracujá (12 un)", type: "Gelo Saborizado", flavor: "Maracujá", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_maca_verde", name: "Gelo Saborizado Maçã Verde (12 un)", type: "Gelo Saborizado", flavor: "Maçã Verde", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_morango", name: "Gelo Saborizado Morango (12 un)", type: "Gelo Saborizado", flavor: "Morango", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_sal_limao", name: "Gelo Saborizado Sal e Limão (12 un)", type: "Gelo Saborizado", flavor: "Sal e Limão", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_frutas_vermelhas", name: "Gelo Saborizado Frutas Vermelhas (12 un)", type: "Gelo Saborizado", flavor: "Frutas Vermelhas", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_uva", name: "Gelo Saborizado Uva (12 un)", type: "Gelo Saborizado", flavor: "Uva", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_limao_hortela", name: "Gelo Saborizado Limão com Hortelã (12 un)", type: "Gelo Saborizado", flavor: "Limão com Hortelã", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true },
+            { id: "sab_abacaxi", name: "Gelo Saborizado Abacaxi (12 un)", type: "Gelo Saborizado", flavor: "Abacaxi", packageType: "pacote", unitsPerPack: 12, unitWeightGrams: 200, defaultPrice: 24.00, active: true }
+        ];
+        state.products.push(...defaultFlavored);
     }
 
     if (state.products) {
-        let stateChanged = false;
         state.products.forEach(p => {
             if (p.type === "Gelo Saborizado" && p.unitPrice === undefined) {
                 p.unitPrice = p.defaultPrice / (p.unitsPerPack || 12);
-                stateChanged = true;
             }
             if (!p.wholesalePrices) {
                 p.wholesalePrices = {
@@ -691,7 +656,6 @@ export function loadState() {
                     tier41_50: null,
                     tier51: null
                 };
-                stateChanged = true;
             }
             if (!p.flashPromo) {
                 p.flashPromo = {
@@ -699,42 +663,30 @@ export function loadState() {
                     price: 0,
                     limit: null
                 };
-                stateChanged = true;
             }
         });
-        if (stateChanged) saveStateLocalOnly();
     }
 
-    let utilityStateChanged = false;
-    if (!state.calendarNotes) {
-        state.calendarNotes = {};
-        utilityStateChanged = true;
-    }
-    if (state.notepadText === undefined) {
-        state.notepadText = "";
-        utilityStateChanged = true;
-    }
+    // Notas e clima
+    if (!state.calendarNotes) state.calendarNotes = {};
+    if (state.notepadText === undefined) state.notepadText = "";
     if (!state.weatherConfig) {
         state.weatherConfig = { city: "S.J. Campos", temp: 24, condition: "sun", lat: -23.1791, lon: -45.8872 };
-        utilityStateChanged = true;
-    }
-    if (utilityStateChanged) {
-        saveStateLocalOnly();
     }
 
-    let newFieldsChanged = false;
-    if (!state.payments) { state.payments = []; newFieldsChanged = true; }
-    if (!state.localEvents) { state.localEvents = []; newFieldsChanged = true; }
-    if (!state.commissionSettings) { state.commissionSettings = { type: 'none', value: 0 }; newFieldsChanged = true; }
-    if (!state.suppliers) { state.suppliers = []; newFieldsChanged = true; }
-    if (!state.packaging) { state.packaging = []; newFieldsChanged = true; }
-    if (!state.packagingTransactions) { state.packagingTransactions = []; newFieldsChanged = true; }
-    if (!state.comodatos) { state.comodatos = []; newFieldsChanged = true; }
-    if (!state.equipments) { state.equipments = []; newFieldsChanged = true; }
+    // Novas coleções vazias se ausentes
+    if (!state.payments) state.payments = [];
+    if (!state.localEvents) state.localEvents = [];
+    if (!state.commissionSettings) state.commissionSettings = { type: 'none', value: 0 };
+    if (!state.suppliers) state.suppliers = [];
+    if (!state.packaging) state.packaging = [];
+    if (!state.packagingTransactions) state.packagingTransactions = [];
+    if (!state.comodatos) state.comodatos = [];
+    if (!state.equipments) state.equipments = [];
     if (state.clients) {
         state.clients.forEach(c => {
-            if (c.outstandingDebt === undefined) { c.outstandingDebt = 0; newFieldsChanged = true; }
-            if (!c.visitDays) { c.visitDays = []; newFieldsChanged = true; }
+            if (c.outstandingDebt === undefined) c.outstandingDebt = 0;
+            if (!c.visitDays) c.visitDays = [];
         });
     }
     if (!state.firebaseConfig || !state.firebaseConfig.apiKey) {
@@ -745,31 +697,14 @@ export function loadState() {
             databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
             deviceKey: 'gelodovale_oficial'
         };
-        newFieldsChanged = true;
     }
-    if (!state.cargoSettlements) {
-        state.cargoSettlements = [];
-        newFieldsChanged = true;
-    }
+    if (!state.cargoSettlements) state.cargoSettlements = [];
     if (state.factorySettings) {
-        if (state.factorySettings.pixKey === undefined) {
-            state.factorySettings.pixKey = '';
-            newFieldsChanged = true;
-        }
-        if (!state.factorySettings.rentalTerms) {
-            state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
-            newFieldsChanged = true;
-        }
+        if (state.factorySettings.pixKey === undefined) state.factorySettings.pixKey = '';
     }
     if (state.lastUpdated === undefined) {
         state.lastUpdated = Date.now();
-        newFieldsChanged = true;
     }
-    if (newFieldsChanged) saveStateLocalOnly();
-    
-    migrateLegacyDebtsToCarnet();
-    migrateLegacyComodatos();
-    initUserAccessControl();
 }
 
 export function recalculateClientDebts() {
