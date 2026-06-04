@@ -2,7 +2,7 @@
    GELCONTROL - CSS DESIGN SYSTEM
    ========================================================================== */
 
-/* Importação de Fontes */
+/* ImportaÃ§Ã£o de Fontes */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
@@ -21,7 +21,7 @@
     --color-text-muted: #94a3b8;
     
     --color-success: #10b981; /* Verde esmeralda */
-    --color-warning: #f59e0b; /* Amarelo âmbar */
+    --color-warning: #f59e0b; /* Amarelo Ã¢mbar */
     --color-danger: #ef4444; /* Vermelho rubi */
     
     /* Gradientes */
@@ -30,7 +30,7 @@
     --shadow-neon: 0 0 15px rgba(0, 240, 255, 0.25);
     --shadow-neon-hover: 0 0 25px rgba(0, 240, 255, 0.45);
     
-    /* Fontes e Transições */
+    /* Fontes e TransiÃ§Ãµes */
     --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -42,7 +42,7 @@
 }
 
 /* ==========================================================================
-   SISTEMA DE TOAST / NOTIFICAÇÕES
+   SISTEMA DE TOAST / NOTIFICAÃ‡Ã•ES
    ========================================================================== */
 
 #toast-container {
@@ -106,7 +106,7 @@
     border-color: rgba(0, 240, 255, 0.25);
 }
 
-/* Ícone do Toast */
+/* Ãcone do Toast */
 .toast-icon {
     flex-shrink: 0;
     width: 20px;
@@ -118,7 +118,7 @@
 .toast-warning .toast-icon { color: #f59e0b; filter: drop-shadow(0 0 4px rgba(245,158,11,0.5)); }
 .toast-info    .toast-icon { color: #00f0ff; filter: drop-shadow(0 0 4px rgba(0,240,255,0.5));  }
 
-/* Conteúdo do Toast */
+/* ConteÃºdo do Toast */
 .toast-body {
     flex: 1;
     min-width: 0;
@@ -143,7 +143,7 @@
     word-break: break-word;
 }
 
-/* Botão de fechar */
+/* BotÃ£o de fechar */
 .toast-close {
     flex-shrink: 0;
     background: none;
@@ -182,7 +182,7 @@
     to   { width: 0%; }
 }
 
-/* Modal de Confirmação (substitui confirm()) */
+/* Modal de ConfirmaÃ§Ã£o (substitui confirm()) */
 #confirm-overlay {
     position: fixed;
     inset: 0;
@@ -258,7 +258,7 @@
 }
 
 
-/* Reset e Configurações Globais */
+/* Reset e ConfiguraÃ§Ãµes Globais */
 * {
     margin: 0;
     padding: 0;
@@ -305,7 +305,7 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar de Navegação */
+/* Sidebar de NavegaÃ§Ã£o */
 aside.sidebar {
     width: 260px;
     background: rgba(10, 15, 30, 0.8);
@@ -392,7 +392,7 @@ nav.nav-menu {
     text-align: center;
 }
 
-/* Área de Conteúdo Principal */
+/* Ãrea de ConteÃºdo Principal */
 main.main-content {
     flex: 1;
     margin-left: 260px;
@@ -503,13 +503,14 @@ header.top-header {
 }
 
 /* ==========================================================================
-   COMPONENTES E CARD DE INFORMAÇÕES
+   COMPONENTES E CARD DE INFORMAÃ‡Ã•ES
    ========================================================================== */
 
 /* Container de abas */
 .tab-content {
     display: none;
     animation: fadeIn var(--transition-normal);
+    position: relative;
 }
 
 .tab-content.active {
@@ -545,6 +546,11 @@ header.top-header {
     transform: translateY(-3px);
     border-color: var(--border-card-hover);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.kpi-card.layout-floating-active:hover,
+.kpi-card.layout-grid-active:hover {
+    transform: none !important;
 }
 
 .kpi-info h3 {
@@ -668,7 +674,7 @@ header.top-header {
 }
 
 /* ==========================================================================
-   GRÁFICO EM SVG DINÂMICO
+   GRÃFICO EM SVG DINÃ‚MICO
    ========================================================================== */
 
 .chart-container {
@@ -713,7 +719,7 @@ header.top-header {
 }
 
 /* ==========================================================================
-   BOTÕES E ENTRADA DE DADOS
+   BOTÃ•ES E ENTRADA DE DADOS
    ========================================================================== */
 
 .btn {
@@ -1085,6 +1091,7 @@ table.data-table tbody tr:hover {
 
 .pedido-acoes {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
 }
@@ -1104,7 +1111,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   TELA DE HISTÓRICO E FILTROS
+   TELA DE HISTÃ“RICO E FILTROS
    ========================================================================== */
 
 .filter-bar {
@@ -1147,7 +1154,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   MODAIS E FORMULÁRIOS
+   MODAIS E FORMULÃRIOS
    ========================================================================== */
 
 .modal-backdrop {
@@ -1337,7 +1344,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   MÓDULO: CONTROLE E INVENTÁRIO DE FREEZERS
+   MÃ“DULO: CONTROLE E INVENTÃRIO DE FREEZERS
    ========================================================================== */
 
 .freezer-grid {
@@ -1498,7 +1505,7 @@ table.data-table tbody tr:hover {
     padding-bottom: 0.25rem;
 }
 
-/* Timeline de Movimentações */
+/* Timeline de MovimentaÃ§Ãµes */
 .movement-timeline {
     display: flex;
     flex-direction: column;
@@ -1627,7 +1634,7 @@ table.data-table tbody tr:hover {
     overflow: hidden;
 }
 
-/* Etiqueta Física Imprimível */
+/* Etiqueta FÃ­sica ImprimÃ­vel */
 .sticker-preview-box {
     width: 100%;
     display: flex;
@@ -1702,7 +1709,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   ESTILOS DE IMPRESSÃO DE DOCUMENTOS COMERCIAIS
+   ESTILOS DE IMPRESSÃƒO DE DOCUMENTOS COMERCIAIS
    ========================================================================== */
 @media print {
     /* Ocultar todos os elementos no body */
@@ -1806,7 +1813,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   CENTRAL DE UTILITÁRIOS (CLOCK, WEATHER, CALENDAR, NOTEPAD DRAWER)
+   CENTRAL DE UTILITÃRIOS (CLOCK, WEATHER, CALENDAR, NOTEPAD DRAWER)
    ========================================================================== */
 
 .utility-drawer-backdrop {
@@ -2056,7 +2063,7 @@ table.data-table tbody tr:hover {
 }
 
 /* ==========================================================================
-   FORMATOS DE BOBINA TÉRMICA (80mm e 58mm)
+   FORMATOS DE BOBINA TÃ‰RMICA (80mm e 58mm)
    ========================================================================== */
 .commercial-document.format-thermal80 {
     max-width: 320px !important;
@@ -2230,7 +2237,7 @@ body.theme-high-contrast .modal-backdrop {
     background: rgba(0, 0, 0, 0.7) !important;
 }
 
-/* --- ESTILOS ADICIONAIS - MELHORIAS DE SINCRONIZAÇÃO EM NUVEM E MANUTENÇÃO --- */
+/* --- ESTILOS ADICIONAIS - MELHORIAS DE SINCRONIZAÃ‡ÃƒO EM NUVEM E MANUTENÃ‡ÃƒO --- */
 @keyframes pulse {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.15); opacity: 0.7; }
@@ -2273,7 +2280,7 @@ body.theme-high-contrast .modal-backdrop {
     background: rgba(255, 255, 255, 0.25);
 }
 
-/* --- CALCULADORA DE LOGÍSTICA PARA ALUGUÉIS --- */
+/* --- CALCULADORA DE LOGÃSTICA PARA ALUGUÃ‰IS --- */
 .logistics-results-card {
     transition: all var(--transition-normal);
 }
@@ -2298,7 +2305,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   GESTÃO DE COMODATOS & PORTAL DE ASSINATURA DO CLIENTE
+   GESTÃƒO DE COMODATOS & PORTAL DE ASSINATURA DO CLIENTE
    ========================================================================== */
 
 .comodato-photos-gallery {
@@ -2576,11 +2583,12 @@ body.theme-high-contrast .modal-backdrop {
     max-width: 100%;
 }
 
-/* Conteúdo das Sub-abas */
+/* ConteÃºdo das Sub-abas */
 .admin-subtab-content {
     display: none;
     max-width: 100%;
     width: 100%;
+    position: relative;
 }
 
 .admin-subtab-content.active {
@@ -2625,13 +2633,13 @@ body.theme-high-contrast .modal-backdrop {
         scroll-snap-type: x mandatory;
     }
 
-    /* Ocultar os títulos de categoria no celular para salvar espaço */
+    /* Ocultar os tÃ­tulos de categoria no celular para salvar espaÃ§o */
     .admin-menu-section-title {
         display: none;
     }
 
     .admin-menu-section {
-        display: contents; /* Desfaz o flex vertical para que os botões fiquem alinhados lado a lado na linha horizontal principal */
+        display: contents; /* Desfaz o flex vertical para que os botÃµes fiquem alinhados lado a lado na linha horizontal principal */
     }
 
     .admin-menu-btn {
@@ -2660,7 +2668,7 @@ body.theme-high-contrast .modal-backdrop {
     }
 }
 
-/* Estilo da Tela de Login Glassmorphic e Permissões */
+/* Estilo da Tela de Login Glassmorphic e PermissÃµes */
 #app-login-screen {
     animation: fadeInBg 0.35s ease-out forwards;
 }
@@ -2744,7 +2752,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   WIDGETS & PAINEL DE CONTROLE CUSTOMIZÁVEL
+   WIDGETS & PAINEL DE CONTROLE CUSTOMIZÃVEL
    ========================================================================== */
 
 .widgets-board {
@@ -2789,6 +2797,10 @@ body.theme-high-contrast .modal-backdrop {
     border-color: var(--border-card-hover);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(var(--color-primary-rgb), 0.05);
 }
+.widget-card.layout-floating-active:hover,
+.widget-card.layout-grid-active:hover {
+    transform: none !important;
+}
 
 .widget-header {
     display: flex;
@@ -2828,7 +2840,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   RELÓGIO ANALÓGICO REDONDO
+   RELÃ“GIO ANALÃ“GICO REDONDO
    ========================================================================== */
 
 .analog-clock-container {
@@ -2864,7 +2876,7 @@ body.theme-high-contrast .modal-backdrop {
     z-index: 5;
 }
 
-/* Centro do relógio */
+/* Centro do relÃ³gio */
 .analog-clock .clock-center-dot {
     position: absolute;
     width: 10px;
@@ -2894,7 +2906,7 @@ body.theme-high-contrast .modal-backdrop {
     width: 2px;
     height: 8px;
     background: rgba(255, 255, 255, 0.15);
-    transform-origin: 50% 90px; /* metade da altura do relógio */
+    transform-origin: 50% 90px; /* metade da altura do relÃ³gio */
 }
 
 .analog-clock .marker-line.quarter {
@@ -2903,7 +2915,7 @@ body.theme-high-contrast .modal-backdrop {
     background: rgba(255, 255, 255, 0.4);
 }
 
-/* Temas do Relógio Analógico */
+/* Temas do RelÃ³gio AnalÃ³gico */
 
 /* 1. Neon Cyber */
 .analog-clock.analog-neon {
@@ -2938,7 +2950,7 @@ body.theme-high-contrast .modal-backdrop {
     box-shadow: 0 0 5px var(--color-primary);
 }
 
-/* 2. Ouro Clássico */
+/* 2. Ouro ClÃ¡ssico */
 .analog-clock.analog-gold {
     background: radial-gradient(circle, #16223f 0%, #0d1527 100%);
     border: 4px solid #d4af37; /* Gold */
@@ -3000,7 +3012,7 @@ body.theme-high-contrast .modal-backdrop {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* Relógio Digital Widgets */
+/* RelÃ³gio Digital Widgets */
 .digital-clock-widget {
     text-align: center;
     padding: 1.5rem;
@@ -3021,7 +3033,7 @@ body.theme-high-contrast .modal-backdrop {
     font-family: var(--font-family);
 }
 
-/* Estilos digitais específicos */
+/* Estilos digitais especÃ­ficos */
 .digital-neon .digital-clock-time {
     color: var(--color-primary);
     text-shadow: 0 0 15px var(--color-primary);
@@ -3073,7 +3085,7 @@ body.theme-high-contrast .modal-backdrop {
     font-weight: 600;
 }
 
-/* Clima Gráfico */
+/* Clima GrÃ¡fico */
 .weather-graph-chart {
     width: 100%;
     height: 80px;
@@ -3212,7 +3224,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   INTERFACES DE CONFIGURAÇÃO DE WIDGETS
+   INTERFACES DE CONFIGURAÃ‡ÃƒO DE WIDGETS
    ========================================================================== */
 
 .widgets-setup-panel {
@@ -3272,7 +3284,7 @@ body.theme-high-contrast .modal-backdrop {
 
 /* ==========================================================================
    MOBILE LAYOUT (MAX-WIDTH: 768px)
-   Estas regras são ESTRITAMENTE aplicadas apenas a celulares.
+   Estas regras sÃ£o ESTRITAMENTE aplicadas apenas a celulares.
    O layout desktop permanece inalterado.
    ========================================================================== */
 
@@ -3287,12 +3299,12 @@ body.theme-high-contrast .modal-backdrop {
         display: none !important;
     }
 
-    /* O main-content deve usar a largura total e ter espaço embaixo para a navbar */
+    /* O main-content deve usar a largura total e ter espaÃ§o embaixo para a navbar */
     .main-content {
         margin-left: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding-bottom: 80px !important; /* Espaço para a navbar inferior */
+        padding-bottom: 80px !important; /* EspaÃ§o para a navbar inferior */
     }
 
     /* Ajustar cards de dashboard para ficarem 100% no celular */
@@ -3354,7 +3366,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   MELHORIAS FASE 2: ESTILOS PREMIUM (CONEXÃO, DEMANDA E AÇÕES RÁPIDAS)
+   MELHORIAS FASE 2: ESTILOS PREMIUM (CONEXÃƒO, DEMANDA E AÃ‡Ã•ES RÃPIDAS)
    ========================================================================== */
 
 /* Banner de Status Offline */
@@ -3373,7 +3385,7 @@ body.theme-high-contrast .modal-backdrop {
     }
 }
 
-/* Painel de Inteligência de Demanda */
+/* Painel de InteligÃªncia de Demanda */
 .weather-demand-panel {
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.01) !important;
@@ -3421,7 +3433,7 @@ body.theme-high-contrast .modal-backdrop {
     }
 }
 
-/* Painel de Ações Rápidas */
+/* Painel de AÃ§Ãµes RÃ¡pidas */
 .dashboard-quick-actions {
     background: rgba(10, 15, 30, 0.6) !important;
     border: 1px solid rgba(0, 240, 255, 0.1) !important;
@@ -3489,7 +3501,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   FRENTE DE CAIXA (PDV BALCÃO) STYLING
+   FRENTE DE CAIXA (PDV BALCÃƒO) STYLING
    ========================================================================== */
 
 #pdv-catalog-grid::-webkit-scrollbar {
@@ -3512,7 +3524,7 @@ body.theme-high-contrast .modal-backdrop {
 }
 
 /* ==========================================================================
-   ABA DE SUPORTE, DÚVIDAS & SOLUÇÕES (PWA / FAQ / AUTOMATION)
+   ABA DE SUPORTE, DÃšVIDAS & SOLUÃ‡Ã•ES (PWA / FAQ / AUTOMATION)
    ========================================================================== */
 
 .faq-list {
@@ -3549,7 +3561,7 @@ details.faq-item summary::-webkit-details-marker {
 }
 
 details.faq-item summary::after {
-    content: '▼';
+    content: 'â–¼';
     font-size: 0.75rem;
     color: var(--color-primary);
     transition: transform 0.25s ease;
@@ -3596,7 +3608,7 @@ details.faq-item .faq-body code {
     font-size: 0.85rem;
 }
 
-/* Painel de Suporte e Ações Rápidas */
+/* Painel de Suporte e AÃ§Ãµes RÃ¡pidas */
 .support-actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -3650,7 +3662,7 @@ details.faq-item .faq-body code {
 }
 
 /* ==========================================================================
-   ANIMAÇÕES TEMÁTICAS E EFEITOS DINÂMICOS
+   ANIMAÃ‡Ã•ES TEMÃTICAS E EFEITOS DINÃ‚MICOS
    ========================================================================== */
 
 @keyframes rotate-ice {
@@ -3683,7 +3695,7 @@ details.faq-item .faq-body code {
     60% { transform: translate(1px, 1px); }
     80% { transform: translate(-1px, -1px); }
 }
-/* Balanço de caminhão ativo no hover */
+/* BalanÃ§o de caminhÃ£o ativo no hover */
 .anim-drive-truck {
     display: inline-block;
     transition: transform 0.2s ease;
@@ -3718,7 +3730,7 @@ details.faq-item .faq-body code {
     animation: wiggle-doc 0.3s ease-in-out infinite;
 }
 
-/* Badges e tags temáticas de produtos */
+/* Badges e tags temÃ¡ticas de produtos */
 .product-icon-badge {
     font-size: 1.1rem;
     vertical-align: middle;
@@ -3727,7 +3739,7 @@ details.faq-item .faq-body code {
 }
 
 /* ==========================================================================
-   FEEDBACK INTERATIVO & INTERAÇÃO SENSORIAL
+   FEEDBACK INTERATIVO & INTERAÃ‡ÃƒO SENSORIAL
    ========================================================================== */
 
 /* 1. Pulsing glow online status indicator */
@@ -3843,7 +3855,7 @@ details.faq-item .faq-body code {
     display: none !important;
 }
 
-/* 2. Clima Reativo (Gradientes dinâmicos conforme temperatura) */
+/* 2. Clima Reativo (Gradientes dinÃ¢micos conforme temperatura) */
 body.weather-hot {
     background-image: 
         radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
@@ -3857,10 +3869,10 @@ body.weather-cold {
 }
 
 /* ==========================================================================
-   RECURSOS INTERATIVOS AVANÇADOS
+   RECURSOS INTERATIVOS AVANÃ‡ADOS
    ========================================================================== */
 
-/* 1. Transição de Abas PWA */
+/* 1. TransiÃ§Ã£o de Abas PWA */
 .tab-transitioning {
     animation: tabSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
@@ -3898,7 +3910,7 @@ body.astro-night {
     background-color: #05070a !important;
 }
 
-/* Combinações Astro-Térmicas */
+/* CombinaÃ§Ãµes Astro-TÃ©rmicas */
 body.astro-night.weather-cold {
     background-image: 
         radial-gradient(at 50% 0%, rgba(0, 114, 255, 0.15) 0px, transparent 60%),
@@ -4017,7 +4029,7 @@ body.astro-day.weather-hot {
     background: rgba(255, 255, 255, 0.01);
 }
 
-/* Efeito de hover e botões de ação nas miniaturas de fotos do comodato */
+/* Efeito de hover e botÃµes de aÃ§Ã£o nas miniaturas de fotos do comodato */
 .comodato-photo-card:hover .photo-card-actions {
     opacity: 1 !important;
 }
@@ -4031,7 +4043,7 @@ body.astro-day.weather-hot {
 }
 
 /* ==========================================================================
-   CPF / CNPJ — Feedback de Validação e Busca
+   CPF / CNPJ â€” Feedback de ValidaÃ§Ã£o e Busca
    ========================================================================== */
 
 .doc-feedback {
@@ -4053,7 +4065,7 @@ body.astro-day.weather-hot {
     color: #10b981;
 }
 
-/* CPF válido matematicamente, mas sem verificação de identidade */
+/* CPF vÃ¡lido matematicamente, mas sem verificaÃ§Ã£o de identidade */
 .doc-valid-warn {
     background: rgba(16, 185, 129, 0.07);
     border: 1px solid rgba(16, 185, 129, 0.3);
@@ -4093,7 +4105,7 @@ body.astro-day.weather-hot {
     animation: docFadeIn 0.25s ease;
 }
 
-/* Heatmap de Demanda no Calendário */
+/* Heatmap de Demanda no CalendÃ¡rio */
 .calendar-day.demand-low:not(.selected):not(.today):not(.other-month) {
     background: rgba(14, 165, 233, 0.12) !important;
     border-color: rgba(14, 165, 233, 0.35) !important;
@@ -4116,3 +4128,155 @@ body.astro-day.weather-hot {
     font-weight: 700;
     box-shadow: inset 0 0 5px rgba(239, 68, 68, 0.2), 0 0 8px rgba(239, 68, 68, 0.15);
 }
+
+/* ==========================================================================
+   SISTEMA DE LAYOUT AJUSTÃVEL & DRAGGABLE (ADMIN)
+   ========================================================================== */
+
+/* Painel flutuante */
+.dashboard-panel.is-floating {
+    position: absolute !important;
+    z-index: 1000 !important;
+    cursor: move;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.15);
+    background: rgba(17, 25, 44, 0.85) !important;
+    backdrop-filter: blur(15px);
+    transition: none !important;
+}
+
+/* AlÃ§a de redimensionamento */
+.dashboard-panel .resize-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    bottom: 2px;
+    right: 2px;
+    cursor: se-resize;
+    z-index: 10;
+}
+.dashboard-panel .resize-handle::after {
+    content: '';
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid rgba(0, 240, 255, 0.6);
+    border-bottom: 2px solid rgba(0, 240, 255, 0.6);
+    transition: border-color 0.2s;
+}
+.dashboard-panel:hover .resize-handle::after {
+    border-color: rgba(0, 240, 255, 0.95);
+}
+
+/* Grade reposicionÃ¡vel */
+.dashboard-panel.is-draggable {
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-panel.is-draggable:active {
+    cursor: grabbing;
+}
+.dashboard-panel.dragging {
+    opacity: 0.4;
+    border: 2px dashed var(--color-primary) !important;
+}
+
+/* OpÃ§Ãµes de layout no Popover */
+.layout-mode-option:hover {
+    background: rgba(0, 240, 255, 0.05) !important;
+    border-color: rgba(0, 240, 255, 0.2) !important;
+}
+.layout-mode-option input[type="radio"]:checked + div strong {
+    color: var(--color-primary) !important;
+}
+.layout-mode-option input[type="radio"] {
+    cursor: pointer;
+}
+
+
+
+/* ===== GELCONTROL LAYOUT MANAGER v3 ===== */
+
+/* Painel em modo flutuante — permanece no fluxo, move via transform */
+.dashboard-panel.layout-floating-active {
+    will-change: transform;
+    transition: box-shadow 0.2s, transform 0.05s;
+    cursor: default;
+}
+.dashboard-panel.layout-floating-active:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 18px rgba(0,240,255,0.15);
+}
+
+/* Header arrastável */
+.dashboard-panel.layout-floating-active .panel-header,
+.dashboard-panel.layout-floating-active .widget-header,
+.dashboard-panel.layout-floating-active > h3,
+.dashboard-panel.layout-floating-active > h2 {
+    cursor: move !important;
+    user-select: none;
+    border-bottom: 1px dashed rgba(0,240,255,0.2) !important;
+}
+
+/* Painel em modo grade reposicionável */
+.dashboard-panel.layout-grid-active {
+    cursor: grab;
+    transition: opacity 0.15s;
+}
+.dashboard-panel.layout-grid-active:active {
+    cursor: grabbing;
+}
+
+/* Handle de resize (triângulo canto inferior direito) */
+.lyt-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 18px;
+    height: 18px;
+    cursor: se-resize;
+    z-index: 10;
+    background: linear-gradient(135deg, transparent 50%, rgba(0,240,255,0.35) 50%);
+    border-bottom-right-radius: 6px;
+    transition: background 0.2s;
+}
+.lyt-resize:hover {
+    background: linear-gradient(135deg, transparent 50%, rgba(0,240,255,0.7) 50%);
+}
+
+/* Compatibilidade com código antigo */
+.dashboard-panel.is-floating {
+    will-change: transform;
+}
+
+/* ==========================================================================
+   ADAPTABILIDADE DE ALTURA DE PAINÉIS AJUSTADOS/REDIMENSIONADOS
+   ========================================================================== */
+
+/* Quando o painel tem altura definida (style="...height:..."), forçamos comportamento flexbox colunar */
+.dashboard-panel[style*="height"] {
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
+
+/* O conteúdo do corpo principal (filhos que não são cabeçalhos ou alças) cresce para ocupar 100% da altura do painel */
+.dashboard-panel[style*="height"] > :not(.panel-header):not(h2):not(h3):not(.lyt-resize) {
+    flex: 1 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+/* Caso específico para o grid do catálogo no PDV-01 e outras listas de grids */
+.dashboard-panel[style*="height"] #pdv-catalog-grid,
+.dashboard-panel[style*="height"] .freezer-grid, 
+.dashboard-panel[style*="height"] .clients-grid, 
+.dashboard-panel[style*="height"] .equipments-grid,
+.dashboard-panel[style*="height"] .pedidos-list,
+.dashboard-panel[style*="height"] .alerts-list,
+.dashboard-panel[style*="height"] .table-responsive {
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+

@@ -96,7 +96,7 @@ export function renderInventario() {
                         ${locationHTML}
                     </div>
                 </div>
-                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
                     <button class="btn btn-secondary" onclick="openFreezerDetail('${f.id}')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
                         <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Detalhes
                     </button>
@@ -972,7 +972,7 @@ export function renderEquipamentos() {
                         ${locationHTML}
                     </div>
                 </div>
-                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
                     <button class="btn btn-secondary" onclick="openEquipmentDetail('${e.id}')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03);">
                         <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Detalhes
                     </button>

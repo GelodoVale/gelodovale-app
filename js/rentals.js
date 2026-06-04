@@ -199,7 +199,7 @@ export function renderTinas() {
                     ${r.returnDate ? `<div style="color: var(--color-primary); font-weight: 600; margin-top: 4px;">✓ Devolvido em: ${new Date(r.returnDate + 'T00:00:00').toLocaleDateString('pt-BR')}</div>` : ''}
                     ${r.notes ? `<div style="font-style: italic; font-size: 0.75rem; color: var(--color-text-muted); border-top: 1px solid rgba(255,255,255,0.03); padding-top: 4px; margin-top: 4px;">Obs: ${r.notes}</div>` : ''}
                 </div>
-                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
+                <div class="freezer-card-actions" style="padding: 0.75rem 1rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; background: rgba(0,0,0,0.1);">
                     ${r.status !== "returned" ? `
                         <button class="btn btn-primary" onclick="returnRental('${r.id}')" style="margin-right: auto; padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
                             <i data-lucide="check" style="width: 14px; height: 14px;"></i> Receber

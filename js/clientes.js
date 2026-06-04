@@ -227,38 +227,50 @@ export function renderClientes() {
                     </div>
                 </div>
                 
-                <div class="client-actions" style="margin-top: 1.5rem; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                    ${c.freezerCode ? `
-                    <button class="btn btn-secondary" onclick="openComodato('${c.id}')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
-                        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Contrato
-                    </button>
-                    ${pendingCom ? `
-                    <button class="btn btn-secondary" onclick="window.triggerComodatoSignatureForClient('${c.id}')" title="Assinar Comodato no Aparelho" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.05);">
-                        <i data-lucide="pen-tool" style="width: 14px; height: 14px;"></i> Assinar
-                    </button>
-                    ` : ''}
-                    <button class="btn btn-secondary" onclick="window.unlinkFreezerFromClient('${c.id}')" title="Desvincular Freezer" style="padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.05);">
-                        <i data-lucide="link-2" style="width: 14px; height: 14px;"></i> Desvincular
-                    </button>
-                    ` : `
-                    <button class="btn btn-secondary" onclick="window.openLinkFreezerModal('${c.id}')" title="Novo Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); color: #3b82f6;">
-                        <i data-lucide="link" style="width: 14px; height: 14px;"></i> Novo Comodato
-                    </button>
-                    `}
-                    ${c.phone ? `
-                    <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
-                        <i data-lucide="phone-call" style="width: 15px; height: 15px;"></i>
-                    </a>
-                    <a href="https://api.whatsapp.com/send?phone=55${c.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-secondary btn-icon-only" title="WhatsApp ${c.phone}" style="color: #00f0ff; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05);">
-                        <i data-lucide="message-circle" style="width: 15px; height: 15px;"></i>
-                    </a>
-                    ` : ''}
-                    <button class="btn btn-secondary btn-icon-only" onclick="editClient('${c.id}')" title="Editar Cliente">
-                        <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
-                    </button>
-                    <button class="btn btn-danger btn-icon-only" onclick="deleteClient('${c.id}')" title="Remover Cliente">
-                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                    </button>
+                <div class="client-actions-group" style="margin-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Linha 1: Contrato, Assinar, Contatos e Editar -->
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%;">
+                        ${c.freezerCode ? `
+                        <button class="btn btn-secondary" onclick="openComodato('${c.id}')" title="Termo de Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2); color: var(--color-primary)">
+                            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Contrato
+                        </button>
+                        ${pendingCom ? `
+                        <button class="btn btn-secondary" onclick="window.triggerComodatoSignatureForClient('${c.id}')" title="Assinar Comodato no Aparelho" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.05);">
+                            <i data-lucide="pen-tool" style="width: 14px; height: 14px;"></i> Assinar
+                        </button>
+                        ` : ''}
+                        ` : `
+                        <button class="btn btn-secondary" onclick="window.openLinkFreezerModal('${c.id}')" title="Novo Comodato" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                            <i data-lucide="link" style="width: 14px; height: 14px;"></i> Novo Comodato
+                        </button>
+                        `}
+                        
+                        ${c.phone ? `
+                        <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05); width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                            <i data-lucide="phone-call" style="width: 14px; height: 14px;"></i>
+                        </a>
+                        <a href="https://api.whatsapp.com/send?phone=55${c.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-secondary btn-icon-only" title="WhatsApp ${c.phone}" style="color: #00f0ff; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                            <i data-lucide="message-circle" style="width: 14px; height: 14px;"></i>
+                        </a>
+                        ` : ''}
+                        
+                        <button class="btn btn-secondary btn-icon-only" onclick="editClient('${c.id}')" title="Editar Cliente" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                            <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Linha 2: Desvincular e Excluir -->
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%;">
+                        ${c.freezerCode ? `
+                        <button class="btn btn-secondary" onclick="window.unlinkFreezerFromClient('${c.id}')" title="Desvincular Freezer" style="margin-right: auto; padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239, 68, 68, 0.05);">
+                            <i data-lucide="link-2" style="width: 14px; height: 14px;"></i> Desvincular
+                        </button>
+                        ` : ''}
+                        
+                        <button class="btn btn-danger btn-icon-only" onclick="deleteClient('${c.id}')" title="Remover Cliente" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; ${!c.freezerCode ? 'margin-left: auto;' : ''}">
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
