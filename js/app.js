@@ -2394,38 +2394,6 @@ export function initForms() {
         });
     }
 
-    const clientPricesForm = document.getElementById("client-prices-form");
-    if (clientPricesForm) {
-        clientPricesForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            
-            const clientId = document.getElementById("form-client-prices-id").value;
-            const client = state.clients.find(c => c.id === clientId);
-            if (!client) return;
-            
-            const customPrices = {};
-            const inputs = document.querySelectorAll(".client-custom-price-input");
-            inputs.forEach(input => {
-                const prodId = input.getAttribute("data-prod-id");
-                const val = parseFloat(input.value);
-                customPrices[prodId] = !isNaN(val) && val > 0 ? val : 0;
-            });
-
-            const unitInputs = document.querySelectorAll(".client-custom-price-unit-input");
-            unitInputs.forEach(input => {
-                const key = input.getAttribute("data-prod-id");
-                const val = parseFloat(input.value);
-                customPrices[key] = !isNaN(val) && val > 0 ? val : 0;
-            });
-            
-            client.customPrices = customPrices;
-            
-            saveState();
-            closeModal("modal-client-prices");
-            showToast("Preços especiais salvos com sucesso!", "success");
-            if (window.renderPrecos) window.renderPrecos();
-        });
-    }
 
     const backupSettingsForm = document.getElementById("backup-settings-form");
     if (backupSettingsForm) {

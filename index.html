@@ -324,7 +324,7 @@
                     <!-- Painel de Gráficos Analíticos -->
                     <div class="dashboard-panel" style="grid-column: span 2;">
                         <div class="panel-header">
-                            <h2>Análise de Vendas</h2>
+                            <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Análise de Vendas <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: DASH-01</span></h2>
                             <div style="font-size: 0.8rem; color: var(--color-text-muted);">Últimos 15 Dias</div>
                         </div>
                         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: center; margin-top: 1rem;">
@@ -340,7 +340,7 @@
                     <!-- Painel de Alertas de Reabastecimento -->
                     <div class="dashboard-panel">
                         <div class="panel-header">
-                            <h2>Alertas Operacionais & Devoluções</h2>
+                            <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Alertas Operacionais & Devoluções <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: DASH-02</span></h2>
                             <span class="status-badge pending" id="alert-count">0 Alertas</span>
                         </div>
                         <div class="alerts-list" id="alerts-list-container">
@@ -354,9 +354,10 @@
                     <!-- Painel de Top Devedores (Carnê Fiado) -->
                     <div class="dashboard-panel">
                         <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h2 style="display: flex; align-items: center; gap: 6px;">
+                            <h2 style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                 <i data-lucide="alert-circle" style="color: var(--color-danger); width: 18px; height: 18px;"></i>
                                 Top Clientes Devedores (Fiado)
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 2px;">COD: DASH-03</span>
                             </h2>
                             <span class="status-badge" style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);" id="top-devedores-count">0 Ativos</span>
                         </div>
@@ -368,9 +369,10 @@
                     <!-- Painel de Pré-pedidos Agendados / Calendário de Entregas -->
                     <div class="dashboard-panel" style="grid-column: span 2;">
                         <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
-                            <h2 style="display: flex; align-items: center; gap: 6px;">
+                            <h2 style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                 <i data-lucide="calendar" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
                                 Pré-Pedidos & Agendamentos Pendentes
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 2px;">COD: DASH-04</span>
                             </h2>
                             <span class="status-badge" style="background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2);" id="scheduled-orders-count">0 Agendados</span>
                         </div>
@@ -658,6 +660,12 @@
 
                 <!-- Tabela de Histórico -->
                 <div class="dashboard-panel" style="padding: 0; overflow: hidden;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1rem 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
+                            Histórico de Entregas Realizadas
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: HIS-01</span>
+                        </h2>
+                    </div>
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -772,7 +780,7 @@
                             <!-- Painel Financeiro e Previsão de Demanda -->
                             <div class="dashboard-panel" id="admin-financial-dashboard" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                                    <h2>Painel Financeiro & Previsão de Demanda (Admin)</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Painel Financeiro & Previsão de Demanda (Admin) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FIN-01</span></h2>
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <select id="admin-finance-month-select" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(0, 240, 255, 0.25);" onchange="renderFinancialDashboard()"></select>
                                         <button type="button" class="btn btn-primary btn-generate-report" onclick="generateMonthlyPDFReport()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -879,9 +887,10 @@
                                     <div class="dashboard-panel" id="admin-driver-commissions-panel" style="width: 100%;">
                                         <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                             <div>
-                                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                                     <i data-lucide="award" style="color: var(--color-primary);"></i>
                                                     Histórico de Comissões de Motoristas
+                                                    <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: FIN-02</span>
                                                 </h3>
                                                 <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Acompanhe o faturamento, despesas e comissões acumuladas de cada entregador/colaborador.</p>
                                             </div>
@@ -945,7 +954,7 @@
                             <div class="dashboard-panel" id="cargo-settlement-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <h2>Acerto de Viagem & Fechamento de Carga (Hoje)</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Acerto de Viagem & Fechamento de Carga (Hoje) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: ACE-01</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Auditoria de vendas, estoque e conciliação financeira do caminhão.</p>
                                     </div>
                                     <button type="button" class="btn btn-secondary" onclick="loadTodaySalesData()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1034,7 +1043,7 @@
                             <!-- Configurações de Comissão do Motorista -->
                             <div class="dashboard-panel" id="commission-settings-panel" style="width: 100%; margin-top: 1.5rem; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                                    <h2>Configurações de Comissão do Motorista</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Configurações de Comissão do Motorista <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: ACE-02</span></h2>
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Defina como a comissão do motorista é calculada no acerto de carga de cada viagem.</p>
                                 </div>
                                 <form id="commission-settings-form" style="padding: 1.5rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;" onsubmit="saveCommissionSettings(event)">
@@ -1064,15 +1073,16 @@
                             <!-- Contas a Receber (Fiados) e Histórico de Pagamentos -->
                             <div class="dashboard-panel" id="accounts-receivable-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                                    <h2>Controle de Contas a Receber (Faturado / Fiados)</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Controle de Contas a Receber (Faturado / Fiados) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: REC-01</span></h2>
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Monitore o saldo devedor dos clientes que compram a prazo e controle o extrato de recebimentos.</p>
                                 </div>
                                 
                                 <div style="padding: 1.5rem 0 0 0; display: flex; flex-direction: column; gap: 1.5rem;">
                                     <!-- Clientes Devedores -->
                                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="users" style="width: 16px; height: 16px;"></i> Clientes com Saldo Devedor
+                                            <span style="font-size: 0.6rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-left: 4px;">COD: REC-01A</span>
                                         </h3>
                                         <div style="overflow-x: auto;">
                                             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
@@ -1093,8 +1103,9 @@
                                     
                                     <!-- Histórico de Recebimentos -->
                                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="receipt" style="width: 16px; height: 16px;"></i> Histórico de Recebimento de Pagamentos
+                                            <span style="font-size: 0.6rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-left: 4px;">COD: REC-01B</span>
                                         </h3>
                                         <div style="overflow-x: auto; max-height: 250px; overflow-y: auto;">
                                             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
@@ -1122,7 +1133,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <h2>Catálogo de Produtos & Equipamentos</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Catálogo de Produtos & Equipamentos <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: CAT-01</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie o Catálogo de itens e serviços dispoNíveis. Cadastre novos tipos de gelo (tamanho/subcategoria), capacidades de carvão ou modelos de tinas.</p>
                                     </div>
                                     <button type="button" class="btn btn-primary" onclick="openProductModal()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1156,7 +1167,7 @@
                             <div class="dashboard-panel" id="comodatos-admin-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <h2>Gestão de Comodatos de Equipamentos</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gestão de Comodatos de Equipamentos <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: COM-01</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Monitore, crie, gerencie contratos de comodato de freezers e colete assinaturas eletrÃ´nicas.</p>
                                     </div>
                                     <button type="button" class="btn btn-primary" onclick="openNewComodatoModal()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1210,7 +1221,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
                                     <div>
-                                        <h2>Análise de Rentabilidade de Freezers (ROI)</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Análise de Rentabilidade de Freezers (ROI) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: RENT-01</span></h2>
                                         <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 4px;">Cruza o faturamento gerado por cliente com custos de manutenção e depreciação estimada do freezer (vida útil de 10 anos).</p>
                                     </div>
                                 </div>
@@ -1243,7 +1254,7 @@
                             <div class="dashboard-panel" id="supply-chain-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <h2>Gestão de Fornecedores, Embalagens e Insumos</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gestão de Fornecedores, Embalagens e Insumos <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SUP-01</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie o cadastro de fornecedores de sacos/fardos de gelo e carvão, monitore o estoque e registre compras de insumos.</p>
                                     </div>
                                 </div>
@@ -1252,8 +1263,9 @@
                                     <!-- Seção Fornecedores -->
                                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
-                                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                                 <i data-lucide="factory" style="width: 16px; height: 16px;"></i> Cadastro de Fornecedores
+                                                <span style="font-size: 0.6rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-left: 4px;">COD: SUP-01A</span>
                                             </h3>
                                             <button type="button" class="btn btn-primary" onclick="openSupplierModal()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
                                                 <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Novo Fornecedor
@@ -1280,8 +1292,9 @@
                                     <!-- Seção Embalagens & Insumos -->
                                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
-                                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                                 <i data-lucide="package" style="width: 16px; height: 16px;"></i> Controle de Estoque de Embalagens
+                                                <span style="font-size: 0.6rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-left: 4px;">COD: SUP-01B</span>
                                             </h3>
                                             <div style="display: flex; gap: 8px;">
                                                 <button type="button" class="btn btn-secondary" onclick="openProductionModal()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
@@ -1314,8 +1327,9 @@
 
                                     <!-- Histórico de Movimentações de Insumos -->
                                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
-                                            <i data-lucide="history" style="width: 16px; height: 16px;"></i> Histórico de Movimentação de Insumos
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+                                            <i data-lucide="history" style="width: 16px; height: 16px;"></i> Histórico de Movimentaçõo de Insumos
+                                            <span style="font-size: 0.6rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-left: 4px;">COD: SUP-01C</span>
                                         </h3>
                                         <div style="overflow-x: auto; max-height: 250px; overflow-y: auto;">
                                             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
@@ -1345,7 +1359,7 @@
                                 <!-- Calendário Administrativo -->
                                 <div class="dashboard-panel" style="flex: 1.2; min-width: 300px; max-width: 400px; width: 100%;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                        <h4 id="admin-calendar-month-year" style="font-size: 0.85rem; font-weight: bold; color: #fff; margin: 0;">Janeiro 2026</h4>
+                                        <div style="display: inline-flex; align-items: center; gap: 8px;"><h4 id="admin-calendar-month-year" style="font-size: 0.85rem; font-weight: bold; color: #fff; margin: 0;">Janeiro 2026</h4><span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: EVE-01</span></div>
                                         <div style="display: flex; gap: 4px;">
                                             <button type="button" class="btn btn-secondary btn-icon-only" onclick="window.changeAdminCalendarMonth(-1)" style="padding: 2px 6px; height: 24px; width: 24px; box-shadow: none;" title="Mês Anterior">
                                                 <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>
@@ -1396,7 +1410,7 @@
                                 <div class="dashboard-panel" style="flex: 2; min-width: 320px; width: 100%;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; width: 100%;">
                                         <div>
-                                            <h2>Gestão de Eventos Locais (Impacto de Demanda)</h2>
+                                            <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gestão de Eventos Locais (Impacto de Demanda) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: EVE-02</span></h2>
                                             <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie eventos festivos da região para projeção inteligente e alertas automatizados.</p>
                                         </div>
                                         <button type="button" class="btn btn-primary" onclick="window.openEditLocalEventModal('')" style="font-size: 0.8rem; padding: 8px 16px;">
@@ -1433,7 +1447,7 @@
                             <!-- Preços Gerais da Fábrica -->
                             <div class="dashboard-panel" style="max-width: 550px; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                    <h2>Preços Padrão de Venda & Aluguel</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Preços Padrão de Venda & Aluguel <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: PRE-01</span></h2>
                                 </div>
                                 <form id="factory-prices-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
                                     <div id="factory-prices-inputs-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -1445,25 +1459,7 @@
                                 </form>
                             </div>
 
-                            <!-- Tabela de Clientes para Preços Específicos -->
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
-                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                                    <div>
-                                        <h2>Tabela de Preços Específicos / Promoções por Cliente</h2>
-                                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Defina valores diferenciados para clientes parceiros. Se um produto não tiver preço customizado, será utilizado o preço padrão da Fábrica.</p>
-                                    </div>
-                                </div>
-                                <div style="padding: 1rem 0 0 0; overflow-x: auto;">
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" class="data-table">
-                                        <thead id="pricing-clients-thead">
-                                            <!-- Preenchido via Javascript -->
-                                        </thead>
-                                        <tbody id="pricing-clients-tbody">
-                                            <!-- Preenchido via JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+
                         </div>
 
                         <!-- sub-aba: Fábrica & Aparência -->
@@ -1472,7 +1468,7 @@
                                 <!-- Dados da Empresa / Fábrica -->
                                 <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                        <h2 style="margin: 0;">Dados da Fábrica / Distribuidora</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Dados da Fábrica / Distribuidora <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-01</span></h2>
                                         <button type="button" class="btn btn-secondary" onclick="autoFillFactorySettings()" style="padding: 6px 12px; font-size: 0.8rem;" title="Recarregar campos com os dados já salvos na memória">
                                             <i data-lucide="refresh-cw"></i> Recarregar Dados Salvos
                                         </button>
@@ -1535,7 +1531,7 @@
                                 <!-- Personalização da Aparência -->
                                 <div class="dashboard-panel" style="flex: 1; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                        <h2 style="margin: 0;">Aparência do Aplicativo</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Aparência do Aplicativo <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-02</span></h2>
                                         <button type="button" class="btn btn-secondary" onclick="autoFillAppearanceSettings()" style="font-size: 0.75rem; padding: 5px 10px; height: auto; background: rgba(0, 240, 255, 0.1); border-color: var(--color-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;" title="Restaurar aparência padrão (Ciano Neon)">
                                             <i data-lucide="palette" style="width: 12px; height: 12px; color: var(--color-primary);"></i> ✨ Restaurar Padrão
                                         </button>
@@ -1685,7 +1681,7 @@
                                 <!-- Configurações de Widgets -->
                                 <div class="dashboard-panel" style="flex: 1; min-width: 320px; margin-top: 1.5rem;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1rem;">
-                                        <h2 style="margin: 0;">Widgets do Dashboard</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Widgets do Dashboard <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-03</span></h2>
                                     </div>
                                     <div class="widgets-setup-panel" id="widgets-setup-panel">
                                         <!-- Configuração dos widgets injetada dinamicamente -->
@@ -1699,7 +1695,7 @@
                             <!-- Painel de Instalação de Impressoras Móveis/Térmicas -->
                             <div class="dashboard-panel" id="printer-setup-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                                    <h2>Instalação de Impressora Térmica Móvel</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Instalação de Impressora Térmica Móvel <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: IMP-01</span></h2>
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Guia prático para conectar e configurar impressoras térmicas de 58mm ou 80mm no celular ou computador.</p>
                                 </div>
                                 
@@ -1746,7 +1742,7 @@
                                 <!-- Configurações de Impressora -->
                                 <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2>Configuração de Impressão</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Configuração de Impressão <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: IMP-02</span></h2>
                                     </div>
                                     <form id="print-settings-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1.25rem;">
                                         <div class="form-group">
@@ -1784,7 +1780,7 @@
                                 <!-- Guia de Instalação Móvel -->
                                 <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2>Guia de Instalação: Impressora Térmica Móvel</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Guia de Instalação: Impressora Térmica Móvel <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: IMP-03</span></h2>
                                     </div>
                                     <div style="padding: 1rem 0 0 0; font-size: 0.8rem; line-height: 1.5; color: var(--color-text-muted);">
                                         <div style="margin-bottom: 1rem;">
@@ -1827,8 +1823,9 @@
                                 <!-- Painel de Sincronização Firebase -->
                                 <div class="dashboard-panel" id="cloud-sync-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="cloud-lightning" style="width: 16px; height: 16px;"></i> Sincronização na Nuvem (Firebase)
+                                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-01</span>
                                         </h3>
                                         <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--color-text-muted); cursor: pointer;">
                                             <input type="checkbox" id="cfg-fb-enabled" onchange="toggleFirebaseSync(this.checked)" style="accent-color: var(--color-primary); margin: 0;"> Sincronizar
@@ -1874,8 +1871,9 @@
                                 <!-- Painel OneDrive & GitHub Pages -->
                                 <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
-                                            <i data-lucide="cloud"></i> Integração OneDrive & GitHub Pages
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+                                            <i data-lucide="cloud" style="width: 16px; height: 16px;"></i> Integração OneDrive & GitHub Pages
+                                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-02</span>
                                         </h3>
                                     </div>
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
@@ -1947,8 +1945,9 @@
                                 <!-- Painel do Guia de Instalação PWA -->
                                 <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: flex; align-items: center; gap: 6px; margin: 0;">
-                                            <i data-lucide="download"></i> Guia de Instalação PWA (App)
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+                                            <i data-lucide="download" style="width: 16px; height: 16px;"></i> Guia de Instalação PWA (App)
+                                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-secondary); border: 1px solid rgba(0,114,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-03</span>
                                         </h3>
                                     </div>
                                     <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
@@ -2000,7 +1999,7 @@
                                 <!-- Configurações de Backup e Versão -->
                                 <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2>Backup & Versão do Aplicativo</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Backup & Versão do Aplicativo <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-04</span></h2>
                                     </div>
                                     <form id="backup-settings-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
                                         <div class="form-row-grid">
@@ -2037,7 +2036,7 @@
                                 <!-- Histórico de Backups Locais -->
                                 <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2>Histórico de Backups Internos (Navegador)</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Histórico de Backups Internos (Navegador) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-05</span></h2>
                                     </div>
                                     <div style="padding: 1rem 0 0 0; overflow-x: auto; max-height: 250px;">
                                         <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;" class="data-table">
@@ -2068,9 +2067,10 @@
                             <div class="dashboard-panel" style="width: 100%; margin-top: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="shield-check" style="color: var(--color-primary);"></i>
                                             Central de Autoteste & Integridade de Módulos
+                                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-06</span>
                                         </h3>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Execute uma varredura completa em tempo real para verificar se todos os módulos integrados, fórmulas e conexões estão se comunicando sem falhas.</p>
                                     </div>
@@ -2100,7 +2100,7 @@
                             <div class="dashboard-panel" style="margin-bottom: 1.5rem; max-width: 480px;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 8px;">
                                     <i data-lucide="shield" style="width: 16px; height: 16px; color: var(--color-primary);"></i>
-                                    <h2 style="margin: 0;">Segurança do Administrador</h2>
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Segurança do Administrador <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: USU-01</span></h2>
                                 </div>
                                 <form id="admin-password-form" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
                                     <div class="form-group">
@@ -2130,7 +2130,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                                     <div>
-                                        <h2>Gerenciar Usu�rios & Senhas</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gerenciar Usuários & Senhas <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: USU-02</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Crie perfis de colaboradores e configure quais abas e ferramentas administrativas cada nível de acesso pode visualizar ou alterar.</p>
                                     </div>
                                     <button type="button" class="btn btn-primary" onclick="openUserModal()" style="display: inline-flex; align-items: center; gap: 6px;">
@@ -2161,7 +2161,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                     <div>
-                                        <h2>Integração PIX (Automático &amp; Manual)</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Integração PIX (Automático &amp; Manual) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: INT-01</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure as credenciais do Mercado Pago e a chave PIX estática para recebimentos.</p>
                                     </div>
                                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-pix-manual').classList.add('active')" style="display: inline-flex; align-items: center; gap: 6px; border-color: rgba(0, 240, 255, 0.2); color: #00f0ff; background: rgba(0, 240, 255, 0.05); font-size: 0.8rem; padding: 6px 12px; height: auto;">
@@ -2238,7 +2238,7 @@
                             <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem; margin-top: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                     <div>
-                                        <h2>Integração WhatsApp API (Envio Automático)</h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Integração WhatsApp API (Envio Automático) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: INT-02</span></h2>
                                         <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Configure sua API/Gateway de WhatsApp para disparar lembretes, recibos e rotas automaticamente.</p>
                                     </div>
                                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-whatsapp-manual').classList.add('active')" style="display: inline-flex; align-items: center; gap: 6px; border-color: rgba(0, 240, 255, 0.2); color: #00f0ff; background: rgba(0, 240, 255, 0.05); font-size: 0.8rem; padding: 6px 12px; height: auto;">
@@ -4490,32 +4490,7 @@
             </div>
         </div>
     </div>
-    <!-- 13. Modal de Preço Específico por Cliente -->
-    <div class="modal-backdrop" id="modal-client-prices">
-        <div class="modal-content" style="width: 500px; max-width: 95vw;">
-            <div class="modal-header">
-                <h3>Preços Customizados: <span id="custom-price-client-name" style="color: var(--color-primary);">Cliente</span></h3>
-                <button type="button" class="close-btn" onclick="closeModal('modal-client-prices')">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <form id="client-prices-form">
-                <input type="hidden" id="form-client-prices-id">
-                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">Digite valores específicos para este cliente. Deixe em branco ou zero para usar o preço padrão da fábrica.</p>
-                
-                <div id="client-prices-inputs-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <!-- Preenchido dinamicamente via JS com os preços customizados de cada produto -->
-                </div>
 
-                <div class="form-actions" style="margin-top: 1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client-prices')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
-                        <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Preços Customizados
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- 14. Modal de Autenticação do Administrador -->
     <div class="modal-backdrop" id="modal-admin-auth">

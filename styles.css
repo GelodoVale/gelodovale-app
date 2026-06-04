@@ -398,6 +398,8 @@ main.main-content {
     margin-left: 260px;
     padding: 2.5rem;
     min-height: 100vh;
+    min-width: 0;
+    max-width: calc(100vw - 260px);
 }
 
 header.top-header {
@@ -1311,6 +1313,7 @@ table.data-table tbody tr:hover {
     main.main-content {
         margin-left: 0;
         padding: 1.5rem 1rem;
+        max-width: 100%;
     }
     
     header.top-header {
@@ -3288,6 +3291,7 @@ body.theme-high-contrast .modal-backdrop {
     .main-content {
         margin-left: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         padding-bottom: 80px !important; /* Espaço para a navbar inferior */
     }
 

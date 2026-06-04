@@ -200,85 +200,6 @@ export function renderPrecos() {
         });
     }
 
-    // 2. Renderizar cabeçalho e linhas da tabela de preços específicos por cliente
-    const thead = document.getElementById("pricing-clients-thead");
-    const tbody = document.getElementById("pricing-clients-tbody");
-    
-    if (thead && tbody) {
-        thead.innerHTML = "";
-        tbody.innerHTML = "";
-
-        const activeProducts = state.products.filter(p => p.active);
-        
-        if (state.clients.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="${activeProducts.length + 2}" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
-                        Nenhum cliente cadastrado para definir preços específicos.
-                    </td>
-                </tr>
-            `;
-        } else {
-            // Desenhar Thead
-            let theadHTML = `<tr style="border-bottom: 2px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left;">`;
-            theadHTML += `<th style="padding: 10px;">Cliente</th>`;
-            activeProducts.forEach(p => {
-                theadHTML += `<th style="padding: 10px; text-align: right;">${p.name}</th>`;
-            });
-            theadHTML += `<th style="padding: 10px; text-align: center;">Ações</th>`;
-            theadHTML += `</tr>`;
-            thead.innerHTML = theadHTML;
-
-            // Desenhar Tbody
-            state.clients.forEach(c => {
-                const cp = c.customPrices || {};
-                
-                let tbodyHTML = `<tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.03);">`;
-                tbodyHTML += `<td style="padding: 10px; vertical-align: middle;">
-                    <div style="font-weight: 600; color: var(--color-text-main);">${c.name}</div>
-                    <div style="font-size: 0.7rem; color: var(--color-text-muted);">${c.freezerCode ? `Freezer: ${c.freezerCode}` : 'Sem freezer comodatado'}</div>
-                </td>`;
-
-                activeProducts.forEach(p => {
-                    let price = "";
-                    if (p.type === 'Gelo Saborizado') {
-                        const priceFardo = cp[p.id] !== undefined && cp[p.id] > 0
-                            ? `Fdo: <span style="color: var(--color-primary); font-weight: 700;">R$ ${cp[p.id].toFixed(2)}</span>`
-                            : `Fdo: <span style="color: var(--color-text-muted); font-size: 0.75rem;">R$ ${(p.defaultPrice || 0).toFixed(2)}</span>`;
-                        const priceUnit = cp[p.id + "_unit"] !== undefined && cp[p.id + "_unit"] > 0
-                            ? `Un: <span style="color: var(--color-primary); font-weight: 700;">R$ ${cp[p.id + "_unit"].toFixed(2)}</span>`
-                            : `Un: <span style="color: var(--color-text-muted); font-size: 0.75rem;">R$ ${(p.unitPrice || 0).toFixed(2)}</span>`;
-                        price = `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                                    <div>${priceFardo}</div>
-                                    <div>${priceUnit}</div>
-                                 </div>`;
-                    } else {
-                        price = cp[p.id] !== undefined && cp[p.id] > 0 
-                            ? `<span style="color: var(--color-primary); font-weight: 700;">R$ ${cp[p.id].toFixed(2)}</span>`
-                            : `<span style="color: var(--color-text-muted); font-size: 0.8rem;">R$ ${(p.defaultPrice || 0).toFixed(2)} (Padrão)</span>`;
-                    }
-                    tbodyHTML += `<td style="padding: 10px; text-align: right; vertical-align: middle;">${price}</td>`;
-                });
-
-                const hasCustom = activeProducts.some(p => cp[p.id] > 0 || cp[p.id + "_unit"] > 0);
-                tbodyHTML += `<td style="padding: 10px; text-align: center; vertical-align: middle;">
-                    <div style="display: inline-flex; gap: 6px; justify-content: center;">
-                        <button class="btn btn-primary" onclick="openClientPricesModal('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
-                            <i data-lucide="edit-3" style="width: 12px; height: 12px;"></i> Configurar
-                        </button>
-                        ${hasCustom ? `
-                            <button class="btn btn-secondary" onclick="clearClientPrices('${c.id}')" style="padding: 4px 8px; font-size: 0.75rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);">
-                                Limpar
-                            </button>
-                        ` : ""}
-                    </div>
-                </td>`;
-                tbodyHTML += `</tr>`;
-                
-                tbody.innerHTML += tbodyHTML;
-            });
-        }
-    }
 
     // 3. Preencher inputs de backup
     if (state.backupSettings) {
@@ -447,61 +368,6 @@ export function renderPrecos() {
     switchAdminSubTab(window.activeAdminSubTab || "tab-financeiro");
 }
 
-export function openClientPricesModal(clientId) {
-    const client = state.clients.find(c => c.id === clientId);
-    if (!client) return;
-
-    document.getElementById("form-client-prices-id").value = client.id;
-    document.getElementById("custom-price-client-name").innerText = client.name;
-
-    const cp = client.customPrices || {};
-    
-    // Popular contêiner de inputs dinâmicos
-    const container = document.getElementById("client-prices-inputs-container");
-    if (container) {
-        container.innerHTML = "";
-        
-        const activeProducts = state.products.filter(p => p.active);
-        activeProducts.forEach(p => {
-            const val = cp[p.id] ? cp[p.id].toFixed(2) : "";
-            container.innerHTML += `
-                <div class="form-group">
-                    <label for="cust-price-${p.id}">${p.name} (R$)</label>
-                    <input type="number" step="0.01" min="0" id="cust-price-${p.id}" class="form-control client-custom-price-input" data-prod-id="${p.id}" value="${val}" placeholder="Padrão: R$ ${(p.defaultPrice || 0).toFixed(2)}">
-                </div>
-            `;
-            
-            if (p.type === 'Gelo Saborizado') {
-                const valUnit = cp[p.id + "_unit"] ? cp[p.id + "_unit"].toFixed(2) : "";
-                container.innerHTML += `
-                    <div class="form-group" style="margin-top: -6px; padding-left: 10px; border-left: 2px solid var(--color-primary);">
-                        <label for="cust-price-unit-${p.id}" style="font-size: 0.75rem;">${p.name} (Unidade Avulsa - R$)</label>
-                        <input type="number" step="0.01" min="0" id="cust-price-unit-${p.id}" class="form-control client-custom-price-unit-input" data-prod-id="${p.id}_unit" value="${valUnit}" placeholder="Padrão: R$ ${(p.unitPrice || 0).toFixed(2)}">
-                    </div>
-                `;
-            }
-        });
-    }
-
-    document.getElementById("modal-client-prices").classList.add("active");
-}
-
-export function clearClientPrices(clientId) {
-    const client = state.clients.find(c => c.id === clientId);
-    if (!client) return;
-
-    window.showConfirm(
-        `Deseja realmente limpar todos os preços especiais de ${client.name}? Ele voltará a pagar os valores padrão da fábrica.`,
-        () => {
-            client.customPrices = {};
-            saveState();
-            renderPrecos();
-        },
-        null,
-        "Limpar Preços",
-        "Limpar"
-    );
-}
 
 // 4. Sistema de Backup
 export function generateBackup(isAuto = false) {
@@ -2471,8 +2337,6 @@ window.closeAdminAuthModal = closeAdminAuthModal;
 window.cancelAdminAuth = closeAdminAuthModal;
 window.lockAdminAccess = lockAdminAccess;
 window.renderPrecos = renderPrecos;
-window.openClientPricesModal = openClientPricesModal;
-window.clearClientPrices = clearClientPrices;
 window.generateBackup = generateBackup;
 window.restoreLocalBackup = restoreLocalBackup;
 window.applyBackupData = applyBackupData;
