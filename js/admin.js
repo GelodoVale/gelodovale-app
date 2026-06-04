@@ -129,7 +129,7 @@ export function renderPrecos() {
                             <span>${p.name} (Preço Fardo/Pacote)</span>
                             <span style="font-size: 0.7rem; color: var(--color-primary);">${p.type}</span>
                         </label>
-                        <input type="number" step="0.01" min="0" id="cfg-price-${p.id}" class="form-control factory-price-input" data-prod-id="${p.id}" value="${(p.defaultPrice || 0).toFixed(2)}" required>
+                        <input type="number" step="0.01" min="0" id="cfg-price-${p.id}" class="form-control factory-price-input" data-prod-id="${p.id}" value="${(p.defaultPrice || 0).toFixed(2)}" required style="max-width: 240px;">
                     </div>
                     
                     <details style="margin-top: 6px; cursor: pointer;">
@@ -143,7 +143,7 @@ export function renderPrecos() {
                 advancedHTML += `
                             <div class="form-group">
                                 <label style="font-size: 0.75rem; display: block; margin-bottom: 2px;">Preço Unitário (Varejo - 1 un) (R$)</label>
-                                <input type="number" step="0.01" min="0" id="cfg-unit-price-${p.id}" class="form-control factory-unit-price-input" data-prod-id="${p.id}" value="${(p.unitPrice || 0).toFixed(2)}">
+                                <input type="number" step="0.01" min="0" id="cfg-unit-price-${p.id}" class="form-control factory-unit-price-input" data-prod-id="${p.id}" value="${(p.unitPrice || 0).toFixed(2)}" style="max-width: 240px;">
                             </div>
                 `;
             }
