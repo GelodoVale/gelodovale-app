@@ -594,6 +594,7 @@ header.top-header {
     border-radius: var(--radius-lg);
     padding: 1.75rem;
     backdrop-filter: blur(10px);
+    max-width: 100%;
 }
 
 .panel-header {
@@ -2569,16 +2570,21 @@ body.theme-high-contrast .modal-backdrop {
 .admin-content-area {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
 }
 
 /* Conteúdo das Sub-abas */
 .admin-subtab-content {
     display: none;
+    max-width: 100%;
+    width: 100%;
 }
 
 .admin-subtab-content.active {
     display: block;
     animation: fadeInAdmin 0.25s ease-out forwards;
+    max-width: 100%;
+    width: 100%;
 }
 
 @keyframes fadeInAdmin {
