@@ -2691,41 +2691,36 @@ export function deleteProduct(productId) {
 }
 
 export function autoFillFactorySettings() {
-    // Preenche apenas os campos do formulário com os dados oficiais padrão da Gelo do Vale.
-    // NÃO altera state.factorySettings nem salva automaticamente — o usuário precisa
-    // clicar em "Salvar" para persistir as alterações.
-    const defaultData = {
-        name: "GELO DO VALE INDÚSTRIA DE GELO LTDA.",
-        cnpj: "65.007.307/0001-60",
-        phone: "(12) 99887-6655",
-        address: "Vale do Paraíba, São José dos Campos - SP",
-        email: "contato@gelodovale.com.br",
-        pixKey: "65.007.307/0001-60",
-        rentalTerms: "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR."
-    };
+    // Lê os dados JÁ SALVOS em state.factorySettings e repopula os campos do formulário.
+    // NÃO altera o state nem salva automaticamente.
+    // Útil para restaurar os campos caso o usuário tenha digitado algo errado.
+    const saved = state.factorySettings || {};
 
     const nameEl = document.getElementById("cfg-factory-name");
-    if (nameEl) nameEl.value = defaultData.name;
+    if (nameEl) nameEl.value = saved.name || "";
 
     const cnpjEl = document.getElementById("cfg-factory-cnpj");
-    if (cnpjEl) cnpjEl.value = defaultData.cnpj;
+    if (cnpjEl) cnpjEl.value = saved.cnpj || "";
 
     const phoneEl = document.getElementById("cfg-factory-phone");
-    if (phoneEl) phoneEl.value = defaultData.phone;
+    if (phoneEl) phoneEl.value = saved.phone || "";
 
     const addressEl = document.getElementById("cfg-factory-address");
-    if (addressEl) addressEl.value = defaultData.address;
+    if (addressEl) addressEl.value = saved.address || "";
 
     const emailEl = document.getElementById("cfg-factory-email");
-    if (emailEl) emailEl.value = defaultData.email;
+    if (emailEl) emailEl.value = saved.email || "";
 
     const pixEl = document.getElementById("cfg-factory-pix");
-    if (pixEl) pixEl.value = defaultData.pixKey;
+    if (pixEl) pixEl.value = saved.pixKey || "";
 
     const rentalTermsEl = document.getElementById("cfg-factory-rental-terms");
-    if (rentalTermsEl) rentalTermsEl.value = defaultData.rentalTerms;
+    if (rentalTermsEl) rentalTermsEl.value = saved.rentalTerms || "";
 
-    window.showToast("Campos preenchidos com dados oficiais da Gelo do Vale. Clique em Salvar para confirmar.", "info");
+    const logoPreviewImg = document.getElementById("img-logo-preview");
+    if (logoPreviewImg) logoPreviewImg.src = saved.logo || "logo_horizontal.jpg";
+
+    window.showToast("Campos recarregados com os dados salvos da fábrica.", "success");
 }
 
 export function autoFillAppearanceSettings() {
