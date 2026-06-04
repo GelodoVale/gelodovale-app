@@ -4268,6 +4268,18 @@ body.astro-day.weather-hot {
     max-height: none !important;
 }
 
+/* Impede que parágrafos, botões, tags de texto ou barras de filtros estiquem */
+.dashboard-panel[style*="height"] > p,
+.dashboard-panel[style*="height"] > span,
+.dashboard-panel[style*="height"] > button,
+.dashboard-panel[style*="height"] > .btn,
+.dashboard-panel[style*="height"] > .alert-item,
+.dashboard-panel[style*="height"] > .filter-bar,
+.dashboard-panel[style*="height"] > .panel-description,
+.dashboard-panel[style*="height"] > form > .form-actions {
+    flex: none !important;
+}
+
 /* Caso específico para o grid do catálogo no PDV-01 e outras listas de grids */
 .dashboard-panel[style*="height"] #pdv-catalog-grid,
 .dashboard-panel[style*="height"] .freezer-grid, 
@@ -4275,8 +4287,20 @@ body.astro-day.weather-hot {
 .dashboard-panel[style*="height"] .equipments-grid,
 .dashboard-panel[style*="height"] .pedidos-list,
 .dashboard-panel[style*="height"] .alerts-list,
-.dashboard-panel[style*="height"] .table-responsive {
+.dashboard-panel[style*="height"] .table-responsive,
+.dashboard-panel[style*="height"] #leaflet-route-fallback,
+.dashboard-panel[style*="height"] #suggested-visits-container,
+.dashboard-panel[style*="height"] #top-devedores-list,
+.dashboard-panel[style*="height"] #scheduled-orders-list,
+.dashboard-panel[style*="height"] #alerts-list-container {
     max-height: none !important;
     overflow-y: auto !important;
+    flex: 1 !important;
+}
+
+/* Garante que o mapa do Leaflet tenha um tamanho mínimo utilizável e flexível */
+.dashboard-panel[style*="height"] #leaflet-route-map {
+    min-height: 150px !important;
+    flex: 1.2 !important;
 }
 
