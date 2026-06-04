@@ -1,5 +1,5 @@
 // --- CENTRAL DE CONTROLE E BOOTSTRAPPER (GELO DO VALE) ---
-import { state, saveState, updateState, MOCK_DATA, APP_VERSION } from './state.js';
+import { state, saveState, updateState, MOCK_DATA, APP_VERSION, CODE_BUILD } from './state.js';
 import { initLoginScreen, initUserAccessControl } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { renderClientes, openClientModal, populateClientDropdowns, openSalesModal, renderSalesModalProducts } from './clientes.js';
@@ -645,11 +645,11 @@ export function renderApp() {
     const activeTab = activeTabEl ? activeTabEl.getAttribute("data-tab") : "dashboard";
     renderTabContent(activeTab);
     
-    // Atualizar versão no rodapé lateral
+    // Atualizar versão no rodapé lateral (Dados vs Sistema)
     const versionEl = document.getElementById("app-sidebar-version");
     if (versionEl) {
-        const ver = state.backupSettings?.currentVersion || APP_VERSION;
-        versionEl.innerText = `Gelo do Vale v${ver} (28/05/2026)`;
+        const ver = state.backupSettings?.currentVersion || "0.1";
+        versionEl.innerText = `Dados: v${ver} | Sistema: ${CODE_BUILD}`;
     }
     
     // Atualizar dropdowns
