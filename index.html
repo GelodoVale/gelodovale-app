@@ -2172,6 +2172,37 @@
                                                 <i data-lucide="download" style="width: 13px; height: 13px;"></i> Fazer Backup Agora
                                             </button>
                                         </div>
+                                </div>
+                            </div>
+
+                            <!-- Histórico de Atualizações do Sistema (Código) -->
+                            <div class="dashboard-panel" id="admin-changelog-panel" style="width: 100%; margin-top: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; margin: 0;">
+                                        <i data-lucide="history" style="color: var(--color-primary); width: 16px; height: 16px;"></i>
+                                        Histórico de Atualizações do Sistema (Código)
+                                        <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-07</span>
+                                    </h3>
+                                </div>
+                                <div style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.82rem;">
+                                    <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 10px;">
+                                        <strong style="color: var(--color-primary);">v14 (04/06/2026 - Antigravity)</strong>
+                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
+                                            <li><strong>Backup & Posições:</strong> Adicionado suporte a backup/restauração completo do layout de painéis (posições/tamanhos), bloco de notas, notas do calendário, eventos locais e configurações de impressão.</li>
+                                            <li><strong>Versão no Rodapé:</strong> Exibição separada da versão dos dados (ex: v0.7) e da versão do sistema de código (ex: v14).</li>
+                                        </ul>
+                                    </div>
+                                    <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 10px;">
+                                        <strong style="color: var(--color-primary);">v13 (04/06/2026 - Antigravity)</strong>
+                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
+                                            <li><strong>Overflow nos Cards (CLI-02):</strong> Botões de ações dos cards de clientes divididos em duas linhas organizadas para evitar estouro em telas estreitas, com botões de ícones otimizados para 28px. Wrap de botões em inventário, aluguel de tinas e recibos.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="changelog-item" style="padding-bottom: 5px;">
+                                        <strong style="color: var(--color-primary);">v12 (04/06/2026 - Antigravity)</strong>
+                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
+                                            <li><strong>Altura Adaptável (PED-02):</strong> Correção de estouro no painel do mapa de rotas. O mapa Leaflet agora tem min-height de 150px e redimensiona livremente; a lista textual de rotas ganhou barra de rolagem vertical. Scroll automático adicionado a devedores, visitas sugeridas, agendamentos e alertas.</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
