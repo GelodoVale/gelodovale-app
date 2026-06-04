@@ -23,7 +23,7 @@ export let state = {
         { id: "tina", name: "Aluguel Tina 360L", type: "Equipamento", subtype: "tina", weight: 0, defaultPrice: 50.00, active: true },
         { id: "mesa", name: "Aluguel Mesa + 4 Cad.", type: "Equipamento", subtype: "mesa_cadeiras", weight: 0, defaultPrice: 30.00, active: true }
     ],
-    adminPassword: "1120M@z@dr1",
+    adminPassword: "1234qwer",
     clients: [],
     orders: [],
     deliveries: [],
@@ -45,7 +45,7 @@ export function updateState(newState, preserveConfigs = false) {
             'users', 'factorySettings', 'backupSettings', 'appearance', 
             'printSettings', 'logisticsSettings', 'firebaseConfig', 
             'localBackups', 'adminPassword', 'notepadText', 'calendarNotes',
-            'localEvents', 'ignoredSpikes'
+            'localEvents', 'ignoredSpikes', 'layoutSettings'
         ];
         keysToPreserve.forEach(key => {
             if (state[key] !== undefined) {
@@ -548,6 +548,14 @@ export function loadState() {
 export function initializeDefaultFields() {
     // Retrocompatibilidade para arrays operacionais
     if (!state.clients) state.clients = [];
+    // Layout settings — versão 4 usa transform (não mais position:absolute)
+    if (!state.layoutSettings) {
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 4 };
+    } else if (!state.layoutSettings.layoutVersion || state.layoutSettings.layoutVersion < 4) {
+        // Dados antigos (left/top) são incompatíveis com novo sistema (tx/ty transform)
+        // Reset completo: posições limpas, modo volta para fixed
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 4 };
+    }
     if (!state.freezers) state.freezers = [];
     if (!state.rentals) state.rentals = [];
     if (!state.documents) state.documents = [];
@@ -582,7 +590,7 @@ export function initializeDefaultFields() {
 
     // Senha padrão do admin
     if (!state.adminPassword || state.adminPassword === "admin") {
-        state.adminPassword = "1120M@z@dr1";
+        state.adminPassword = "1234qwer";
     }
     
     // Configurações de backup

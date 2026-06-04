@@ -23,7 +23,25 @@
             alert("Erro de Promessa (Promise) no GelControl:\n\nMotivo: " + event.reason);
         });
     </script>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Reset automático de layout antigo (position:absolute) antes do app carregar -->
+    <script>
+        try {
+            const raw = localStorage.getItem('gelcontrol_state');
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s && s.layoutSettings) {
+                    const lv = s.layoutSettings.layoutVersion;
+                    // Se não tem versão 4+, limpa layout (dados antigos incompatíveis)
+                    if (!lv || lv < 4) {
+                        s.layoutSettings = { mode: 'fixed', positions: {}, layoutVersion: 4 };
+                        localStorage.setItem('gelcontrol_state', JSON.stringify(s));
+                        console.log('[Layout] Estado antigo detectado e resetado para v4 (fixed).');
+                    }
+                }
+            }
+        } catch(e) { /* ignora erros de parse */ }
+    </script>
+    <link rel="stylesheet" href="styles.css?v=13">
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -247,13 +265,16 @@
             <section id="dashboard" class="tab-content active">
                 
                 <!-- Painel de Alertas e Interações Inteligentes (Picos de Venda e Eventos Locais) -->
-                <div id="dashboard-spike-alerts" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem;"></div>
+                <div id="dashboard-spike-alerts" class="dashboard-panel" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem;"></div>
 
                 <!-- Grade de KPIs -->
                 <div class="kpi-grid">
-                    <div class="kpi-card">
+                    <div class="kpi-card dashboard-panel" id="kpi-card-freezers">
                         <div class="kpi-info">
-                            <h3>👥 Clientes / 🧊 Freezers</h3>
+                            <h3 style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span>👥 Clientes / 🧊 Freezers</span>
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: KPI-01</span>
+                            </h3>
                             <div class="kpi-value" id="kpi-freezers">0 / 0</div>
                         </div>
                         <div class="kpi-icon-wrapper" style="background: rgba(0, 240, 255, 0.08);">
@@ -261,9 +282,12 @@
                         </div>
                     </div>
                     
-                    <div class="kpi-card">
+                    <div class="kpi-card dashboard-panel" id="kpi-card-delivered">
                         <div class="kpi-info">
-                            <h3>❄️ Gelo Entregue (Mês)</h3>
+                            <h3 style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span>❄️ Gelo Entregue (Mês)</span>
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: KPI-02</span>
+                            </h3>
                             <div class="kpi-value" id="kpi-delivered">0 kg</div>
                         </div>
                         <div class="kpi-icon-wrapper" style="background: rgba(0, 240, 255, 0.08);">
@@ -271,9 +295,12 @@
                         </div>
                     </div>
                     
-                    <div class="kpi-card">
+                    <div class="kpi-card dashboard-panel" id="kpi-card-pending">
                         <div class="kpi-info">
-                            <h3>⏳ Pedidos Pendentes</h3>
+                            <h3 style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span>⏳ Pedidos Pendentes</span>
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: KPI-03</span>
+                            </h3>
                             <div class="kpi-value" id="kpi-pending-orders">0</div>
                         </div>
                         <div class="kpi-icon-wrapper" style="background: rgba(255, 170, 0, 0.08);">
@@ -281,9 +308,12 @@
                         </div>
                     </div>
                     
-                    <div class="kpi-card">
+                    <div class="kpi-card dashboard-panel" id="kpi-card-revenue">
                         <div class="kpi-info">
-                            <h3>💰 Faturamento Mensal</h3>
+                            <h3 style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span>💰 Faturamento Mensal</span>
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: KPI-04</span>
+                            </h3>
                             <div class="kpi-value" id="kpi-revenue">R$ 0,00</div>
                         </div>
                         <div class="kpi-icon-wrapper" style="background: rgba(0, 255, 100, 0.08);">
@@ -293,9 +323,9 @@
                 </div>
                 
                 <!-- Painel de Ações Rápidas (Atalhos do Administrador) -->
-                <div class="dashboard-quick-actions" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(16px); box-shadow: 0 4px 30px rgba(0,0,0,0.2);">
-                    <div style="font-size: 0.75rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px; margin-right: 0.5rem;">
-                        <i data-lucide="zap" style="width: 16px; height: 16px; color: var(--color-primary); filter: drop-shadow(0 0 5px var(--color-primary));"></i> Atalhos Rápidos:
+                <div class="dashboard-quick-actions dashboard-panel" id="dashboard-quick-actions-panel" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(16px); box-shadow: 0 4px 30px rgba(0,0,0,0.2);">
+                    <div class="panel-header" style="font-size: 0.75rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px; margin-right: 0.5rem; margin-bottom: 0;">
+                        <i data-lucide="zap" style="width: 16px; height: 16px; color: var(--color-primary); filter: drop-shadow(0 0 5px var(--color-primary));"></i> Atalhos Rápidos: <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: DASH-00</span>
                     </div>
                     <button class="btn btn-secondary btn-sm" onclick="window.quickAction('nova-entrega')" style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; padding: 6px 12px; background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); color: var(--color-primary); cursor: pointer; border-radius: 6px; transition: all 0.2s;">
                         <i data-lucide="truck" style="width: 14px; height: 14px;"></i> Registrar Pedido
@@ -322,7 +352,7 @@
                 <!-- Painéis do Dashboard (Gráfico e Alertas) -->
                 <div class="dashboard-row">
                     <!-- Painel de Gráficos Analíticos -->
-                    <div class="dashboard-panel" style="grid-column: span 2;">
+                    <div class="dashboard-panel" id="dash-sales-analysis-panel" style="grid-column: span 2;">
                         <div class="panel-header">
                             <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Análise de Vendas <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: DASH-01</span></h2>
                             <div style="font-size: 0.8rem; color: var(--color-text-muted);">Últimos 15 Dias</div>
@@ -338,7 +368,7 @@
                     </div>
 
                     <!-- Painel de Alertas de Reabastecimento -->
-                    <div class="dashboard-panel">
+                    <div class="dashboard-panel" id="dash-operational-alerts-panel">
                         <div class="panel-header">
                             <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Alertas Operacionais & Devoluções <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: DASH-02</span></h2>
                             <span class="status-badge pending" id="alert-count">0 Alertas</span>
@@ -352,7 +382,7 @@
                 <!-- Nova linha do Dashboard para Devedores e Pré-pedidos Agendados -->
                 <div class="dashboard-row" style="margin-top: 1.5rem;">
                     <!-- Painel de Top Devedores (Carnê Fiado) -->
-                    <div class="dashboard-panel">
+                    <div class="dashboard-panel" id="dash-top-debtors-panel">
                         <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                             <h2 style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                 <i data-lucide="alert-circle" style="color: var(--color-danger); width: 18px; height: 18px;"></i>
@@ -367,7 +397,7 @@
                     </div>
 
                     <!-- Painel de Pré-pedidos Agendados / Calendário de Entregas -->
-                    <div class="dashboard-panel" style="grid-column: span 2;">
+                    <div class="dashboard-panel" id="dash-scheduled-orders-panel" style="grid-column: span 2;">
                         <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                             <h2 style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                 <i data-lucide="calendar" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
@@ -385,34 +415,43 @@
 
             <!-- ================= TELA: CLIENTES & FREEZERS ================= -->
             <section id="clientes" class="tab-content">
-                <div class="panel-header" style="margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                    <div>
-                        <h2>Lista de Clientes e Status de Estoque</h2>
-                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie os clientes cadastrados, níveis de estoque de gelo e risco de inatividade (churn).</p>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; max-width: 720px; justify-content: flex-end; margin-left: auto; align-items: center;">
-                        <input type="text" id="client-search-input" class="form-control" placeholder="Buscar por nome ou endereço..." style="flex: 1.5; min-width: 180px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" oninput="renderClientes()">
-                        <select id="client-activity-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
-                            <option value="all">Status: Todos</option>
-                            <option value="active">🟢 Ativos (≤ 7 dias)</option>
-                            <option value="warning">🟡 Alerta (8-14 dias)</option>
-                            <option value="inactive">🔴 Inativos (> 14 dias)</option>
-                            <option value="new">🔵 Novos (Sem compras)</option>
-                        </select>
-                        <select id="client-doc-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
-                            <option value="all">Doc.: Todos</option>
-                            <option value="completo">📄 Completo</option>
-                            <option value="sem_foto">⚠️ Faltando Foto</option>
-                            <option value="incompleto">❌ Sem Documento</option>
-                        </select>
-                        <button class="btn btn-primary" id="btn-add-client" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; height: 36px; font-size: 0.85rem;">
-                            <i data-lucide="user-plus" style="width: 15px; height: 15px;"></i> Adicionar
-                        </button>
+                <!-- Barra de Filtros e Busca de Clientes -->
+                <div class="dashboard-panel" id="client-filter-panel" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                    <div class="panel-header" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; width: 100%;">
+                        <div>
+                            <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Lista de Clientes & Filtros <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: CLI-01</span></h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Gerencie os clientes cadastrados, níveis de estoque de gelo e risco de inatividade (churn).</p>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; max-width: 720px; justify-content: flex-end; margin-left: auto; align-items: center;">
+                            <input type="text" id="client-search-input" class="form-control" placeholder="Buscar por nome ou endereço..." style="flex: 1.5; min-width: 180px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" oninput="renderClientes()">
+                            <select id="client-activity-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
+                                <option value="all">Status: Todos</option>
+                                <option value="active">🟢 Ativos (≤ 7 dias)</option>
+                                <option value="warning">🟡 Alerta (8-14 dias)</option>
+                                <option value="inactive">🔴 Inativos (> 14 dias)</option>
+                                <option value="new">🔵 Novos (Sem compras)</option>
+                            </select>
+                            <select id="client-doc-filter" class="form-control" style="flex: 1; min-width: 120px; font-size: 0.85rem; height: 36px; padding: 6px 12px;" onchange="renderClientes()">
+                                <option value="all">Doc.: Todos</option>
+                                <option value="completo">📄 Completo</option>
+                                <option value="sem_foto">⚠️ Faltando Foto</option>
+                                <option value="incompleto">❌ Sem Documento</option>
+                            </select>
+                            <button class="btn btn-primary" id="btn-add-client" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; height: 36px; font-size: 0.85rem;">
+                                <i data-lucide="user-plus" style="width: 15px; height: 15px;"></i> Adicionar
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="clients-grid" id="clients-grid-container">
-                    <!-- Clientes inseridos dinamicamente via JS -->
+                <!-- Grade de Clientes -->
+                <div class="dashboard-panel" id="client-list-panel" style="padding: 1.25rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Clientes Cadastrados <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: CLI-02</span></h2>
+                    </div>
+                    <div class="clients-grid" id="clients-grid-container">
+                        <!-- Clientes inseridos dinamicamente via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -431,25 +470,39 @@
                 </div>
 
                 <!-- Barra de Filtros e Busca -->
-                <div class="filter-bar">
-                    <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <label for="search-freezer">Buscar por Código ou Modelo</label>
-                        <input type="text" id="search-freezer" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                <div class="filter-bar dashboard-panel" id="freezer-filter-panel" style="margin-bottom: 1.5rem;">
+                    <div class="panel-header" style="margin-bottom: 8px; width: 100%;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin: 0; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <span>🔍 Filtros de Busca</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: INV-01</span>
+                        </h3>
                     </div>
-                    <div class="filter-group">
-                        <label for="filter-freezer-status">Filtrar por Status</label>
-                        <select class="filter-input" id="filter-freezer-status">
-                            <option value="">Todos os Status</option>
-                            <option value="disponivel">Disponível / Fábrica</option>
-                            <option value="alocado">Alocado (Em Cliente)</option>
-                            <option value="manutencao">Em Manutenção</option>
-                            <option value="inativo">Inativo / Descartado</option>
-                        </select>
+                    <div style="display: flex; gap: 1rem; width: 100%; flex-wrap: wrap;">
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="search-freezer">Buscar por Código ou Modelo</label>
+                            <input type="text" id="search-freezer" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="filter-freezer-status">Filtrar por Status</label>
+                            <select class="filter-input" id="filter-freezer-status" style="width: 100%;">
+                                <option value="">Todos os Status</option>
+                                <option value="disponivel">Disponível / Fábrica</option>
+                                <option value="alocado">Alocado (Em Cliente)</option>
+                                <option value="manutencao">Em Manutenção</option>
+                                <option value="inativo">Inativo / Descartado</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="freezer-grid" id="freezer-grid-container">
-                    <!-- Freezers inseridos dinamicamente via JS -->
+                <!-- Grade de Freezers -->
+                <div class="dashboard-panel" id="freezer-list-panel" style="padding: 1.25rem; margin-top: 1rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Fila de Equipamentos (Freezers) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: INV-02</span></h2>
+                    </div>
+                    <div class="freezer-grid" id="freezer-grid-container">
+                        <!-- Freezers inseridos dinamicamente via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -463,34 +516,48 @@
                 </div>
 
                 <!-- Barra de Filtros e Busca -->
-                <div class="filter-bar">
-                    <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <label for="search-equipment">Buscar por Código ou Modelo</label>
-                        <input type="text" id="search-equipment" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                <div class="filter-bar dashboard-panel" id="equipment-filter-panel" style="margin-bottom: 1.5rem;">
+                    <div class="panel-header" style="margin-bottom: 8px; width: 100%;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin: 0; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <span>🔍 Filtros de Busca</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: EQP-01</span>
+                        </h3>
                     </div>
-                    <div class="filter-group">
-                        <label for="filter-equipment-type">Filtrar por Tipo</label>
-                        <select class="filter-input" id="filter-equipment-type">
-                            <option value="">Todos os Tipos</option>
-                            <option value="tina">Tina</option>
-                            <option value="mesa_cadeiras">Mesa/Cadeira</option>
-                            <option value="outros">Outros</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-equipment-status">Filtrar por Status</label>
-                        <select class="filter-input" id="filter-equipment-status">
-                            <option value="">Todos os Status</option>
-                            <option value="disponivel">Disponível / Fábrica</option>
-                            <option value="alocado">Alocado (Em Cliente)</option>
-                            <option value="manutencao">Em Manutenção</option>
-                            <option value="inativo">Inativo / Descartado</option>
-                        </select>
+                    <div style="display: flex; gap: 1rem; width: 100%; flex-wrap: wrap;">
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="search-equipment">Buscar por Código ou Modelo</label>
+                            <input type="text" id="search-equipment" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="filter-group" style="flex: 1; min-width: 150px;">
+                            <label for="filter-equipment-type">Filtrar por Tipo</label>
+                            <select class="filter-input" id="filter-equipment-type" style="width: 100%;">
+                                <option value="">Todos os Tipos</option>
+                                <option value="tina">Tina</option>
+                                <option value="mesa_cadeiras">Mesa/Cadeira</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="flex: 1; min-width: 150px;">
+                            <label for="filter-equipment-status">Filtrar por Status</label>
+                            <select class="filter-input" id="filter-equipment-status" style="width: 100%;">
+                                <option value="">Todos os Status</option>
+                                <option value="disponivel">Disponível / Fábrica</option>
+                                <option value="alocado">Alocado (Em Cliente)</option>
+                                <option value="manutencao">Em Manutenção</option>
+                                <option value="inativo">Inativo / Descartado</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="freezer-grid" id="equipment-grid-container">
-                    <!-- Equipamentos inseridos dinamicamente via JS -->
+                <!-- Grade de Equipamentos -->
+                <div class="dashboard-panel" id="equipment-list-panel" style="padding: 1.25rem; margin-top: 1rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Equipamentos Cadastrados <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: EQP-02</span></h2>
+                    </div>
+                    <div class="freezer-grid" id="equipment-grid-container">
+                        <!-- Equipamentos inseridos dinamicamente via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -504,24 +571,38 @@
                 </div>
 
                 <!-- Barra de Filtros e Busca -->
-                <div class="filter-bar">
-                    <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <label for="search-rental">Buscar por Cliente, Tina ou Conjunto de Mesas</label>
-                        <input type="text" id="search-rental" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                <div class="filter-bar dashboard-panel" id="rental-filter-panel" style="margin-bottom: 1.5rem;">
+                    <div class="panel-header" style="margin-bottom: 8px; width: 100%;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin: 0; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <span>🔍 Filtros de Busca</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: TIN-01</span>
+                        </h3>
                     </div>
-                    <div class="filter-group">
-                        <label for="filter-rental-status">Filtrar por Status</label>
-                        <select class="filter-input" id="filter-rental-status">
-                            <option value="">Todos os Status</option>
-                            <option value="active">Em Andamento</option>
-                            <option value="returned">Devolvido</option>
-                            <option value="overdue">Atrasado</option>
-                        </select>
+                    <div style="display: flex; gap: 1rem; width: 100%; flex-wrap: wrap;">
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="search-rental">Buscar por Cliente, Tina ou Conjunto de Mesas</label>
+                            <input type="text" id="search-rental" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="filter-rental-status">Filtrar por Status</label>
+                            <select class="filter-input" id="filter-rental-status" style="width: 100%;">
+                                <option value="">Todos os Status</option>
+                                <option value="active">Em Andamento</option>
+                                <option value="returned">Devolvido</option>
+                                <option value="overdue">Atrasado</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="freezer-grid" id="rental-grid-container">
-                    <!-- Aluguéis inseridos dinamicamente via JS -->
+                <!-- Grade de Aluguéis -->
+                <div class="dashboard-panel" id="rental-list-panel" style="padding: 1.25rem; margin-top: 1rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Aluguéis em Andamento <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: TIN-02</span></h2>
+                    </div>
+                    <div class="freezer-grid" id="rental-grid-container">
+                        <!-- Aluguéis inseridos dinamicamente via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -535,24 +616,38 @@
                 </div>
 
                 <!-- Barra de Filtros e Busca -->
-                <div class="filter-bar">
-                    <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <label for="search-document">Buscar por Cliente</label>
-                        <input type="text" id="search-document" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                <div class="filter-bar dashboard-panel" id="document-filter-panel" style="margin-bottom: 1.5rem;">
+                    <div class="panel-header" style="margin-bottom: 8px; width: 100%;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin: 0; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <span>🔍 Filtros de Busca</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: DOC-01</span>
+                        </h3>
                     </div>
-                    <div class="filter-group">
-                        <label for="filter-document-type">Filtrar por Tipo</label>
-                        <select class="filter-input" id="filter-document-type">
-                            <option value="">Todos os Tipos</option>
-                            <option value="orcamento">Orçamento</option>
-                            <option value="recibo">Recibo</option>
-                            <option value="nota">Nota</option>
-                        </select>
+                    <div style="display: flex; gap: 1rem; width: 100%; flex-wrap: wrap;">
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="search-document">Buscar por Cliente</label>
+                            <input type="text" id="search-document" class="filter-input" placeholder="Digite para buscar..." style="width: 100%; padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="filter-group" style="flex: 1; min-width: 200px;">
+                            <label for="filter-document-type">Filtrar por Tipo</label>
+                            <select class="filter-input" id="filter-document-type" style="width: 100%;">
+                                <option value="">Todos os Tipos</option>
+                                <option value="orcamento">Orçamento</option>
+                                <option value="recibo">Recibo</option>
+                                <option value="nota">Nota</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="freezer-grid" id="document-grid-container">
-                    <!-- Documentos inseridos dinamicamente via JS -->
+                <!-- Grade de Documentos -->
+                <div class="dashboard-panel" id="document-list-panel" style="padding: 1.25rem; margin-top: 1rem;">
+                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Documentos Gerados <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: DOC-02</span></h2>
+                    </div>
+                    <div class="freezer-grid" id="document-grid-container">
+                        <!-- Documentos inseridos dinamicamente via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -560,9 +655,12 @@
             <section id="pedidos" class="tab-content">
                 <div class="pedidos-layout">
                     <!-- Fila de Pedidos -->
-                    <div class="pedidos-panel">
-                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                            <h2>Fila de Espera por Reabastecimento</h2>
+                    <div class="pedidos-panel dashboard-panel" id="pedidos-queue-panel">
+                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 1rem;">
+                            <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
+                                Fila de Espera por Reabastecimento
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: PED-01</span>
+                            </h2>
                             <div style="display: flex; gap: 8px;">
                                 <button type="button" class="btn btn-secondary" onclick="optimizeDeliveryRoute()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
                                     <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i> Otimizar Rota
@@ -583,10 +681,11 @@
                     <!-- Lado Direito: Sugestões de Visita e Configurações -->
                     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                         <!-- Rota no Mapa Interativo Leaflet -->
-                        <div class="pedidos-panel" style="height: fit-content;">
-                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <h2 style="display: flex; align-items: center; gap: 6px; color: var(--color-primary);">
+                        <div class="pedidos-panel dashboard-panel" id="pedidos-map-panel" style="height: fit-content;">
+                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 1rem;">
+                                <h2 style="display: flex; align-items: center; gap: 6px; color: var(--color-primary); margin: 0;">
                                     <i data-lucide="map" style="width: 16px; height: 16px;"></i> Mapa de Rotas Otimizado
+                                    <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: PED-02</span>
                                 </h2>
                                 <button type="button" class="btn btn-secondary" onclick="window.drawRouteOnLeafletMap()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; height: auto;">
                                     <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Atualizar
@@ -601,9 +700,12 @@
                         </div>
 
                         <!-- Sugestões de Visita de Hoje -->
-                        <div class="pedidos-panel" style="height: fit-content;">
-                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <h2>Sugestões de Visita de Hoje</h2>
+                        <div class="pedidos-panel dashboard-panel" id="pedidos-suggestions-panel" style="height: fit-content;">
+                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 0.5rem;">
+                                <h2 style="margin: 0; display: inline-flex; align-items: center; gap: 6px;">
+                                    Sugestões de Visita de Hoje
+                                    <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: PED-03</span>
+                                </h2>
                                 <button type="button" class="btn btn-secondary" onclick="addSuggestedVisitsToRoute()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; height: auto;">
                                     <i data-lucide="plus-circle" style="width: 12px; height: 12px;"></i> Roteirizar
                                 </button>
@@ -615,9 +717,12 @@
                         </div>
 
                         <!-- Configuração de Preços (Restrita) -->
-                        <div class="pedidos-panel" style="height: fit-content; border: 1px solid rgba(239, 68, 68, 0.15); background: rgba(9, 13, 22, 0.4);">
-                            <div class="panel-header">
-                                <h2>Preços e Configurações</h2>
+                        <div class="pedidos-panel dashboard-panel" id="pedidos-lock-notice-panel" style="height: fit-content; border: 1px solid rgba(239, 68, 68, 0.15); background: rgba(9, 13, 22, 0.4);">
+                            <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 1rem;">
+                                <h2 style="margin: 0; display: inline-flex; align-items: center; gap: 6px;">
+                                    Preços e Configurações
+                                    <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: PED-04</span>
+                                </h2>
                             </div>
                             <div style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
                                 <div style="background: rgba(239, 68, 68, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.25);">
@@ -638,28 +743,36 @@
             <!-- ================= TELA: HISTÓRICO DE ENTREGAS ================= -->
             <section id="historico" class="tab-content">
                 <!-- Barra de Filtros -->
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <label for="filter-client">Filtrar por Cliente</label>
-                        <select class="filter-input" id="filter-client">
-                            <option value="">Todos os Clientes</option>
-                        </select>
+                <div class="filter-bar dashboard-panel" id="history-filter-panel" style="margin-bottom: 1.5rem;">
+                    <div class="panel-header" style="margin-bottom: 8px; width: 100%;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin: 0; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <span>🔍 Filtros de Busca</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: HIS-02</span>
+                        </h3>
                     </div>
-                    
-                    <div class="filter-group">
-                        <label for="filter-product">Filtrar por Produto</label>
-                        <select class="filter-input" id="filter-product">
-                            <option value="">Todos os Produtos</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group" style="margin-left: auto;">
-                        <button class="btn btn-secondary" id="btn-clear-filters">Limpar Filtros</button>
+                    <div style="display: flex; gap: 1rem; width: 100%; flex-wrap: wrap; align-items: flex-end;">
+                        <div class="filter-group" style="flex: 1; min-width: 180px;">
+                            <label for="filter-client">Filtrar por Cliente</label>
+                            <select class="filter-input" id="filter-client" style="width: 100%;">
+                                <option value="">Todos os Clientes</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group" style="flex: 1; min-width: 180px;">
+                            <label for="filter-product">Filtrar por Produto</label>
+                            <select class="filter-input" id="filter-product" style="width: 100%;">
+                                <option value="">Todos os Produtos</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group" style="margin-left: auto;">
+                            <button class="btn btn-secondary" id="btn-clear-filters" style="height: 38px;">Limpar Filtros</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Tabela de Histórico -->
-                <div class="dashboard-panel" style="padding: 0; overflow: hidden;">
+                <div class="dashboard-panel" id="history-deliveries-panel" style="padding: 0; overflow: hidden;">
                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1rem 1.25rem;">
                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
                             Histórico de Entregas Realizadas
@@ -1130,7 +1243,7 @@
                         <!-- sub-aba: Catálogo de Itens -->
                         <div id="tab-catalogo" class="admin-subtab-content">
                             <!-- Catálogo de Produtos e Equipamentos -->
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-catalog-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Catálogo de Produtos & Equipamentos <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: CAT-01</span></h2>
@@ -1218,7 +1331,7 @@
 
                         <!-- sub-aba: Rentabilidade de Freezers -->
                         <div id="tab-rentabilidade-freezers" class="admin-subtab-content">
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-rentability-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
                                     <div>
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Análise de Rentabilidade de Freezers (ROI) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: RENT-01</span></h2>
@@ -1357,7 +1470,7 @@
                         <div id="tab-eventos-locais" class="admin-subtab-content">
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; width: 100%;">
                                 <!-- Calendário Administrativo -->
-                                <div class="dashboard-panel" style="flex: 1.2; min-width: 300px; max-width: 400px; width: 100%;">
+                                <div class="dashboard-panel" id="admin-calendar-panel" style="flex: 1.2; min-width: 300px; max-width: 400px; width: 100%;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                         <div style="display: inline-flex; align-items: center; gap: 8px;"><h4 id="admin-calendar-month-year" style="font-size: 0.85rem; font-weight: bold; color: #fff; margin: 0;">Janeiro 2026</h4><span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: EVE-01</span></div>
                                         <div style="display: flex; gap: 4px;">
@@ -1407,7 +1520,7 @@
                                 </div>
 
                                 <!-- Lista e Tabela de Eventos -->
-                                <div class="dashboard-panel" style="flex: 2; min-width: 320px; width: 100%;">
+                                <div class="dashboard-panel" id="admin-events-management-panel" style="flex: 2; min-width: 320px; width: 100%;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; width: 100%;">
                                         <div>
                                             <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gestão de Eventos Locais (Impacto de Demanda) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: EVE-02</span></h2>
@@ -1445,7 +1558,7 @@
                         <!-- sub-aba: Preços & Clientes -->
                         <div id="tab-precos" class="admin-subtab-content">
                             <!-- Preços Gerais da Fábrica -->
-                            <div class="dashboard-panel" style="max-width: 550px; margin-bottom: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-standard-prices-panel" style="max-width: 550px; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                     <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Preços Padrão de Venda & Aluguel <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: PRE-01</span></h2>
                                 </div>
@@ -1466,7 +1579,7 @@
                         <div id="tab-dados-fabrica" class="admin-subtab-content">
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
                                 <!-- Dados da Empresa / Fábrica -->
-                                <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-factory-info-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Dados da Fábrica / Distribuidora <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-01</span></h2>
                                         <button type="button" class="btn btn-secondary" onclick="autoFillFactorySettings()" style="padding: 6px 12px; font-size: 0.8rem;" title="Recarregar campos com os dados já salvos na memória">
@@ -1529,7 +1642,7 @@
                                 </div>
 
                                 <!-- Personalização da Aparência -->
-                                <div class="dashboard-panel" style="flex: 1; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-appearance-panel" style="flex: 1; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Aparência do Aplicativo <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-02</span></h2>
                                         <button type="button" class="btn btn-secondary" onclick="autoFillAppearanceSettings()" style="font-size: 0.75rem; padding: 5px 10px; height: auto; background: rgba(0, 240, 255, 0.1); border-color: var(--color-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;" title="Restaurar aparência padrão (Ciano Neon)">
@@ -1679,7 +1792,7 @@
                                 </div>
                                 
                                 <!-- Configurações de Widgets -->
-                                <div class="dashboard-panel" style="flex: 1; min-width: 320px; margin-top: 1.5rem;">
+                                <div class="dashboard-panel" id="admin-widgets-setup-panel" style="flex: 1; min-width: 320px; margin-top: 1.5rem;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Widgets do Dashboard <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-03</span></h2>
                                     </div>
@@ -1740,7 +1853,7 @@
 
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-top: 1.5rem; margin-bottom: 1.5rem;">
                                 <!-- Configurações de Impressora -->
-                                <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-print-settings-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Configuração de Impressão <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: IMP-02</span></h2>
                                     </div>
@@ -1778,7 +1891,7 @@
                                 </div>
 
                                 <!-- Guia de Instalação Móvel -->
-                                <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-print-guide-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Guia de Instalação: Impressora Térmica Móvel <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: IMP-03</span></h2>
                                     </div>
@@ -1869,7 +1982,7 @@
                             <!-- Nova Row: OneDrive, GitHub Pages e PWA -->
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
                                 <!-- Painel OneDrive & GitHub Pages -->
-                                <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-onedrive-sync-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="cloud" style="width: 16px; height: 16px;"></i> Integração OneDrive & GitHub Pages
@@ -1943,7 +2056,7 @@
                                 </div>
 
                                 <!-- Painel do Guia de Instalação PWA -->
-                                <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-pwa-guide-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                             <i data-lucide="download" style="width: 16px; height: 16px;"></i> Guia de Instalação PWA (App)
@@ -1997,7 +2110,7 @@
                             <!-- Seção de Backup & Gestão de Versões -->
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
                                 <!-- Configurações de Backup e Versão -->
-                                <div class="dashboard-panel" style="flex: 1.2; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-backup-settings-panel" style="flex: 1.2; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Backup & Versão do Aplicativo <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-04</span></h2>
                                     </div>
@@ -2034,7 +2147,7 @@
                                 </div>
 
                                 <!-- Histórico de Backups Locais -->
-                                <div class="dashboard-panel" style="flex: 1.5; min-width: 320px;">
+                                <div class="dashboard-panel" id="admin-browser-backups-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Histórico de Backups Internos (Navegador) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-05</span></h2>
                                     </div>
@@ -2053,18 +2166,18 @@
                                         </table>
                                         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
                                             <span style="font-size: 0.7rem; color: var(--color-text-muted);">
-                                                Ãšltimo Backup: <strong id="lbl-last-backup-date">-</strong>
+                                                Último Backup: <strong id="lbl-last-backup-date">-</strong>
                                             </span>
                                             <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
                                                 <i data-lucide="download" style="width: 13px; height: 13px;"></i> Fazer Backup Agora
                                             </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- Painel de Diagnóstico & Autoteste de Integração -->
-                            <div class="dashboard-panel" style="width: 100%; margin-top: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-system-diagnostics-panel" style="width: 100%; margin-top: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
                                         <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
@@ -2097,7 +2210,7 @@
                         <div id="tab-usuarios" class="admin-subtab-content">
 
                             <!-- Segurança do Administrador (movido para cá) -->
-                            <div class="dashboard-panel" style="margin-bottom: 1.5rem; max-width: 480px;">
+                            <div class="dashboard-panel" id="admin-security-settings-panel" style="margin-bottom: 1.5rem; max-width: 480px;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 8px;">
                                     <i data-lucide="shield" style="width: 16px; height: 16px; color: var(--color-primary);"></i>
                                     <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Segurança do Administrador <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: USU-01</span></h2>
@@ -2127,7 +2240,7 @@
                                 </form>
                             </div>
 
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-users-management-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                                     <div>
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Gerenciar Usuários & Senhas <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: USU-02</span></h2>
@@ -2158,7 +2271,7 @@
 
                         <!-- TAB: INTEGRAÇÃO MERCADO PAGO -->
                         <div id="tab-integracoes" class="admin-subtab-content">
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-pix-integration-panel" style="width: 100%; margin-bottom: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                     <div>
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Integração PIX (Automático &amp; Manual) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: INT-01</span></h2>
@@ -2235,7 +2348,7 @@
                                 </div>
                             </div>
                             
-                            <div class="dashboard-panel" style="width: 100%; margin-bottom: 1.5rem; margin-top: 1.5rem;">
+                            <div class="dashboard-panel" id="admin-whatsapp-integration-panel" style="width: 100%; margin-bottom: 1.5rem; margin-top: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                     <div>
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Integração WhatsApp API (Envio Automático) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: INT-02</span></h2>
@@ -2317,9 +2430,10 @@
                     <!-- Coluna da Esquerda: Catálogo e Carrinho -->
                     <div style="flex: 1.8; display: flex; flex-direction: column; gap: 1.5rem; min-width: 320px;">
                         <!-- Produtos Disponíveis -->
-                        <div class="dashboard-panel">
-                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="grid" style="width: 16px; height: 16px;"></i> Catálogo Rápido
+                        <div class="dashboard-panel" id="pdv-quick-catalog-panel">
+                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="grid" style="width: 16px; height: 16px;"></i> Catálogo Rápido</span>
+                                <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: PDV-01</span>
                             </h3>
                             <div id="pdv-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
                                 <!-- Preenchido via JS -->
@@ -2327,10 +2441,11 @@
                         </div>
 
                         <!-- Carrinho de Compras -->
-                        <div class="dashboard-panel">
-                            <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: flex; align-items: center; gap: 6px; margin: 0;">
+                        <div class="dashboard-panel" id="pdv-cart-items-panel">
+                            <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 8px;">
+                                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                                     <i data-lucide="shopping-bag" style="width: 16px; height: 16px;"></i> Itens no Carrinho
+                                    <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-secondary); border: 1px solid rgba(0,114,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: PDV-02</span>
                                 </h3>
                                 <button type="button" class="btn btn-secondary" onclick="clearPDVCart()" style="font-size: 0.75rem; padding: 4px 8px; height: auto; border-color: rgba(239, 68, 68, 0.2); color: #ef4444; background: rgba(239,68,68,0.05);">Limpar Carrinho</button>
                             </div>
@@ -2354,9 +2469,10 @@
                     </div>
 
                     <!-- Coluna da Direita: Checkout & Fechamento -->
-                    <div style="flex: 1.2; min-width: 320px;" class="dashboard-panel">
-                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="credit-card" style="width: 16px; height: 16px;"></i> Finalização da Venda
+                    <div style="flex: 1.2; min-width: 320px;" class="dashboard-panel" id="pdv-checkout-panel">
+                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="credit-card" style="width: 16px; height: 16px;"></i> Finalização da Venda</span>
+                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: PDV-03</span>
                         </h3>
                         
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -2435,9 +2551,10 @@
                 </div>
 
                 <!-- Painel de Ações Rápidas de Automação -->
-                <div class="dashboard-panel" style="margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                        <i data-lucide="cpu" style="width: 16px; height: 16px;"></i> Painel de Automação & Diagnóstico
+                <div class="dashboard-panel" id="support-automation-diagnostics-panel" style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                        <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="cpu" style="width: 16px; height: 16px;"></i> Painel de Automação & Diagnóstico</span>
+                        <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: AJU-01</span>
                     </h3>
                     <div class="support-actions-grid">
                         <!-- Card 1: Testar Conexão -->
@@ -2476,9 +2593,10 @@
                 </div>
 
                 <!-- Painel de Dúvidas Frequentes -->
-                <div class="dashboard-panel">
-                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                        <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i> Dúvidas & Perguntas Frequentes (FAQ)
+                <div class="dashboard-panel" id="support-faq-panel">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-secondary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                        <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="help-circle" style="width: 16px; height: 16px;"></i> Dúvidas & Perguntas Frequentes (FAQ)</span>
+                        <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-secondary); border: 1px solid rgba(0,114,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: AJU-02</span>
                     </h3>
                     
                     <div class="faq-list">
@@ -5716,7 +5834,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/app.js?v=13"></script>
 </body>
 </html>
 

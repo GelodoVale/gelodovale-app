@@ -25,6 +25,7 @@ import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil, getBrazilianHolid
 import { runClientDiagnostics } from './diagnostics.js';
 import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './pdv.js';
 import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry, syncDeliveryCarnetEntry, syncDocumentCarnetEntry } from './carne.js';
+import { initLayoutSystem, applyCurrentLayout } from './layout.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -203,6 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateQuickTogglesUI();
     initFirebase();
     checkOneDriveSync();
+    initLayoutSystem();
+    // (Migração de layout gerenciada automaticamente em state.js via layoutVersion)
 
     // Inicializar o modo Sol Forte (Alto Contraste) se salvo
     const savedContrast = localStorage.getItem("highContrastTheme");
@@ -628,6 +631,13 @@ export function renderTabContent(tab) {
     
     // Sempre re-inicializar o efeito 3D Tilt para novos elementos renderizados
     if (window.init3DTilt) window.init3DTilt();
+    
+    // Aplica as posições e estado de layout ajustáveis das janelas/painéis
+    if (window.applyCurrentLayout) {
+        window.applyCurrentLayout();
+    } else {
+        applyCurrentLayout();
+    }
 }
 
 export function renderApp() {
@@ -4331,3 +4341,4 @@ export function changeAdminCalendarMonth(dir) {
 window.renderAdminEventCalendar = renderAdminEventCalendar;
 window.changeAdminCalendarMonth = changeAdminCalendarMonth;
 window.refreshAdminCalendar = () => renderAdminEventCalendar(adminCalendarYear, adminCalendarMonth);
+window.applyCurrentLayout = applyCurrentLayout;

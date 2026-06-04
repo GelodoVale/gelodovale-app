@@ -1,5 +1,6 @@
 import { state, saveState, saveStateLocalOnly } from './state.js';
 import { formatCurrency } from './utils.js';
+import { applyCurrentLayout } from './layout.js';
 
 // Inicialização de Estado Padrão dos Widgets
 function initWidgetsState() {
@@ -211,6 +212,11 @@ export function renderWidgets() {
     
     // Iniciar listeners de Drag & Drop
     initWidgetDragAndDrop();
+
+    // Re-aplicar layout (caso esteja em modo flutuante ou grade)
+    if (typeof applyCurrentLayout === 'function') {
+        applyCurrentLayout();
+    }
 }
 
 // 1. Relógio
@@ -218,8 +224,10 @@ function getClockHTML(theme) {
     const isDigital = theme.startsWith('digital');
     if (isDigital) {
         return `
-        <div class="widget-card size-small" draggable="true" data-widget-key="clock">
-            <div class="widget-header"><h3><i data-lucide="clock"></i> Relógio Local</h3></div>
+        <div class="widget-card dashboard-panel size-small" id="widget-clock" data-widget-key="clock">
+            <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="clock"></i> Relógio Local <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-01</span></h3>
+            </div>
             <div class="widget-body">
                 <div class="digital-clock-widget ${theme}">
                     <div class="digital-clock-time" id="widget-digital-time">00:00:00</div>
@@ -229,8 +237,10 @@ function getClockHTML(theme) {
         </div>`;
     } else {
         return `
-        <div class="widget-card size-small" draggable="true" data-widget-key="clock">
-            <div class="widget-header"><h3><i data-lucide="clock"></i> Horário</h3></div>
+        <div class="widget-card dashboard-panel size-small" id="widget-clock" data-widget-key="clock">
+            <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="clock"></i> Horário <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-01</span></h3>
+            </div>
             <div class="widget-body">
                 <div class="analog-clock-container">
                     <div class="analog-clock ${theme}">
@@ -290,8 +300,10 @@ function initClockLogic(theme) {
 // 2. Clima
 function getWeatherHTML() {
     return `
-    <div class="widget-card size-small" draggable="true" data-widget-key="weather">
-        <div class="widget-header"><h3><i data-lucide="cloud"></i> Clima</h3></div>
+    <div class="widget-card dashboard-panel size-small" id="widget-weather" data-widget-key="weather">
+        <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="cloud"></i> Clima <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-02</span></h3>
+        </div>
         <div class="widget-body">
             <div class="weather-widget">
                 <div class="weather-detailed-card" id="widget-weather-content">
@@ -413,8 +425,10 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
 // 3. Meta de Vendas
 function getSalesGoalHTML() {
     return `
-    <div class="widget-card size-small" draggable="true" data-widget-key="salesGoal">
-        <div class="widget-header"><h3><i data-lucide="target"></i> Meta do Mês</h3></div>
+    <div class="widget-card dashboard-panel size-small" id="widget-salesGoal" data-widget-key="salesGoal">
+        <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="target"></i> Meta do Mês <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-03</span></h3>
+        </div>
         <div class="widget-body">
             <div class="sales-goal-widget">
                 <div class="circular-progress-container">
@@ -482,8 +496,10 @@ function initSalesGoalLogic() {
 // 4. Calculadora
 function getSalesCalcHTML() {
     return `
-    <div class="widget-card size-small" draggable="true" data-widget-key="salesCalc">
-        <div class="widget-header"><h3><i data-lucide="calculator"></i> Calc. Rápida</h3></div>
+    <div class="widget-card dashboard-panel size-small" id="widget-salesCalc" data-widget-key="salesCalc">
+        <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="calculator"></i> Calc. Rápida <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-04</span></h3>
+        </div>
         <div class="widget-body">
             <div class="sales-calc-widget">
                 <div class="sales-calc-display" id="widget-calc-display">0</div>
@@ -546,10 +562,11 @@ function initSalesCalcLogic() {
 // 5. Bloco de Notas
 function getNotepadHTML(theme) {
     return `
-    <div class="widget-card size-medium" draggable="true" data-widget-key="notepad">
-        <div class="widget-header">
-            <h3><i data-lucide="pen-tool"></i> Lembretes Rápidos</h3>
-            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Salvo na nuvem</span>
+    <div class="widget-card dashboard-panel size-medium" id="widget-notepad" data-widget-key="notepad">
+        <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; width: 100%;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 6px;"><i data-lucide="pen-tool"></i> Lembretes Rápidos</h3>
+            <span style="font-size: 0.7rem; color: var(--color-text-muted); margin-left: 6px;">Salvo na nuvem</span>
+            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-05</span>
         </div>
         <div class="widget-body" style="align-items: stretch;">
             <div class="${theme}" style="flex:1; display:flex; flex-direction:column;">
@@ -724,9 +741,9 @@ function getBirthdaysHTML() {
     }
 
     return `
-        <div class="widget-card size-small" draggable="true" data-widget-key="birthdays">
-            <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
-                <h3><i data-lucide="cake" style="color: #ff5e00;"></i> Aniversários da Semana</h3>
+        <div class="widget-card dashboard-panel size-small" id="widget-birthdays" data-widget-key="birthdays">
+            <div class="widget-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 6px; width: 100%;"><i data-lucide="cake" style="color: #ff5e00;"></i> Aniversários da Semana <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto;">COD: WID-06</span></h3>
             </div>
             <div class="widget-body" style="padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;">
                 ${listHTML}

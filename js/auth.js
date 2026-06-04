@@ -24,7 +24,7 @@ export function initUserAccessControl() {
             id: "admin",
             username: "admin",
             name: "Administrador",
-            password: state.adminPassword || "1120M@z@dr1",
+            password: state.adminPassword || "1234qwer",
             permissions: {}
         };
         state.users.unshift(adminUser);
@@ -35,7 +35,7 @@ export function initUserAccessControl() {
     adminUser.username = "admin";
     adminUser.name = "Administrador";
     if (!adminUser.password) {
-        adminUser.password = state.adminPassword || "1120M@z@dr1";
+        adminUser.password = state.adminPassword || "1234qwer";
     } else {
         state.adminPassword = adminUser.password;
     }
@@ -577,7 +577,7 @@ export function toggleSelectAllPermissions(checked) {
 }
 
 export function recoverAdminPassword() {
-    const confirmMessage = "Deseja redefinir a senha do Administrador ('admin') para a senha de fábrica (1120M@z@dr1)? Isso restaurará seu acesso caso a senha tenha sido esquecida ou perdida.";
+    const confirmMessage = "Deseja redefinir a senha do Administrador ('admin') para a senha de fábrica (1234qwer)? Isso restaurará seu acesso caso a senha tenha sido esquecida ou perdida.";
     const proceedReset = () => {
         if (!state.users) state.users = [];
         let adminUser = state.users.find(u => u.username === "admin");
@@ -591,15 +591,15 @@ export function recoverAdminPassword() {
             };
             state.users.unshift(adminUser);
         } else {
-            adminUser.password = "1120M@z@dr1";
+            adminUser.password = "1234qwer";
         }
-        state.adminPassword = "1120M@z@dr1";
+        state.adminPassword = "1234qwer";
         saveState();
         
         if (window.showToast) {
-            window.showToast("Senha do Administrador redefinida para: 1120M@z@dr1", "success");
+            window.showToast("Senha do Administrador redefinida para: 1234qwer", "success");
         } else {
-            alert("Senha do Administrador redefinida para: 1120M@z@dr1");
+            alert("Senha do Administrador redefinida para: 1234qwer");
         }
         
         // Limpar campo de senha
