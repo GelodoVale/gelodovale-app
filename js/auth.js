@@ -685,12 +685,10 @@ export function clearAppCacheAndReload() {
             return Promise.all(keys.map(key => caches.delete(key)));
         }).then(() => {
             sessionStorage.clear();
-            localStorage.removeItem("gelcontrol_state"); // clear corrupted local state to force cloud fetch
             window.location.reload();
         });
     } else {
         sessionStorage.clear();
-        localStorage.removeItem("gelcontrol_state");
         window.location.reload();
     }
 }

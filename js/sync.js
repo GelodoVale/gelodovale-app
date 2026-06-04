@@ -372,6 +372,7 @@ export async function checkOneDriveSync() {
                     console.log("OneDrive backup is newer. Restoring data automatically...");
                     updateState(actualData);
                     saveStateLocalOnly();
+                    if (window.applyAppearanceTheme) window.applyAppearanceTheme();
                     renderApp();
                     showOneDriveToast("Dados do OneDrive carregados automaticamente!");
                 }

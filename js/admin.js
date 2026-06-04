@@ -621,7 +621,10 @@ export function applyBackupData(payload) {
         state.users = d.users || [];
         
         if (d.factorySettings) state.factorySettings = d.factorySettings;
-        if (d.appearance) state.appearance = d.appearance;
+        if (d.appearance) {
+            state.appearance = d.appearance;
+            applyAppearanceTheme(state.appearance);
+        }
         if (d.widgets) state.widgets = d.widgets;
 
         if (payload.version && state.backupSettings) {
