@@ -1854,6 +1854,35 @@ export function processReceivePayment(event) {
         
         if (!state.payments) state.payments = [];
         state.payments.push(payment);
+
+        // Alocar o pagamento nas parcelas do carnê (mais antigas primeiro) via FIFO
+        if (!client.carnet) client.carnet = [];
+        let remaining = amount;
+        const unpaid = client.carnet
+            .filter(e => !e.paid)
+            .sort((a, b) => new Date(a.dueDate || a.createdAt) - new Date(b.dueDate || b.createdAt));
+            
+        for (const entry of unpaid) {
+            if (remaining <= 0) break;
+            if (remaining >= entry.amount) {
+                entry.paid = true;
+                entry.paidDate = window.getBrazilTimeISO();
+                remaining -= entry.amount;
+            } else {
+                entry.amount -= remaining;
+                client.carnet.push({
+                    id: 'cr-part-' + Date.now() + '-' + Math.random().toString().slice(-4),
+                    amount: remaining,
+                    description: `${entry.description} (Parcial)`,
+                    dueDate: entry.dueDate,
+                    paid: true,
+                    paidDate: window.getBrazilTimeISO(),
+                    createdAt: window.getBrazilTimeISO()
+                });
+                remaining = 0;
+            }
+        }
+
         saveState();
         if (window.renderApp) window.renderApp();
         if (window.closeModal) window.closeModal('modal-receive-payment');

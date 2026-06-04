@@ -767,34 +767,94 @@ export function loadState() {
     }
     if (newFieldsChanged) saveStateLocalOnly();
     
+    migrateLegacyDebtsToCarnet();
     migrateLegacyComodatos();
     initUserAccessControl();
 }
 
 export function recalculateClientDebts() {
     if (!state.clients) return;
-    state.clients.forEach(c => { c.outstandingDebt = 0; });
-    if (state.deliveries) {
-        state.deliveries.forEach(d => {
-            if (d.paymentMethod === "A Prazo") {
-                const c = state.clients.find(item => item.id === d.clientId);
-                if (c) c.outstandingDebt = (c.outstandingDebt || 0) + (d.revenue || 0);
+    state.clients.forEach(c => {
+        if (!c.carnet) c.carnet = [];
+        c.outstandingDebt = c.carnet
+            .filter(e => !e.paid)
+            .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    });
+}
+
+export function migrateLegacyDebtsToCarnet() {
+    if (!state.clients) return;
+    let migratedAny = false;
+    
+    state.clients.forEach(c => {
+        if (!c.carnet) c.carnet = [];
+        if (c.carnet.length > 0) return; // já migrado ou possui lançamentos
+        
+        // 1. Coletar entregas a prazo
+        const clientDeliveries = (state.deliveries || []).filter(d => d.clientId === c.id && d.paymentMethod === "A Prazo");
+        clientDeliveries.forEach(d => {
+            const dateStr = d.date ? new Date(d.date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+            c.carnet.push({
+                id: 'cr-mig-del-' + d.id,
+                amount: parseFloat(d.revenue) || 0,
+                description: `Entrega em ${dateStr}`,
+                dueDate: d.date ? d.date.split('T')[0] : new Date().toISOString().split('T')[0],
+                paid: false,
+                paidDate: null,
+                createdAt: d.date || new Date().toISOString()
+            });
+            migratedAny = true;
+        });
+        
+        // 2. Coletar documentos a prazo
+        const clientDocs = (state.documents || []).filter(doc => doc.clientId === c.id && (doc.type === "recibo" || doc.type === "nota") && doc.paymentMethod === "A Prazo");
+        clientDocs.forEach(doc => {
+            const dateStr = doc.date ? new Date(doc.date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+            c.carnet.push({
+                id: 'cr-mig-doc-' + doc.id,
+                amount: parseFloat(doc.total) || 0,
+                description: `${doc.type === "nota" ? "Nota" : "Recibo"} em ${dateStr}`,
+                dueDate: doc.date || new Date().toISOString().split('T')[0],
+                paid: false,
+                paidDate: null,
+                createdAt: doc.date ? doc.date + 'T12:00:00' : new Date().toISOString()
+            });
+            migratedAny = true;
+        });
+        
+        // 3. Ordenar o carnê por data de criação
+        c.carnet.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        
+        // 4. Aplicar pagamentos existentes via FIFO
+        const clientPayments = (state.payments || []).filter(p => p.clientId === c.id);
+        clientPayments.forEach(p => {
+            let remaining = parseFloat(p.amount) || 0;
+            const unpaid = c.carnet.filter(e => !e.paid);
+            for (const entry of unpaid) {
+                if (remaining <= 0) break;
+                if (remaining >= entry.amount) {
+                    entry.paid = true;
+                    entry.paidDate = p.date || new Date().toISOString();
+                    remaining -= entry.amount;
+                } else {
+                    entry.amount -= remaining;
+                    c.carnet.push({
+                        id: 'cr-mig-part-' + Date.now() + '-' + Math.random().toString().slice(-4),
+                        amount: remaining,
+                        description: `${entry.description} (Parcial)`,
+                        dueDate: entry.dueDate,
+                        paid: true,
+                        paidDate: p.date || new Date().toISOString(),
+                        createdAt: p.date || new Date().toISOString()
+                    });
+                    remaining = 0;
+                }
             }
         });
-    }
-    if (state.documents) {
-        state.documents.forEach(doc => {
-            if ((doc.type === "recibo" || doc.type === "nota") && doc.paymentMethod === "A Prazo") {
-                const c = state.clients.find(item => item.id === doc.clientId);
-                if (c) c.outstandingDebt = (c.outstandingDebt || 0) + (doc.total || 0);
-            }
-        });
-    }
-    if (state.payments) {
-        state.payments.forEach(p => {
-            const c = state.clients.find(item => item.id === p.clientId);
-            if (c) c.outstandingDebt = (c.outstandingDebt || 0) - (p.amount || 0);
-        });
+    });
+    
+    if (migratedAny) {
+        saveStateLocalOnly();
     }
 }
 

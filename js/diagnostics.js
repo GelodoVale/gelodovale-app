@@ -263,6 +263,47 @@ export function runFullDiagnostic() {
         log("Frente de Caixa (PDV Balcão)", "error", e.message);
     }
 
+    // 14. Integração Mercado Pago (PIX Automático)
+    try {
+        const enabled = state.mercadoPago && state.mercadoPago.enabled;
+        const token = state.mercadoPago && state.mercadoPago.accessToken;
+        if (enabled) {
+            if (!token) {
+                throw new Error("Integração ativa, mas Access Token está vazio!");
+            }
+            if (!token.startsWith("APP_USR-")) {
+                log("Integração Mercado Pago", "warning", "Integração ativa, mas o Access Token não começa com 'APP_USR-'. Verifique se é uma chave de Produção válida.");
+            } else {
+                log("Integração Mercado Pago", "success", "Integração ativada e formato do Access Token validado.");
+            }
+        } else {
+            log("Integração Mercado Pago", "success", "Integração automática desativada (Usando PIX Manual/Local).");
+        }
+    } catch (e) {
+        log("Integração Mercado Pago", "error", e.message);
+    }
+
+    // 15. Integração WhatsApp API (Envio Automático)
+    try {
+        const enabled = state.whatsapp && state.whatsapp.enabled;
+        const provider = state.whatsapp && state.whatsapp.provider;
+        const url = state.whatsapp && state.whatsapp.url;
+        const token = state.whatsapp && state.whatsapp.token;
+        if (enabled) {
+            if (!url) {
+                throw new Error("Envio automático ativo, mas a URL da Instância/Endpoint está vazia!");
+            }
+            if (!token && provider !== "generic") {
+                throw new Error(`WhatsApp ativo com ${provider.toUpperCase()}, mas o Token/API Key está vazio!`);
+            }
+            log("Integração WhatsApp API", "success", `Envio automático ativo via provedor: ${provider.toUpperCase()}. URL e tokens configurados.`);
+        } else {
+            log("Integração WhatsApp API", "success", "Envio automático desativado (Utilizando fallback manual via WhatsApp Web).");
+        }
+    } catch (e) {
+        log("Integração WhatsApp API", "error", e.message);
+    }
+
     return {
         results,
         passed,

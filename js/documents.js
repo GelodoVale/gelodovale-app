@@ -225,6 +225,14 @@ export function deleteDocument(docId) {
         "Deseja realmente excluir este documento comercial?",
         () => {
             state.documents = state.documents.filter(d => d.id !== docId);
+            
+            // Também remover parcela correspondente do carnê
+            state.clients.forEach(c => {
+                if (c.carnet) {
+                    c.carnet = c.carnet.filter(e => e.id !== 'cr-doc-' + docId);
+                }
+            });
+            
             saveState();
             if (window.renderApp) window.renderApp();
             window.showToast("Documento comercial excluído com sucesso!", "success");

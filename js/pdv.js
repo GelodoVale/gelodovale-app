@@ -1,6 +1,7 @@
 // --- LOGICA DO MODO BALCÃO / PDV RAPIDO ---
 import { state, saveState } from './state.js';
 import { getBrazilTimeISO } from './utils.js';
+import { syncDeliveryCarnetEntry } from './carne.js';
 
 // Estado local do carrinho do PDV
 let pdvCart = [];
@@ -455,9 +456,9 @@ export function checkoutPDVSale() {
     if (!state.deliveries) state.deliveries = [];
     state.deliveries.push(newDelivery);
     
-    // Se selecionado cliente e pago "A Prazo", adiciona ao débito
-    if (paymentMethod === "A Prazo" && client) {
-        client.outstandingDebt = (client.outstandingDebt || 0) + totalVal;
+    // Se selecionado cliente e pago "A Prazo", sincroniza a parcela no carnê
+    if (client) {
+        syncDeliveryCarnetEntry(newDelivery);
     }
     
     saveState();
@@ -467,10 +468,13 @@ export function checkoutPDVSale() {
     if (window.triggerConfetti) window.triggerConfetti(items);
     if (window.triggerHaptic) window.triggerHaptic('success');
     
-    if (window.showToast) window.showToast(`Venda Balcão finalizada! R$ ${totalVal.toFixed(2)} (${paymentMethod}).`, "success");
-    
     // Exibir comprovante rápido pós-venda com WhatsApp e impressão térmica
     sharePDVSaleWhatsApp(newDelivery, client);
+
+    // Se for pagamento via PIX, abrir o QR Code estático local para escanear imediatamente no balcão
+    if (paymentMethod === "Pix" && window.showLocalPixModal) {
+        window.showLocalPixModal(clientName, totalVal);
+    }
 
     // Resetar carrinho e atualizar interface
     initPDV();

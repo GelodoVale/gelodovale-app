@@ -24,7 +24,7 @@ import { initFirebase, checkOneDriveSync } from './sync.js';
 import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil, getBrazilianHolidays } from './utils.js';
 import { runClientDiagnostics } from './diagnostics.js';
 import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './pdv.js';
-import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry } from './carne.js';
+import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry, syncDeliveryCarnetEntry, syncDocumentCarnetEntry } from './carne.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -1095,24 +1095,7 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps, photoBase64
     };
     
     state.deliveries.push(newDelivery);
-    
-    if (paymentMethod === "A Prazo") {
-        client.outstandingDebt = (client.outstandingDebt || 0) + revenue;
-        // Criar entrada no carnê automaticamente
-        if (!client.carnet) client.carnet = [];
-        const dateStr = new Date().toLocaleDateString('pt-BR');
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 10);
-        client.carnet.push({
-            id: 'cr-' + Date.now(),
-            amount: revenue,
-            description: `Entrega em ${dateStr}`,
-            dueDate: dueDate.toISOString().split('T')[0],
-            paid: false,
-            paidDate: null,
-            createdAt: new Date().toISOString()
-        });
-    }
+    syncDeliveryCarnetEntry(newDelivery);
     
     state.orders = state.orders.filter(o => o.id !== orderId);
     
@@ -1229,6 +1212,14 @@ export function deleteDelivery(deliveryId) {
         "Excluir este registro apagará os dados de faturamento associados. O estoque do freezer do cliente não será alterado retroativamente. Confirmar?",
         () => {
             state.deliveries = state.deliveries.filter(d => d.id !== deliveryId);
+            
+            // Também remover parcela correspondente do carnê
+            state.clients.forEach(c => {
+                if (c.carnet) {
+                    c.carnet = c.carnet.filter(e => e.id !== 'cr-del-' + deliveryId);
+                }
+            });
+            
             saveState();
             renderApp();
             showToast("Registro de entrega removido com sucesso!", "success");
@@ -2221,6 +2212,7 @@ export function initForms() {
                             docLogisticsFuelConsumption, docLogisticsMarkupPercent, docLogisticsMarkupFixed,
                             docLogisticsTollReturn
                         };
+                        syncDocumentCarnetEntry(state.documents[idx]);
                     }
                 } else {
                     const newDoc = {
@@ -2243,6 +2235,7 @@ export function initForms() {
                             deductPackagingStock(productId, qtyFardos, qtyUnits, `${type === "nota" ? "Nota" : "Recibo"}: ${newDoc.id}`);
                         });
                     }
+                    syncDocumentCarnetEntry(newDoc);
                 }
 
                 saveState();

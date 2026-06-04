@@ -174,7 +174,19 @@ export function payCarneEntry(clientId, entryId) {
         () => {
             entry.paid = true;
             entry.paidDate = new Date().toISOString();
-            client.outstandingDebt = Math.max(0, (client.outstandingDebt || 0) - entry.amount);
+            
+            // Registrar em state.payments para manter histórico e visibilidade de fluxo de caixa
+            if (!state.payments) state.payments = [];
+            state.payments.push({
+                id: "pay-" + Date.now(),
+                clientId: clientId,
+                clientName: client.name,
+                amount: entry.amount,
+                paymentMethod: "Dinheiro",
+                date: new Date().toISOString(),
+                gps: null
+            });
+            
             saveState();
             if (window.showToast) window.showToast('Pagamento registrado! Saldo atualizado.', 'success');
             openCarneModal(clientId);
@@ -333,3 +345,106 @@ export function sendClientDebtWhatsApp(clientId, debtAmount) {
 
 window.sendCarneBillingWhatsApp = sendCarneBillingWhatsApp;
 window.sendClientDebtWhatsApp = sendClientDebtWhatsApp;
+
+export function syncDeliveryCarnetEntry(delivery) {
+    if (!delivery) return;
+    const clientId = delivery.clientId;
+    const carnetId = 'cr-del-' + delivery.id;
+    const isAPrazo = delivery.paymentMethod === "A Prazo";
+
+    // Garantir que nenhum outro cliente tenha essa parcela
+    state.clients.forEach(c => {
+        if (c.id !== clientId && c.carnet) {
+            c.carnet = c.carnet.filter(e => e.id !== carnetId);
+        }
+    });
+
+    if (!clientId || clientId === "c-balcao") return;
+    const client = (state.clients || []).find(c => c.id === clientId);
+    if (!client) return;
+    if (!client.carnet) client.carnet = [];
+
+    const idx = client.carnet.findIndex(e => e.id === carnetId);
+
+    if (isAPrazo) {
+        const dateStr = delivery.date ? new Date(delivery.date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+        const dueDate = new Date(delivery.date || Date.now());
+        dueDate.setDate(dueDate.getDate() + 10);
+
+        const entryData = {
+            id: carnetId,
+            amount: delivery.revenue || 0,
+            description: `Entrega em ${dateStr}`,
+            dueDate: dueDate.toISOString().split('T')[0],
+            paid: false,
+            paidDate: null,
+            createdAt: delivery.date || new Date().toISOString()
+        };
+
+        if (idx === -1) {
+            client.carnet.push(entryData);
+        } else {
+            if (!client.carnet[idx].paid) {
+                client.carnet[idx].amount = entryData.amount;
+                client.carnet[idx].description = entryData.description;
+            }
+        }
+    } else {
+        if (idx !== -1 && !client.carnet[idx].paid) {
+            client.carnet.splice(idx, 1);
+        }
+    }
+}
+
+export function syncDocumentCarnetEntry(doc) {
+    if (!doc) return;
+    const clientId = doc.clientId;
+    const carnetId = 'cr-doc-' + doc.id;
+    const isAPrazo = doc.paymentMethod === "A Prazo" && (doc.type === "recibo" || doc.type === "nota");
+
+    // Limpar o carnê de qualquer outro cliente
+    state.clients.forEach(c => {
+        if (c.id !== clientId && c.carnet) {
+            c.carnet = c.carnet.filter(e => e.id !== carnetId);
+        }
+    });
+
+    if (!clientId) return;
+    const client = (state.clients || []).find(c => c.id === clientId);
+    if (!client) return;
+    if (!client.carnet) client.carnet = [];
+
+    const idx = client.carnet.findIndex(e => e.id === carnetId);
+
+    if (isAPrazo) {
+        const dateStr = doc.date ? new Date(doc.date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+        const dueDate = new Date(doc.date ? doc.date + 'T12:00:00' : Date.now());
+        dueDate.setDate(dueDate.getDate() + 10);
+
+        const entryData = {
+            id: carnetId,
+            amount: doc.total || 0,
+            description: `${doc.type === "nota" ? "Nota" : "Recibo"} em ${dateStr}`,
+            dueDate: dueDate.toISOString().split('T')[0],
+            paid: false,
+            paidDate: null,
+            createdAt: doc.date ? doc.date + 'T12:00:00' : new Date().toISOString()
+        };
+
+        if (idx === -1) {
+            client.carnet.push(entryData);
+        } else {
+            if (!client.carnet[idx].paid) {
+                client.carnet[idx].amount = entryData.amount;
+                client.carnet[idx].description = entryData.description;
+            }
+        }
+    } else {
+        if (idx !== -1 && !client.carnet[idx].paid) {
+            client.carnet.splice(idx, 1);
+        }
+    }
+}
+
+window.syncDeliveryCarnetEntry = syncDeliveryCarnetEntry;
+window.syncDocumentCarnetEntry = syncDocumentCarnetEntry;
