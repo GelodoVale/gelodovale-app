@@ -36,11 +36,37 @@ export let state = {
     ignoredSpikes: []
 };
 
-export function updateState(newState) {
+export function updateState(newState, preserveConfigs = false) {
     // Usar Object.assign preserva a referência do objeto original,
     // evitando que módulos que já importaram 'state' fiquem com dados antigos
+    let savedConfigs = {};
+    if (preserveConfigs) {
+        const keysToPreserve = [
+            'users', 'factorySettings', 'backupSettings', 'appearance', 
+            'printSettings', 'logisticsSettings', 'firebaseConfig', 
+            'localBackups', 'adminPassword', 'notepadText', 'calendarNotes',
+            'localEvents', 'ignoredSpikes'
+        ];
+        keysToPreserve.forEach(key => {
+            if (state[key] !== undefined) {
+                try {
+                    savedConfigs[key] = JSON.parse(JSON.stringify(state[key]));
+                } catch (e) {
+                    savedConfigs[key] = state[key];
+                }
+            }
+        });
+    }
+
     Object.keys(state).forEach(k => delete state[k]);
     Object.assign(state, newState);
+
+    if (preserveConfigs) {
+        Object.keys(savedConfigs).forEach(key => {
+            state[key] = savedConfigs[key];
+        });
+    }
+
     normalizeStateArrays();
     initializeDefaultFields();
     initUserAccessControl();

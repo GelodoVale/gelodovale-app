@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Deseja carregar os dados de demonstração? Isso substituirá as informações atuais.",
                 () => {
                     const mockCopy = JSON.parse(JSON.stringify(MOCK_DATA));
-                    updateState(mockCopy);
+                    updateState(mockCopy, true);
                     saveState();
                     renderApp();
                     window.showToast("Dados de demonstração carregados com sucesso!", "success");
