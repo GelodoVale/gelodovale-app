@@ -78,7 +78,7 @@
                     <label for="login-password" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted); font-weight: 600;">Senha</label>
                     <div style="position: relative;">
                         <input type="password" id="login-password" class="form-control" placeholder="Digite a senha" required style="padding-right: 40px; text-align: center; letter-spacing: 4px; font-size: 1.1rem; height: 42px;">
-                        <button type="button" id="btn-toggle-login-pwd" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                        <button type="button" id="btn-toggle-login-pwd" onclick="togglePasswordVisibility('login-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Mostrar/Ocultar senha">
                             <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                         </button>
                     </div>
@@ -2107,7 +2107,7 @@
                                         <label for="cfg-current-pwd">Senha Atual</label>
                                         <div style="position: relative;">
                                             <input type="password" id="cfg-current-pwd" class="form-control" required placeholder="Digite a senha atual" style="padding-right: 40px;">
-                                            <button type="button" id="btn-toggle-cfg-current-pwd" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                                            <button type="button" id="btn-toggle-cfg-current-pwd" onclick="togglePasswordVisibility('cfg-current-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Mostrar/Ocultar senha">
                                                 <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                                             </button>
                                         </div>
@@ -2116,7 +2116,7 @@
                                         <label for="cfg-new-pwd">Nova Senha</label>
                                         <div style="position: relative;">
                                             <input type="password" id="cfg-new-pwd" class="form-control" required placeholder="Mínimo 4 caracteres" style="padding-right: 40px;">
-                                            <button type="button" id="btn-toggle-cfg-new-pwd" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                                            <button type="button" id="btn-toggle-cfg-new-pwd" onclick="togglePasswordVisibility('cfg-new-pwd', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Mostrar/Ocultar senha">
                                                 <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                                             </button>
                                         </div>
@@ -4946,7 +4946,7 @@
                         <label for="user-password">Senha de Acesso *</label>
                         <div style="position: relative;">
                             <input type="password" id="user-password" class="form-control" placeholder="Digite a senha" required style="padding-right: 40px;">
-                            <button type="button" id="btn-toggle-modal-pwd" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                            <button type="button" id="btn-toggle-modal-pwd" onclick="togglePasswordVisibility('user-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Mostrar/Ocultar senha">
                                 <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                             </button>
                         </div>

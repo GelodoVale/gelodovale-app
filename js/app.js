@@ -93,6 +93,28 @@ function _dismissToast(toast) {
 }
 
 /**
+ * Alterna a visibilidade de um campo de senha (password <-> text) e atualiza o ícone do Lucide.
+ * @param {string} inputId ID do input de senha
+ * @param {HTMLElement} btn O botão que foi clicado
+ */
+window.togglePasswordVisibility = function(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = `<i data-lucide="eye-off" style="width: 16px; height: 16px;"></i>`;
+    } else {
+        input.type = 'password';
+        btn.innerHTML = `<i data-lucide="eye" style="width: 16px; height: 16px;"></i>`;
+    }
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+};
+
+
+/**
  * Substitui o confirm() nativo por um modal bonito e não-bloqueante.
  * @param {string} message     Texto da pergunta
  * @param {Function} onConfirm Callback se confirmar
