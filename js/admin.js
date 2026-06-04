@@ -2691,46 +2691,41 @@ export function deleteProduct(productId) {
 }
 
 export function autoFillFactorySettings() {
-    if (!state.factorySettings) {
-        state.factorySettings = {};
-    }
-    state.factorySettings.name = "GELO DO VALE INDÚSTRIA DE GELO LTDA.";
-    state.factorySettings.cnpj = "65.007.307/0001-60";
-    state.factorySettings.phone = "(12) 99887-6655";
-    state.factorySettings.address = "Vale do Paraíba, São José dos Campos - SP";
-    state.factorySettings.email = "contato@gelodovale.com.br";
-    state.factorySettings.pixKey = "65.007.307/0001-60";
-    state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
+    // Preenche apenas os campos do formulário com os dados oficiais padrão da Gelo do Vale.
+    // NÃO altera state.factorySettings nem salva automaticamente — o usuário precisa
+    // clicar em "Salvar" para persistir as alterações.
+    const defaultData = {
+        name: "GELO DO VALE INDÚSTRIA DE GELO LTDA.",
+        cnpj: "65.007.307/0001-60",
+        phone: "(12) 99887-6655",
+        address: "Vale do Paraíba, São José dos Campos - SP",
+        email: "contato@gelodovale.com.br",
+        pixKey: "65.007.307/0001-60",
+        rentalTerms: "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR."
+    };
 
-    // Update form elements
     const nameEl = document.getElementById("cfg-factory-name");
-    if (nameEl) nameEl.value = state.factorySettings.name;
-    
-    const cnpjEl = document.getElementById("cfg-factory-cnpj");
-    if (cnpjEl) cnpjEl.value = state.factorySettings.cnpj;
-    
-    const phoneEl = document.getElementById("cfg-factory-phone");
-    if (phoneEl) phoneEl.value = state.factorySettings.phone;
-    
-    const addressEl = document.getElementById("cfg-factory-address");
-    if (addressEl) addressEl.value = state.factorySettings.address;
-    
-    const emailEl = document.getElementById("cfg-factory-email");
-    if (emailEl) emailEl.value = state.factorySettings.email;
-    
-    const pixEl = document.getElementById("cfg-factory-pix");
-    if (pixEl) pixEl.value = state.factorySettings.pixKey;
-    
-    const rentalTermsEl = document.getElementById("cfg-factory-rental-terms");
-    if (rentalTermsEl) rentalTermsEl.value = state.factorySettings.rentalTerms;
+    if (nameEl) nameEl.value = defaultData.name;
 
-    // Atualizar UI de configurações
-    if (window.renderPrecos) {
-        window.renderPrecos();
-    }
-    
-    saveState();
-    window.showToast("Dados comerciais oficiais da Gelo do Vale preenchidos com sucesso!", "success");
+    const cnpjEl = document.getElementById("cfg-factory-cnpj");
+    if (cnpjEl) cnpjEl.value = defaultData.cnpj;
+
+    const phoneEl = document.getElementById("cfg-factory-phone");
+    if (phoneEl) phoneEl.value = defaultData.phone;
+
+    const addressEl = document.getElementById("cfg-factory-address");
+    if (addressEl) addressEl.value = defaultData.address;
+
+    const emailEl = document.getElementById("cfg-factory-email");
+    if (emailEl) emailEl.value = defaultData.email;
+
+    const pixEl = document.getElementById("cfg-factory-pix");
+    if (pixEl) pixEl.value = defaultData.pixKey;
+
+    const rentalTermsEl = document.getElementById("cfg-factory-rental-terms");
+    if (rentalTermsEl) rentalTermsEl.value = defaultData.rentalTerms;
+
+    window.showToast("Campos preenchidos com dados oficiais da Gelo do Vale. Clique em Salvar para confirmar.", "info");
 }
 
 export function autoFillAppearanceSettings() {
