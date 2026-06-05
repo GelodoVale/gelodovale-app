@@ -150,6 +150,15 @@ export function applyCurrentLayout() {
 }
 
 function applyLayoutMode(mode) {
+    const debugEl = document.getElementById("layout-debug-log") || (() => {
+        const el = document.createElement("div");
+        el.id = "layout-debug-log";
+        el.style.cssText = "position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.95);color:#00f0ff;border:1px solid #00f0ff;padding:10px;z-index:99999;font-size:11px;font-family:monospace;max-width:320px;word-break:break-all;border-radius:6px;box-shadow:0 0 15px rgba(0,240,255,0.2);";
+        document.body.appendChild(el);
+        return el;
+    })();
+    debugEl.innerText = `Mode: ${mode}\nActiveTab: ${document.querySelector('.tab-content.active')?.id}\nPanels: ${getActivePanels().map(p => p.id).join(', ')}\nAdmin: ${isAdmin()}\nURL: ${window.location.href}`;
+
     // 1. LIMPEZA GLOBAL — remove tudo de todas as versões anteriores
     document.querySelectorAll(".dashboard-panel").forEach(panel => {
         panel.classList.remove(
