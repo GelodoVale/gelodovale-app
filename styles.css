@@ -4264,9 +4264,19 @@ body.astro-day.weather-hot {
 
 /* O conteúdo do corpo principal (filhos que não são cabeçalhos ou alças) cresce para ocupar 100% da altura do painel */
 .dashboard-panel[style*="height"] > :not(.panel-header):not(h2):not(h3):not(.lyt-resize) {
-    flex: 1 !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    overflow-y: auto !important;
+}
+
+/* Classe do container scrollable dinâmico para os painéis redimensionados */
+.panel-content-scrollable {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: inherit !important;
 }
 
 /* Impede que parágrafos, botões, tags de texto ou barras de filtros estiquem */

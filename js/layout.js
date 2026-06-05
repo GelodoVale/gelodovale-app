@@ -155,6 +155,8 @@ function applyLayoutMode(mode) {
 
     // 1. LIMPEZA GLOBAL — remove tudo de todas as versões anteriores
     document.querySelectorAll(".dashboard-panel").forEach(panel => {
+        unwrapPanelContents(panel);
+
         panel.classList.remove(
             "layout-floating-active", "layout-grid-active",
             "is-floating", "is-draggable", "dragging", "layout-drag-enabled"
@@ -209,6 +211,7 @@ function applyLayoutMode(mode) {
             if (saved.order !== undefined) panel.style.order  = String(saved.order);
             if (saved.width)               panel.style.width  = saved.width;
             if (saved.height)              panel.style.height = saved.height;
+            wrapPanelContents(panel);
             if (admin) {
                 setupGridDrag(panel);
                 injectResizeHandle(panel);
@@ -223,13 +226,46 @@ function applyLayoutMode(mode) {
             panel.style.transform = `translate(${tx}px,${ty}px)`;
             if (saved.width)  panel.style.width  = saved.width;
             if (saved.height) panel.style.height = saved.height;
-
+            wrapPanelContents(panel);
             if (admin) {
                 setupPointerDrag(panel);
                 injectResizeHandle(panel);
             }
         }
     });
+}
+
+function wrapPanelContents(panel) {
+    if (panel.querySelector(".panel-content-scrollable")) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "panel-content-scrollable";
+
+    const nodesToWrap = Array.from(panel.childNodes).filter(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            return !node.classList.contains("panel-header") &&
+                   !node.classList.contains("widget-header") &&
+                   !node.classList.contains("lyt-resize") &&
+                   !node.classList.contains("resize-handle") &&
+                   !node.classList.contains("drag-grip") &&
+                   node.tagName !== "H2" &&
+                   node.tagName !== "H3";
+        }
+        return true;
+    });
+
+    nodesToWrap.forEach(node => wrapper.appendChild(node));
+    panel.appendChild(wrapper);
+}
+
+function unwrapPanelContents(panel) {
+    const wrapper = panel.querySelector(".panel-content-scrollable");
+    if (!wrapper) return;
+
+    while (wrapper.firstChild) {
+        panel.insertBefore(wrapper.firstChild, wrapper);
+    }
+    wrapper.remove();
 }
 
 // --------------------------------------------------------------------------
