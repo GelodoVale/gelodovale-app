@@ -150,14 +150,8 @@ export function applyCurrentLayout() {
 }
 
 function applyLayoutMode(mode) {
-    const debugEl = document.getElementById("layout-debug-log") || (() => {
-        const el = document.createElement("div");
-        el.id = "layout-debug-log";
-        el.style.cssText = "position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.95);color:#00f0ff;border:1px solid #00f0ff;padding:10px;z-index:99999;font-size:11px;font-family:monospace;max-width:320px;word-break:break-all;border-radius:6px;box-shadow:0 0 15px rgba(0,240,255,0.2);";
-        document.body.appendChild(el);
-        return el;
-    })();
-    debugEl.innerText = `Mode: ${mode}\nActiveTab: ${document.querySelector('.tab-content.active')?.id}\nPanels: ${getActivePanels().map(p => p.id).join(', ')}\nAdmin: ${isAdmin()}\nURL: ${window.location.href}`;
+    // Remove debug element if it exists
+    document.getElementById("layout-debug-log")?.remove();
 
     // 1. LIMPEZA GLOBAL — remove tudo de todas as versões anteriores
     document.querySelectorAll(".dashboard-panel").forEach(panel => {
@@ -211,6 +205,7 @@ function applyLayoutMode(mode) {
 
         if (mode === "grid") {
             panel.classList.add("layout-grid-active");
+            panel.style.position = "relative";
             if (saved.order !== undefined) panel.style.order  = String(saved.order);
             if (saved.width)               panel.style.width  = saved.width;
             if (saved.height)              panel.style.height = saved.height;
@@ -222,6 +217,7 @@ function applyLayoutMode(mode) {
 
         else if (mode === "floating") {
             panel.classList.add("layout-floating-active");
+            panel.style.position = "relative";
             const tx = saved.tx ?? 0;
             const ty = saved.ty ?? 0;
             panel.style.transform = `translate(${tx}px,${ty}px)`;
