@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v17 (05/06/2026 - Antigravity)
+* **Correção de Sub-abas Administrativas Invisíveis:**
+  * Corrigida a falha na função `getActivePanels()` no gerenciador de layout (`js/layout.js`). Sub-abas administrativas que consistem de formulários e configurações (como `tab-usuarios`, `tab-integracoes`, `tab-dados-fabrica`, `tab-impressao`, `tab-seguranca-backup` e `tab-precos`) foram explicitamente excluídas do comportamento de janelas flutuantes/redimensionáveis.
+  * Com isso, o layout destas seções permanece estático e limpo por padrão, fazendo com que as telas de "Gerenciar Usuários & Senhas" e "Integrações (Pix & WhatsApp)" voltem a ser exibidas e funcionem perfeitamente.
+  * Atualizada a versão do cache do Service Worker para `gelodovale-v115` e os parâmetros de carregamento no `index.html` para `v23` para forçar os navegadores a limparem o cache antigo.
+
 #### v16 (05/06/2026 - Antigravity)
 * **Prevenção Definitiva de Tremor & Atualização de Cache PWA:**
   * Forçado `transition: none !important;` nas classes `.dashboard-panel.layout-floating-active` e `.widget-card.layout-floating-active` no CSS, prevenindo que qualquer transição herdada (como a do `.widget-card`) atrase a renderização da posição `transform` durante o arraste de qualquer widget do dashboard.

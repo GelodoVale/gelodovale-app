@@ -24,6 +24,18 @@ function getActivePanels() {
     // Sub-aba do admin ativa dentro do tab ativo
     const activeSubTab = activeTab.querySelector('.admin-subtab-content.active');
     if (activeSubTab) {
+        // Exclui abas administrativas de configuração/formulário do gerenciador de layout
+        const excludeSubTabs = [
+            'tab-dados-fabrica', 
+            'tab-impressao', 
+            'tab-seguranca-backup', 
+            'tab-usuarios', 
+            'tab-integracoes', 
+            'tab-precos'
+        ];
+        if (excludeSubTabs.includes(activeSubTab.id)) {
+            return [];
+        }
         return Array.from(activeSubTab.querySelectorAll('.dashboard-panel'));
     }
 
