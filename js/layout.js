@@ -236,7 +236,8 @@ function applyLayoutMode(mode) {
 }
 
 function wrapPanelContents(panel) {
-    if (panel.querySelector(".panel-content-scrollable")) return;
+    const hasDirectWrapper = Array.from(panel.children).some(c => c.classList.contains("panel-content-scrollable"));
+    if (hasDirectWrapper) return;
 
     const wrapper = document.createElement("div");
     wrapper.className = "panel-content-scrollable";
@@ -259,7 +260,7 @@ function wrapPanelContents(panel) {
 }
 
 function unwrapPanelContents(panel) {
-    const wrapper = panel.querySelector(".panel-content-scrollable");
+    const wrapper = Array.from(panel.children).find(c => c.classList.contains("panel-content-scrollable"));
     if (!wrapper) return;
 
     while (wrapper.firstChild) {
