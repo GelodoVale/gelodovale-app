@@ -81,6 +81,9 @@ export function switchAdminSubTab(subTabId) {
     if (window.lucide) {
         window.lucide.createIcons();
     }
+
+    // Aplica layout e alças de redimensionamento na sub-aba ativa
+    applyCurrentLayout();
 }
 
 // 2. Fechamento de Autenticação Administrativa
