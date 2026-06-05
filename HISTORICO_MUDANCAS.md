@@ -6,6 +6,11 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v15 (05/06/2026 - Antigravity)
+* **Correção de Drag & Tremor no Dashboard:**
+  * Removido a transição `transform` do painel flutuante ativo no CSS (`styles.css`), eliminando o efeito de tremor/stutter causado por atrasos de animação durante o movimento do ponteiro.
+  * Desativada a escuta de eventos nativos de reordenamento HTML5 de widgets (`widgets.js`) quando o modo de layout ativo não for `'fixed'` (ou seja, quando for `'grid'` ou `'floating'`). Isso evita conflitos de arraste duplo com o gerenciador de layout principal (`layout.js`) e corrige o problema do painel ficar preso ao mouse.
+
 #### v14 (04/06/2026 - Antigravity)
 * **Correção do Backup & Sincronização:**
   * Adicionado suporte para salvar/restaurar as posições personalizadas dos painéis (`layoutSettings`).

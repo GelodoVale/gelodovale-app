@@ -4202,7 +4202,7 @@ body.astro-day.weather-hot {
 /* Painel em modo flutuante — permanece no fluxo, move via transform */
 .dashboard-panel.layout-floating-active {
     will-change: transform;
-    transition: box-shadow 0.2s, transform 0.05s;
+    transition: box-shadow 0.2s;
     cursor: default;
 }
 .dashboard-panel.layout-floating-active:hover {

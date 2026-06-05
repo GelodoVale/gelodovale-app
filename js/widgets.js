@@ -590,9 +590,18 @@ export function initWidgetDragAndDrop() {
     const container = document.getElementById('widgets-container');
     if (!container) return;
     
+    // Se o layout não for "fixed", desativa a lógica de drag & drop nativa do widgets.js
+    // para evitar conflitos com a lógica de layout do layout.js
+    if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+        return;
+    }
+    
     let draggedKey = null;
 
     container.addEventListener('dragstart', (e) => {
+        if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+            return;
+        }
         const card = e.target.closest('.widget-card');
         if (card) {
             draggedKey = card.getAttribute('data-widget-key');
@@ -603,6 +612,9 @@ export function initWidgetDragAndDrop() {
     });
 
     container.addEventListener('dragend', (e) => {
+        if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+            return;
+        }
         const card = e.target.closest('.widget-card');
         if (card) {
             card.classList.remove('widget-dragging');
@@ -611,6 +623,9 @@ export function initWidgetDragAndDrop() {
     });
 
     container.addEventListener('dragover', (e) => {
+        if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+            return;
+        }
         e.preventDefault();
         const card = e.target.closest('.widget-card');
         if (card && card.getAttribute('data-widget-key') !== draggedKey) {
@@ -619,6 +634,9 @@ export function initWidgetDragAndDrop() {
     });
 
     container.addEventListener('dragleave', (e) => {
+        if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+            return;
+        }
         const card = e.target.closest('.widget-card');
         if (card) {
             card.classList.remove('drag-over');
@@ -626,6 +644,9 @@ export function initWidgetDragAndDrop() {
     });
 
     container.addEventListener('drop', (e) => {
+        if (state.layoutSettings && state.layoutSettings.mode && state.layoutSettings.mode !== 'fixed') {
+            return;
+        }
         e.preventDefault();
         const targetCard = e.target.closest('.widget-card');
         if (!targetCard) return;
