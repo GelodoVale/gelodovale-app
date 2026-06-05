@@ -30,60 +30,88 @@ export function switchAdminSubTab(subTabId) {
         }
     });
     
-    // Atualiza classes ativas do conteúdo
+    // Atualiza classes ativas do conteúdo — com forçamento de display inline
     const contents = document.querySelectorAll(".admin-subtab-content");
     contents.forEach(content => {
         if (content.id === subTabId) {
             content.classList.add("active");
+            // Força display:block para garantir visibilidade independente de CSS ou layout conflitante
+            content.style.display = "block";
+            content.style.width = "";
+            content.style.height = "";
+            content.style.overflow = "";
+            content.style.visibility = "visible";
+            content.style.opacity = "1";
         } else {
             content.classList.remove("active");
+            content.style.display = "";
         }
     });
     
-    if (subTabId === "tab-rentabilidade-freezers" && typeof window.renderFreezerRentability === "function") {
-        window.renderFreezerRentability();
-    }
+    try {
+        if (subTabId === "tab-rentabilidade-freezers" && typeof window.renderFreezerRentability === "function") {
+            window.renderFreezerRentability();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] renderFreezerRentability error:", e); }
     
-    if (subTabId === "tab-eventos-locais" && typeof window.renderEventosLocaisTable === "function") {
-        window.renderEventosLocaisTable();
-    }
+    try {
+        if (subTabId === "tab-eventos-locais" && typeof window.renderEventosLocaisTable === "function") {
+            window.renderEventosLocaisTable();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] renderEventosLocaisTable error:", e); }
     
     // Renderizar tabela de usuários se a aba for a correspondente
-    if (subTabId === "tab-usuarios" && typeof window.renderUsersTable === "function") {
-        window.renderUsersTable();
-    }
+    try {
+        if (subTabId === "tab-usuarios" && typeof window.renderUsersTable === "function") {
+            window.renderUsersTable();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] renderUsersTable error:", e); }
     
     // Carregar configurações do Mercado Pago e WhatsApp
     if (subTabId === "tab-integracoes") {
-        if (typeof window.loadMercadoPagoSettings === "function") {
-            window.loadMercadoPagoSettings();
-        }
-        if (typeof window.loadWhatsAppSettings === "function") {
-            window.loadWhatsAppSettings();
-        }
+        try {
+            if (typeof window.loadMercadoPagoSettings === "function") {
+                window.loadMercadoPagoSettings();
+            }
+        } catch(e) { console.error("[switchAdminSubTab] loadMercadoPagoSettings error:", e); }
+        try {
+            if (typeof window.loadWhatsAppSettings === "function") {
+                window.loadWhatsAppSettings();
+            }
+        } catch(e) { console.error("[switchAdminSubTab] loadWhatsAppSettings error:", e); }
     }
     
     // Renderizar painel de widgets
-    if (subTabId === "tab-dados-fabrica") {
-        renderWidgetsSetupPanel();
-    }
+    try {
+        if (subTabId === "tab-dados-fabrica") {
+            renderWidgetsSetupPanel();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] renderWidgetsSetupPanel error:", e); }
 
-    if (subTabId === "tab-acerto") {
-        populateCargoSettlementDrivers();
-    }
+    try {
+        if (subTabId === "tab-acerto") {
+            populateCargoSettlementDrivers();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] populateCargoSettlementDrivers error:", e); }
     
-    if (subTabId === "tab-financeiro") {
-        populateCommissionsDriverFilter();
-        renderDriverCommissionsReport();
-    }
+    try {
+        if (subTabId === "tab-financeiro") {
+            populateCommissionsDriverFilter();
+            renderDriverCommissionsReport();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] financeiro render error:", e); }
     
     // Força a renderização dos ícones Lucide recém-exibidos
-    if (window.lucide) {
-        window.lucide.createIcons();
-    }
+    try {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    } catch(e) { /* ignora */ }
 
     // Aplica layout e alças de redimensionamento na sub-aba ativa
-    applyCurrentLayout();
+    try {
+        applyCurrentLayout();
+    } catch(e) { console.error("[switchAdminSubTab] applyCurrentLayout error:", e); }
 }
 
 // 2. Fechamento de Autenticação Administrativa
@@ -256,11 +284,11 @@ export function renderPrecos() {
 
     // 5. Preencher inputs de dados comerciais
     if (state.factorySettings) {
-        document.getElementById("cfg-factory-name").value = state.factorySettings.name || "";
-        document.getElementById("cfg-factory-cnpj").value = state.factorySettings.cnpj || "";
-        document.getElementById("cfg-factory-phone").value = state.factorySettings.phone || "";
-        document.getElementById("cfg-factory-address").value = state.factorySettings.address || "";
-        document.getElementById("cfg-factory-email").value = state.factorySettings.email || "";
+        const elName = document.getElementById("cfg-factory-name"); if (elName) elName.value = state.factorySettings.name || "";
+        const elCnpj = document.getElementById("cfg-factory-cnpj"); if (elCnpj) elCnpj.value = state.factorySettings.cnpj || "";
+        const elPhone = document.getElementById("cfg-factory-phone"); if (elPhone) elPhone.value = state.factorySettings.phone || "";
+        const elAddr = document.getElementById("cfg-factory-address"); if (elAddr) elAddr.value = state.factorySettings.address || "";
+        const elEmail = document.getElementById("cfg-factory-email"); if (elEmail) elEmail.value = state.factorySettings.email || "";
         const pixEl = document.getElementById("cfg-factory-pix");
         if (pixEl) pixEl.value = state.factorySettings.pixKey || "";
         
@@ -276,9 +304,9 @@ export function renderPrecos() {
     // 6. Preencher inputs de aparência
     if (state.appearance) {
         const themePreset = state.appearance.themeName || "ciano";
-        document.getElementById("cfg-theme-preset").value = themePreset;
-        document.getElementById("cfg-custom-color").value = state.appearance.primaryColor || "#00f0ff";
-        document.getElementById("cfg-custom-color-text").value = state.appearance.primaryColor || "#00f0ff";
+        const elTheme = document.getElementById("cfg-theme-preset"); if (elTheme) elTheme.value = themePreset;
+        const elColor = document.getElementById("cfg-custom-color"); if (elColor) elColor.value = state.appearance.primaryColor || "#00f0ff";
+        const elColorTxt = document.getElementById("cfg-custom-color-text"); if (elColorTxt) elColorTxt.value = state.appearance.primaryColor || "#00f0ff";
         
         // Destacar o cartão de tema correspondente
         const cards = document.querySelectorAll(".theme-card");
@@ -304,17 +332,17 @@ export function renderPrecos() {
         
         // Preencher novas opções avançadas
         const bgStyle = state.appearance.backgroundStyle || "darkSpace";
-        document.getElementById("cfg-bg-style").value = bgStyle;
-        document.getElementById("cfg-custom-bg-color").value = state.appearance.customBgColor || "#090d16";
-        document.getElementById("cfg-custom-bg-color-text").value = state.appearance.customBgColor || "#090d16";
+        const elBgStyle = document.getElementById("cfg-bg-style"); if (elBgStyle) elBgStyle.value = bgStyle;
+        const elBgColor = document.getElementById("cfg-custom-bg-color"); if (elBgColor) elBgColor.value = state.appearance.customBgColor || "#090d16";
+        const elBgColorTxt = document.getElementById("cfg-custom-bg-color-text"); if (elBgColorTxt) elBgColorTxt.value = state.appearance.customBgColor || "#090d16";
         
         const bgPickerGroup = document.getElementById("custom-bg-color-group");
         if (bgPickerGroup) {
             bgPickerGroup.style.display = bgStyle === "custom" ? "block" : "none";
         }
         
-        document.getElementById("cfg-panel-style").value = state.appearance.panelStyle || "glassmorphism";
-        document.getElementById("cfg-glow-intensity").value = state.appearance.glowIntensity || "high";
+        const elPanelStyle = document.getElementById("cfg-panel-style"); if (elPanelStyle) elPanelStyle.value = state.appearance.panelStyle || "glassmorphism";
+        const elGlowIntensity = document.getElementById("cfg-glow-intensity"); if (elGlowIntensity) elGlowIntensity.value = state.appearance.glowIntensity || "high";
 
         const chkSound = document.getElementById("cfg-sound-enabled");
         if (chkSound) chkSound.checked = state.appearance.soundEnabled !== false;
@@ -331,9 +359,9 @@ export function renderPrecos() {
 
     // 7. Preencher inputs de configuração de impressão
     if (state.printSettings) {
-        document.getElementById("cfg-print-format").value = state.printSettings.format || "a4";
-        document.getElementById("cfg-print-show-logo").checked = state.printSettings.showLogo !== undefined ? state.printSettings.showLogo : true;
-        document.getElementById("cfg-print-show-signatures").checked = state.printSettings.showSignatures !== undefined ? state.printSettings.showSignatures : true;
+        const elPrintFmt = document.getElementById("cfg-print-format"); if (elPrintFmt) elPrintFmt.value = state.printSettings.format || "a4";
+        const elShowLogo = document.getElementById("cfg-print-show-logo"); if (elShowLogo) elShowLogo.checked = state.printSettings.showLogo !== undefined ? state.printSettings.showLogo : true;
+        const elShowSig = document.getElementById("cfg-print-show-signatures"); if (elShowSig) elShowSig.checked = state.printSettings.showSignatures !== undefined ? state.printSettings.showSignatures : true;
     }
 
     // 8. Preencher inputs do Firebase
