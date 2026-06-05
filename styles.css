@@ -4200,9 +4200,10 @@ body.astro-day.weather-hot {
 /* ===== GELCONTROL LAYOUT MANAGER v3 ===== */
 
 /* Painel em modo flutuante — permanece no fluxo, move via transform */
-.dashboard-panel.layout-floating-active {
+.dashboard-panel.layout-floating-active,
+.widget-card.layout-floating-active {
     will-change: transform;
-    transition: box-shadow 0.2s;
+    transition: none !important;
     cursor: default;
 }
 .dashboard-panel.layout-floating-active:hover {
