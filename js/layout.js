@@ -150,123 +150,135 @@ export function applyCurrentLayout() {
 }
 
 function applyLayoutMode(mode) {
-    // Remove debug element if it exists
-    document.getElementById("layout-debug-log")?.remove();
+    try {
+        // Remove debug element if it exists
+        document.getElementById("layout-debug-log")?.remove();
 
-    // 1. LIMPEZA GLOBAL — remove tudo de todas as versões anteriores
-    document.querySelectorAll(".dashboard-panel").forEach(panel => {
-        unwrapPanelContents(panel);
+        // 1. LIMPEZA GLOBAL — remove tudo de todas as versões anteriores
+        document.querySelectorAll(".dashboard-panel").forEach(panel => {
+            unwrapPanelContents(panel);
 
-        panel.classList.remove(
-            "layout-floating-active", "layout-grid-active",
-            "is-floating", "is-draggable", "dragging", "layout-drag-enabled"
-        );
-        panel.style.position = "";
-        panel.style.left     = "";
-        panel.style.top      = "";
-        panel.style.zIndex   = "";
-        panel.style.boxShadow = "";
-        panel.removeAttribute("draggable");
+            panel.classList.remove(
+                "layout-floating-active", "layout-grid-active",
+                "is-floating", "is-draggable", "dragging", "layout-drag-enabled"
+            );
+            panel.style.position = "";
+            panel.style.left     = "";
+            panel.style.top      = "";
+            panel.style.zIndex   = "";
+            panel.style.boxShadow = "";
+            panel.removeAttribute("draggable");
 
-        // Remove handles injetados
-        panel.querySelector(".lyt-resize")?.remove();
-        panel.querySelector(".drag-grip")?.remove();
-        panel.querySelector(".resize-handle")?.remove();
+            // Remove handles injetados
+            panel.querySelector(".lyt-resize")?.remove();
+            panel.querySelector(".drag-grip")?.remove();
+            panel.querySelector(".resize-handle")?.remove();
 
-        // Limpa cursor e flags do header
-        const hdr = panel.querySelector(".panel-header, .widget-header, .kpi-info, :scope > h3, :scope > h2");
-        if (hdr) {
-            hdr.style.cursor      = "";
-            hdr.style.userSelect  = "";
-            hdr.style.touchAction = "";
-            delete hdr.dataset.lytDrag;
-        }
-        // Limpa flag do grid drag
-        delete panel.dataset.lytGrid;
-    });
-
-    // 2. Modo fixo: remove transforms e encerra
-    if (mode === "fixed") {
-        document.querySelectorAll(".dashboard-panel").forEach(p => {
-            p.style.transform = "";
-            p.style.width     = "";
-            p.style.height    = "";
-            p.style.order     = "";
+            // Limpa cursor e flags do header
+            const hdr = panel.querySelector(".panel-header, .widget-header, .kpi-info, :scope > h3, :scope > h2");
+            if (hdr) {
+                hdr.style.cursor      = "";
+                hdr.style.userSelect  = "";
+                hdr.style.touchAction = "";
+                delete hdr.dataset.lytDrag;
+            }
+            // Limpa flag do grid drag
+            delete panel.dataset.lytGrid;
         });
-        return;
+
+        // 2. Modo fixo: remove transforms e encerra
+        if (mode === "fixed") {
+            document.querySelectorAll(".dashboard-panel").forEach(p => {
+                p.style.transform = "";
+                p.style.width     = "";
+                p.style.height    = "";
+                p.style.order     = "";
+            });
+            return;
+        }
+
+        // 3. Aplicar modo nos painéis da aba ativa
+        const panels = getActivePanels();
+        const pos    = state.layoutSettings?.positions || {};
+        const admin  = isAdmin();
+
+        panels.forEach(panel => {
+            if (!panel.id) return;
+            const saved = pos[panel.id] || {};
+
+            if (mode === "grid") {
+                panel.classList.add("layout-grid-active");
+                panel.style.position = "relative";
+                if (saved.order !== undefined) panel.style.order  = String(saved.order);
+                if (saved.width)               panel.style.width  = saved.width;
+                if (saved.height)              panel.style.height = saved.height;
+                wrapPanelContents(panel);
+                if (admin) {
+                    setupGridDrag(panel);
+                    injectResizeHandle(panel);
+                }
+            }
+
+            else if (mode === "floating") {
+                panel.classList.add("layout-floating-active");
+                panel.style.position = "relative";
+                const tx = saved.tx ?? 0;
+                const ty = saved.ty ?? 0;
+                panel.style.transform = `translate(${tx}px,${ty}px)`;
+                if (saved.width)  panel.style.width  = saved.width;
+                if (saved.height) panel.style.height = saved.height;
+                wrapPanelContents(panel);
+                if (admin) {
+                    setupPointerDrag(panel);
+                    injectResizeHandle(panel);
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Layout Manager Error:", err);
     }
-
-    // 3. Aplicar modo nos painéis da aba ativa
-    const panels = getActivePanels();
-    const pos    = state.layoutSettings?.positions || {};
-    const admin  = isAdmin();
-
-    panels.forEach(panel => {
-        if (!panel.id) return;
-        const saved = pos[panel.id] || {};
-
-        if (mode === "grid") {
-            panel.classList.add("layout-grid-active");
-            panel.style.position = "relative";
-            if (saved.order !== undefined) panel.style.order  = String(saved.order);
-            if (saved.width)               panel.style.width  = saved.width;
-            if (saved.height)              panel.style.height = saved.height;
-            wrapPanelContents(panel);
-            if (admin) {
-                setupGridDrag(panel);
-                injectResizeHandle(panel);
-            }
-        }
-
-        else if (mode === "floating") {
-            panel.classList.add("layout-floating-active");
-            panel.style.position = "relative";
-            const tx = saved.tx ?? 0;
-            const ty = saved.ty ?? 0;
-            panel.style.transform = `translate(${tx}px,${ty}px)`;
-            if (saved.width)  panel.style.width  = saved.width;
-            if (saved.height) panel.style.height = saved.height;
-            wrapPanelContents(panel);
-            if (admin) {
-                setupPointerDrag(panel);
-                injectResizeHandle(panel);
-            }
-        }
-    });
 }
 
 function wrapPanelContents(panel) {
-    const hasDirectWrapper = Array.from(panel.children).some(c => c.classList.contains("panel-content-scrollable"));
-    if (hasDirectWrapper) return;
+    try {
+        const hasDirectWrapper = Array.from(panel.children).some(c => c.classList.contains("panel-content-scrollable"));
+        if (hasDirectWrapper) return;
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "panel-content-scrollable";
+        const wrapper = document.createElement("div");
+        wrapper.className = "panel-content-scrollable";
 
-    const nodesToWrap = Array.from(panel.childNodes).filter(node => {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            return !node.classList.contains("panel-header") &&
-                   !node.classList.contains("widget-header") &&
-                   !node.classList.contains("lyt-resize") &&
-                   !node.classList.contains("resize-handle") &&
-                   !node.classList.contains("drag-grip") &&
-                   node.tagName !== "H2" &&
-                   node.tagName !== "H3";
-        }
-        return true;
-    });
+        const nodesToWrap = Array.from(panel.childNodes).filter(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                return !node.classList.contains("panel-header") &&
+                       !node.classList.contains("widget-header") &&
+                       !node.classList.contains("lyt-resize") &&
+                       !node.classList.contains("resize-handle") &&
+                       !node.classList.contains("drag-grip") &&
+                       node.tagName !== "H2" &&
+                       node.tagName !== "H3";
+            }
+            return true;
+        });
 
-    nodesToWrap.forEach(node => wrapper.appendChild(node));
-    panel.appendChild(wrapper);
+        nodesToWrap.forEach(node => wrapper.appendChild(node));
+        panel.appendChild(wrapper);
+    } catch (err) {
+        console.error("Error wrapping panel contents:", err);
+    }
 }
 
 function unwrapPanelContents(panel) {
-    const wrapper = Array.from(panel.children).find(c => c.classList.contains("panel-content-scrollable"));
-    if (!wrapper) return;
+    try {
+        const wrapper = Array.from(panel.children).find(c => c.classList.contains("panel-content-scrollable"));
+        if (!wrapper) return;
 
-    while (wrapper.firstChild) {
-        panel.insertBefore(wrapper.firstChild, wrapper);
+        while (wrapper.firstChild) {
+            panel.insertBefore(wrapper.firstChild, wrapper);
+        }
+        wrapper.remove();
+    } catch (err) {
+        console.error("Error unwrapping panel contents:", err);
     }
-    wrapper.remove();
 }
 
 // --------------------------------------------------------------------------
