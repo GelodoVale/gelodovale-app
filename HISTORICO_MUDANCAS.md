@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v48 (11/06/2026 - Antigravity)
+* **Central de Notificações Dinâmicas (Sininho de Alertas - COD: NOTIF-01):**
+  - Criado o novo módulo `js/notifications.js` que consolida alertas operacionais de estoque baixo, clientes inativos (risco de churn) e pedidos pendentes de entrega em um único feed de atualizações.
+  - Adicionado o botão de sininho (`#btn-notifications`) no cabeçalho superior (`index.html`) com um badge vermelho que indica a quantidade de notificações e alertas ativos.
+  - Implementado o popover de notificações interativas: clicar em qualquer notificação redireciona automaticamente o usuário para a aba correspondente e filtra/pesquisa o cliente em foco no campo de busca para ação imediata.
+  - Adicionado suporte offline no Service Worker (`sw.js`) para cachear o módulo `js/notifications.js` e bumped build do sistema para `v48` com cache `gelodovale-v141`.
+
 #### v47 (11/06/2026 - Antigravity)
 * **Correção do Layout de Atalhos Rápidos (COD: DASH-00):**
   - Corrigido o bug visual no painel de atalhos rápidos (`#dashboard-quick-actions-panel`) onde os botões ocupavam uma linha inteira cada e ficavam esticados verticalmente. O problema ocorria quando o painel era redimensionado ou possuía configurações de layout salvas, fazendo o gerenciador de layout (`js/layout.js`) envolvê-los em um contêiner `.panel-content-scrollable` que aplica `flex-direction: column !important`.

@@ -26,6 +26,7 @@ import { runClientDiagnostics } from './diagnostics.js';
 import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './pdv.js';
 import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry, syncDeliveryCarnetEntry, syncDocumentCarnetEntry } from './carne.js';
 import { initLayoutSystem, applyCurrentLayout } from './layout.js';
+import { initNotificationsSystem, updateNotifications } from './notifications.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -223,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 3. Configurar listeners de navegação
     initNavigation();
+    initNotificationsSystem();
     
     // 4. Configurar formulários e modais
     initForms();
@@ -441,6 +443,20 @@ export function initNavigation() {
             renderTabContent(targetTab);
         });
     });
+
+    // Função global para navegar entre abas programaticamente (usada pelas notificações)
+    window.navigateToTab = function(targetTab) {
+        const navs = document.querySelectorAll(".nav-item");
+        let targetNav = null;
+        navs.forEach(nav => {
+            if (nav.getAttribute("data-tab") === targetTab) {
+                targetNav = nav;
+            }
+        });
+        if (targetNav) {
+            targetNav.click();
+        }
+    };
 
     // Ação do Botão Global superior direito
     if (globalBtn) {
@@ -666,6 +682,9 @@ export function renderApp() {
 
     // Iniciar 3D Tilt nos novos cards
     if (window.init3DTilt) window.init3DTilt();
+
+    // Atualizar notificações e alertas do painel superior
+    if (window.updateNotifications) window.updateNotifications();
 }
 
 // --- PEDIDOS E SUAS VISITAS SUGERIDAS ---

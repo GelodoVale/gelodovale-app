@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v140';
+const CACHE_NAME = 'gelodovale-v141';
 const ASSETS = [
   'index.html',
   'styles.css',
@@ -8,6 +8,7 @@ const ASSETS = [
   'logo_horizontal.jpg',
   'js/app.js',
   'js/state.js',
+  'js/notifications.js',
   'js/auth.js',
   'js/dashboard.js',
   'js/clientes.js',

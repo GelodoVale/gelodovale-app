@@ -42,7 +42,7 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=47">
+    <link rel="stylesheet" href="styles.css?v=48">
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -247,6 +247,11 @@
 
                     <button class="btn btn-secondary" id="btn-toggle-contrast" title="Modo Sol Forte (Alto Contraste)" onclick="toggleHighContrastTheme()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; flex-shrink: 0; margin-right: 4px;">
                         <i data-lucide="sun"></i>
+                    </button>
+
+                    <button class="btn btn-secondary" id="btn-notifications" title="Notificações & Alertas" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px; width: 38px; height: 38px; flex-shrink: 0; margin-right: 4px; position: relative;">
+                        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
+                        <span id="notifications-badge" style="display: none; position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; background-color: var(--color-danger); border-radius: 50%; box-shadow: 0 0 8px var(--color-danger); color: #fff; font-size: 0.62rem; font-weight: 800; align-items: center; justify-content: center; padding: 2px;">0</span>
                     </button>
                     
                     <button class="btn btn-secondary" id="btn-toggle-utility" title="Utilitários (Relógio, Clima, Notas, Calendário)" style="display: inline-flex; align-items: center; gap: 6px; margin-right: 4px;">
@@ -6018,7 +6023,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=47"></script>
+    <script type="module" src="js/app.js?v=48"></script>
 </body>
 </html>
 
