@@ -3867,10 +3867,179 @@ window.loadSystemChangelog = loadSystemChangelog;
 // ==========================================================================
 
 const SELECTOR_EMOJIS = {
-    "🧊 Gelo / Geral": ["❄️", "🧊", "🔥", "📦", "🪣", "🪑", "⚡", "✨", "🌟", "💧", "🌡️"],
-    "🍓 Frutas / Sabores": ["🍓", "🥥", "🍉", "🍋", "🥭", "🍇", "🍍", "🍒", "🍑", "🍏", "🍎", "🍊", "🍌", "🥝", "🍈", "🍐", "🫐"],
-    "🍹 Bebidas / Copos": ["🍹", "🍺", "🥂", "🥤", "🍷", "🍸", "🥃", "☕", "🥛"],
-    "💵 Objetos / Símbolos": ["💵", "📅", "⚙️", "👥", "🚚", "🛒", "🧾", "🔒", "🔑", "📌", "🗺️", "💬", "📊"]
+    "🧊 Gelo / Frio / Fábrica": [
+        "❄️", "🧊", "☃️", "⛄", "💧", "🌊", "🌬️", "💨", "🌡️", "🔥", "⚡", "✨", "🌟", "🏢", "🏭", "🔌", "🛠️", "🔧", "⚙️", "⚒️", "🧱", "⚖️", "📦", "🪣"
+    ],
+    "🍓 Frutas / Sabores / Doces": [
+        "🍓", "🥥", "🍉", "🍋", "🥭", "🍇", "🍍", "🍒", "🍑", "🍏", "🍎", "🍊", "🍌", "🥝", "🍈", "🍐", "🫐", "🍅", "🥑", "🥕", "🌽", "🌶️", "🫑", "🧅", "🥔", "🍯", "🍫", "🍬", "🍭", "🍨", "🍧", "🍦", "🍩", "🍪", "🎂", "🧁", "🥧"
+    ],
+    "🍹 Bebidas / Copos": [
+        "🍹", "🍺", "🍻", "🥂", "🥤", "🧃", "🧉", "🍷", "🍸", "🥃", "☕", "🍵", "🥛", "🍼", "🍾", "🍶"
+    ],
+    "💵 Negócios / Financeiro": [
+        "💵", "💴", "💶", "💷", "🪙", "💸", "💳", "🧾", "💰", "💼", "📁", "📂", "📊", "📈", "📉", "📅", "📆", "⏱️", "⏳", "🔒", "🔑", "🔍", "🔎", "📝", "✏️"
+    ],
+    "👥 Clientes / Equipe / Entrega": [
+        "👥", "👤", "🤝", "👮", "🧑‍🔧", "🧑‍💼", "🚚", "🚛", "🚗", "🛵", "🏍️", "🚲", "🛒", "🛍️", "🏷️", "🗺️", "📍", "📌", "🏠", "🏢", "🏪", "💬", "📣", "📢", "🔔"
+    ],
+    "⭐ Símbolos / Status / Extras": [
+        "⭐", "🌟", "✨", "❤️", "👍", "👎", "✅", "❌", "⚠️", "ℹ️", "🆗", "🆕", "🔄", "♻️", "➕", "➖", "✖️", "➗", "❓", "💡", "🎯", "🏆", "🏅", "🥇", "👑"
+    ]
+};
+
+const EMOJI_KEYWORDS = {
+    "❄️": "neve frio gelo snowflake cold winter",
+    "🧊": "gelo cubo ice",
+    "☃️": "boneco neve frio cold winter",
+    "⛄": "boneco neve frio cold winter",
+    "💧": "agua gota pingo liquid",
+    "🌊": "onda agua mar rio",
+    "🌬️": "vento sopro frio ar air wind",
+    "💨": "vento ar pressa rapido",
+    "🌡️": "temperatura termometro calor frio clima",
+    "🔥": "fogo calor quente carvao carvão",
+    "⚡": "energia raio eletricidade rapido turbo power",
+    "✨": "brilho especial novo destaque",
+    "🌟": "estrela destaque favorito especial gold",
+    "🏢": "predio empresa escritorio escritório fabrica fábrica",
+    "🏭": "fabrica fábrica industria indústria chamine",
+    "🔌": "tomada energia eletricidade plug ligar",
+    "🛠️": "ferramentas conserto manutencao manutenção martelo chave",
+    "🔧": "chave conserto manutencao manutenção ferramenta",
+    "⚙️": "engrenagem config configuracao configuracões administracao",
+    "⚒️": "martelo picareta ferramentas",
+    "🧱": "tijolo parede construcao bloco",
+    "⚖️": "balanca balança peso medicao lei justica",
+    "📦": "caixa fardo pacote encomenda entrega",
+    "🪣": "balde agua gelo tina",
+    "🍓": "morango strawberry red vermelho frutas saborizado",
+    "🥥": "coco coconut branco coco-da-bahia saborizado",
+    "🍉": "melancia watermelon saborizado verde vermelho",
+    "🍋": "limao limão lemon verde saborizado acido",
+    "🥭": "manga mango saborizado yellow amarelo",
+    "🍇": "uva grape roxo saborizado",
+    "🍍": "abacaxi pineapple saborizado yellow amarelo",
+    "🍒": "cereja cherry saborizado vermelho red",
+    "🍑": "pessego pêssego peach saborizado",
+    "🍏": "maca maçã verde green apple saborizado",
+    "🍎": "maca maçã vermelha red apple saborizado",
+    "🍊": "laranja orange mexerica tangerina saborizado",
+    "🍌": "banana saborizado amarelo yellow",
+    "🥝": "kiwi saborizado verde green",
+    "🍈": "melao melão melon saborizado",
+    "🍐": "pera pêra pear saborizado",
+    "🫐": "mirtilo blueberry azul blue saborizado",
+    "🍅": "tomate vermelho",
+    "🥑": "abacate green verde",
+    "🥕": "cenoura orange laranja",
+    "🌽": "milho yellow amarelo corn",
+    "🌶️": "pimenta picante ardido vermelho hot red",
+    "🫑": "pimentao pimentão verde",
+    "🧅": "cebola onion",
+    "🥔": "batata potato",
+    "🍯": "mel honey doce saborizado",
+    "🍫": "chocolate doce saborizado brown",
+    "🍬": "bala doce caramelo bombom",
+    "🍭": "pirulito doce candy",
+    "🍨": "sorvete doce sobremesa taca taça",
+    "🍧": "sorvete raspadinha gelo doce",
+    "🍦": "sorvete casquinha doce cone",
+    "🍩": "donut rosca doce",
+    "🍪": "biscoito bolacha cookie doce",
+    "🎂": "bolo aniversario aniversário doce festa",
+    "🧁": "cupcake bolo doce",
+    "🥧": "torta doce sobremesa",
+    "🍹": "drink coquetel copo saborizado palha suco",
+    "🍺": "cerveja chopp copo beer bar pub alcohol alcool álcool",
+    "🍻": "cervejas copos brinde comemoracao beer bar",
+    "🥂": "champanhe taças taca brinde casamento festa celebracao comemoracao",
+    "🥤": "copo canudo refrigerante suco shake",
+    "🧃": "suco caixinha juice",
+    "🧉": "mate chimarrao terere tereré erva",
+    "🍷": "vinho taca taça wine uva",
+    "🍸": "martini drink copo",
+    "🥃": "whisky copo dose gelo",
+    "☕": "cafe café xicara xícara quentinho expresso cappuccino",
+    "🍵": "cha chá xicara",
+    "🥛": "leite milk copo branco",
+    "🍼": "mamadeira leite bebe",
+    "🍾": "garrafa espumante vinho champanhe celebracao festa",
+    "🍶": "sake garrafa copo",
+    "💵": "dinheiro cash dolar dólar notas cédula pagamento",
+    "💴": "dinheiro iene",
+    "💶": "dinheiro euro",
+    "💷": "dinheiro libra",
+    "🪙": "moeda coin dinheiro centavos troco",
+    "💸": "dinheiro voando gasto pagamento custo",
+    "💳": "cartao cartão credito débito pagamento maquininha",
+    "🧾": "recibo nota fiscal comprovante cupom fatura",
+    "💰": "saco dinheiro ouro lucro cofre",
+    "💼": "maleta trabalho emprego administrativo negocios",
+    "📁": "pasta arquivos documentos",
+    "📂": "pasta aberta arquivos documentos",
+    "📊": "dashboard grafico gráfico estatisticas relatorio relatórios",
+    "📈": "grafico subindo crescimento lucro alta vendas",
+    "📉": "grafico caindo prejuizo queda baixa dividas",
+    "📅": "calendario data agendamento compromisso dia",
+    "📆": "calendario folha data dia",
+    "⏱️": "cronometro tempo relogio",
+    "⏳": "ampulheta tempo aguarde processando",
+    "🔒": "cadeado seguranca segurança bloqueado login senha",
+    "🔑": "chave seguranca acesso login entrar",
+    "🔍": "lupa buscar pesquisar encontrar",
+    "🔎": "lupa buscar pesquisar",
+    "📝": "bloco notas rascunho caneta escrever anotacao anotação",
+    "✏️": "lapis lápis escrever editar",
+    "👥": "clientes grupo equipe pessoas usuarios usuários",
+    "👤": "cliente usuario usuário perfil conta login",
+    "🤝": "parceria acordo aperto maos contrato clientes vendas",
+    "👮": "guarda policial seguranca",
+    "🧑‍🔧": "mecanico técnico suporte manutencao",
+    "🧑‍💼": "atendente escritorio vendedor administrativo",
+    "🚚": "entrega frete transporte roteiro rota caminhao caminhão",
+    "🚛": "caminhao caminhão grande frete entrega roteiro",
+    "🚗": "carro auto veiculo rota",
+    "🛵": "moto scooter motoboy entrega delivery rapido",
+    "🏍️": "moto esportiva veiculo",
+    "🚲": "bicicleta bike entrega",
+    "🛒": "carrinho compras pdv vendas mercado",
+    "🛍️": "sacola compras loja vendas",
+    "🏷️": "etiqueta preco preço promocao desconto",
+    "🗺️": "mapa rota localizacao GPS roteiro cidades",
+    "📍": "pino mapa localizacao GPS paradas",
+    "📌": "taxinha fixar lembrete nota destaque",
+    "🏠": "casa residencia lar clientes",
+    "🏡": "casa jardim lar",
+    "🏪": "loja comercio mercado cliente ponto",
+    "💬": "balao conversa chat mensagem whatsapp feedback",
+    "📣": "megafone aviso anuncio novidade",
+    "📢": "alto falante aviso anuncio",
+    "🔔": "sino notificacao alerta aviso som",
+    "⭐": "estrela destaque favorito",
+    "🌟": "estrela brilhando especial",
+    "✨": "brilhos novidade limpo",
+    "❤️": "coracao amor curtir favorito",
+    "👍": "like gostei sim aprovado positivo ok",
+    "👎": "dislike nao gostei reprovado negativo",
+    "✅": "check confirmado feito concluido correto sucesso ok",
+    "❌": "erro cancelado errado excluir remover deletar",
+    "⚠️": "atencao atenção perigo aviso importante",
+    "ℹ️": "informacao informação ajuda detalhes",
+    "🆗": "ok confirmado aceito",
+    "🆕": "novo novidade lancamento",
+    "🔄": "atualizar recarregar sync sincronizar",
+    "♻️": "reciclar sustentavel",
+    "➕": "mais somar adicionar novo",
+    "➖": "menos subtrair remover",
+    "✖️": "multiplicar fechar remover",
+    "➗": "dividir",
+    "❓": "duvida pergunta ajuda",
+    "💡": "ideia lampada lâmpada dica sugestao",
+    "🎯": "meta objetivo acerto foco",
+    "🏆": "trofeu troféu premio prêmio campeao",
+    "🏅": "medalha premio",
+    "🥇": "primeiro ouro medalha",
+    "👑": "coroa rei rainha premium vip destaque"
 };
 
 export function updateProductIconPreview() {
@@ -4004,27 +4173,10 @@ export function filterSelectorEmojis() {
             } else {
                 const emoji = btn.textContent;
                 let keywords = emoji;
-                if (emoji === "🍓") keywords += " morango strawberry red frutas saborizado";
-                if (emoji === "🥥") keywords += " coco coconut branco coco-da-bahia saborizado";
-                if (emoji === "🍉") keywords += " melancia watermelon saborizado";
-                if (emoji === "🍋") keywords += " limao limão lemon verde saborizado";
-                if (emoji === "🥭") keywords += " manga maracuja maracujá yellow saborizado";
-                if (emoji === "🍇") keywords += " uva grape roxo saborizado";
-                if (emoji === "🍍") keywords += " abacaxi pineapple saborizado";
-                if (emoji === "🍒") keywords += " cereja cherry";
-                if (emoji === "🧊") keywords += " gelo cubo ice";
-                if (emoji === "❄️") keywords += " neve frio gelo";
-                if (emoji === "🔥") keywords += " fogo carvao carvão quente";
-                if (emoji === "📦") keywords += " fardo caixa produto";
-                if (emoji === "🪣") keywords += " balde tina";
-                if (emoji === "🪑") keywords += " cadeira mesa aluguel";
-                if (emoji === "🍹") keywords += " drink coquetel copo saborizado";
-                if (emoji === "🍺") keywords += " cerveja copo beer";
-                if (emoji === "🚚") keywords += " entrega caminhao caminhão roteiro";
-                if (emoji === "👥") keywords += " clientes users";
-                if (emoji === "📊") keywords += " dashboard relatorio graficos";
-                if (emoji === "🛒") keywords += " pdv balcao carrinho vendas";
-                if (emoji === "⚙️") keywords += " config configuracao admin";
+                
+                if (EMOJI_KEYWORDS && EMOJI_KEYWORDS[emoji]) {
+                    keywords += " " + EMOJI_KEYWORDS[emoji];
+                }
                 
                 if (keywords.includes(query)) {
                     btn.style.display = "inline-flex";
