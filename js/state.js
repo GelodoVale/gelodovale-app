@@ -5,7 +5,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "3.8";
-export const CODE_BUILD = "v33 (11/06/2026 - Antigravity)";
+export const CODE_BUILD = "v34 (11/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -745,12 +745,19 @@ export function initializeDefaultFields() {
     }
     if (!state.firebaseConfig || !state.firebaseConfig.apiKey) {
         state.firebaseConfig = {
-            enabled: false,
+            enabled: true,  // AUTO-ATIVADO: sync em tempo real ligado por padrão
             apiKey: 'AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE',
             projectId: 'gelo-do-vale',
             databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
             deviceKey: 'gelodovale_oficial'
         };
+    }
+    // Migração: ativar auto-sync para dispositivos existentes que tinham enabled=false
+    // mas já possuem as credenciais preenchidas (não vai afetar quem desativou manualmente pós v34)
+    if (state.firebaseConfig && state.firebaseConfig.apiKey &&
+        state.firebaseConfig.projectId && state.firebaseConfig.databaseURL &&
+        state.firebaseConfig.enabled === false && !state.firebaseConfig._manuallyDisabled) {
+        state.firebaseConfig.enabled = true;
     }
     if (!state.cargoSettlements) state.cargoSettlements = [];
     if (state.factorySettings) {

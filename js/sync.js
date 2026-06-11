@@ -228,6 +228,12 @@ export function toggleFirebaseSync(checked) {
         state.firebaseConfig = { enabled: false, apiKey: '', projectId: '', databaseURL: '', deviceKey: '' };
     }
     state.firebaseConfig.enabled = checked;
+    // Se o usuário desativou manualmente, marcamos para não reativar automático
+    if (!checked) {
+        state.firebaseConfig._manuallyDisabled = true;
+    } else {
+        state.firebaseConfig._manuallyDisabled = false;
+    }
     saveStateLocalOnly();
     if (checked) {
         initFirebase();

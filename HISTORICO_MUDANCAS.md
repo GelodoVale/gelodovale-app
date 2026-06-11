@@ -6,7 +6,18 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
-#### v33 (11/06/2026 - Antigravity)
+#### v34 (11/06/2026 - Antigravity)
+* **Sincronização Automática em Tempo Real (Firebase Auto-Sync) (COD: SYNC-01):**
+  - Ativado o Firebase Realtime Database por padrão (`enabled: true`) para todos os dispositivos. Antes estava desativado por padrão, bloqueando todo o sistema de sync já implementado.
+  - Adicionada migração automática: dispositivos existentes que tinham `enabled: false` com as credenciais preenchidas são automaticamente ativados na próxima abertura (sem perda de dados).
+  - Adicionada flag `_manuallyDisabled` para preservar a preferência do usuário que optar por desativar manualmente o sync pelo painel de configurações.
+  - Qualquer alteração de dados (clientes, pedidos, vendas PDV, backups, pontos de restauração) agora sincroniza automaticamente para a nuvem em tempo real. Todos os dispositivos conectados recebem a atualização em 1-2 segundos.
+* **Auto-Push de Código para GitHub Pages (COD: DEV-01):**
+  - Criado o hook Git `post-commit` que executa `git push origin main` automaticamente após cada commit do Antigravity, eliminando a necessidade de rodar o `atualizar_github.bat` manualmente.
+  - Com isso, o site online (GitHub Pages) atualiza automaticamente sempre que o Antigravity faz alguma alteração no código.
+* Bumped cache para `gelodovale-v127` e build para `v34`.
+
+
 * **Alinhamento do Cabeçalho Superior e Suporte de Resizing Lateral (COD: Layout):**
   - Otimizado o cabeçalho superior (`.top-header` e `.header-actions`) no `styles.css` para utilizar `flex-wrap: nowrap` no contêiner principal e truncamento inteligente (`ellipsis`) nos textos longos como `"Frente de Caixa (PDV Balcão)"`, impedindo desalinhamento visual e quebras de linha bagunçadas em telas desktop.
   - Adicionado `flex-wrap: wrap` e gap otimizado para `0.5rem` nos botões da barra de ações, permitindo que os botões se organizem perfeitamente sem deformar o título.
