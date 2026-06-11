@@ -199,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Carregar dados do localStorage
     loadState();
+    applyTabIcons();
     applyAppearanceTheme();
     initVolumeSlider();
     updateQuickTogglesUI();
@@ -2441,6 +2442,8 @@ export function initForms() {
             const unitsPerPack = type === "Gelo Saborizado" ? (parseInt(document.getElementById("prod-units-per-pack").value) || 1) : 0;
             const unitWeightGrams = type === "Gelo Saborizado" ? (parseInt(document.getElementById("prod-unit-weight-g").value) || 0) : 0;
             
+            const customIcon = document.getElementById("prod-custom-icon").value.trim();
+            
             if (!name) {
                 showToast("O nome do item é obrigatório!", "warning");
                 return;
@@ -2452,14 +2455,16 @@ export function initForms() {
                     state.products[idx] = {
                         ...state.products[idx],
                         name, type, subtype, weight, defaultPrice, active,
-                        flavor, packageType, unitsPerPack, unitWeightGrams
+                        flavor, packageType, unitsPerPack, unitWeightGrams,
+                        customIcon
                     };
                 }
             } else {
                 const newProduct = {
                     id: "p-" + Date.now(),
                     name, type, subtype, weight, defaultPrice, active,
-                    flavor, packageType, unitsPerPack, unitWeightGrams
+                    flavor, packageType, unitsPerPack, unitWeightGrams,
+                    customIcon
                 };
                 if (!state.products) state.products = [];
                 state.products.push(newProduct);
@@ -3425,6 +3430,12 @@ window.runClientDiagnosticsFromSupport = runClientDiagnosticsFromSupport;
 
 export function getProductEmoji(p) {
     if (!p) return "";
+    if (p.customIcon) {
+        if (p.customIcon.startsWith("data:image/") || p.customIcon.startsWith("http") || p.customIcon.startsWith("blob:") || p.customIcon.startsWith("./") || p.customIcon.startsWith("/")) {
+            return `<img src="${p.customIcon}" style="width: 1.2rem; height: 1.2rem; object-fit: contain; vertical-align: middle; border-radius: 3px;" alt="" />`;
+        }
+        return p.customIcon;
+    }
     const nameLower = (p.name || "").toLowerCase();
     const typeLower = (p.type || "").toLowerCase();
     
@@ -3458,6 +3469,10 @@ export function getProductEmojiBadge(p) {
     const nameLower = (p.name || "").toLowerCase();
     const typeLower = (p.type || "").toLowerCase();
     
+    if (emoji.startsWith("<img")) {
+        return `<span class="product-icon-badge">${emoji}</span>`;
+    }
+    
     if (typeLower.includes("carv") || nameLower.includes("carv")) {
         return `<span class="product-icon-badge anim-pulse-fire">${emoji}</span>`;
     }
@@ -3468,6 +3483,29 @@ export function getProductEmojiBadge(p) {
 }
 
 window.getProductEmojiBadge = getProductEmojiBadge;
+
+export function applyTabIcons() {
+    if (!state.tabIcons) return;
+    const navItems = document.querySelectorAll(".nav-menu .nav-item");
+    navItems.forEach(item => {
+        const tab = item.getAttribute("data-tab");
+        if (tab && state.tabIcons[tab]) {
+            const span = item.querySelector("span");
+            if (span) {
+                const currentText = span.textContent;
+                const textOnly = currentText.replace(/^[^a-zA-ZÀ-ÿ\s]+/g, '').trim();
+                
+                const iconVal = state.tabIcons[tab];
+                if (iconVal.startsWith("data:image/") || iconVal.startsWith("http") || iconVal.startsWith("blob:") || iconVal.startsWith("./") || iconVal.startsWith("/")) {
+                    span.innerHTML = `<img src="${iconVal}" style="width: 1.1rem; height: 1.1rem; object-fit: contain; margin-right: 6px; vertical-align: middle; border-radius: 2px;" alt="" /> ${textOnly}`;
+                } else {
+                    span.innerHTML = `${iconVal} ${textOnly}`;
+                }
+            }
+        }
+    });
+}
+window.applyTabIcons = applyTabIcons;
 
 // ==========================================
 // FEEDBACK SENSORIAL E INTERATIVIDADE (CONFES, SONS, HAPTICS, ETC)

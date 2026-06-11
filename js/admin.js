@@ -456,6 +456,8 @@ export function renderPrecos() {
         toggleCommissionValueLabel();
     }
 
+    if (window.renderCustomIconsLibraryGrid) window.renderCustomIconsLibraryGrid();
+    if (window.renderTabsIconsConfigGrid) window.renderTabsIconsConfigGrid();
     if (window.loadSystemChangelog) window.loadSystemChangelog();
     switchAdminSubTab(window.activeAdminSubTab || "tab-financeiro");
 }
@@ -2680,6 +2682,7 @@ export function openProductModal(productId = null) {
     document.getElementById("prod-package-type").value = "pacote";
     document.getElementById("prod-units-per-pack").value = "12";
     document.getElementById("prod-unit-weight-g").value = "200";
+    document.getElementById("prod-custom-icon").value = "";
     
     if (productId) {
         title.innerText = "Editar Produto / Item";
@@ -2698,12 +2701,15 @@ export function openProductModal(productId = null) {
             document.getElementById("prod-package-type").value = p.packageType || "pacote";
             document.getElementById("prod-units-per-pack").value = p.unitsPerPack !== undefined ? p.unitsPerPack : "12";
             document.getElementById("prod-unit-weight-g").value = p.unitWeightGrams !== undefined ? p.unitWeightGrams : "200";
+            
+            document.getElementById("prod-custom-icon").value = p.customIcon || "";
         }
     } else {
         title.innerText = "Novo Produto / Item";
     }
     
     toggleProductSubfields();
+    if (window.updateProductIconPreview) window.updateProductIconPreview();
     modal.classList.add("active");
 }
 
@@ -3846,6 +3852,540 @@ export async function loadSystemChangelog() {
 }
 
 window.loadSystemChangelog = loadSystemChangelog;
+
+// ==========================================================================
+// GESTÃO DE ÍCONES E EMOJIS (PRODUTOS & ABAS) - ADMIN ONLY
+// ==========================================================================
+
+const SELECTOR_EMOJIS = {
+    "🧊 Gelo / Geral": ["❄️", "🧊", "🔥", "📦", "🪣", "🪑", "⚡", "✨", "🌟", "💧", "🌡️"],
+    "🍓 Frutas / Sabores": ["🍓", "🥥", "🍉", "🍋", "🥭", "🍇", "🍍", "🍒", "🍑", "🍏", "🍎", "🍊", "🍌", "🥝", "🍈", "🍐", "🫐"],
+    "🍹 Bebidas / Copos": ["🍹", "🍺", "🥂", "🥤", "🍷", "🍸", "🥃", "☕", "🥛"],
+    "💵 Objetos / Símbolos": ["💵", "📅", "⚙️", "👥", "🚚", "🛒", "🧾", "🔒", "🔑", "📌", "🗺️", "💬", "📊"]
+};
+
+export function updateProductIconPreview() {
+    const val = document.getElementById("prod-custom-icon").value.trim();
+    const previewEl = document.getElementById("product-icon-preview");
+    if (!previewEl) return;
+    
+    if (val) {
+        if (val.startsWith("data:image/") || val.startsWith("http") || val.startsWith("blob:") || val.startsWith("./") || val.startsWith("/")) {
+            previewEl.innerHTML = `<img src="${val}" style="width: 100%; height: 100%; object-fit: contain;" alt="" />`;
+        } else {
+            previewEl.innerHTML = val;
+        }
+    } else {
+        // Fallback para o tipo e nome
+        const type = document.getElementById("prod-type").value;
+        const name = document.getElementById("prod-name").value;
+        const tempP = { type, name };
+        const fallbackEmoji = window.getProductEmoji ? window.getProductEmoji(tempP) : "❄️";
+        if (fallbackEmoji.startsWith("<img")) {
+            previewEl.innerHTML = fallbackEmoji;
+        } else {
+            previewEl.innerHTML = `<span style="opacity: 0.5;">${fallbackEmoji}</span>`;
+        }
+    }
+}
+window.updateProductIconPreview = updateProductIconPreview;
+
+// Configurar listeners após carregar a página
+document.addEventListener("DOMContentLoaded", () => {
+    const nameInput = document.getElementById("prod-name");
+    if (nameInput) {
+        nameInput.addEventListener("input", () => {
+            updateProductIconPreview();
+        });
+    }
+    const typeInput = document.getElementById("prod-type");
+    if (typeInput) {
+        typeInput.addEventListener("change", () => {
+            updateProductIconPreview();
+        });
+    }
+});
+
+export function clearProductIcon() {
+    document.getElementById("prod-custom-icon").value = "";
+    updateProductIconPreview();
+    window.showToast("Personalização visual limpa! Usando ícone padrão do sistema.", "info");
+}
+window.clearProductIcon = clearProductIcon;
+
+export function openIconSelector(targetType, targetId = "") {
+    document.getElementById("icon-selector-target-type").value = targetType;
+    document.getElementById("icon-selector-target-id").value = targetId;
+    
+    // Resetar busca
+    const search = document.getElementById("emoji-search-input");
+    if (search) search.value = "";
+    
+    switchIconSelectorTab("emojis");
+    renderSelectorEmojis();
+    renderSelectorLibrary();
+    
+    const modal = document.getElementById("modal-icon-selector");
+    if (modal) modal.classList.add("active");
+}
+window.openIconSelector = openIconSelector;
+
+export function switchIconSelectorTab(tabName) {
+    const btnEmojis = document.getElementById("btn-icon-sel-emojis");
+    const btnLibrary = document.getElementById("btn-icon-sel-library");
+    const contentEmojis = document.getElementById("icon-sel-content-emojis");
+    const contentLibrary = document.getElementById("icon-sel-content-library");
+    
+    if (tabName === "emojis") {
+        btnEmojis.classList.add("active");
+        btnLibrary.classList.remove("active");
+        contentEmojis.style.display = "flex";
+        contentLibrary.style.display = "none";
+    } else {
+        btnEmojis.classList.remove("active");
+        btnLibrary.classList.add("active");
+        contentEmojis.style.display = "none";
+        contentLibrary.style.display = "block";
+    }
+}
+window.switchIconSelectorTab = switchIconSelectorTab;
+
+function renderSelectorEmojis() {
+    const container = document.getElementById("emoji-selector-groups");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    Object.entries(SELECTOR_EMOJIS).forEach(([groupName, emojis]) => {
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "emoji-group-section";
+        groupDiv.style.marginBottom = "10px";
+        
+        const title = document.createElement("div");
+        title.style.cssText = "font-size: 0.75rem; color: var(--color-primary); margin-bottom: 4px; font-weight: bold;";
+        title.textContent = groupName;
+        
+        const grid = document.createElement("div");
+        grid.style.cssText = "display: flex; gap: 6px; flex-wrap: wrap;";
+        
+        emojis.forEach(emoji => {
+            const btn = document.createElement("span");
+            btn.className = "emoji-preset-btn";
+            btn.textContent = emoji;
+            btn.addEventListener("click", () => selectPresetEmoji(emoji));
+            grid.appendChild(btn);
+        });
+        
+        groupDiv.appendChild(title);
+        groupDiv.appendChild(grid);
+        container.appendChild(groupDiv);
+    });
+}
+
+export function filterSelectorEmojis() {
+    const query = (document.getElementById("emoji-search-input").value || "").toLowerCase().trim();
+    const sections = document.querySelectorAll(".emoji-group-section");
+    
+    sections.forEach(sec => {
+        let groupHasMatch = false;
+        const btns = sec.querySelectorAll(".emoji-preset-btn");
+        btns.forEach(btn => {
+            if (!query) {
+                btn.style.display = "inline-flex";
+                groupHasMatch = true;
+            } else {
+                const emoji = btn.textContent;
+                let keywords = emoji;
+                if (emoji === "🍓") keywords += " morango strawberry red frutas saborizado";
+                if (emoji === "🥥") keywords += " coco coconut branco coco-da-bahia saborizado";
+                if (emoji === "🍉") keywords += " melancia watermelon saborizado";
+                if (emoji === "🍋") keywords += " limao limão lemon verde saborizado";
+                if (emoji === "🥭") keywords += " manga maracuja maracujá yellow saborizado";
+                if (emoji === "🍇") keywords += " uva grape roxo saborizado";
+                if (emoji === "🍍") keywords += " abacaxi pineapple saborizado";
+                if (emoji === "🍒") keywords += " cereja cherry";
+                if (emoji === "🧊") keywords += " gelo cubo ice";
+                if (emoji === "❄️") keywords += " neve frio gelo";
+                if (emoji === "🔥") keywords += " fogo carvao carvão quente";
+                if (emoji === "📦") keywords += " fardo caixa produto";
+                if (emoji === "🪣") keywords += " balde tina";
+                if (emoji === "🪑") keywords += " cadeira mesa aluguel";
+                if (emoji === "🍹") keywords += " drink coquetel copo saborizado";
+                if (emoji === "🍺") keywords += " cerveja copo beer";
+                if (emoji === "🚚") keywords += " entrega caminhao caminhão roteiro";
+                if (emoji === "👥") keywords += " clientes users";
+                if (emoji === "📊") keywords += " dashboard relatorio graficos";
+                if (emoji === "🛒") keywords += " pdv balcao carrinho vendas";
+                if (emoji === "⚙️") keywords += " config configuracao admin";
+                
+                if (keywords.includes(query)) {
+                    btn.style.display = "inline-flex";
+                    groupHasMatch = true;
+                } else {
+                    btn.style.display = "none";
+                }
+            }
+        });
+        sec.style.display = groupHasMatch ? "block" : "none";
+    });
+}
+window.filterSelectorEmojis = filterSelectorEmojis;
+
+function renderSelectorLibrary() {
+    const grid = document.getElementById("library-selector-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    const library = state.customIconsLibrary || [];
+    if (library.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; color: var(--color-text-muted); padding: 20px; font-size: 0.8rem;">
+                Nenhum ícone importado. Vá em Configurações para carregar fotos (.PNG/.JPG).
+            </div>
+        `;
+        return;
+    }
+    
+    library.forEach(icon => {
+        const item = document.createElement("div");
+        item.style.cssText = `
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        `;
+        item.title = icon.name;
+        
+        item.addEventListener("mouseover", () => {
+            item.style.borderColor = "var(--color-primary)";
+            item.style.background = "rgba(0, 240, 255, 0.05)";
+        });
+        item.addEventListener("mouseout", () => {
+            item.style.borderColor = "rgba(255, 255, 255, 0.05)";
+            item.style.background = "rgba(255, 255, 255, 0.02)";
+        });
+        
+        item.innerHTML = `
+            <div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                <img src="${icon.data}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+            </div>
+            <div style="font-size: 0.65rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; text-align: center;">${icon.name}</div>
+        `;
+        
+        item.addEventListener("click", () => selectPresetEmoji(icon.data));
+        grid.appendChild(item);
+    });
+}
+
+export function selectPresetEmoji(val) {
+    const targetType = document.getElementById("icon-selector-target-type").value;
+    const targetId = document.getElementById("icon-selector-target-id").value;
+    
+    if (targetType === "product") {
+        document.getElementById("prod-custom-icon").value = val;
+        updateProductIconPreview();
+        window.showToast("Ícone selecionado com sucesso!", "success");
+    } else if (targetType === "tab") {
+        if (!state.tabIcons) state.tabIcons = {};
+        state.tabIcons[targetId] = val;
+        saveState();
+        
+        const input = document.getElementById(`tab-input-${targetId}`);
+        if (input) input.value = val;
+        
+        const preview = document.getElementById(`tab-icon-preview-${targetId}`);
+        if (preview) {
+            if (val.startsWith("data:image/") || val.startsWith("http")) {
+                preview.innerHTML = `<img src="${val}" style="width: 80%; height: 80%; object-fit: contain;" />`;
+            } else {
+                preview.innerHTML = val || "❓";
+            }
+        }
+        
+        if (window.applyTabIcons) window.applyTabIcons();
+        window.showToast("Ícone da aba atualizado com sucesso!", "success");
+    }
+    
+    closeModal("modal-icon-selector");
+}
+window.selectPresetEmoji = selectPresetEmoji;
+
+export function handleProductIconUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 512000) {
+        window.showToast("A imagem é muito grande! Escolha uma imagem de até 500KB para melhor desempenho.", "warning");
+        event.target.value = "";
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        document.getElementById("prod-custom-icon").value = base64;
+        updateProductIconPreview();
+        
+        // Adicionar automaticamente à biblioteca
+        addIconToGlobalLibrary(file.name.split('.')[0], base64);
+        event.target.value = "";
+        window.showToast("Imagem carregada e salva no produto!", "success");
+    };
+    reader.readAsDataURL(file);
+}
+window.handleProductIconUpload = handleProductIconUpload;
+
+export function addIconToGlobalLibrary(name, base64) {
+    if (!state.customIconsLibrary) state.customIconsLibrary = [];
+    const exists = state.customIconsLibrary.some(item => item.data === base64);
+    if (!exists) {
+        const id = "icon-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+        state.customIconsLibrary.push({
+            id: id,
+            name: name || "Sem Nome",
+            data: base64
+        });
+        saveState();
+        renderCustomIconsLibraryGrid();
+    }
+}
+window.addIconToGlobalLibrary = addIconToGlobalLibrary;
+
+export function renderCustomIconsLibraryGrid() {
+    const grid = document.getElementById("custom-icons-library-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    const library = state.customIconsLibrary || [];
+    if (library.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; color: var(--color-text-muted); padding: 20px; border: 1px dashed rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.8rem; background: rgba(0,0,0,0.1); width: 100%;">
+                Nenhum ícone importado na biblioteca. Faça o upload clicando acima.
+            </div>
+        `;
+        return;
+    }
+    
+    library.forEach(icon => {
+        const card = document.createElement("div");
+        card.style.cssText = `
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        `;
+        card.title = "Dica: Abra o cadastro/edição de um produto e clique no ícone para usá-lo lá!";
+        
+        card.innerHTML = `
+            <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px; background: rgba(0,0,0,0.3);">
+                <img src="${icon.data}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+            </div>
+            <div style="font-size: 0.65rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center;">${icon.name}</div>
+        `;
+        
+        // Botão de deletar
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.style.cssText = `
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--color-danger);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        `;
+        delBtn.innerHTML = "×";
+        delBtn.title = "Excluir Ícone";
+        delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            window.showConfirm(
+                `Deseja realmente remover o ícone "${icon.name}" da biblioteca?`,
+                () => {
+                    state.customIconsLibrary = state.customIconsLibrary.filter(item => item.id !== icon.id);
+                    saveState();
+                    renderCustomIconsLibraryGrid();
+                }
+            );
+        });
+        
+        card.appendChild(delBtn);
+        
+        // Ao clicar, se o modal de produto estiver ativo, associa
+        card.addEventListener("click", () => {
+            const productModal = document.getElementById("modal-product-mgmt");
+            if (productModal && productModal.classList.contains("active")) {
+                document.getElementById("prod-custom-icon").value = icon.data;
+                updateProductIconPreview();
+                window.showToast(`Ícone "${icon.name}" selecionado!`, "success");
+            } else {
+                window.showToast("Dica: Abra o cadastro/edição de um produto e clique no ícone para usá-lo lá!", "info");
+            }
+        });
+        
+        grid.appendChild(card);
+    });
+}
+window.renderCustomIconsLibraryGrid = renderCustomIconsLibraryGrid;
+
+export function triggerCustomIconLibraryUpload() {
+    const input = document.getElementById("icon-library-file-input");
+    if (input) input.click();
+}
+window.triggerCustomIconLibraryUpload = triggerCustomIconLibraryUpload;
+
+export function handleLibraryIconUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 512000) {
+        window.showToast("A imagem é muito grande! Escolha uma imagem de até 500KB para melhor desempenho.", "warning");
+        event.target.value = "";
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        addIconToGlobalLibrary(file.name.split('.')[0], base64);
+        event.target.value = "";
+        window.showToast("Ícone importado com sucesso na biblioteca!", "success");
+    };
+    reader.readAsDataURL(file);
+}
+window.handleLibraryIconUpload = handleLibraryIconUpload;
+
+export function renderTabsIconsConfigGrid() {
+    const grid = document.getElementById("tabs-icons-configuration-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    const tabsList = [
+        { id: "dashboard", label: "Dashboard" },
+        { id: "clientes", label: "Clientes" },
+        { id: "inventario", label: "Inventário de Freezers" },
+        { id: "equipamentos", label: "Inventário de Equipamentos" },
+        { id: "tinas", label: "Aluguel de Equipamentos" },
+        { id: "documentos", label: "Recibos & Orçamentos" },
+        { id: "pedidos", label: "Pedidos Pendentes" },
+        { id: "historico", label: "Diário de Entregas" },
+        { id: "pdv", label: "Balcão (PDV Rápido)" },
+        { id: "admin", label: "Configurações" }
+    ];
+    
+    const tabIcons = state.tabIcons || {};
+    
+    tabsList.forEach(tab => {
+        const itemVal = tabIcons[tab.id] || "";
+        
+        const row = document.createElement("div");
+        row.style.cssText = `
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        
+        const preview = document.createElement("div");
+        preview.id = `tab-icon-preview-${tab.id}`;
+        preview.style.cssText = `
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            overflow: hidden;
+        `;
+        if (itemVal.startsWith("data:image/") || itemVal.startsWith("http")) {
+            preview.innerHTML = `<img src="${itemVal}" style="width: 80%; height: 80%; object-fit: contain;" />`;
+        } else {
+            preview.innerHTML = itemVal || "❓";
+        }
+        
+        const info = document.createElement("div");
+        info.style.cssText = `
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        `;
+        
+        const label = document.createElement("label");
+        label.style.cssText = "font-size: 0.75rem; font-weight: 600; color: var(--color-text-main); margin-bottom: 0;";
+        label.textContent = tab.label;
+        
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "form-control";
+        input.id = `tab-input-${tab.id}`;
+        input.style.cssText = "font-size: 0.8rem; padding: 4px 8px; height: auto;";
+        input.value = itemVal;
+        input.placeholder = "Emoji ou base64...";
+        
+        input.addEventListener("input", () => {
+            const val = input.value.trim();
+            if (!state.tabIcons) state.tabIcons = {};
+            state.tabIcons[tab.id] = val;
+            saveState();
+            
+            if (val.startsWith("data:image/") || val.startsWith("http")) {
+                preview.innerHTML = `<img src="${val}" style="width: 80%; height: 80%; object-fit: contain;" />`;
+            } else {
+                preview.innerHTML = val || "❓";
+            }
+            
+            if (window.applyTabIcons) window.applyTabIcons();
+        });
+        
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary";
+        btn.style.cssText = "padding: 2px 6px; font-size: 0.65rem; height: auto; align-self: flex-start;";
+        btn.textContent = "Escolher da Biblioteca";
+        btn.addEventListener("click", () => {
+            openIconSelector("tab", tab.id);
+        });
+        
+        info.appendChild(label);
+        info.appendChild(input);
+        info.appendChild(btn);
+        
+        row.appendChild(preview);
+        row.appendChild(info);
+        grid.appendChild(row);
+    });
+}
+window.renderTabsIconsConfigGrid = renderTabsIconsConfigGrid;
+
 
 
 

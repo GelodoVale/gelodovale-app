@@ -1,0 +1,1 @@
+Olá! Este é um teste oficial de sincronização entre o computador do Trabalho e o de Casa. Se você estiver lendo isso em casa, a sincronização do OneDrive está funcionando 100%! Código de confirmação: [SYNC-SUCESSO-9921]

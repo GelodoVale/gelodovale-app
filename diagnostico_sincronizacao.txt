@@ -1,0 +1,28 @@
+=== DIAGNOSTICO DE SINCRONIZACAO === 
+Data/Hora: 03/06/2026 20:14:03,51 
+Computador: DESKTOP-47I1V20 
+Usuario: Escrit¢rio 
+UserProfile: C:\Users\Escrit¢rio 
+OneDrive Detectado: C:\Users\Escrit¢rio\OneDrive 
+IDE Rodando: NAO 
+ 
+[Pasta: antigravity] 
+Caminho Local: C:\Users\Escrit¢rio\.gemini\antigravity 
+Caminho OneDrive: C:\Users\Escrit¢rio\OneDrive\antigravity 
+OneDrive pasta existe: SIM 
+E Junction: SIM 
+Destino Junction Atual: "" 
+O destino da sincronizacao esta incorreto. Atualizando... 
+Criando conexao com o OneDrive... 
+Criacao Junction: SUCESSO 
+ 
+[Pasta: antigravity-ide] 
+Caminho Local: C:\Users\Escrit¢rio\.gemini\antigravity-ide 
+Caminho OneDrive: C:\Users\Escrit¢rio\OneDrive\antigravity-ide 
+OneDrive pasta existe: SIM 
+E Junction: SIM 
+Destino Junction Atual: "C:\Users\Escrit¢rio\OneDrive\antigravity" 
+O destino da sincronizacao esta incorreto. Atualizando... 
+Criando conexao com o OneDrive... 
+Criacao Junction: SUCESSO 
+Status Final: SUCESSO 

@@ -96,19 +96,7 @@ export function renderPDVCatalog() {
     
     activeProducts.forEach(p => {
         // Ícone ou emoji dependendo do tipo de produto
-        let emoji = "❄️";
-        if (p.type === "Carvão") emoji = "🔥";
-        else if (p.type === "Gelo Saborizado") {
-            const nameLower = (p.name || "").toLowerCase();
-            if (nameLower.includes("coco")) emoji = "🥥";
-            else if (nameLower.includes("melancia")) emoji = "🍉";
-            else if (nameLower.includes("morango")) emoji = "🍓";
-            else if (nameLower.includes("limão") || nameLower.includes("limao")) emoji = "🍋";
-            else if (nameLower.includes("maracujá") || nameLower.includes("maracuja")) emoji = "🥭";
-            else if (nameLower.includes("uva")) emoji = "🍇";
-            else if (nameLower.includes("abacaxi")) emoji = "🍍";
-            else emoji = "🍹";
-        }
+        const emoji = window.getProductEmoji ? window.getProductEmoji(p) : "❄️";
         
         // Calcular preço baseado nas regras de cliente e promoção
         let priceFardo = p.defaultPrice || 0;

@@ -4,8 +4,8 @@ import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
-export const APP_VERSION = "3.2";
-export const CODE_BUILD = "v27 (11/06/2026 - Antigravity)";
+export const APP_VERSION = "3.3";
+export const CODE_BUILD = "v28 (11/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -46,7 +46,7 @@ export function updateState(newState, preserveConfigs = false) {
             'users', 'factorySettings', 'backupSettings', 'appearance', 
             'printSettings', 'logisticsSettings', 'firebaseConfig', 
             'localBackups', 'adminPassword', 'notepadText', 'calendarNotes',
-            'localEvents', 'ignoredSpikes', 'layoutSettings'
+            'localEvents', 'ignoredSpikes', 'layoutSettings', 'customIconsLibrary', 'tabIcons'
         ];
         keysToPreserve.forEach(key => {
             if (state[key] !== undefined) {
@@ -658,6 +658,25 @@ export function initializeDefaultFields() {
             markupPercent: 0,
             markupFixed: 0.00,
             tollReturn: true
+        };
+    }
+
+    // Biblioteca de ícones customizados
+    if (!state.customIconsLibrary) {
+        state.customIconsLibrary = [];
+    }
+    if (!state.tabIcons) {
+        state.tabIcons = {
+            dashboard: "📊",
+            clientes: "👥",
+            inventario: "🧊",
+            equipamentos: "📦",
+            tinas: "🪣",
+            documentos: "🧾",
+            pedidos: "⏳",
+            historico: "🚚",
+            pdv: "🛒",
+            admin: "⚙️"
         };
     }
 

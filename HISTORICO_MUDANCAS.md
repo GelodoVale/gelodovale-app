@@ -6,6 +6,14 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v28 (11/06/2026 - Antigravity)
+* **Galeria de Ícones & Emojis e Abas Customizadas (Admin Only) (COD: FAB-04):**
+  - Implementada a **Biblioteca de Ícones Global** na aba Configurações de Fábrica & Aparência, permitindo o upload de fotos locais e gerenciamento em lote.
+  - Desenvolvido o modal reutilizável **Seletor de Ícones e Emojis** para produtos e abas de menu, com pesquisa instantânea e filtros por categorias (Frutas, Bebidas, Objetos, Gelo).
+  - Unificada a renderização visual do catálogo no PDV e das listagens administrativas para suportar ícones e imagens Base64 dinâmicas através da função `getProductEmoji`.
+  - Adicionada a customização dos ícones das abas laterais da sidebar de navegação com salvamento offline persistente no estado global do GelControl.
+  - Atualizada a versão do PWA para `v28` (cache `gelodovale-v120` e arquivos `?v=28`).
+
 #### v27 (11/06/2026 - Antigravity)
 * **Pontos de Restauração Nomeados e Diário de Bordo Dinâmico (COD: SEG-05/SEG-07):**
   - Implementado o sistema de **Pontos de Restauração** (Navegador) permitindo que o usuário dê nomes/descrições personalizadas (ex: "Antes de reajustar preços") ao invés de usar datas/códigos crus.

@@ -4315,3 +4315,29 @@ body.astro-day.weather-hot {
     flex: 1.2 !important;
 }
 
+/* Biblioteca de Emojis e Ícones */
+.emoji-preset-btn {
+    cursor: pointer;
+    padding: 6px;
+    font-size: 1.25rem;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    user-select: none;
+}
+.emoji-preset-btn:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--color-primary);
+    transform: scale(1.1);
+}
+.product-icon-badge img {
+    width: 1.2rem;
+    height: 1.2rem;
+    object-fit: contain;
+    vertical-align: middle;
+    border-radius: 3px;
+}
