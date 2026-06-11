@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v55 (11/06/2026 - Antigravity)
+* **Correção de Codificação de Caracteres (COD: ACE-01):**
+  - **Arquivo `index.html`:** Corrigido problema de codificação double-UTF8 no painel de Acerto de Carga (COD: ACE-01), alterando "OdÃ´metro" para "Odômetro" com a acentuação correta e limpa nas labels e cabeçalhos de KM inicial e final.
+  - **Verificação Geral:** Escaneado o projeto em busca de outras anomalias de codificação semelhantes, confirmando que a ocorrência estava isolada a essa seção.
+  - **Bumped build** para `v55` e cache SW `gelodovale-v148`.
+
 #### v54 (11/06/2026 - Antigravity)
 * **Correção no Layout dos Cards de Clientes (COD: CLI-02):**
   - **Módulo `js/clientes.js`:** Corrigido desalinhamento crítico na exibição dos cards de clientes. Resolvido o fechamento precoce da tag `div` de `.client-card` que ocorria logo após o cabeçalho, o que fazia com que o conteúdo do card (dados do freezer, estoque, contatos e botões) ficasse órfão de layout e desalinhado, quebrando o grid de clientes.
