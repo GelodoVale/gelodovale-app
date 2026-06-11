@@ -6,11 +6,44 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
-#### v17 (05/06/2026 - Antigravity)
-* **Correção de Sub-abas Administrativas Invisíveis:**
+#### v25 (10/06/2026 - Antigravity)
+* **Correção de Abas Administrativas Ocultas:**
+  * Corrigida a tag `</div>` de fechamento ausente no container `dashboard-row` da aba de **Segurança & Backup** no arquivo `index.html`. 
+  * Este erro fazia com que as sub-abas seguintes ("Gerenciar Usuários & Senhas" e "Integrações") fossem incorretamente aninhadas dentro da seção de segurança, fazendo com que ficassem ocultas (tela preta/vazia) ao alternar de aba no menu.
+  * Atualizada a versão de cache do Service Worker para `gelodovale-v117` e o parâmetro de cache-busting em scripts do `index.html` para `?v=25`.
+
+#### v24 (05/06/2026 - Antigravity)
+* **Defensiva de JavaScript e Null-Safety em Configurações:**
+  * Adicionada verificação de nulos (`null-safety`) em todas as atribuições diretas de `.value = ...` da função `renderPrecos()` em `js/admin.js` para campos comerciais (como nome, CNPJ, telefone, etc.) que podiam não existir em certas renderizações.
+  * Envelopamento com `try-catch` e proteções na função `switchAdminSubTab()` para garantir que erros em renderizações secundárias não travem o script global do painel.
+  * Atualizada a versão do PWA para `v24` (cache `gelodovale-v116` e script `?v=24`).
+
+#### v23 (05/06/2026 - Antigravity)
+* **Exclusão de Sub-abas Administrativas do Layout Manager:**
   * Corrigida a falha na função `getActivePanels()` no gerenciador de layout (`js/layout.js`). Sub-abas administrativas que consistem de formulários e configurações (como `tab-usuarios`, `tab-integracoes`, `tab-dados-fabrica`, `tab-impressao`, `tab-seguranca-backup` e `tab-precos`) foram explicitamente excluídas do comportamento de janelas flutuantes/redimensionáveis.
-  * Com isso, o layout destas seções permanece estático e limpo por padrão, fazendo com que as telas de "Gerenciar Usuários & Senhas" e "Integrações (Pix & WhatsApp)" voltem a ser exibidas e funcionem perfeitamente.
-  * Atualizada a versão do cache do Service Worker para `gelodovale-v115` e os parâmetros de carregamento no `index.html` para `v23` para forçar os navegadores a limparem o cache antigo.
+  * Isso manteve o layout dessas seções estático por padrão, evitando conflitos de salvamento de posições.
+
+#### v22 (05/06/2026 - Antigravity)
+* **Segurança e Robustez no Layout Manager:**
+  * Adicionado encapsulamento defensivo em blocos `try-catch` em todas as principais operações do Layout Manager (`js/layout.js`) para evitar que qualquer erro isolado de posicionamento quebre a execução de outros módulos javascript do sistema.
+
+#### v21 (05/06/2026 - Antigravity)
+* **Correção de Crashes em Painéis Aninhados:**
+  * Restringida a lógica de `wrapPanelContents()` e `unwrapPanelContents()` para atuar apenas sobre filhos diretos do painel principal, evitando erros em painéis que contêm outros elementos aninhados em sua estrutura.
+
+#### v20 (05/06/2026 - Antigravity)
+* **Auto-formatação de Conteúdo em Painéis Redimensionados:**
+  * Adicionado suporte para envelopar automaticamente o conteúdo de painéis em contêineres de rolagem (`.panel-content-scrollable`) ao serem redimensionados, prevenindo estouros visuais.
+
+#### v19 (05/06/2026 - Antigravity)
+* **Aplicação Automática de Layout em Alternâncias:**
+  * Configurada a chamada automática do Layout Manager ao trocar de sub-abas administrativas para repintar e reinjetar alças de redimensionamento instantaneamente na sub-aba ativada.
+
+#### v18 (05/06/2026 - Antigravity)
+* **Restauração de Handles e Limpeza de Logs:**
+  * Corrigido o sumiço das alças de redimensionamento em painéis ao mudar de abas e removida a camada visual de logs de depuração do layout manager que ficava sobreposta na tela.
+
+#### v17 (05/06/2026 - Antigravity)
 
 #### v16 (05/06/2026 - Antigravity)
 * **Prevenção Definitiva de Tremor & Atualização de Cache PWA:**
