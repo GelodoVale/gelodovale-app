@@ -162,19 +162,22 @@ export function renderClientes() {
         
         clientsContainer.innerHTML += `
             <div class="client-card">
-                <div class="client-card-header" style="flex-wrap: wrap; gap: 10px; align-items: center;">
+                <div class="client-card-header" style="flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
                     <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 180px;">
                         ${facadeSnippet}
-                        <div class="client-name-details">
-                                <h3 style="margin: 0; font-size: 1rem; color: #fff; display: inline-flex; align-items: center; gap: 4px;">
-                                    ${c.fantasyName || c.name}
-                                    ${c.noWhatsapp ? `<span style="color: var(--color-danger); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 2px;" title="Bloqueado para envios automáticos de WhatsApp">🚫</span>` : ''}
-                                </h3>
+                        <div class="client-name-details" style="display: flex; flex-direction: column; gap: 2px;">
+                            <h3 style="margin: 0; font-size: 1.05rem; color: #fff; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;">
+                                ${c.fantasyName || c.name}
+                                ${c.noWhatsapp ? `<span style="color: var(--color-danger); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 2px;" title="Bloqueado para envios automáticos de WhatsApp">🚫</span>` : ''}
+                            </h3>
+                            ${c.fantasyName ? `<p style="margin: 0; font-size: 0.75rem; color: var(--color-text-muted); font-style: italic; font-weight: normal;">${c.name}</p>` : ''}
+                            <p style="margin: 0; font-size: 0.78rem; color: var(--color-text-muted); font-weight: 500;">
+                                ${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}
+                            </p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
                                 ${activityBadgeHTML}
                                 ${docBadgeHTML}
                             </div>
-                            ${c.fantasyName ? `<p style="margin-top: 1px; font-size: 0.72rem; color: var(--color-text-muted); font-style: italic;">${c.name}</p>` : ''}
-                            <p style="margin-top: 4px; font-size: 0.75rem; color: var(--color-text-muted);">${c.freezerCode ? `Freezer: <strong>${c.freezerCode}</strong>` : 'Sem Freezer'}</p>
                         </div>
                     </div>
                     ${statusBadgeHTML}

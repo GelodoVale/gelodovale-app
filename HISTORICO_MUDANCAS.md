@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v54 (11/06/2026 - Antigravity)
+* **Correção no Layout dos Cards de Clientes (COD: CLI-02):**
+  - **Módulo `js/clientes.js`:** Corrigido desalinhamento crítico na exibição dos cards de clientes. Resolvido o fechamento precoce da tag `div` de `.client-card` que ocorria logo após o cabeçalho, o que fazia com que o conteúdo do card (dados do freezer, estoque, contatos e botões) ficasse órfão de layout e desalinhado, quebrando o grid de clientes.
+  - **Organização do Cabeçalho:** Estruturado o painel `.client-name-details` em uma coluna flexível que agrupa o nome, nome fantasia, código do freezer e badges de atividade/documento de forma limpa.
+  - **Bumped build** para `v54` e cache SW `gelodovale-v147`.
+
 #### v53 (11/06/2026 - Antigravity)
 * **Central de WhatsApp & Formulário Público do Cliente (COD: WA-01):**
   - **Módulo `js/whatsapp.js`:** Criado central com 10 templates customizáveis e suporte a placeholders dinâmicos (Nome, Valor, Link, etc.) com geração de links encriptados Base64.
