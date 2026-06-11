@@ -3896,7 +3896,7 @@ const SELECTOR_EMOJIS = {
         "❄️", "🧊", "☃️", "⛄", "💧", "🌊", "🌬️", "💨", "🌡️", "🔥", "⚡", "✨", "🌟", "🏢", "🏭", "🔌", "🛠️", "🔧", "⚙️", "⚒️", "🧱", "⚖️", "📦", "🪣"
     ],
     "🍓 Frutas / Sabores / Doces": [
-        "🍓", "🥥", "🍉", "🍋", "🥭", "🍇", "🍍", "🍒", "🍑", "🍏", "🍎", "🍊", "🍌", "🥝", "🍈", "🍐", "🫐", "🍅", "🥑", "🥕", "🌽", "🌶️", "🫑", "🧅", "🥔", "🍯", "🍫", "🍬", "🍭", "🍨", "🍧", "🍦", "🍩", "🍪", "🎂", "🧁", "🥧"
+        "🍓", "🥥", "🍉", "🍋", "🥭", "🍇", "🍍", "🍒", "🍑", "🍏", "🍎", "🍊", "🍌", "🥝", "🍈", "🍐", "🫐", "🍅", "🥑", "🥕", "🌽", "🌶️", "🫑", "🧅", "🥔", "🍯", "🍫", "🍬", "🍭", "🍨", "🍧", "🍦", "🍩", "🍪", "🎂", "🧁", "🥧", "🌿", "🌱", "🍃"
     ],
     "🍹 Bebidas / Copos": [
         "🍹", "🍺", "🍻", "🥂", "🥤", "🧃", "🧉", "🍷", "🍸", "🥃", "☕", "🍵", "🥛", "🍼", "🍾", "🍶"
@@ -4064,7 +4064,10 @@ const EMOJI_KEYWORDS = {
     "🏆": "trofeu troféu premio prêmio campeao",
     "🏅": "medalha premio",
     "🥇": "primeiro ouro medalha",
-    "👑": "coroa rei rainha premium vip destaque"
+    "👑": "coroa rei rainha premium vip destaque",
+    "🌿": "hortela hortelã menta erva folha green verde",
+    "🌱": "broto plantinha erva hortela hortelã menta",
+    "🍃": "folhas hortela hortelã menta vento verde"
 };
 
 export function updateProductIconPreview() {
@@ -4273,9 +4276,20 @@ export function selectPresetEmoji(val) {
     const targetId = document.getElementById("icon-selector-target-id").value;
     
     if (targetType === "product") {
-        document.getElementById("prod-custom-icon").value = val;
+        const input = document.getElementById("prod-custom-icon");
+        const currentVal = (input.value || "").trim();
+        const isValImage = val.startsWith("data:image/") || val.startsWith("http") || val.startsWith("blob:") || val.startsWith("./") || val.startsWith("/");
+        const isCurrentValImage = currentVal.startsWith("data:image/") || currentVal.startsWith("http") || currentVal.startsWith("blob:") || currentVal.startsWith("./") || currentVal.startsWith("/");
+        
+        if (isValImage || isCurrentValImage) {
+            input.value = val;
+            closeModal("modal-icon-selector");
+            window.showToast("Ícone selecionado com sucesso!", "success");
+        } else {
+            input.value = currentVal + val;
+            window.showToast(`Emoji "${val}" adicionado!`, "success");
+        }
         updateProductIconPreview();
-        window.showToast("Ícone selecionado com sucesso!", "success");
     } else if (targetType === "tab") {
         if (!state.tabIcons) state.tabIcons = {};
         state.tabIcons[targetId] = val;
@@ -4295,9 +4309,8 @@ export function selectPresetEmoji(val) {
         
         if (window.applyTabIcons) window.applyTabIcons();
         window.showToast("Ícone da aba atualizado com sucesso!", "success");
+        closeModal("modal-icon-selector");
     }
-    
-    closeModal("modal-icon-selector");
 }
 window.selectPresetEmoji = selectPresetEmoji;
 

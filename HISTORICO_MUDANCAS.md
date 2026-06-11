@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v39 (11/06/2026 - Antigravity)
+* **Múltiplos Emojis/Ícones nos Produtos & Emojis de Hortelã/Ervas (COD: CAT-04):**
+  - Implementada a seleção acumulativa de múltiplos emojis para os produtos (ex: "🧊🍍🌿" para gelo saborizado de abacaxi com hortelã). Ao selecionar emojis no seletor, o sistema agora os concatena no campo de ícone em vez de sobrescrever. Imagens/Base64 continuam com comportamento de substituição padrão.
+  - A janela do seletor de emojis permanece aberta durante a seleção de emojis para permitir múltiplas seleções sequenciais, adicionando um botão "Concluído" nas ações do modal para fechá-lo quando terminar.
+  - Adicionados novos emojis rápidos de ervas e folhas ("🌿", "🌱", "🍃") no grupo de Frutas/Sabores/Doces do seletor e indexados no dicionário de busca com termos como "hortela", "hortelã", "menta" e "erva".
+  - Bumped build do sistema para `v39` e cache do Service Worker para `gelodovale-v132`.
+
 #### v38 (11/06/2026 - Antigravity)
 * **Correção da Tabela Vazia de Catálogo (COD: CAT-03):**
   - Corrigido o bug visual "sumiu tudo" em que a tabela do "Catálogo de Itens" aparecia em branco após recarregar a página. O problema ocorria porque a função `renderProductsCatalog()` era executada apenas no salvamento ou exclusão de um produto, mas não ao inicializar a aba de configurações ou ao alternar para a sub-aba de catálogo.
