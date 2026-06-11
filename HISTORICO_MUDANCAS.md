@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v38 (11/06/2026 - Antigravity)
+* **Correção da Tabela Vazia de Catálogo (COD: CAT-03):**
+  - Corrigido o bug visual "sumiu tudo" em que a tabela do "Catálogo de Itens" aparecia em branco após recarregar a página. O problema ocorria porque a função `renderProductsCatalog()` era executada apenas no salvamento ou exclusão de um produto, mas não ao inicializar a aba de configurações ou ao alternar para a sub-aba de catálogo.
+  - Adicionada a chamada automática de `renderProductsCatalog()` ao carregar a aba de configurações (`renderPrecos()`) e ao selecionar a sub-aba do Catálogo (`switchAdminSubTab('tab-catalogo')`).
+  - Bumped build do sistema para `v38` e cache do Service Worker para `gelodovale-v131`.
+
 #### v37 (11/06/2026 - Antigravity)
 * **Exclusão Definitiva de Itens no Catálogo (COD: CAT-02):**
   - Implementada a exclusão permanente de produtos em duas etapas. Se o item estiver ativo, clicar na lixeira o inativa (mantendo o histórico comercial e ocultando-o do PDV). Se o item já estiver inativo, clicar na lixeira novamente exibe a opção de excluí-lo definitivamente do banco de dados de forma irreversível.

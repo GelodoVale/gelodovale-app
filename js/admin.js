@@ -101,6 +101,12 @@ export function switchAdminSubTab(subTabId) {
         }
     } catch(e) { console.error("[switchAdminSubTab] financeiro render error:", e); }
     
+    try {
+        if (subTabId === "tab-catalogo") {
+            renderProductsCatalog();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] renderProductsCatalog error:", e); }
+    
     // Força a renderização dos ícones Lucide recém-exibidos
     try {
         if (window.lucide) {
@@ -448,6 +454,7 @@ export function renderPrecos() {
     renderPackaging();
     renderPackagingTransactions();
     if (window.renderComodatosAdmin) window.renderComodatosAdmin();
+    renderProductsCatalog();
     
     // Configurações de Comissão
     if (state.commissionSettings) {
