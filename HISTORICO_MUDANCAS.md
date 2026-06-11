@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v30 (11/06/2026 - Antigravity)
+* **Unificação do Cabeçalho e Limpeza Visual da Aba PDV (Frente de Caixa):**
+  - Removido o cabeçalho interno redundante e duplicado (`<h2>` e `<p>`) na seção Frente de Caixa (`#pdv` no `index.html`).
+  - Alinhada a aba de PDV com a arquitetura limpa de outras telas do sistema (como Histórico de Entregas), deixando que apenas a barra superior global (`.top-header`) gerencie e exiba o título no canto superior esquerdo e a barra de ações no canto superior direito de forma fixada e sem quebras de linha indesejadas.
+  - Atualizada a versão de cache do Service Worker para `gelodovale-v122` e o build do sistema para `v30`.
+
 #### v29 (11/06/2026 - Antigravity)
 * **Ajuste de Redimensionamento Horizontal dos Painéis do PDV (COD: PDV-01):**
   - Adicionado suporte completo para redimensionamento horizontal lateral dos painéis em modo Grade (`grid`) e Janelas Flutuantes (`floating`) no Gerenciador de Layout (`js/layout.js` e `styles.css`).
