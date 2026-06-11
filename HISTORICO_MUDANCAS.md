@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v31 (11/06/2026 - Antigravity)
+* **Correção do Painel de Configurações de Backup e Versão (COD: SEG-04):**
+  - Corrigido o erro estrutural de fechamento de tags no `index.html` na seção de backup, onde a abertura do painel de Pontos de Restauração (`COD: SEG-05`) havia sido incorretamente injetada dentro do formulário e cortado o botão de importar JSON e a tag de envio.
+  - Reintegrados os botões "Importar Backup (JSON)" e "Salvar Configurações" com suas respectivas tags e submissão do formulário (`backup-settings-form`) restauradas.
+  - Corrigido o bug onde a digitação de novas versões de dados (ex: mudando de 0.9 para 1.0) não persistia no estado da aplicação por ausência do botão e ação de salvar o formulário.
+  - Atualizada a versão de cache do Service Worker para `gelodovale-v123` e o build do sistema para `v31`.
+
 #### v30 (11/06/2026 - Antigravity)
 * **Unificação do Cabeçalho e Limpeza Visual da Aba PDV (Frente de Caixa):**
   - Removido o cabeçalho interno redundante e duplicado (`<h2>` e `<p>`) na seção Frente de Caixa (`#pdv` no `index.html`).

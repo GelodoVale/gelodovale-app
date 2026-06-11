@@ -2230,7 +2230,16 @@
                                         <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
                                             <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="importBackupFromFile(event)">
                                             <button type="button" class="btn btn-secondary" onclick="document.getElementById('backup-file-input').click()" style="display: inline-flex; align-items: center; gap: 6px;">
-                                                                     <!-- Histórico de Backups Locais (Pontos de Restauração) -->
+                                                <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Backup (JSON)
+                                            </button>
+                                            <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                                                <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Configurações
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Histórico de Backups Locais (Pontos de Restauração) -->
                                 <div class="dashboard-panel" id="admin-browser-backups-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                         <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Pontos de Restauração do Sistema (Navegador) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-05</span></h2>
@@ -2248,15 +2257,16 @@
                                                 <!-- Preenchido via Javascript -->
                                             </tbody>
                                         </table>
-                                        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">
-                                                Último Ponto: <strong id="lbl-last-backup-date">-</strong>
-                                            </span>
-                                            <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
-                                                <i data-lucide="save" style="width: 13px; height: 13px;"></i> Criar Ponto de Restauração
-                                            </button>
-                                        </div>
-                                </div></div>
+                                    </div>
+                                    <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">
+                                            Último Ponto: <strong id="lbl-last-backup-date">-</strong>
+                                        </span>
+                                        <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i data-lucide="save" style="width: 13px; height: 13px;"></i> Criar Ponto de Restauração
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Diário de Bordo / Histórico de Atualizações (Código) -->
@@ -5991,7 +6001,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=30"></script>
+    <script type="module" src="js/app.js?v=31"></script>
 </body>
 </html>
 
