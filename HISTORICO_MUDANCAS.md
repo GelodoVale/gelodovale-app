@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v27 (11/06/2026 - Antigravity)
+* **Pontos de Restauração Nomeados e Diário de Bordo Dinâmico (COD: SEG-05/SEG-07):**
+  - Implementado o sistema de **Pontos de Restauração** (Navegador) permitindo que o usuário dê nomes/descrições personalizadas (ex: "Antes de reajustar preços") ao invés de usar datas/códigos crus.
+  - Criada a funcionalidade do **Diário de Bordo Dinâmico** (`loadSystemChangelog` em `js/admin.js`) que lê o arquivo markdown `HISTORICO_MUDANCAS.md` diretamente e o renderiza em HTML estruturado com listas e negrito na tela do app, centralizando o controle de versão e mantendo o histórico sempre sincronizado.
+  - Atualizada a versão do PWA para `v27` (cache `gelodovale-v119` e arquivos `?v=27`).
+
 #### v26 (11/06/2026 - Antigravity)
 * **Customização Visual e Ajustes do Logotipo da Fábrica (COD: FAB-01/FAB-02):**
   - Adicionados controles deslizantes (sliders) e seletores de cor no painel de Aparência (`COD: FAB-02`) para permitir o ajuste visual completo do logotipo da fábrica.

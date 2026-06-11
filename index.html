@@ -41,7 +41,7 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=26">
+    <link rel="stylesheet" href="styles.css?v=27">
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -2190,27 +2190,18 @@
                                         <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
                                             <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="importBackupFromFile(event)">
                                             <button type="button" class="btn btn-secondary" onclick="document.getElementById('backup-file-input').click()" style="display: inline-flex; align-items: center; gap: 6px;">
-                                                <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Restaurar de Arquivo JSON
-                                            </button>
-                                            <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
-                                                <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Configurações
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <!-- Histórico de Backups Locais -->
+                                                                     <!-- Histórico de Backups Locais (Pontos de Restauração) -->
                                 <div class="dashboard-panel" id="admin-browser-backups-panel" style="flex: 1.5; min-width: 320px;">
                                     <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Histórico de Backups Internos (Navegador) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-05</span></h2>
+                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Pontos de Restauração do Sistema (Navegador) <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: SEG-05</span></h2>
                                     </div>
                                     <div style="padding: 1rem 0 0 0; overflow-x: auto; max-height: 250px;">
                                         <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;" class="data-table">
                                             <thead>
                                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; text-align: left;">
-                                                    <th style="padding: 6px;">Versão</th>
-                                                    <th style="padding: 6px;">Data / Hora</th>
-                                                    <th style="padding: 6px; text-align: right;">Ações</th>
+                                                    <th style="padding: 6px; width: 60px;">Versão</th>
+                                                    <th style="padding: 6px;">Ponto de Restauração / Data</th>
+                                                    <th style="padding: 6px; text-align: right; width: 150px;">Ações</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="local-backups-tbody">
@@ -2219,44 +2210,26 @@
                                         </table>
                                         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
                                             <span style="font-size: 0.7rem; color: var(--color-text-muted);">
-                                                Último Backup: <strong id="lbl-last-backup-date">-</strong>
+                                                Último Ponto: <strong id="lbl-last-backup-date">-</strong>
                                             </span>
                                             <button type="button" class="btn btn-primary" onclick="generateBackup()" style="padding: 4px 8px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
-                                                <i data-lucide="download" style="width: 13px; height: 13px;"></i> Fazer Backup Agora
+                                                <i data-lucide="save" style="width: 13px; height: 13px;"></i> Criar Ponto de Restauração
                                             </button>
                                         </div>
                                 </div></div>
                             </div>
 
-                            <!-- Histórico de Atualizações do Sistema (Código) -->
+                            <!-- Diário de Bordo / Histórico de Atualizações (Código) -->
                             <div class="dashboard-panel" id="admin-changelog-panel" style="width: 100%; margin-top: 1.5rem;">
                                 <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                                     <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; margin: 0;">
                                         <i data-lucide="history" style="color: var(--color-primary); width: 16px; height: 16px;"></i>
-                                        Histórico de Atualizações do Sistema (Código)
+                                        Diário de Bordo do Sistema (Histórico de Versões)
                                         <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: SEG-07</span>
                                     </h3>
                                 </div>
-                                <div style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.82rem;">
-                                    <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 10px;">
-                                        <strong style="color: var(--color-primary);">v14 (04/06/2026 - Antigravity)</strong>
-                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
-                                            <li><strong>Backup & Posições:</strong> Adicionado suporte a backup/restauração completo do layout de painéis (posições/tamanhos), bloco de notas, notas do calendário, eventos locais e configurações de impressão.</li>
-                                            <li><strong>Versão no Rodapé:</strong> Exibição separada da versão dos dados (ex: v0.7) e da versão do sistema de código (ex: v14).</li>
-                                        </ul>
-                                    </div>
-                                    <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 10px;">
-                                        <strong style="color: var(--color-primary);">v13 (04/06/2026 - Antigravity)</strong>
-                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
-                                            <li><strong>Overflow nos Cards (CLI-02):</strong> Botões de ações dos cards de clientes divididos em duas linhas organizadas para evitar estouro em telas estreitas, com botões de ícones otimizados para 28px. Wrap de botões em inventário, aluguel de tinas e recibos.</li>
-                                        </ul>
-                                    </div>
-                                    <div class="changelog-item" style="padding-bottom: 5px;">
-                                        <strong style="color: var(--color-primary);">v12 (04/06/2026 - Antigravity)</strong>
-                                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px;">
-                                            <li><strong>Altura Adaptável (PED-02):</strong> Correção de estouro no painel do mapa de rotas. O mapa Leaflet agora tem min-height de 150px e redimensiona livremente; a lista textual de rotas ganhou barra de rolagem vertical. Scroll automático adicionado a devedores, visitas sugeridas, agendamentos e alertas.</li>
-                                        </ul>
-                                    </div>
+                                <div class="changelog-body" style="padding: 1rem 0 0 0; display: flex; flex-direction: column; gap: 1rem; max-height: 300px; overflow-y: auto; font-size: 0.82rem;">
+                                    <!-- Preenchido dinamicamente via Javascript -->
                                 </div>
                             </div>
 
@@ -5918,7 +5891,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=26"></script>
+    <script type="module" src="js/app.js?v=27"></script>
 </body>
 </html>
 

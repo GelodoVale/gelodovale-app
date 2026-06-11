@@ -237,12 +237,15 @@ export function renderPrecos() {
     if (state.backupSettings) {
         document.getElementById("cfg-app-version").value = state.backupSettings.currentVersion || "1.0";
         document.getElementById("cfg-backup-frequency").value = state.backupSettings.frequencyDays !== undefined ? state.backupSettings.frequencyDays : 7;
-        document.getElementById("lbl-last-backup-date").innerText = state.backupSettings.lastBackupDate 
-            ? window.formatDateBrazil(state.backupSettings.lastBackupDate) 
-            : "Nenhum backup realizado";
+        const lastDateEl = document.getElementById("lbl-last-backup-date");
+        if (lastDateEl) {
+            lastDateEl.innerText = state.backupSettings.lastBackupDate 
+                ? window.formatDateBrazil(state.backupSettings.lastBackupDate) 
+                : "Nenhum ponto criado";
+        }
     }
 
-    // 4. Renderizar histórico de backups locais
+    // 4. Renderizar histórico de backups locais (Pontos de Restauração)
     const backupsTbody = document.getElementById("local-backups-tbody");
     if (backupsTbody) {
         backupsTbody.innerHTML = "";
@@ -252,7 +255,7 @@ export function renderPrecos() {
             backupsTbody.innerHTML = `
                 <tr>
                     <td colspan="3" style="padding: 1rem; text-align: center; color: var(--color-text-muted);">
-                        Nenhum backup salvo localmente no navegador.
+                        Nenhum Ponto de Restauração salvo no navegador.
                     </td>
                 </tr>
             `;
@@ -261,18 +264,22 @@ export function renderPrecos() {
             const sortedBackups = [...backups].sort((a, b) => new Date(b.date) - new Date(a.date));
             sortedBackups.forEach(b => {
                 const dateStr = window.formatDateBrazil(b.date);
+                const labelText = b.label || (b.payload && b.payload.label) || "Ponto de Restauração Manual";
                 backupsTbody.innerHTML += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <td style="padding: 8px 6px; font-weight: 600; color: var(--color-primary);">v${b.version}</td>
-                        <td style="padding: 8px 6px; color: var(--color-text-main); font-size: 0.75rem;">${dateStr}</td>
+                        <td style="padding: 8px 6px; text-align: left;">
+                            <div style="color: #fff; font-weight: 600; font-size: 0.8rem;">${labelText}</div>
+                            <div style="color: var(--color-text-muted); font-size: 0.68rem; margin-top: 2px;">${dateStr}</div>
+                        </td>
                         <td style="padding: 4px 6px; text-align: right; display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
-                            <button class="btn btn-secondary" onclick="restoreLocalBackup('${b.id}')" title="Restaurar este backup" style="padding: 3px 6px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 2px;">
+                            <button class="btn btn-secondary" onclick="restoreLocalBackup('${b.id}')" title="Restaurar este ponto" style="padding: 3px 6px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 2px;">
                                 <i data-lucide="rotate-ccw" style="width: 11px; height: 11px;"></i> Restaurar
                             </button>
                             <button class="btn btn-secondary btn-icon-only" onclick="downloadBackupJSON('${b.id}')" title="Baixar arquivo JSON" style="padding: 3px 6px; display: inline-flex; align-items: center; justify-content: center;">
                                 <i data-lucide="download" style="width: 12px; height: 12px;"></i>
                             </button>
-                            <button class="btn btn-danger btn-icon-only" onclick="deleteLocalBackup('${b.id}')" title="Excluir do histórico" style="padding: 3px 6px; display: inline-flex; align-items: center; justify-content: center;">
+                            <button class="btn btn-danger btn-icon-only" onclick="deleteLocalBackup('${b.id}')" title="Excluir ponto" style="padding: 3px 6px; display: inline-flex; align-items: center; justify-content: center;">
                                 <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
                             </button>
                         </td>
@@ -449,6 +456,7 @@ export function renderPrecos() {
         toggleCommissionValueLabel();
     }
 
+    if (window.loadSystemChangelog) window.loadSystemChangelog();
     switchAdminSubTab(window.activeAdminSubTab || "tab-financeiro");
 }
 
@@ -458,10 +466,18 @@ export function generateBackup(isAuto = false) {
     const version = (state.backupSettings && state.backupSettings.currentVersion) || "1.0";
     const backupDate = window.getBrazilTimeISO();
     
+    let label = "";
+    if (!isAuto) {
+        label = prompt("Digite um nome/descrição para este Ponto de Restauração (ex: Antes de alterar preços):");
+        if (label === null) return; // Cancelou
+        label = label.trim();
+    }
+    
     // Payload do backup: dados operacionais sem o histórico de backups locais para não estourar o tamanho
     const backupPayload = {
         version: version,
         date: backupDate,
+        label: label || (isAuto ? "Ponto de Restauração Automático" : "Ponto de Restauração Manual"),
         data: {
             clients: state.clients || [],
             freezers: state.freezers || [],
@@ -498,6 +514,7 @@ export function generateBackup(isAuto = false) {
         id: backupId,
         version: version,
         date: backupDate,
+        label: label || (isAuto ? "Ponto de Restauração Automático" : "Ponto de Restauração Manual"),
         payload: backupPayload
     };
 
@@ -626,15 +643,17 @@ export function downloadBackupJSON(backupId) {
 }
 
 export function deleteLocalBackup(backupId) {
+    const backup = (state.localBackups || []).find(b => b.id === backupId);
+    const labelText = backup ? (backup.label || "este ponto") : "este ponto";
     window.showConfirm(
-        "Deseja realmente excluir este backup do histórico interno do navegador?",
+        `Deseja realmente excluir o ponto "${labelText}" do histórico interno do navegador?`,
         () => {
             state.localBackups = (state.localBackups || []).filter(b => b.id !== backupId);
             saveState();
             renderPrecos();
         },
         null,
-        "Excluir Backup",
+        "Excluir Ponto de Restauração",
         "Excluir"
     );
 }
@@ -3752,6 +3771,81 @@ window.toggleLogoBgTransparent = toggleLogoBgTransparent;
 window.handleLogoBgColorChange = handleLogoBgColorChange;
 window.handleLogoBgColorTextChange = handleLogoBgColorTextChange;
 window.handleLogoSliderInput = handleLogoSliderInput;
+
+export async function loadSystemChangelog() {
+    const changelogContainer = document.querySelector("#admin-changelog-panel .changelog-body");
+    if (!changelogContainer) return;
+    
+    try {
+        changelogContainer.innerHTML = `<p style="color: var(--color-primary); font-size: 0.8rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="loader" class="anim-spin" style="width: 14px; height: 14px;"></i> Carregando diário de bordo...</p>`;
+        if (window.lucide) window.lucide.createIcons();
+
+        const response = await fetch("HISTORICO_MUDANCAS.md");
+        if (!response.ok) throw new Error("Não foi possível carregar o arquivo.");
+        
+        const markdown = await response.text();
+        
+        let html = "";
+        const lines = markdown.split("\n");
+        let inList = false;
+        
+        for (let line of lines) {
+            let trimmed = line.trim();
+            if (!trimmed) continue;
+            
+            if (trimmed.startsWith("# ") || trimmed === "---") {
+                continue;
+            }
+            
+            if (trimmed.startsWith("### ")) {
+                if (inList) { html += "</ul>"; inList = false; }
+                const text = trimmed.replace("### ", "");
+                html += `<h4 style="color: #fff; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">${text}</h4>`;
+                continue;
+            }
+            
+            if (trimmed.startsWith("#### ")) {
+                if (inList) { html += "</ul>"; inList = false; }
+                const text = trimmed.replace("#### ", "");
+                html += `<div style="margin-top: 1.25rem; font-weight: bold; color: var(--color-primary); font-size: 0.9rem;">${text}</div>`;
+                continue;
+            }
+            
+            if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+                if (!inList) { html += '<ul style="margin: 6px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 4px; list-style-type: disc;">'; inList = true; }
+                let itemText = trimmed.substring(2);
+                itemText = itemText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+                itemText = itemText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: var(--color-primary); text-decoration: underline;">$1</a>');
+                html += `<li style="line-height: 1.4; color: var(--color-text-light); font-size: 0.82rem;">${itemText}</li>`;
+                continue;
+            }
+            
+            if (line.startsWith("  * ") || line.startsWith("  - ") || line.startsWith("    * ") || line.startsWith("    - ")) {
+                let subText = trimmed.substring(2);
+                subText = subText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+                subText = subText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: var(--color-primary); text-decoration: underline;">$1</a>');
+                html += `<li style="line-height: 1.4; color: var(--color-text-muted); font-size: 0.78rem; margin-left: 1rem; list-style-type: circle;">${subText}</li>`;
+                continue;
+            }
+            
+            if (inList) { html += "</ul>"; inList = false; }
+            let pText = trimmed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            pText = pText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: var(--color-primary); text-decoration: underline;">$1</a>');
+            html += `<p style="margin: 0.5rem 0; color: var(--color-text-muted); line-height: 1.4;">${pText}</p>`;
+        }
+        
+        if (inList) html += "</ul>";
+        
+        changelogContainer.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+        
+    } catch (error) {
+        changelogContainer.innerHTML = `<p style="color: var(--color-danger); font-size: 0.8rem;">Erro ao carregar o diário do sistema. Verifique a conexão ou o arquivo HISTORICO_MUDANCAS.md.</p>`;
+        console.error("Erro no fetch do changelog:", error);
+    }
+}
+
+window.loadSystemChangelog = loadSystemChangelog;
 
 
 
