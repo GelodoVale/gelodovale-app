@@ -7,12 +7,12 @@ export function initNotificationsSystem() {
     if (!document.getElementById("notifications-popover")) {
         document.body.insertAdjacentHTML("beforeend", `
             <div id="notifications-popover"
-                 style="display:none; position:fixed; top:70px; right:16px; z-index:99999;
+                 style="position:fixed; top:70px; right:16px; z-index:99999;
                         width:350px; border-radius:12px;
                         background:rgba(12,20,40,0.97); backdrop-filter:blur(20px);
                         border:1px solid rgba(0,240,255,0.2);
                         box-shadow:0 12px 40px rgba(0,0,0,0.6);
-                        display: flex; flex-direction: column; overflow: hidden; max-height: 480px;">
+                        flex-direction: column; overflow: hidden; max-height: 480px;">
                 <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; justify-content: space-between; align-items: center; background: rgba(0, 240, 255, 0.03);">
                     <span style="color:#fff; font-weight:700; font-size:.88rem; display: flex; align-items: center; gap: 6px;">
                         🔔 Notificações e Alertas
@@ -26,6 +26,10 @@ export function initNotificationsSystem() {
                 </div>
             </div>
         `);
+
+        // Garantir que o popover comece OCULTO (sem conflito com display:flex no template)
+        const pop = document.getElementById("notifications-popover");
+        if (pop) pop.style.display = "none";
     }
 
     const btn = document.getElementById("btn-notifications");
@@ -39,7 +43,7 @@ export function initNotificationsSystem() {
     // Fechar popover ao clicar fora
     document.addEventListener("click", (e) => {
         const pop = document.getElementById("notifications-popover");
-        if (pop && pop.style.display !== "none") {
+        if (pop && pop.style.display === "flex") {
             const btn = document.getElementById("btn-notifications");
             if (!pop.contains(e.target) && !btn?.contains(e.target)) {
                 pop.style.display = "none";
@@ -47,7 +51,7 @@ export function initNotificationsSystem() {
         }
     });
 
-    // Executa a primeira varredura de notificações
+    // Executa a primeira varredura de notificações (sem abrir o popover)
     updateNotifications();
 }
 
@@ -134,17 +138,17 @@ export function updateNotifications() {
         }
     });
 
+    // Atualiza apenas a lista e o badge — NÃO abre o popover
     renderNotificationsList();
 }
 
 function toggleNotificationsPopover() {
     const pop = document.getElementById("notifications-popover");
     if (!pop) return;
-    if (pop.style.display === "none") {
-        pop.style.display = "flex";
-    } else {
-        pop.style.display = "none";
-    }
+
+    // Verifica pelo estado atual correto
+    const isVisible = pop.style.display === "flex";
+    pop.style.display = isVisible ? "none" : "flex";
 }
 
 function renderNotificationsList() {
@@ -221,13 +225,15 @@ function renderNotificationsList() {
 
                 // Filtrar cliente específico no campo de pesquisa
                 if (notif.searchVal) {
-                    const searchInput = document.getElementById("client-search-input");
-                    if (searchInput) {
-                        searchInput.value = notif.searchVal;
-                        if (typeof window.renderClientes === 'function') {
-                            window.renderClientes();
+                    setTimeout(() => {
+                        const searchInput = document.getElementById("client-search-input");
+                        if (searchInput) {
+                            searchInput.value = notif.searchVal;
+                            if (typeof window.renderClientes === 'function') {
+                                window.renderClientes();
+                            }
                         }
-                    }
+                    }, 150);
                 }
                 
                 if (window.triggerHaptic) window.triggerHaptic('light');
