@@ -1,4 +1,4 @@
-# 📜 Histórico de Atualizações do Sistema (GelControl)
+﻿# 📜 Histórico de Atualizações do Sistema (GelControl)
 
 Este arquivo é o registro oficial de todas as alterações feitas no código pelo **Antigravity**. Ele permite que o assistente faça varreduras instantâneas e saiba exatamente o estado do sistema a qualquer momento.
 
@@ -6,6 +6,31 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v52 (11/06/2026 - Antigravity)
+* **Central de Notificações Expandida — 9 Tipos de Alertas (COD: NOTIF-01):**
+  - Expandido o módulo js/notifications.js com 6 novos tipos de alerta: Aluguel Atrasado, Divida em Aberto/Alta, Comodato Pendente, Aniversario Hoje, Recibo Nao Pago e Insumo Baixo/Zerado.
+  - Adicionado campo label em cada notificacao para exibir a categoria no canto da notificacao.
+  - Bumped build para v52 e cache SW gelodovale-v145.
+
+#### v51 (11/06/2026 - Antigravity)
+* **Correcao Definitiva do Sininho - onclick Direto no HTML (COD: NOTIF-01):**
+  - Substituido addEventListener por onclick direto no elemento do HTML, eliminando perda de listener por re-renderizacoes.
+  - Exposta window.toggleNotificationsPopover() para uso via onclick inline.
+  - Deduplicacao do listener de fechar ao clicar fora com flag window._notifClickOutsideAdded.
+  - Bumped build para v51 e cache SW gelodovale-v144.
+
+#### v50 (11/06/2026 - Antigravity)
+* **Widget de Clima com Fallback Offline e Reconexao Automatica (COD: WID-02):**
+  - Funcao renderWeatherFromCache(): exibe dados salvos com badge aviso quando API falha.
+  - Botao Tentar novamente quando nao ha cache algum.
+  - Reconexao automatica em background a cada 30 segundos apos falha de rede.
+  - Bumped build para v50 e cache SW gelodovale-v143.
+
+#### v49 (11/06/2026 - Antigravity)
+* **Correcao do Popover do Sininho - Display Invisivel e Toggle Quebrado (COD: NOTIF-01):**
+  - Corrigido bug onde display:none seguido de display:flex no mesmo style fazia popover aparecer automaticamente ao entrar.
+  - Corrigido toggle que comparava === none mas valor era flex, nunca abrindo o popover.
+  - Bumped build para v49 e cache SW gelodovale-v142.
 #### v48 (11/06/2026 - Antigravity)
 * **Central de Notificações Dinâmicas (Sininho de Alertas - COD: NOTIF-01):**
   - Criado o novo módulo `js/notifications.js` que consolida alertas operacionais de estoque baixo, clientes inativos (risco de churn) e pedidos pendentes de entrega em um único feed de atualizações.
@@ -225,3 +250,4 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
   * **Lista Textual de Paradas:** Adicionado scroll vertical automático (`overflow-y: auto`) na lista de paradas (`#leaflet-route-fallback`), evitando vazamento do card.
   * **Listas do Dashboard:** Configurado scroll automático para as sugestões de visitas, devedores, agendamentos e alertas de reabastecimento.
   * **Layout Flex:** Impedido que parágrafos, botões e alertas estiquem artificialmente ao redimensionar os painéis.
+
