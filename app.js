@@ -7889,6 +7889,27 @@ async function updateWeatherFromAPI() {
         let lon = config.lon;
         let resolvedCityName = config.city;
 
+        if (lat && lon && (resolvedCityName === "Auto (GPS)" || resolvedCityName === "Local Detectado" || !resolvedCityName)) {
+            try {
+                const revGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
+                const revGeoRes = await fetch(revGeoUrl);
+                const revGeoData = await revGeoRes.json();
+                if (revGeoData) {
+                    const cityResolved = revGeoData.city || revGeoData.locality || revGeoData.principalSubdivision || "";
+                    let stateAbbr = "";
+                    if (revGeoData.principalSubdivisionCode) {
+                        const parts = revGeoData.principalSubdivisionCode.split("-");
+                        stateAbbr = parts[parts.length - 1];
+                    }
+                    if (cityResolved) {
+                        resolvedCityName = stateAbbr ? `${cityResolved} - ${stateAbbr}` : cityResolved;
+                    }
+                }
+            } catch (err) {
+                console.error("Erro na geolocalização reversa em updateWeatherFromAPI:", err);
+            }
+        }
+
         if (!lat || !lon) {
             const cityNameOnly = config.city.split(" - ")[0];
             const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityNameOnly)}&count=1&language=pt`;

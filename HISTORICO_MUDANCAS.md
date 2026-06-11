@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v42 (11/06/2026 - Antigravity)
+* **Resolução Forçada de Cidades Travadas em "Auto (GPS)" (COD: WID-02):**
+  - Implementado o geocódigo reverso corretivo automático em `updateWeatherFromAPI()`: se o estado local possui coordenadas de latitude/longitude válidas salvas, mas o nome do local está travado como `"Auto (GPS)"` ou `"Local Detectado"`, o sistema agora realiza uma chamada automática em segundo plano para o **BigDataCloud API** para resolver o nome correto (ex: `"Registro - SP"`) e atualiza o estado local e o Firebase.
+  - Isso corrige o cenário onde usuários com coordenadas válidas em cache continuavam visualizando `"Auto (GPS)"` permanentemente na lateral devido a dados legados no estado local ou remoto.
+  - Bumped build do sistema para `v42` e cache do Service Worker para `gelodovale-v135`.
+
 #### v41 (11/06/2026 - Antigravity)
 * **Prevenção de Prompts Repetitivos de Localização (Login Screen Guard) e Geolocalização Reversa Confiável (COD: WID-02):**
   - Substituído o serviço de geolocalização reversa Nominatim (OpenStreetMap) pela API gratuita do **BigDataCloud**, resolvendo o problema de requisições bloqueadas com status `403 Forbidden` quando o app é executado sob o protocolo local `file:///` no Chrome. A localização agora resolve corretamente para `"Registro - SP"` em vez de ficar travada como `"Auto (GPS)"`.
