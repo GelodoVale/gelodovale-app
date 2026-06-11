@@ -336,7 +336,8 @@ async function initWeatherLogic() {
                 return;
             }
         } catch(e) {
-            console.error(e);
+            console.error('Erro ao buscar cidade configurada:', e);
+            // Cai no fluxo abaixo para tentar GPS/cache
         }
     }
 
@@ -447,8 +448,14 @@ async function initWeatherLogic() {
 }
 
 async function fetchWeatherData(lat, lon, locationName, contentDiv, saveToState = true) {
+    // Se já há dados em cache, mostrá-los imediatamente enquanto busca atualização
+    if (state.weatherConfig && state.weatherConfig.temp !== undefined && saveToState) {
+        renderWeatherFromCache(contentDiv, true);
+    }
+
     try {
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,wind_speed_10m&timezone=auto`);
+        if (!res.ok) throw new Error('API retornou ' + res.status);
         const data = await res.json();
         
         if (data && data.current) {
@@ -508,9 +515,68 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv, saveToState 
             }
         }
     } catch(e) {
-        contentDiv.innerHTML = '<div style="color:red; text-align:center;">Sem conexão para clima.</div>';
+        console.warn('Clima: erro de rede -', e.message);
+        // Se há dados em cache, exibir com aviso de offline
+        if (state.weatherConfig && state.weatherConfig.temp !== undefined) {
+            renderWeatherFromCache(contentDiv, false);
+        } else {
+            contentDiv.innerHTML = `
+                <div style="text-align:center; padding: 16px; color: var(--color-text-muted); font-size: 0.8rem;">
+                    <i data-lucide="wifi-off" style="width:28px; height:28px; opacity:0.5; margin-bottom:8px;"></i>
+                    <div>Sem conexão com o serviço de clima.</div>
+                    <button onclick="window.retryWeather()" style="margin-top:8px; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.2); color:var(--color-primary); border-radius:6px; padding:4px 12px; cursor:pointer; font-size:0.75rem;">Tentar novamente</button>
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        // Tenta reconectar automaticamente após 30 segundos
+        setTimeout(() => {
+            const el = document.getElementById('widget-weather-content');
+            if (el) fetchWeatherData(lat, lon, locationName, el, saveToState);
+        }, 30000);
     }
 }
+
+function renderWeatherFromCache(contentDiv, isLive) {
+    if (!state.weatherConfig || state.weatherConfig.temp === undefined) return;
+    const temp = state.weatherConfig.temp;
+    const icon = state.weatherConfig.condition || 'cloud';
+    const locationName = state.weatherConfig.city || 'Local';
+    const offlineBadge = isLive ? '' : `<div style="font-size:0.65rem; color:#eab308; margin-top:4px;">⚠️ Dados em cache (sem conexão)</div>`;
+
+    const conditionMap = {
+        'sun': 'Céu Limpo', 'moon': 'Noite Limpa', 'cloud': 'Parcialmente Nublado',
+        'cloud-moon': 'Noite Nublada', 'cloud-fog': 'Neblina', 'cloud-rain': 'Chuva',
+        'cloud-snow': 'Neve', 'cloud-lightning': 'Tempestade'
+    };
+    const condition = conditionMap[icon] || 'Parcialmente Nublado';
+
+    contentDiv.innerHTML = `
+        <div class="weather-main-info">
+            <div style="display:flex; align-items:center; gap: 15px;">
+                <i data-lucide="${icon}" style="width: 42px; height: 42px; color: var(--color-primary);"></i>
+                <div>
+                    <div style="font-size: 2.5rem; font-weight: bold; line-height: 1;">${temp}°<span style="font-size: 1.2rem; color: #888;">C</span></div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-muted);">${condition}</div>
+                </div>
+            </div>
+        </div>
+        <div class="weather-grid-details">
+            <div class="weather-detail-item" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${locationName}"><i data-lucide="map-pin" style="width:14px;"></i> Local: <span>${locationName}</span></div>
+        </div>
+        ${offlineBadge}
+    `;
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.retryWeather = function() {
+    const el = document.getElementById('widget-weather-content');
+    if (el) {
+        el.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 0.85rem; color: #888;">Tentando reconectar...</div>';
+        initWeatherLogic();
+    }
+};
 
 // 3. Meta de Vendas
 function getSalesGoalHTML() {
