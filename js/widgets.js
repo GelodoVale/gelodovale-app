@@ -339,6 +339,22 @@ async function initWeatherLogic() {
             console.error(e);
         }
     }
+
+    // Se já temos coordenadas GPS e a cidade resolvida salvas no estado, usamos diretamente.
+    // Isso evita o prompt de geolocalização repetitivo no protocolo file:///
+    if (state.weatherConfig && state.weatherConfig.lat && state.weatherConfig.lon) {
+        const lat = state.weatherConfig.lat;
+        const lon = state.weatherConfig.lon;
+        const resolvedName = state.weatherConfig.city || "Auto (GPS)";
+        fetchWeatherData(lat, lon, resolvedName, content);
+        return;
+    }
+
+    // Se o usuário não está logado, não forçar prompt de geolocalização (evita popup na tela de login)
+    if (!sessionStorage.getItem("currentUserId")) {
+        fetchWeatherData(-23.1791, -45.8872, "São José dos Campos", content);
+        return;
+    }
     
     let lat = -23.1791; 
     let lon = -45.8872; // São José dos Campos SP
@@ -348,7 +364,28 @@ async function initWeatherLogic() {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
-                fetchWeatherData(lat, lon, "Auto (GPS)", content);
+
+                // Tentar obter o nome real da cidade (ex: Registro - SP) via geolocalização reversa
+                let resolvedName = "Auto (GPS)";
+                try {
+                    const revGeoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`);
+                    const revGeoData = await revGeoRes.json();
+                    if (revGeoData) {
+                        const city = revGeoData.city || revGeoData.locality || revGeoData.principalSubdivision || "";
+                        let stateAbbr = "";
+                        if (revGeoData.principalSubdivisionCode) {
+                            const parts = revGeoData.principalSubdivisionCode.split("-");
+                            stateAbbr = parts[parts.length - 1];
+                        }
+                        if (city) {
+                            resolvedName = stateAbbr ? `${city} - ${stateAbbr}` : city;
+                        }
+                    }
+                } catch (err) {
+                    console.error("Erro na geolocalização reversa inicial:", err);
+                }
+                
+                fetchWeatherData(lat, lon, resolvedName, content);
             }, () => {
                 fetchWeatherData(lat, lon, "São José dos Campos", content);
             });
@@ -409,7 +446,9 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             state.weatherConfig.temp = temp;
             state.weatherConfig.condition = icon;
             state.weatherConfig.city = locationName;
-            saveStateLocalOnly();
+            state.weatherConfig.lat = lat;
+            state.weatherConfig.lon = lon;
+            saveState();
 
             const activeEl = document.querySelector(".nav-item.active");
             const activeTab = activeEl ? activeEl.getAttribute("data-tab") : "dashboard";

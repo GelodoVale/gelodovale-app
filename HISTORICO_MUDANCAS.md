@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v41 (11/06/2026 - Antigravity)
+* **Prevenção de Prompts Repetitivos de Localização (Login Screen Guard) e Geolocalização Reversa Confiável (COD: WID-02):**
+  - Substituído o serviço de geolocalização reversa Nominatim (OpenStreetMap) pela API gratuita do **BigDataCloud**, resolvendo o problema de requisições bloqueadas com status `403 Forbidden` quando o app é executado sob o protocolo local `file:///` no Chrome. A localização agora resolve corretamente para `"Registro - SP"` em vez de ficar travada como `"Auto (GPS)"`.
+  - Adicionada uma trava na inicialização automática do clima: o sistema bloqueia solicitações de GPS (`getCurrentPosition`) se o usuário ainda não estiver logado (evitando o popup de permissão incômodo na tela de login).
+  - Atualizada a gravação de clima para usar `saveState()` (sincronizando coordenadas no Firebase), garantindo que todos os dispositivos conectados à mesma conta herdem as coordenadas e evitem prompts repetitivos.
+  - Bumped build do sistema para `v41` e cache do Service Worker para `gelodovale-v134`.
+
 #### v39 (11/06/2026 - Antigravity)
 * **Múltiplos Emojis/Ícones nos Produtos & Emojis de Hortelã/Ervas (COD: CAT-04):**
   - Implementada a seleção acumulativa de múltiplos emojis para os produtos (ex: "🧊🍍🌿" para gelo saborizado de abacaxi com hortelã). Ao selecionar emojis no seletor, o sistema agora os concatena no campo de ícone em vez de sobrescrever. Imagens/Base64 continuam com comportamento de substituição padrão.

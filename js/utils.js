@@ -667,19 +667,20 @@ export function detectUserLocation() {
         const lon = position.coords.longitude;
 
         try {
-            const revGeoUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=pt`;
+            const revGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
             const revGeoRes = await fetch(revGeoUrl);
             const revGeoData = await revGeoRes.json();
             
             let city = "Local Detectado";
-            if (revGeoData && revGeoData.address) {
-                city = revGeoData.address.city || revGeoData.address.town || revGeoData.address.suburb || "São Paulo";
-                if (revGeoData.address.state) {
-                    const stateName = revGeoData.address.state;
-                    const stateAbbr = stateName === "São Paulo" ? "SP" : 
-                                      stateName === "Rio de Janeiro" ? "RJ" : 
-                                      stateName === "Minas Gerais" ? "MG" : stateName;
-                    city += ` - ${stateAbbr}`;
+            if (revGeoData) {
+                const cityResolved = revGeoData.city || revGeoData.locality || revGeoData.principalSubdivision || "";
+                let stateAbbr = "";
+                if (revGeoData.principalSubdivisionCode) {
+                    const parts = revGeoData.principalSubdivisionCode.split("-");
+                    stateAbbr = parts[parts.length - 1];
+                }
+                if (cityResolved) {
+                    city = stateAbbr ? `${cityResolved} - ${stateAbbr}` : cityResolved;
                 }
             }
 
