@@ -32,24 +32,19 @@ export function initNotificationsSystem() {
         if (pop) pop.style.display = "none";
     }
 
-    const btn = document.getElementById("btn-notifications");
-    if (btn) {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            toggleNotificationsPopover();
-        });
-    }
-
-    // Fechar popover ao clicar fora
-    document.addEventListener("click", (e) => {
-        const pop = document.getElementById("notifications-popover");
-        if (pop && pop.style.display === "flex") {
-            const btn = document.getElementById("btn-notifications");
-            if (!pop.contains(e.target) && !btn?.contains(e.target)) {
-                pop.style.display = "none";
+    // Fechar popover ao clicar fora (adicionado apenas uma vez)
+    if (!window._notifClickOutsideAdded) {
+        document.addEventListener("click", (e) => {
+            const pop = document.getElementById("notifications-popover");
+            if (pop && pop.style.display === "flex") {
+                const btn = document.getElementById("btn-notifications");
+                if (!pop.contains(e.target) && !btn?.contains(e.target)) {
+                    pop.style.display = "none";
+                }
             }
-        }
-    });
+        });
+        window._notifClickOutsideAdded = true;
+    }
 
     // Executa a primeira varredura de notificações (sem abrir o popover)
     updateNotifications();
@@ -150,6 +145,12 @@ function toggleNotificationsPopover() {
     const isVisible = pop.style.display === "flex";
     pop.style.display = isVisible ? "none" : "flex";
 }
+
+// Expõe globalmente para uso via onclick no HTML
+window.toggleNotificationsPopover = function(e) {
+    if (e) e.stopPropagation();
+    toggleNotificationsPopover();
+};
 
 function renderNotificationsList() {
     const list = document.getElementById("notifications-list");
