@@ -41,7 +41,7 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -77,8 +77,8 @@
     <!-- TELA DE LOGIN GLASSMORPHIC GERAL -->
     <div id="app-login-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(20px); z-index: 9999; display: flex; align-items: center; justify-content: center;">
         <div class="login-card" style="background: rgba(17, 25, 44, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: var(--radius-lg); padding: 2.5rem; width: 380px; max-width: 90vw; box-shadow: 0 0 40px rgba(0, 240, 255, 0.15); text-align: center; backdrop-filter: blur(10px); animation: fadeIn 0.4s ease-out; position: relative;">
-            <div style="background: #ffffff; border-radius: var(--radius-md); padding: 10px; margin-bottom: 1.5rem; display: inline-block; border: 1px solid rgba(255,255,255,0.05);">
-                <img src="logo_horizontal.jpg" alt="Gelo do Vale" style="max-height: 42px; max-width: 100%; object-fit: contain;">
+            <div id="login-logo-container" style="background: #ffffff; border-radius: var(--radius-md); padding: 10px; margin-bottom: 1.5rem; display: inline-block; border: 1px solid rgba(255,255,255,0.05);">
+                <img id="login-logo-img" src="logo_horizontal.jpg" alt="Gelo do Vale" style="max-height: 42px; max-width: 100%; object-fit: contain;">
             </div>
             
             <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff; letter-spacing: -0.5px; font-size: 1.3rem;">GelControl - Acesso</h3>
@@ -133,8 +133,8 @@
         
         <!-- SIDEBAR DE NAVEGAÇÃO -->
         <aside class="sidebar">
-            <div class="logo-container" style="justify-content: center; padding: 0.75rem 0.5rem; background: #ffffff; border-radius: var(--radius-md); margin: 0.75rem; border: 1px solid rgba(255,255,255,0.05); display: flex;">
-                <img src="logo_horizontal.jpg" alt="Gelo do Vale" style="max-height: 42px; max-width: 100%; object-fit: contain;">
+            <div id="sidebar-logo-container" class="logo-container" style="justify-content: center; padding: 0.75rem 0.5rem; background: #ffffff; border-radius: var(--radius-md); margin: 0.75rem; border: 1px solid rgba(255,255,255,0.05); display: flex;">
+                <img id="sidebar-logo-img" src="logo_horizontal.jpg" alt="Gelo do Vale" style="max-height: 42px; max-width: 100%; object-fit: contain;">
             </div>
             
             <nav class="nav-menu">
@@ -1782,6 +1782,59 @@
                                                     <input type="checkbox" id="cfg-3d-tilt-enabled" style="accent-color: var(--color-primary); width: 16px; height: 16px;">
                                                     Habilitar Efeitos Visuais 3D (Inclinação de Cards) 🕶️
                                                 </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 6. Ajustes de Exibição do Logotipo -->
+                                        <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                                            <label style="margin-bottom: 0.75rem; display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-text-main);">Exibição do Logotipo</label>
+                                            <div style="display: flex; flex-direction: column; gap: 1rem; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                                
+                                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--color-text-main);">
+                                                    <input type="checkbox" id="cfg-logo-bg-transparent" onchange="toggleLogoBgTransparent(this.checked)" style="accent-color: var(--color-primary); width: 16px; height: 16px;">
+                                                    Fundo Transparente (Sem caixa de fundo)
+                                                </label>
+
+                                                <div id="logo-bg-color-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                                    <label for="cfg-logo-bg-color" style="font-size: 0.8rem; color: var(--color-text-muted);">Cor de Fundo da Caixa do Logo</label>
+                                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                                        <input type="color" id="cfg-logo-bg-color" class="form-control" style="width: 55px; height: 38px; padding: 2px; cursor: pointer; background: transparent; border: 1px solid rgba(255,255,255,0.1);" oninput="handleLogoBgColorChange(this.value)">
+                                                        <input type="text" id="cfg-logo-bg-color-text" class="form-control" style="flex: 1; font-family: monospace; text-transform: uppercase;" placeholder="#FFFFFF" pattern="^#[0-9A-Fa-f]{6}$" oninput="handleLogoBgColorTextChange(this.value)">
+                                                    </div>
+                                                </div>
+
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                                        <label for="cfg-logo-max-width" style="color: var(--color-text-muted);">Largura Máxima</label>
+                                                        <span id="cfg-logo-max-width-val" style="color: var(--color-primary); font-family: monospace; font-weight: bold;">100%</span>
+                                                    </div>
+                                                    <input type="range" id="cfg-logo-max-width" min="30" max="100" value="100" style="accent-color: var(--color-primary); width: 100%; cursor: pointer;" oninput="handleLogoSliderInput('max-width', this.value)">
+                                                </div>
+
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                                        <label for="cfg-logo-max-height" style="color: var(--color-text-muted);">Altura Máxima</label>
+                                                        <span id="cfg-logo-max-height-val" style="color: var(--color-primary); font-family: monospace; font-weight: bold;">42px</span>
+                                                    </div>
+                                                    <input type="range" id="cfg-logo-max-height" min="20" max="150" value="42" style="accent-color: var(--color-primary); width: 100%; cursor: pointer;" oninput="handleLogoSliderInput('max-height', this.value)">
+                                                </div>
+
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                                        <label for="cfg-logo-padding" style="color: var(--color-text-muted);">Espaçamento Interno (Padding)</label>
+                                                        <span id="cfg-logo-padding-val" style="color: var(--color-primary); font-family: monospace; font-weight: bold;">12px</span>
+                                                    </div>
+                                                    <input type="range" id="cfg-logo-padding" min="0" max="40" value="12" style="accent-color: var(--color-primary); width: 100%; cursor: pointer;" oninput="handleLogoSliderInput('padding', this.value)">
+                                                </div>
+
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                                        <label for="cfg-logo-border-radius" style="color: var(--color-text-muted);">Arredondamento das Bordas</label>
+                                                        <span id="cfg-logo-border-radius-val" style="color: var(--color-primary); font-family: monospace; font-weight: bold;">8px</span>
+                                                    </div>
+                                                    <input type="range" id="cfg-logo-border-radius" min="0" max="30" value="8" style="accent-color: var(--color-primary); width: 100%; cursor: pointer;" oninput="handleLogoSliderInput('border-radius', this.value)">
+                                                </div>
+
                                             </div>
                                         </div>
                                         
@@ -5865,7 +5918,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=25"></script>
+    <script type="module" src="js/app.js?v=26"></script>
 </body>
 </html>
 

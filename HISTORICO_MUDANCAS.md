@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v26 (11/06/2026 - Antigravity)
+* **Customização Visual e Ajustes do Logotipo da Fábrica (COD: FAB-01/FAB-02):**
+  - Adicionados controles deslizantes (sliders) e seletores de cor no painel de Aparência (`COD: FAB-02`) para permitir o ajuste visual completo do logotipo da fábrica.
+  - Implementada a pré-visualização em tempo real (live preview) para os ajustes de: Fundo Transparente, Cor de Fundo do Logo, Largura Máxima (30% a 100%), Altura Máxima (20px a 150px), Espaçamento Interno (Padding, 0px a 40px) e Arredondamento (Border Radius, 0px a 30px).
+  - Configurada a persistência dessas preferências visuais em `state.appearance.logoSettings`, aplicando as mesmas dinamicamente no menu lateral esquerdo e na caixa do logotipo da tela de login.
+  - Atualizada a versão do PWA para `v26` (cache `gelodovale-v118` e arquivos `?v=26`).
+
 #### v25 (10/06/2026 - Antigravity)
 * **Correção de Abas Administrativas Ocultas:**
   * Corrigida a tag `</div>` de fechamento ausente no container `dashboard-row` da aba de **Segurança & Backup** no arquivo `index.html`. 

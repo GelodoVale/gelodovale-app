@@ -355,6 +355,58 @@ export function renderPrecos() {
 
         const chkTilt = document.getElementById("cfg-3d-tilt-enabled");
         if (chkTilt) chkTilt.checked = state.appearance.tilt3DEnabled !== false;
+
+        // Preencher opções do logotipo
+        const logoSettings = state.appearance.logoSettings || {
+            bgTransparent: false,
+            bgColor: "#ffffff",
+            maxWidth: 100,
+            maxHeight: 42,
+            padding: 12,
+            borderRadius: 8
+        };
+
+        const chkLogoTransparent = document.getElementById("cfg-logo-bg-transparent");
+        if (chkLogoTransparent) chkLogoTransparent.checked = !!logoSettings.bgTransparent;
+
+        const elLogoBgColor = document.getElementById("cfg-logo-bg-color");
+        if (elLogoBgColor) elLogoBgColor.value = logoSettings.bgColor || "#ffffff";
+
+        const elLogoBgColorTxt = document.getElementById("cfg-logo-bg-color-text");
+        if (elLogoBgColorTxt) elLogoBgColorTxt.value = logoSettings.bgColor || "#ffffff";
+
+        const logoBgColorGroup = document.getElementById("logo-bg-color-group");
+        if (logoBgColorGroup) {
+            logoBgColorGroup.style.display = logoSettings.bgTransparent ? "none" : "flex";
+        }
+
+        const sliderMaxWidth = document.getElementById("cfg-logo-max-width");
+        if (sliderMaxWidth) {
+            sliderMaxWidth.value = logoSettings.maxWidth !== undefined ? logoSettings.maxWidth : 100;
+            const span = document.getElementById("cfg-logo-max-width-val");
+            if (span) span.innerText = `${sliderMaxWidth.value}%`;
+        }
+
+        const sliderMaxHeight = document.getElementById("cfg-logo-max-height");
+        if (sliderMaxHeight) {
+            sliderMaxHeight.value = logoSettings.maxHeight !== undefined ? logoSettings.maxHeight : 42;
+            const span = document.getElementById("cfg-logo-max-height-val");
+            if (span) span.innerText = `${sliderMaxHeight.value}px`;
+        }
+
+        const sliderPadding = document.getElementById("cfg-logo-padding");
+        if (sliderPadding) {
+            sliderPadding.value = logoSettings.padding !== undefined ? logoSettings.padding : 12;
+            const span = document.getElementById("cfg-logo-padding-val");
+            if (span) span.innerText = `${sliderPadding.value}px`;
+        }
+
+        const sliderBorderRadius = document.getElementById("cfg-logo-border-radius");
+        if (sliderBorderRadius) {
+            sliderBorderRadius.value = logoSettings.borderRadius !== undefined ? logoSettings.borderRadius : 8;
+            const span = document.getElementById("cfg-logo-border-radius-val");
+            if (span) span.innerText = `${sliderBorderRadius.value}px`;
+        }
     }
 
     // 7. Preencher inputs de configuração de impressão
@@ -730,15 +782,45 @@ export function applyAppearanceTheme(customTheme = null) {
         }
     `;
     
-    // Atualizar logotipo da barra lateral
-    const logoImg = document.querySelector("aside.sidebar .logo-container img");
-    if (logoImg) {
-        if (state && state.factorySettings && state.factorySettings.logo) {
-            logoImg.src = state.factorySettings.logo;
-        } else {
-            logoImg.src = "logo_horizontal.jpg";
+    // Aplicar configurações do logotipo (se existirem)
+    const logoSettings = theme.logoSettings || {
+        bgTransparent: false,
+        bgColor: "#ffffff",
+        maxWidth: 100,
+        maxHeight: 42,
+        padding: 12,
+        borderRadius: 8
+    };
+
+    const sidebarContainer = document.getElementById("sidebar-logo-container");
+    const sidebarImg = document.getElementById("sidebar-logo-img");
+    const loginContainer = document.getElementById("login-logo-container");
+    const loginImg = document.getElementById("login-logo-img");
+
+    const bgValue = logoSettings.bgTransparent ? "transparent" : (logoSettings.bgColor || "#ffffff");
+    const borderValue = logoSettings.bgTransparent ? "none" : "1px solid rgba(255,255,255,0.05)";
+
+    [sidebarContainer, loginContainer].forEach(container => {
+        if (container) {
+            container.style.background = bgValue;
+            container.style.padding = `${logoSettings.padding}px`;
+            container.style.borderRadius = `${logoSettings.borderRadius}px`;
+            container.style.border = borderValue;
         }
-    }
+    });
+
+    [sidebarImg, loginImg].forEach(img => {
+        if (img) {
+            img.style.maxWidth = `${logoSettings.maxWidth}%`;
+            img.style.maxHeight = `${logoSettings.maxHeight}px`;
+            img.style.objectFit = "contain";
+            if (state && state.factorySettings && state.factorySettings.logo) {
+                img.src = state.factorySettings.logo;
+            } else {
+                img.src = "logo_horizontal.jpg";
+            }
+        }
+    });
 
     // Atualizar UI dos botões rápidos e clima
     if (window.updateQuickTogglesUI) {
@@ -798,6 +880,23 @@ export function getCurrentUIThemeSettings() {
     const hapticEnabled = document.getElementById("cfg-haptic-enabled") ? document.getElementById("cfg-haptic-enabled").checked : (state.appearance ? state.appearance.hapticEnabled !== false : true);
     const weatherThemeEnabled = document.getElementById("cfg-weather-theme-enabled") ? document.getElementById("cfg-weather-theme-enabled").checked : (state.appearance ? state.appearance.weatherThemeEnabled !== false : true);
     
+    // Ler configurações de exibição do logotipo
+    const logoBgTransparent = document.getElementById("cfg-logo-bg-transparent") ? document.getElementById("cfg-logo-bg-transparent").checked : false;
+    const logoBgColor = document.getElementById("cfg-logo-bg-color") ? document.getElementById("cfg-logo-bg-color").value : "#ffffff";
+    const logoMaxWidth = document.getElementById("cfg-logo-max-width") ? parseInt(document.getElementById("cfg-logo-max-width").value, 10) : 100;
+    const logoMaxHeight = document.getElementById("cfg-logo-max-height") ? parseInt(document.getElementById("cfg-logo-max-height").value, 10) : 42;
+    const logoPadding = document.getElementById("cfg-logo-padding") ? parseInt(document.getElementById("cfg-logo-padding").value, 10) : 12;
+    const logoBorderRadius = document.getElementById("cfg-logo-border-radius") ? parseInt(document.getElementById("cfg-logo-border-radius").value, 10) : 8;
+
+    const logoSettings = {
+        bgTransparent: logoBgTransparent,
+        bgColor: logoBgColor,
+        maxWidth: logoMaxWidth,
+        maxHeight: logoMaxHeight,
+        padding: logoPadding,
+        borderRadius: logoBorderRadius
+    };
+
     return {
         themeName: themePreset,
         primaryColor,
@@ -809,7 +908,8 @@ export function getCurrentUIThemeSettings() {
         glowIntensity,
         soundEnabled,
         hapticEnabled,
-        weatherThemeEnabled
+        weatherThemeEnabled,
+        logoSettings
     };
 }
 
@@ -3575,6 +3675,83 @@ export function saveWhatsAppSettings() {
 window.toggleWaFields = toggleWaFields;
 window.loadWhatsAppSettings = loadWhatsAppSettings;
 window.saveWhatsAppSettings = saveWhatsAppSettings;
+
+export function toggleLogoBgTransparent(checked) {
+    const group = document.getElementById("logo-bg-color-group");
+    if (group) {
+        group.style.display = checked ? "none" : "flex";
+    }
+    const sidebarContainer = document.getElementById("sidebar-logo-container");
+    const loginContainer = document.getElementById("login-logo-container");
+    const bgVal = checked ? "transparent" : (document.getElementById("cfg-logo-bg-color").value || "#ffffff");
+    const borderVal = checked ? "none" : "1px solid rgba(255,255,255,0.05)";
+    [sidebarContainer, loginContainer].forEach(container => {
+        if (container) {
+            container.style.background = bgVal;
+            container.style.border = borderVal;
+        }
+    });
+}
+
+export function handleLogoBgColorChange(val) {
+    const textInput = document.getElementById("cfg-logo-bg-color-text");
+    if (textInput) textInput.value = val;
+    const sidebarContainer = document.getElementById("sidebar-logo-container");
+    const loginContainer = document.getElementById("login-logo-container");
+    [sidebarContainer, loginContainer].forEach(container => {
+        if (container) container.style.background = val;
+    });
+}
+
+export function handleLogoBgColorTextChange(val) {
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        const picker = document.getElementById("cfg-logo-bg-color");
+        if (picker) picker.value = val;
+        const sidebarContainer = document.getElementById("sidebar-logo-container");
+        const loginContainer = document.getElementById("login-logo-container");
+        [sidebarContainer, loginContainer].forEach(container => {
+            if (container) container.style.background = val;
+        });
+    }
+}
+
+export function handleLogoSliderInput(type, val) {
+    const span = document.getElementById(`cfg-logo-${type}-val`);
+    if (span) {
+        span.innerText = `${val}${type === 'max-width' ? '%' : 'px'}`;
+    }
+    
+    if (type === 'max-width') {
+        const sidebarImg = document.getElementById("sidebar-logo-img");
+        const loginImg = document.getElementById("login-logo-img");
+        [sidebarImg, loginImg].forEach(img => {
+            if (img) img.style.maxWidth = `${val}%`;
+        });
+    } else if (type === 'max-height') {
+        const sidebarImg = document.getElementById("sidebar-logo-img");
+        const loginImg = document.getElementById("login-logo-img");
+        [sidebarImg, loginImg].forEach(img => {
+            if (img) img.style.maxHeight = `${val}px`;
+        });
+    } else if (type === 'padding') {
+        const sidebarContainer = document.getElementById("sidebar-logo-container");
+        const loginContainer = document.getElementById("login-logo-container");
+        [sidebarContainer, loginContainer].forEach(container => {
+            if (container) container.style.padding = `${val}px`;
+        });
+    } else if (type === 'border-radius') {
+        const sidebarContainer = document.getElementById("sidebar-logo-container");
+        const loginContainer = document.getElementById("login-logo-container");
+        [sidebarContainer, loginContainer].forEach(container => {
+            if (container) container.style.borderRadius = `${val}px`;
+        });
+    }
+}
+
+window.toggleLogoBgTransparent = toggleLogoBgTransparent;
+window.handleLogoBgColorChange = handleLogoBgColorChange;
+window.handleLogoBgColorTextChange = handleLogoBgColorTextChange;
+window.handleLogoSliderInput = handleLogoSliderInput;
 
 
 

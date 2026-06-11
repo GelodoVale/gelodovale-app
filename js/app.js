@@ -2570,6 +2570,22 @@ export function initForms() {
             const weatherThemeEnabled = document.getElementById("cfg-weather-theme-enabled") ? document.getElementById("cfg-weather-theme-enabled").checked : true;
             const tilt3DEnabled = document.getElementById("cfg-3d-tilt-enabled") ? document.getElementById("cfg-3d-tilt-enabled").checked : true;
             
+            const logoBgTransparent = document.getElementById("cfg-logo-bg-transparent") ? document.getElementById("cfg-logo-bg-transparent").checked : false;
+            const logoBgColor = document.getElementById("cfg-logo-bg-color") ? document.getElementById("cfg-logo-bg-color").value : "#ffffff";
+            const logoMaxWidth = document.getElementById("cfg-logo-max-width") ? parseInt(document.getElementById("cfg-logo-max-width").value, 10) : 100;
+            const logoMaxHeight = document.getElementById("cfg-logo-max-height") ? parseInt(document.getElementById("cfg-logo-max-height").value, 10) : 42;
+            const logoPadding = document.getElementById("cfg-logo-padding") ? parseInt(document.getElementById("cfg-logo-padding").value, 10) : 12;
+            const logoBorderRadius = document.getElementById("cfg-logo-border-radius") ? parseInt(document.getElementById("cfg-logo-border-radius").value, 10) : 8;
+
+            const logoSettings = {
+                bgTransparent: logoBgTransparent,
+                bgColor: logoBgColor,
+                maxWidth: logoMaxWidth,
+                maxHeight: logoMaxHeight,
+                padding: logoPadding,
+                borderRadius: logoBorderRadius
+            };
+
             state.appearance = {
                 ...state.appearance,
                 themeName: preset,
@@ -2583,7 +2599,8 @@ export function initForms() {
                 soundEnabled,
                 hapticEnabled,
                 weatherThemeEnabled,
-                tilt3DEnabled
+                tilt3DEnabled,
+                logoSettings
             };
             
             saveState();
