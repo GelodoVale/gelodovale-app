@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v32 (11/06/2026 - Antigravity)
+* **Prevenção de Desalinhamento de Layout e Recuperação de Painéis (COD: PDV-02):**
+  - Implementado reset automático na inicialização do Gerenciador de Layout (`js/layout.js`) caso o usuário tenha um layout com versão desatualizada (menor que `5`).
+  - Isso corrige o problema onde a remoção do cabeçalho redundante do PDV (que fez o conteúdo da aba subir verticalmente) deslocava o painel do Carrinho de Compras (`COD: PDV-02`) para fora da área visível do topo da tela devido a coordenadas de translate salvas no localStorage.
+  - Atualizada a versão de cache do Service Worker para `gelodovale-v124` e o build do sistema para `v32`.
+
 #### v31 (11/06/2026 - Antigravity)
 * **Correção do Painel de Configurações de Backup e Versão (COD: SEG-04):**
   - Corrigido o erro estrutural de fechamento de tags no `index.html` na seção de backup, onde a abertura do painel de Pontos de Restauração (`COD: SEG-05`) havia sido incorretamente injetada dentro do formulário e cortado o botão de importar JSON e a tag de envio.

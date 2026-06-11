@@ -5,6 +5,11 @@ import { state, saveState } from './state.js';
 // ==========================================================================
 
 export function initLayoutSystem() {
+    // Se a versão do layout for anterior a 5, força o reset para evitar painéis desalinhados/sumidos devido às mudanças no cabeçalho do PDV
+    if (!state.layoutSettings || state.layoutSettings.layoutVersion !== 5) {
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
+        saveState();
+    }
     injectLayoutButton();
     injectLayoutPopover();
     applyCurrentLayout();
@@ -477,7 +482,7 @@ function saveLayout() {
 
     if (!state.layoutSettings) state.layoutSettings = {};
     state.layoutSettings.mode          = mode;
-    state.layoutSettings.layoutVersion = 4;
+    state.layoutSettings.layoutVersion = 5;
     saveState();
 
     applyCurrentLayout();
@@ -495,7 +500,7 @@ function resetLayout() {
             delete p.dataset.lytGrid;
         });
 
-        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 4 };
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
         saveState();
         applyCurrentLayout();
 

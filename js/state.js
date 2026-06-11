@@ -4,8 +4,8 @@ import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
-export const APP_VERSION = "3.6";
-export const CODE_BUILD = "v31 (11/06/2026 - Antigravity)";
+export const APP_VERSION = "3.7";
+export const CODE_BUILD = "v32 (11/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
