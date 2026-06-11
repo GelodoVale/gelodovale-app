@@ -258,6 +258,9 @@ function applyLayoutMode(mode) {
 
 function wrapPanelContents(panel) {
     try {
+        // Ignora o painel de atalhos rápidos para que ele sempre mantenha o layout horizontal original
+        if (panel.id === "dashboard-quick-actions-panel") return;
+
         const hasDirectWrapper = Array.from(panel.children).some(c => c.classList.contains("panel-content-scrollable"));
         if (hasDirectWrapper) return;
 

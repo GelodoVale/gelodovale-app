@@ -3457,12 +3457,37 @@ body.theme-high-contrast .modal-backdrop {
     background: rgba(10, 15, 30, 0.6) !important;
     border: 1px solid rgba(0, 240, 255, 0.1) !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.02) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* Garante que se o gerenciador de layout envolver em scrollable, ele continue horizontal */
+.dashboard-quick-actions .panel-content-scrollable {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: inherit !important;
+    width: auto !important;
 }
 
 .dashboard-quick-actions button {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     position: relative;
     overflow: hidden;
+    width: auto !important;
+    flex: 0 1 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
 }
 
 .dashboard-quick-actions button::before {

@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v47 (11/06/2026 - Antigravity)
+* **Correção do Layout de Atalhos Rápidos (COD: DASH-00):**
+  - Corrigido o bug visual no painel de atalhos rápidos (`#dashboard-quick-actions-panel`) onde os botões ocupavam uma linha inteira cada e ficavam esticados verticalmente. O problema ocorria quando o painel era redimensionado ou possuía configurações de layout salvas, fazendo o gerenciador de layout (`js/layout.js`) envolvê-los em um contêiner `.panel-content-scrollable` que aplica `flex-direction: column !important`.
+  - Excluído o painel de atalhos rápidos da lógica de empacotamento flex no gerenciador de layout (`js/layout.js`), impedindo a criação do contêiner flex vertical.
+  - Customizados os estilos do painel de atalhos e seus botões em `styles.css` para garantir um layout horizontal (`flex-direction: row !important`, `flex-wrap: wrap !important`), alinhamento flexível e tamanho compacto dos botões (`width: auto`, `padding: 6px 12px`).
+  - Bumped build do sistema para `v47` e cache do Service Worker para `gelodovale-v140`.
+
 #### v46 (11/06/2026 - Antigravity)
 * **Busca por Endereço e Ordenação Completa na Gestão de Comodatos (COD: COM-02):**
   - Implementada a ordenação dinâmica na tabela da Gestão de Comodatos (`js/comodatos.js`). O usuário agora pode ordenar comodatos por Nome, Data de Início, Data de Retorno, Endereço/Local, Código do Freezer ou Status, em ordem Crescente (▲) ou Decrescente (▼).
