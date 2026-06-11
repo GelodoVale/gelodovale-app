@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v35 (11/06/2026 - Antigravity)
+* **Correção da Seleção Vazia de Usuários no Login (COD: AUTH-01):**
+  - Garantido que a função `initUserAccessControl()` seja chamada em `renderApp()` antes de construir a tela de login (`initLoginScreen()`). Isso previne que a lista de usuários no menu suspenso fique em branco em novos acessos ou após re-sincronizações do Firebase.
+  - Adicionada a mesma garantia ao importar backups via `applyBackupData()`, impedindo que backups inconsistentes apaguem o usuário administrador do estado ativo.
+  - Bumped build para `v35` e Service Worker cache para `gelodovale-v128`.
+
 #### v34 (11/06/2026 - Antigravity)
 * **Sincronização Automática em Tempo Real (Firebase Auto-Sync) (COD: SYNC-01):**
   - Ativado o Firebase Realtime Database por padrão (`enabled: true`) para todos os dispositivos. Antes estava desativado por padrão, bloqueando todo o sistema de sync já implementado.
