@@ -1352,6 +1352,7 @@ export function initForms() {
             const docExpiry = document.getElementById("client-doc-expiry") ? document.getElementById("client-doc-expiry").value : "";
             
             const alertThreshold = parseInt(document.getElementById("alert-threshold").value) || 20;
+            const noWhatsapp = document.getElementById("client-no-whatsapp") ? document.getElementById("client-no-whatsapp").checked : false;
             
             const capacities = {};
             const stock = {};
@@ -1385,7 +1386,8 @@ export function initForms() {
                         latitude,
                         longitude,
                         birthDate,
-                        docExpiry
+                        docExpiry,
+                        noWhatsapp
                     };
                 }
             } else {
@@ -1408,13 +1410,30 @@ export function initForms() {
                     latitude,
                     longitude,
                     birthDate,
-                    docExpiry
+                    docExpiry,
+                    noWhatsapp
                 };
                 state.clients.push(newClient);
             }
             
             if (window.migrateLegacyComodatos) window.migrateLegacyComodatos();
             saveState();
+            
+            // Se veio da aprovação de formulário público, remove-o do Firebase
+            if (window.pendingFormToApprove && state.firebaseConfig && state.firebaseConfig.deviceKey) {
+                const formIdToDelete = window.pendingFormToApprove;
+                const deviceKey = state.firebaseConfig.deviceKey;
+                firebase.database().ref(`factories/${deviceKey}/pendingForms/${formIdToDelete}`).remove()
+                    .then(() => {
+                        console.log(`[Form Approval] Pending form ${formIdToDelete} removed from Firebase successfully.`);
+                        window.pendingFormToApprove = null;
+                        if (typeof window.fetchPendingFormsFirebase === 'function') {
+                            window.fetchPendingFormsFirebase();
+                        }
+                    })
+                    .catch(err => console.error("Error deleting approved form:", err));
+            }
+            
             closeModal("modal-client");
             renderApp();
         });

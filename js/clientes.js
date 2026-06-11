@@ -166,8 +166,10 @@ export function renderClientes() {
                     <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 180px;">
                         ${facadeSnippet}
                         <div class="client-name-details">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <h3 style="margin: 0; font-size: 1rem; color: #fff;">${c.fantasyName || c.name}</h3>
+                                <h3 style="margin: 0; font-size: 1rem; color: #fff; display: inline-flex; align-items: center; gap: 4px;">
+                                    ${c.fantasyName || c.name}
+                                    ${c.noWhatsapp ? `<span style="color: var(--color-danger); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 2px;" title="Bloqueado para envios automáticos de WhatsApp">🚫</span>` : ''}
+                                </h3>
                                 ${activityBadgeHTML}
                                 ${docBadgeHTML}
                             </div>
@@ -249,9 +251,9 @@ export function renderClientes() {
                         <a href="tel:${c.phone.replace(/\D/g,'')}" class="btn btn-secondary btn-icon-only" title="Ligar para ${c.phone}" style="color: #10b981; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05); width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
                             <i data-lucide="phone-call" style="width: 14px; height: 14px;"></i>
                         </a>
-                        <a href="https://api.whatsapp.com/send?phone=55${c.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-secondary btn-icon-only" title="WhatsApp ${c.phone}" style="color: #00f0ff; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        <button type="button" class="btn btn-secondary btn-icon-only" onclick="window.abrirConfirmacaoWA('${c.id}', 'livre')" title="WhatsApp ${c.phone}" style="color: #00f0ff; border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.05); width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
                             <i data-lucide="message-circle" style="width: 14px; height: 14px;"></i>
-                        </a>
+                        </button>
                         ` : ''}
                         
                         <button class="btn btn-secondary btn-icon-only" onclick="editClient('${c.id}')" title="Editar Cliente" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
@@ -318,6 +320,9 @@ export function openClientModal(clientId = null) {
     if (document.getElementById("client-doc-expiry")) {
         document.getElementById("client-doc-expiry").value = "";
     }
+    if (document.getElementById("client-no-whatsapp")) {
+        document.getElementById("client-no-whatsapp").checked = false;
+    }
     
     if (clientId) {
         title.innerText = "Editar Cliente";
@@ -371,6 +376,9 @@ export function openClientModal(clientId = null) {
             }
             if (document.getElementById("client-doc-expiry")) {
                 document.getElementById("client-doc-expiry").value = c.docExpiry || "";
+            }
+            if (document.getElementById("client-no-whatsapp")) {
+                document.getElementById("client-no-whatsapp").checked = c.noWhatsapp || false;
             }
             if (document.getElementById("alert-threshold")) {
                 document.getElementById("alert-threshold").value = c.alertThreshold || 20;

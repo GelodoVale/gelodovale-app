@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Cliente — Gelo do Vale</title>
+    
+    <!-- Importação de Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: rgba(17, 25, 44, 0.75);
+            --border-card: rgba(0, 240, 255, 0.12);
+            --border-input: rgba(255, 255, 255, 0.08);
+            --color-primary: #00f0ff;
+            --color-secondary: #0072ff;
+            --color-text-main: #f8fafc;
+            --color-text-muted: #94a3b8;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --grad-primary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--color-text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 114, 255, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            padding: 1.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            margin: 2rem auto;
+            animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 240, 255, 0.03);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: var(--grad-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Forms Layout */
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin: 2rem 0 1rem;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        label .required {
+            color: var(--color-danger);
+            margin-left: 2px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-input);
+            border-radius: var(--radius-md);
+            padding: 0.8rem 1rem;
+            color: var(--color-text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition-normal);
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        textarea:focus {
+            border-color: var(--color-primary);
+            background: rgba(0, 240, 255, 0.02);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+        }
+
+        .gps-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .gps-inputs {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.5rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition-normal);
+            border: none;
+            outline: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--grad-primary);
+            color: #090d16;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--color-text-main);
+            border: 1px solid var(--border-input);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-gps {
+            padding: 0.8rem 1.25rem;
+            flex-shrink: 0;
+            height: 42px;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--color-primary);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            font-size: 0.85rem;
+        }
+
+        .btn-gps:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+        }
+
+        /* Checkbox lists */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-input);
+            border-radius: var(--radius-md);
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .day-checkbox:hover {
+            border-color: rgba(0, 240, 255, 0.2);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .day-checkbox input {
+            accent-color: var(--color-primary);
+            cursor: pointer;
+        }
+
+        .day-checkbox.active {
+            border-color: var(--color-primary);
+            background: rgba(0, 240, 255, 0.05);
+            color: var(--color-primary);
+        }
+
+        /* Document/Facade uploads */
+        .upload-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            position: relative;
+            background: rgba(255, 255, 255, 0.01);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            min-height: 140px;
+        }
+
+        .upload-box:hover {
+            border-color: var(--color-primary);
+            background: rgba(0, 240, 255, 0.02);
+        }
+
+        .upload-box input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            color: var(--color-primary);
+            filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.3));
+        }
+
+        .upload-text {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .upload-text strong {
+            color: var(--color-text-main);
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.85rem;
+        }
+
+        .upload-preview {
+            max-width: 100%;
+            max-height: 110px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .upload-box.has-file .upload-preview {
+            display: block;
+        }
+        
+        .upload-box.has-file .upload-icon,
+        .upload-box.has-file .upload-text {
+            display: none;
+        }
+
+        /* Success/Error views */
+        .toast-form {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(17, 25, 44, 0.95);
+            border: 1px solid var(--color-danger);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast-form.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-form.toast-success-type {
+            border-color: var(--color-success);
+        }
+
+        .success-screen {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .success-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--color-success);
+            color: var(--color-success);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        }
+
+        .success-screen h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #fff;
+        }
+
+        .success-screen p {
+            color: var(--color-text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .invalid-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .invalid-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--color-danger);
+            color: var(--color-danger);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+        }
+
+        .invalid-screen h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .invalid-screen p {
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(5px);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(0, 240, 255, 0.1);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--color-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .form-grid, .upload-row {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            .days-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-form" id="toast-form">
+        <i data-lucide="alert-circle" style="color: var(--color-danger); width: 20px; height: 20px;"></i>
+        <span id="toast-text" style="font-size: 0.85rem; font-weight: 600; color: #fff;"></span>
+    </div>
+
+    <div class="container">
+        
+        <!-- Tela de Link Inválido -->
+        <div class="card invalid-screen" id="invalid-screen">
+            <div class="invalid-icon">
+                <i data-lucide="x-circle" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2>Link de Acesso Inválido</h2>
+            <p>Este formulário não pôde carregar as configurações de segurança. Solicite um novo link válido de cadastro pelo WhatsApp.</p>
+        </div>
+
+        <!-- Tela de Sucesso -->
+        <div class="card success-screen" id="success-screen">
+            <div class="success-icon">
+                <i data-lucide="check" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2>Cadastro Enviado!</h2>
+            <p>Seus dados de cadastro foram recebidos com sucesso pela nossa equipe e estão em processo de aprovação.<br>Entraremos em contato em breve para confirmar a liberação do seu perfil ou ativação do comodato. Obrigado!</p>
+        </div>
+
+        <!-- Formulário Principal -->
+        <div class="card" id="form-card" style="display: none;">
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text" id="loading-text">Processando dados...</div>
+            </div>
+
+            <div class="header">
+                <div class="logo">
+                    <span>❄️ Gelo do Vale</span>
+                </div>
+                <div class="subtitle" id="form-subtitle">Formulário de Cadastro Simplificado</div>
+            </div>
+
+            <form id="client-registration-form" onsubmit="handleFormSubmit(event)">
+                
+                <!-- Secao 1: Identificacao -->
+                <div class="form-section-title">
+                    <i data-lucide="user" style="width: 18px; height: 18px;"></i> Identificação do Cliente
+                </div>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="client-name">Razão Social / Nome Completo <span class="required">*</span></label>
+                        <input type="text" id="client-name" required placeholder="Ex: João da Silva ou Mercantil Vale LTDA">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-fantasy">Nome Fantasia (Como prefere ser chamado)</label>
+                        <input type="text" id="client-fantasy" placeholder="Ex: Mercado do João">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-cpf-cnpj">CNPJ ou CPF <span class="required" id="doc-req-star">*</span></label>
+                        <input type="text" id="client-cpf-cnpj" required placeholder="00.000.000/0000-00 ou 000.000.000-00" oninput="maskCpfCnpj(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-ie">Inscrição Estadual (IE)</label>
+                        <input type="text" id="client-ie" placeholder="Caso possua">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-birth">Data de Nascimento</label>
+                        <input type="date" id="client-birth">
+                    </div>
+                </div>
+
+                <!-- Secao 2: Contato -->
+                <div class="form-section-title">
+                    <i data-lucide="phone" style="width: 18px; height: 18px;"></i> Contato
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="client-phone">Celular / WhatsApp <span class="required">*</span></label>
+                        <input type="text" id="client-phone" required placeholder="(00) 00000-0000" oninput="maskPhone(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-email">E-mail</label>
+                        <input type="email" id="client-email" placeholder="email@exemplo.com">
+                    </div>
+                </div>
+
+                <!-- Secao 3: Endereço -->
+                <div class="form-section-title">
+                    <i data-lucide="map-pin" style="width: 18px; height: 18px;"></i> Endereço do Estabelecimento
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="client-cep">CEP <span class="required">*</span></label>
+                        <input type="text" id="client-cep" required placeholder="00000-000" oninput="maskCep(this)" onblur="fetchAddressByCep()">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-city">Cidade / UF <span class="required">*</span></label>
+                        <input type="text" id="client-city" required placeholder="Cidade - UF">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="client-address">Rua / Avenida <span class="required">*</span></label>
+                        <input type="text" id="client-address" required placeholder="Nome do logradouro">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-number">Número <span class="required">*</span></label>
+                        <input type="text" id="client-number" required placeholder="Número comercial">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-complement">Complemento / Referência</label>
+                        <input type="text" id="client-complement" placeholder="Ex: Esquina com a farmácia">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="client-neighborhood">Bairro <span class="required">*</span></label>
+                        <input type="text" id="client-neighborhood" required placeholder="Bairro">
+                    </div>
+
+                    <!-- Geocalização GPS -->
+                    <div class="form-group full-width">
+                        <label>Localização GPS exata (Importante para entregas) <span class="required">*</span></label>
+                        <div class="gps-row">
+                            <div class="gps-inputs">
+                                <input type="text" id="client-lat" placeholder="Latitude" readonly required>
+                                <input type="text" id="client-lng" placeholder="Longitude" readonly required>
+                            </div>
+                            <button type="button" class="btn btn-gps" onclick="captureGPS()">
+                                <i data-lucide="navigation"></i> 📍 Capturar GPS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secao 4: Preferências e Fotos -->
+                <div class="form-section-title">
+                    <i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Dias de Visita Sugeridos
+                </div>
+                <div class="days-grid">
+                    <label class="day-checkbox" id="lbl-seg">
+                        <input type="checkbox" name="visit-days" value="Seg" onchange="toggleDayClass(this, 'lbl-seg')"> Seg
+                    </label>
+                    <label class="day-checkbox" id="lbl-ter">
+                        <input type="checkbox" name="visit-days" value="Ter" onchange="toggleDayClass(this, 'lbl-ter')"> Ter
+                    </label>
+                    <label class="day-checkbox" id="lbl-qua">
+                        <input type="checkbox" name="visit-days" value="Qua" onchange="toggleDayClass(this, 'lbl-qua')"> Qua
+                    </label>
+                    <label class="day-checkbox" id="lbl-qui">
+                        <input type="checkbox" name="visit-days" value="Qui" onchange="toggleDayClass(this, 'lbl-qui')"> Qui
+                    </label>
+                    <label class="day-checkbox" id="lbl-sex">
+                        <input type="checkbox" name="visit-days" value="Sex" onchange="toggleDayClass(this, 'lbl-sex')"> Sex
+                    </label>
+                    <label class="day-checkbox" id="lbl-sab">
+                        <input type="checkbox" name="visit-days" value="Sáb" onchange="toggleDayClass(this, 'lbl-sab')"> Sáb
+                    </label>
+                    <label class="day-checkbox" id="lbl-dom">
+                        <input type="checkbox" name="visit-days" value="Dom" onchange="toggleDayClass(this, 'lbl-dom')"> Dom
+                    </label>
+                </div>
+
+                <div class="form-section-title">
+                    <i data-lucide="image" style="width: 18px; height: 18px;"></i> Fotos / Comprovação
+                </div>
+                <div class="upload-row">
+                    <div class="form-group">
+                        <label>Foto do Documento (RG / CNH / CPF) <span class="required" id="doc-photo-req-star">*</span></label>
+                        <div class="upload-box" id="box-doc">
+                            <i data-lucide="camera" class="upload-icon" style="width: 28px; height: 28px;"></i>
+                            <div class="upload-text">
+                                <strong>Selecionar ou Tirar Foto</strong>
+                                <span>Toque para tirar foto do documento</span>
+                            </div>
+                            <input type="file" id="input-doc" accept="image/*" onchange="handlePublicImageUpload(this, 'box-doc', 'preview-doc', 'data-doc', 900, 0.82)">
+                            <img class="upload-preview" id="preview-doc">
+                            <input type="hidden" id="data-doc" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Foto da Fachada (Estabelecimento)</label>
+                        <div class="upload-box" id="box-facade">
+                            <i data-lucide="image" class="upload-icon" style="width: 28px; height: 28px;"></i>
+                            <div class="upload-text">
+                                <strong>Foto do Estabelecimento</strong>
+                                <span>Toque para tirar foto do local</span>
+                            </div>
+                            <input type="file" id="input-facade" accept="image/*" onchange="handlePublicImageUpload(this, 'box-facade', 'preview-facade', 'data-facade', 320, 0.6)">
+                            <img class="upload-preview" id="preview-facade">
+                            <input type="hidden" id="data-facade">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="client-notes">Observações Adicionais</label>
+                    <textarea id="client-notes" rows="3" placeholder="Insira aqui informações de horários preferidos, restrições ou observações gerais."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btn-submit">
+                    <i data-lucide="send"></i> Enviar Cadastro
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        let dbConfig = null;
+
+        // Inicializar ícones do Lucide
+        lucide.createIcons();
+
+        // 1. Processamento e validação de token da URL na abertura
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('t');
+            
+            if (!token) {
+                showScreen('invalid-screen');
+                return;
+            }
+
+            try {
+                // Decodificar Base64 seguro para UTF-8
+                const decodedJson = decodeURIComponent(escape(atob(token)));
+                dbConfig = JSON.parse(decodedJson);
+                
+                if (!dbConfig.apiKey || !dbConfig.projectId || !dbConfig.databaseURL || !dbConfig.deviceKey) {
+                    showScreen('invalid-screen');
+                    return;
+                }
+
+                // Configurar rótulos e obrigatoriedade dependendo do tipo de formulário solicitado
+                setupFormType(dbConfig.type);
+                
+                // Mostrar formulário
+                showScreen('form-card');
+                
+                // Inicializar Firebase
+                firebase.initializeApp({
+                    apiKey: dbConfig.apiKey,
+                    projectId: dbConfig.projectId,
+                    databaseURL: dbConfig.databaseURL
+                });
+
+            } catch (err) {
+                console.error("Erro ao decodificar token:", err);
+                showScreen('invalid-screen');
+            }
+        });
+
+        function showScreen(id) {
+            document.getElementById('invalid-screen').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'none';
+            document.getElementById('form-card').style.display = 'none';
+            
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function setupFormType(type) {
+            const formSubtitle = document.getElementById('form-subtitle');
+            const docReqStar = document.getElementById('doc-req-star');
+            const docPhotoReqStar = document.getElementById('doc-photo-req-star');
+            
+            const cnpjInput = document.getElementById('client-cpf-cnpj');
+            const dataDocInput = document.getElementById('data-doc');
+
+            if (type === 'comodato') {
+                formSubtitle.innerText = 'Formulário de Cadastro — Solicitação de Comodato';
+                cnpjInput.required = true;
+                dataDocInput.required = true;
+                if (docReqStar) docReqStar.style.display = 'inline';
+                if (docPhotoReqStar) docPhotoReqStar.style.display = 'inline';
+            } else if (type === 'aluguel') {
+                formSubtitle.innerText = 'Formulário de Cadastro — Aluguel de Equipamentos';
+                cnpjInput.required = true;
+                dataDocInput.required = true;
+                if (docReqStar) docReqStar.style.display = 'inline';
+                if (docPhotoReqStar) docPhotoReqStar.style.display = 'inline';
+            } else {
+                formSubtitle.innerText = 'Formulário de Cadastro Simplificado';
+                cnpjInput.required = false;
+                dataDocInput.required = false;
+                if (docReqStar) docReqStar.style.display = 'none';
+                if (docPhotoReqStar) docPhotoReqStar.style.display = 'none';
+            }
+        }
+
+        // 2. CEP Autocomplete
+        function maskCep(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length > 5) {
+                val = val.substring(0, 5) + '-' + val.substring(5, 8);
+            }
+            input.value = val.substring(0, 9);
+        }
+
+        function fetchAddressByCep() {
+            const cep = document.getElementById('client-cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) return;
+
+            showLoading(true, "Buscando endereço...");
+
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.erro) {
+                        showToast("CEP não encontrado.");
+                        return;
+                    }
+                    document.getElementById('client-address').value = data.logradouro || '';
+                    document.getElementById('client-neighborhood').value = data.bairro || '';
+                    document.getElementById('client-city').value = `${data.localidade || ''} - ${data.uf || ''}`;
+                    document.getElementById('client-number').focus();
+                })
+                .catch(() => {
+                    showToast("Erro ao buscar CEP. Preencha manualmente.");
+                })
+                .finally(() => {
+                    showLoading(false);
+                });
+        }
+
+        // 3. Geocalização GPS
+        function captureGPS() {
+            if (!navigator.geolocation) {
+                showToast("Seu aparelho não suporta captura de GPS.");
+                return;
+            }
+
+            showLoading(true, "Capturando localização exata pelo satélite...");
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('client-lat').value = pos.coords.latitude.toFixed(7);
+                    document.getElementById('client-lng').value = pos.coords.longitude.toFixed(7);
+                    showLoading(false);
+                    showToast("GPS capturado com sucesso!", "success");
+                },
+                (err) => {
+                    showLoading(false);
+                    console.error("GPS Error:", err);
+                    showToast("Permissão de GPS negada. Ative a localização no celular.");
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // 4. Input Mascaras
+        function maskCpfCnpj(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length <= 11) {
+                // CPF: 000.000.000-00
+                val = val.replace(/(\d{3})(\d)/, '$1.$2');
+                val = val.replace(/(\d{3})(\d)/, '$1.$2');
+                val = val.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            } else {
+                // CNPJ: 00.000.000/0000-00
+                val = val.replace(/^(\d{2})(\d)/, '$1.$2');
+                val = val.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                val = val.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                val = val.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+            }
+            input.value = val.substring(0, 18);
+        }
+
+        function maskPhone(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length > 10) {
+                // (00) 00000-0000
+                val = val.substring(0, 11);
+                val = val.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+            } else if (val.length > 5) {
+                // (00) 0000-0000
+                val = val.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+            } else if (val.length > 2) {
+                val = val.replace(/^(\d{2})(\d)/, '($1) $2');
+            }
+            input.value = val;
+        }
+
+        function toggleDayClass(checkbox, labelId) {
+            const label = document.getElementById(labelId);
+            if (checkbox.checked) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        }
+
+        // 5. Upload e Compressão de Imagens
+        function handlePublicImageUpload(inputEl, boxId, previewId, hiddenInputId, maxDimension, quality) {
+            const file = inputEl.files[0];
+            if (!file) return;
+
+            const box = document.getElementById(boxId);
+            const preview = document.getElementById(previewId);
+            const hidden = document.getElementById(hiddenInputId);
+            
+            showLoading(true, "Otimizando imagem...");
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement("canvas");
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxDimension) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        }
+                    } else {
+                        if (height > maxDimension) {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+                    
+                    hidden.value = compressedBase64;
+                    preview.src = compressedBase64;
+                    box.classList.add('has-file');
+                    
+                    showLoading(false);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Helper Loading
+        function showLoading(show, text = "Processando...") {
+            const overlay = document.getElementById('loading-overlay');
+            const txt = document.getElementById('loading-text');
+            if (show) {
+                txt.innerText = text;
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Helper Toast
+        let toastTimeout = null;
+        function showToast(message, type = "error") {
+            const toast = document.getElementById('toast-form');
+            const txt = document.getElementById('toast-text');
+            txt.innerText = message;
+            
+            if (type === "success") {
+                toast.classList.add('toast-success-type');
+            } else {
+                toast.classList.remove('toast-success-type');
+            }
+
+            toast.classList.add('active');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('active');
+            }, 4000);
+        }
+
+        // 6. Envio de Dados para o Firebase
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            // Validações adicionais
+            const type = dbConfig.type;
+            const name = document.getElementById('client-name').value.trim();
+            const fantasy = document.getElementById('client-fantasy').value.trim();
+            const cpfCnpj = document.getElementById('client-cpf-cnpj').value.trim();
+            const ie = document.getElementById('client-ie').value.trim();
+            const birth = document.getElementById('client-birth').value;
+            const phone = document.getElementById('client-phone').value.trim();
+            const email = document.getElementById('client-email').value.trim();
+            
+            const cep = document.getElementById('client-cep').value.trim();
+            const city = document.getElementById('client-city').value.trim();
+            const address = document.getElementById('client-address').value.trim();
+            const number = document.getElementById('client-number').value.trim();
+            const complement = document.getElementById('client-complement').value.trim();
+            const neighborhood = document.getElementById('client-neighborhood').value.trim();
+            
+            const lat = document.getElementById('client-lat').value;
+            const lng = document.getElementById('client-lng').value;
+            
+            const photoDoc = document.getElementById('data-doc').value;
+            const photoFacade = document.getElementById('data-facade').value;
+            const notes = document.getElementById('client-notes').value.trim();
+
+            if (!name || !phone || !cep || !city || !address || !number || !neighborhood) {
+                showToast("Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            // Exige CPF/CNPJ e Foto do Documento para aluguel ou comodato
+            if ((type === 'comodato' || type === 'aluguel') && !cpfCnpj) {
+                showToast("CNPJ ou CPF é obrigatório para comodato/aluguel.");
+                return;
+            }
+            if ((type === 'comodato' || type === 'aluguel') && !photoDoc) {
+                showToast("Foto do documento é obrigatória para comodato/aluguel.");
+                return;
+            }
+
+            if (!lat || !lng) {
+                showToast("Por favor, capture a localização GPS do estabelecimento.");
+                return;
+            }
+
+            // Dias de visita sugeridos
+            const visitDays = [];
+            document.querySelectorAll('input[name="visit-days"]:checked').forEach(cb => {
+                visitDays.push(cb.value);
+            });
+
+            // Estrutura de dados para o envio
+            const formData = {
+                name,
+                fantasyName: fantasy || name, // fallback para o nome completo se vazio
+                cpfCnpj,
+                ie: ie || '',
+                birthDate: birth || '',
+                phone,
+                email: email || '',
+                cep,
+                city,
+                address,
+                number,
+                complement: complement || '',
+                neighborhood,
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lng),
+                visitDays,
+                photoDoc: photoDoc || '',
+                photoFacade: photoFacade || '',
+                notes: notes || '',
+                status: 'pending',
+                submittedAt: Date.now()
+            };
+
+            showLoading(true, "Gravando informações de cadastro na nuvem...");
+
+            const formId = 'form_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+
+            firebase.database().ref(`factories/${dbConfig.deviceKey}/pendingForms/${formId}`).set({
+                id: formId,
+                type: type || 'cadastro',
+                status: 'pending',
+                submittedAt: Date.now(),
+                data: formData
+            })
+            .then(() => {
+                showLoading(false);
+                showScreen('success-screen');
+            })
+            .catch(err => {
+                showLoading(false);
+                console.error("Firebase submit error:", err);
+                showToast("Erro de rede. Verifique sua conexão e tente novamente.");
+            });
+        }
+    </script>
+</body>
+</html>

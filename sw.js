@@ -1,6 +1,7 @@
-const CACHE_NAME = 'gelodovale-v145';
+const CACHE_NAME = 'gelodovale-v146';
 const ASSETS = [
   'index.html',
+  'form.html',
   'styles.css',
   'manifest.json',
   'gelcontrol.ico',
@@ -8,6 +9,7 @@ const ASSETS = [
   'logo_horizontal.jpg',
   'js/app.js',
   'js/state.js',
+  'js/whatsapp.js',
   'js/notifications.js',
   'js/auth.js',
   'js/dashboard.js',

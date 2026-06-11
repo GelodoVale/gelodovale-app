@@ -1,10 +1,19 @@
-﻿# 📜 Histórico de Atualizações do Sistema (GelControl)
+# 📜 Histórico de Atualizações do Sistema (GelControl)
 
 Este arquivo é o registro oficial de todas as alterações feitas no código pelo **Antigravity**. Ele permite que o assistente faça varreduras instantâneas e saiba exatamente o estado do sistema a qualquer momento.
 
 ---
 
 ### 🚀 Últimas Alterações Realizadas
+
+#### v53 (11/06/2026 - Antigravity)
+* **Central de WhatsApp & Formulário Público do Cliente (COD: WA-01):**
+  - **Módulo `js/whatsapp.js`:** Criado central com 10 templates customizáveis e suporte a placeholders dinâmicos (Nome, Valor, Link, etc.) com geração de links encriptados Base64.
+  - **Formulário Público (`form.html`):** Criada página autônoma responsiva com captura GPS, busca rápida de CEP por API e compressão automática de fotos de fachada/documento antes do envio ao Firebase.
+  - **Preferência do Cliente:** Adicionado toggle "🚫 Bloquear WhatsApp Automático" no cadastro do cliente com ícone indicador no card do cliente.
+  - **Aprovação Admin:** Adicionado aba "Central do WhatsApp" nas configurações para rever cadastros preenchidos por clientes e aprovar diretamente no sistema, limpando do Firebase ao salvar.
+  - **Sininho & Botões Rápidos:** Notificação automática ao receber cadastros públicos com navegação direta para a aba de aprovação. Botões de "Enviar WA" inline adicionados às notificações de estoque, aniversários e dívidas.
+  - Bumped build para v53 e cache SW gelodovale-v146.
 
 #### v52 (11/06/2026 - Antigravity)
 * **Central de Notificações Expandida — 9 Tipos de Alertas (COD: NOTIF-01):**

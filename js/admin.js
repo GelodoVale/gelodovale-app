@@ -1,6 +1,7 @@
 import { state, saveState, FACTORY_INFO, recalculateClientDebts, APP_VERSION } from './state.js';
 import { renderWidgetsSetupPanel } from './widgets.js';
 import { applyCurrentLayout } from './layout.js';
+import { getWhatsappTemplates, saveWhatsappTemplate } from './whatsapp.js';
 
 // 1. Alternador de Sub-abas Administrativas
 export function switchAdminSubTab(subTabId) {
@@ -79,6 +80,17 @@ export function switchAdminSubTab(subTabId) {
                 window.loadWhatsAppSettings();
             }
         } catch(e) { console.error("[switchAdminSubTab] loadWhatsAppSettings error:", e); }
+    }
+    
+    if (subTabId === "tab-whatsapp") {
+        try {
+            if (typeof window.loadTemplateToEditor === "function") {
+                window.loadTemplateToEditor();
+            }
+            if (typeof window.fetchPendingFormsFirebase === "function") {
+                window.fetchPendingFormsFirebase();
+            }
+        } catch(e) { console.error("[switchAdminSubTab] tab-whatsapp render error:", e); }
     }
     
     // Renderizar painel de widgets
@@ -4584,6 +4596,267 @@ export function renderTabsIconsConfigGrid() {
     });
 }
 window.renderTabsIconsConfigGrid = renderTabsIconsConfigGrid;
+
+// ==========================================
+// CENTRAL DO WHATSAPP - TEMPLATES E CADASTROS
+// ==========================================
+
+export function loadTemplateToEditor() {
+    const select = document.getElementById("wa-template-select");
+    const editor = document.getElementById("wa-template-editor");
+    if (!select || !editor) return;
+    
+    const templates = getWhatsappTemplates();
+    editor.value = templates[select.value] || "";
+}
+
+export function saveSelectedWATemplate() {
+    const select = document.getElementById("wa-template-select");
+    const editor = document.getElementById("wa-template-editor");
+    if (!select || !editor) return;
+    
+    const key = select.value;
+    const text = editor.value;
+    
+    saveWhatsappTemplate(key, text);
+    window.showToast("Template de WhatsApp salvo com sucesso!", "success");
+}
+
+export function fetchPendingFormsFirebase() {
+    const tbody = document.getElementById("wa-pending-forms-tbody");
+    if (!tbody) return;
+    
+    if (!state.firebaseConfig || !state.firebaseConfig.enabled || !state.firebaseConfig.deviceKey) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
+                    Firebase desativado ou não configurado nas Integrações. Ative a sincronização primeiro.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-primary);">
+                Carregando formulários recebidos...
+            </td>
+        </tr>
+    `;
+    
+    if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
+                    Firebase SDK não carregado no momento. Verifique a conexão com a internet.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const deviceKey = state.firebaseConfig.deviceKey;
+    firebase.database().ref(`factories/${deviceKey}/pendingForms`).once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            tbody.innerHTML = "";
+            
+            if (!data) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
+                            Nenhum formulário pendente de revisão.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const forms = Object.values(data);
+            forms.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+            
+            forms.forEach(form => {
+                const fd = form.data || {};
+                const name = fd.name || "Sem Nome";
+                const phone = fd.phone || "Sem Contato";
+                const tipo = form.type || "cadastro";
+                const labelTipo = tipo === 'comodato' ? '🔧 Comodato' : (tipo === 'aluguel' ? '📦 Aluguel' : '📝 Cadastro');
+                
+                let dateStr = "N/A";
+                if (form.submittedAt) {
+                    dateStr = new Date(form.submittedAt).toLocaleString('pt-BR');
+                }
+                
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
+                
+                const tdClient = document.createElement("td");
+                tdClient.style.padding = "10px";
+                tdClient.innerHTML = `<strong>${name}</strong>${fd.fantasyName ? `<br><span style="font-size:0.75rem;color:var(--color-text-muted);">${fd.fantasyName}</span>` : ""}`;
+                
+                const tdType = document.createElement("td");
+                tdType.style.padding = "10px";
+                tdType.innerHTML = `<span style="font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,240,255,0.08); color: var(--color-primary); font-weight: bold;">${labelTipo}</span>`;
+                
+                const tdContact = document.createElement("td");
+                tdContact.style.padding = "10px";
+                tdContact.innerText = phone;
+                
+                const tdDate = document.createElement("td");
+                tdDate.style.padding = "10px";
+                tdDate.innerText = dateStr;
+                
+                const tdActions = document.createElement("td");
+                tdActions.style.padding = "4px 10px";
+                tdActions.style.textAlign = "right";
+                
+                // Botão Aprovar
+                const btnApprove = document.createElement("button");
+                btnApprove.className = "btn btn-secondary";
+                btnApprove.title = "Rever e Salvar Cadastro";
+                btnApprove.style.cssText = "padding: 4px 8px; font-size: 0.75rem; margin-right: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); color: #10b981;";
+                btnApprove.innerHTML = `<i data-lucide="check-square" style="width:12px; height:12px;"></i> Rever/Aprovar`;
+                btnApprove.onclick = () => {
+                    reviewAndApprovePendingForm(form.id, form);
+                };
+                
+                // Botão Rejeitar
+                const btnReject = document.createElement("button");
+                btnReject.className = "btn btn-danger btn-icon-only";
+                btnReject.title = "Rejeitar Formulário";
+                btnReject.style.cssText = "width:26px; height:26px; padding:0; display: inline-flex; align-items: center; justify-content: center;";
+                btnReject.innerHTML = `<i data-lucide="trash-2" style="width:12px; height:12px;"></i>`;
+                btnReject.onclick = () => {
+                    rejectPendingForm(form.id);
+                };
+                
+                tdActions.appendChild(btnApprove);
+                tdActions.appendChild(btnReject);
+                
+                tr.appendChild(tdClient);
+                tr.appendChild(tdType);
+                tr.appendChild(tdContact);
+                tr.appendChild(tdDate);
+                tr.appendChild(tdActions);
+                
+                tbody.appendChild(tr);
+            });
+            
+            if (window.lucide) window.lucide.createIcons();
+        })
+        .catch(err => {
+            console.error("fetchPendingFormsFirebase error:", err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-danger);">
+                        Erro ao conectar com Firebase: ${err.message}
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+export function reviewAndApprovePendingForm(formId, formObj) {
+    const fd = formObj.data || {};
+    
+    // Abrir o modal do cliente usando o helper do app
+    if (typeof window.openClientModal === 'function') {
+        window.openClientModal(null); // Abre como Novo Cliente
+        
+        // Mudar título temporariamente para revisão
+        const title = document.getElementById("client-modal-title");
+        if (title) title.innerText = "Revisar Formulário de Cliente Recebido";
+        
+        // Preencher os campos do formulário
+        document.getElementById("client-name").value = fd.name || "";
+        const fantasyEl = document.getElementById("client-fantasy-name");
+        if (fantasyEl) fantasyEl.value = fd.fantasyName || "";
+        document.getElementById("client-phone").value = fd.phone || "";
+        const docEl = document.getElementById("client-document");
+        if (docEl) docEl.value = fd.cpfCnpj || "";
+        
+        // Endereço completo
+        const addressEl = document.getElementById("client-address");
+        if (addressEl) {
+            addressEl.value = fd.address || "";
+        }
+        
+        // GPS
+        const latEl = document.getElementById("client-latitude");
+        const lngEl = document.getElementById("client-longitude");
+        if (latEl) latEl.value = fd.latitude || "";
+        if (lngEl) lngEl.value = fd.longitude || "";
+        
+        // Nascimento e Exposição do Documento
+        const birthEl = document.getElementById("client-birthdate");
+        if (birthEl) birthEl.value = fd.birthDate || "";
+        
+        // Imagens
+        const facadeDataEl = document.getElementById("photo-facade-data");
+        if (facadeDataEl) facadeDataEl.value = fd.photoFacade || "";
+        const previewFacade = document.getElementById("preview-facade");
+        if (previewFacade) {
+            if (fd.photoFacade) {
+                previewFacade.innerHTML = `<img src="${fd.photoFacade}" style="max-height: 80px; border-radius: 4px;">`;
+            } else {
+                previewFacade.innerHTML = "<p style='font-size: 0.75rem; color: var(--color-text-muted);'>Nenhuma foto carregada</p>";
+            }
+        }
+        
+        const docDataEl = document.getElementById("photo-doc-data");
+        if (docDataEl) docDataEl.value = fd.photoDoc || "";
+        const previewDoc = document.getElementById("preview-doc");
+        if (previewDoc) {
+            if (fd.photoDoc) {
+                previewDoc.innerHTML = `<img src="${fd.photoDoc}" style="max-height: 140px; max-width: 100%; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">`;
+            } else {
+                previewDoc.innerHTML = "";
+            }
+        }
+
+        // Marcar checkboxes de visita
+        const visitDays = fd.visitDays || [];
+        document.querySelectorAll('input[name="visit-days"]').forEach(cb => {
+            // Mapeia os dias curtos do form ("Seg", "Ter", etc.) para os dias completos do index.html ("Segunda", "Terça", etc.)
+            const dayMap = { "Seg": "Segunda", "Ter": "Terça", "Qua": "Quarta", "Qui": "Quinta", "Sex": "Sexta", "Sáb": "Sábado", "Dom": "Domingo" };
+            const mappedDays = visitDays.map(d => dayMap[d] || d);
+            cb.checked = mappedDays.includes(cb.value);
+        });
+
+        // Registrar referência global para excluir no sucesso do salvamento
+        window.pendingFormToApprove = formId;
+    }
+}
+
+export function rejectPendingForm(formId) {
+    window.showConfirm(
+        "Tem certeza que deseja rejeitar e excluir permanentemente este formulário de cadastro pendente?",
+        () => {
+            if (!state.firebaseConfig || !state.firebaseConfig.deviceKey) return;
+            const deviceKey = state.firebaseConfig.deviceKey;
+            
+            firebase.database().ref(`factories/${deviceKey}/pendingForms/${formId}`).remove()
+                .then(() => {
+                    window.showToast("Formulário removido com sucesso.", "info");
+                    fetchPendingFormsFirebase();
+                })
+                .catch(err => {
+                    window.showToast("Erro ao remover: " + err.message, "error");
+                });
+        },
+        null,
+        "Rejeitar Formulário",
+        "Excluir"
+    );
+}
+
+// Bind to window for HTML accessibility
+window.loadTemplateToEditor = loadTemplateToEditor;
+window.saveSelectedWATemplate = saveSelectedWATemplate;
+window.fetchPendingFormsFirebase = fetchPendingFormsFirebase;
+window.reviewAndApprovePendingForm = reviewAndApprovePendingForm;
+window.rejectPendingForm = rejectPendingForm;
 
 
 

@@ -4,8 +4,8 @@ import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
-export const APP_VERSION = "3.8";
-export const CODE_BUILD = "v52 (11/06/2026 - Antigravity)";
+export const APP_VERSION = "3.9";
+export const CODE_BUILD = "v53 (11/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -78,7 +78,7 @@ export function normalizeStateArrays() {
         'clients', 'products', 'orders', 'deliveries', 'freezers', 
         'rentals', 'documents', 'payments', 'suppliers', 'packaging', 
         'packagingTransactions', 'cargoSettlements', 'users', 'equipments',
-        'comodatos', 'localEvents', 'ignoredSpikes'
+        'comodatos', 'localEvents', 'ignoredSpikes', 'pendingForms'
     ];
     collections.forEach(col => {
         if (state[col]) {

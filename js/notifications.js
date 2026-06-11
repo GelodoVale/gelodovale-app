@@ -249,6 +249,24 @@ export function updateNotifications() {
         }
     });
 
+    // ─── 10. Formulários de Clientes Pendentes (WhatsApp) ───────────────────
+    (state.pendingForms || []).forEach(form => {
+        if (form.status === 'pending') {
+            const fd = form.data || {};
+            const labelTipo = form.type === 'comodato' ? 'Comodato' : (form.type === 'aluguel' ? 'Aluguel' : 'Cadastro');
+            notifications.push({
+                type: 'pending_form',
+                label: 'WhatsApp',
+                clientName: fd.name || 'Cliente',
+                title: `📝 Form. de ${labelTipo} Recebido`,
+                text: `${fd.name || 'Cliente'} preencheu o formulário enviado. Clique para revisar e aprovar.`,
+                severity: 'info',
+                targetTab: 'tab-admin',
+                adminSubTab: 'tab-whatsapp'
+            });
+        }
+    });
+
     // Atualiza badge e lista — NÃO abre o popover
     renderNotificationsList();
 }
@@ -334,6 +352,10 @@ function renderNotificationsList() {
                     window.navigateToTab(notif.targetTab);
                 }
 
+                if (notif.adminSubTab && typeof window.switchAdminSubTab === 'function') {
+                    window.switchAdminSubTab(notif.adminSubTab);
+                }
+
                 if (notif.searchVal) {
                     setTimeout(() => {
                         const searchInput = document.getElementById("client-search-input");
@@ -347,12 +369,41 @@ function renderNotificationsList() {
                 if (window.triggerHaptic) window.triggerHaptic('light');
             };
 
+            let waBtnHtml = '';
+            const isWaApplicable = ['birthday', 'debt', 'stock'].includes(notif.type);
+            let matchingClient = null;
+            if (isWaApplicable && notif.clientName) {
+                matchingClient = (state.clients || []).find(c => c.name === notif.clientName);
+            }
+            
+            if (matchingClient && matchingClient.phone) {
+                const templateMap = { birthday: 'aniversario', debt: 'divida', stock: 'estoque_baixo' };
+                const templateType = templateMap[notif.type];
+                const contexto = {
+                    nome: matchingClient.fantasyName || matchingClient.name,
+                    phone: matchingClient.phone,
+                    valor: matchingClient.outstandingDebt || 0
+                };
+                const contextoStr = JSON.stringify(contexto).replace(/"/g, '&quot;');
+                
+                waBtnHtml = `
+                    <div style="margin-top: 6px; display: flex; justify-content: flex-end;">
+                        <button onclick="event.stopPropagation(); window.abrirConfirmacaoWA('${matchingClient.id}', '${templateType}', ${contextoStr})" 
+                                class="btn btn-secondary" 
+                                style="padding: 2px 8px; font-size: 0.68rem; display: inline-flex; align-items: center; gap: 4px; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.15); color: var(--color-primary); height: auto;">
+                            <i data-lucide="message-circle" style="width: 12px; height: 12px;"></i> Enviar WA
+                        </button>
+                    </div>
+                `;
+            }
+
             item.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                     <strong style="font-size:0.8rem; color:#fff; flex:1;">${notif.title}</strong>
                     <span style="font-size:0.62rem; color:var(--color-text-muted); white-space:nowrap; background:rgba(255,255,255,0.05); border-radius:4px; padding:1px 5px;">${notif.label || ''}</span>
                 </div>
                 <p style="font-size:0.72rem; color:var(--color-text-muted); margin:0; line-height:1.35;">${notif.text}</p>
+                ${waBtnHtml}
             `;
 
             list.appendChild(item);

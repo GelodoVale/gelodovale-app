@@ -888,6 +888,10 @@
                                     <i data-lucide="link-2"></i>
                                     <span>Integrações (Pix & WhatsApp)</span>
                                 </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-whatsapp')">
+                                    <i data-lucide="message-square"></i>
+                                    <span>Central do WhatsApp</span>
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -2542,6 +2546,75 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 📱 CENTRAL DO WHATSAPP E FORMULÁRIOS PENDENTES -->
+                        <div id="tab-whatsapp" class="admin-subtab-content" style="display: none;">
+                            <div class="dashboard-row" style="grid-template-columns: 1.8fr 1.2fr; gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+                                <!-- Coluna Esquerda: Formulários Pendentes -->
+                                <div class="dashboard-panel">
+                                    <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                                        <span style="display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="file-text"></i> Formulários de Clientes Recebidos</span>
+                                        <button type="button" class="btn btn-secondary" onclick="window.fetchPendingFormsFirebase()" style="font-size: 0.75rem; padding: 4px 8px; height: auto;">
+                                            <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i> Recarregar
+                                        </button>
+                                    </h2>
+                                    <div style="overflow-x: auto;">
+                                        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                                            <thead>
+                                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--color-text-muted); text-align: left;">
+                                                    <th style="padding: 10px;">Cliente</th>
+                                                    <th style="padding: 10px;">Tipo</th>
+                                                    <th style="padding: 10px;">Contato</th>
+                                                    <th style="padding: 10px;">Data Envio</th>
+                                                    <th style="padding: 10px; text-align: right;">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="wa-pending-forms-tbody">
+                                                <!-- Preenchido via JS -->
+                                                <tr>
+                                                    <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-text-muted);">
+                                                        Nenhum formulário pendente de revisão.
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Coluna Direita: Templates Personalizados -->
+                                <div class="dashboard-panel">
+                                    <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--color-secondary); margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                        <i data-lucide="message-square"></i> Templates de Mensagens
+                                    </h2>
+                                    <div class="form-group" style="margin-bottom: 1rem;">
+                                        <label for="wa-template-select">Selecione o Tipo:</label>
+                                        <select id="wa-template-select" class="form-control" onchange="window.loadTemplateToEditor()" style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--border-input); height: 40px;">
+                                            <option value="aniversario">🎂 Aniversário</option>
+                                            <option value="estoque_baixo">⚠️ Estoque Baixo</option>
+                                            <option value="divida">💸 Lembrete de Dívida</option>
+                                            <option value="pedido">📦 Pedido Confirmado</option>
+                                            <option value="entrega">🚚 Entrega Realizada</option>
+                                            <option value="boas_vindas">🎉 Boas-vindas (Form. Cadastro)</option>
+                                            <option value="comodato">🔧 Comodato Instalado (Form. Contrato)</option>
+                                            <option value="documento">🧾 Recibo / Orçamento</option>
+                                            <option value="visita">📅 Lembrete de Visita</option>
+                                            <option value="livre">✍️ Mensagem Livre</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 1rem;">
+                                        <label for="wa-template-editor">Texto do Template:</label>
+                                        <textarea id="wa-template-editor" class="form-control" rows="8" style="font-size: 0.82rem; font-family: monospace; background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.08); padding: 10px; color: #fff;"></textarea>
+                                        <small style="color: var(--color-text-muted); display: block; margin-top: 5px; line-height: 1.3;">
+                                            Placeholders suportados: <br>
+                                            <code>[Nome]</code>, <code>[Valor]</code>, <code>[Produtos]</code>, <code>[Data]</code>, <code>[Equipamento]</code>, <code>[Codigo]</code>, <code>[Link]</code>
+                                        </small>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="window.saveSelectedWATemplate()" style="width: 100%;">
+                                        <i data-lucide="save"></i> Salvar Template
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </main>
                 </div>
             </section>
@@ -2968,6 +3041,12 @@
                     <div class="form-group">
                         <label for="alert-threshold">Limiar de Alerta de Estoque (%)</label>
                         <input type="number" id="alert-threshold" class="form-control" min="5" max="50" value="20">
+                    </div>
+                    <div class="form-group" style="justify-content: center;">
+                        <label class="day-checkbox" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: 1px solid var(--border-input); border-radius: var(--radius-md); padding: 8px 12px; margin-top: 18px; background: rgba(255, 255, 255, 0.01); width: 100%;">
+                            <input type="checkbox" id="client-no-whatsapp" style="accent-color: var(--color-primary);">
+                            <span style="font-size: 0.85rem; font-weight: 500;">🚫 Bloquear WhatsApp Automático</span>
+                        </label>
                     </div>
                 </div>
 
@@ -6023,7 +6102,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=48"></script>
+    <script type="module" src="js/app.js?v=53"></script>
 </body>
 </html>
 
