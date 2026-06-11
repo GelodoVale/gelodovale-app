@@ -351,9 +351,17 @@ async function initWeatherLogic() {
         return;
     }
 
-    // Se o usuário não está logado, não forçar prompt de geolocalização (evita popup na tela de login)
+    // Se o usuário não está logado, usamos os dados em cache se existirem (para mostrar a cidade correta na tela de login),
+    // senão mostramos o fallback de SJC sem forçar o prompt de geolocalização.
     if (!sessionStorage.getItem("currentUserId")) {
-        fetchWeatherData(-23.1791, -45.8872, "São José dos Campos", content, false);
+        if (state.weatherConfig && state.weatherConfig.lat && state.weatherConfig.lon) {
+            const lat = state.weatherConfig.lat;
+            const lon = state.weatherConfig.lon;
+            const resolvedName = state.weatherConfig.city || "Auto (GPS)";
+            fetchWeatherData(lat, lon, resolvedName, content, false);
+        } else {
+            fetchWeatherData(-23.1791, -45.8872, "São José dos Campos", content, false);
+        }
         return;
     }
     

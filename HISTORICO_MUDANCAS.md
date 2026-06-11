@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v45 (11/06/2026 - Antigravity)
+* **Clima em Cache na Tela de Login (COD: WID-02):**
+  - Ajustada a inicialização do clima pré-login em `initWeatherLogic()` (`js/widgets.js`) para usar a cidade em cache (ex: Registro - SP) salva anteriormente no estado, em vez de redefinir temporariamente para São José dos Campos.
+  - Isso garante consistência visual imediata na tela de login e previne loops de geolocalização desnecessários.
+  - Bumped build do sistema para `v45` e cache do Service Worker para `gelodovale-v138`.
+
 #### v44 (11/06/2026 - Antigravity)
 * **IP-Geolocalização Ativa pós-Login e Fallback Manual do Clima (COD: WID-02):**
   - Adicionado gatilho imediato de atualização de clima pós-autenticação em `loginUser()` (`js/auth.js`): assim que o usuário faz login, a API de Clima tenta autodetectar a cidade dele silenciosamente por IP, sem esperar por recarregamento de página.
