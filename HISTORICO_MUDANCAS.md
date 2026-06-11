@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v29 (11/06/2026 - Antigravity)
+* **Ajuste de Redimensionamento Horizontal dos Painéis do PDV (COD: PDV-01):**
+  - Adicionado suporte completo para redimensionamento horizontal lateral dos painéis em modo Grade (`grid`) e Janelas Flutuantes (`floating`) no Gerenciador de Layout (`js/layout.js` e `styles.css`).
+  - Corrigido o conflito onde a propriedade padrão `align-items: stretch` do flexbox pai e `max-width: 100%` nos painéis anulavam a largura inline configurada pelo usuário ao tentar esticar lateralmente.
+  - Implementado o ajuste dinâmico com `align-self: flex-start !important` e `max-width: none !important` no CSS para painéis com largura modificada em tempo real, garantindo que o catálogo de produtos (`COD: PDV-01`) possa se expandir em múltiplas colunas responsivas (`repeat(auto-fill, minmax(130px, 1fr))`).
+  - Atualizada a versão de cache do Service Worker para `gelodovale-v121` e o build do sistema para `v29`.
+
 #### v28 (11/06/2026 - Antigravity)
 * **Galeria de Ícones & Emojis e Abas Customizadas (Admin Only) (COD: FAB-04):**
   - Implementada a **Biblioteca de Ícones Global** na aba Configurações de Fábrica & Aparência, permitindo o upload de fotos locais e gerenciamento em lote.

@@ -4262,6 +4262,15 @@ body.astro-day.weather-hot {
     box-sizing: border-box !important;
 }
 
+/* Quando o painel tem largura definida pelo layout manager, impedimos que o flexbox pai o estique/limite forçadamente */
+.dashboard-panel.layout-floating-active[style*="width"],
+.dashboard-panel.layout-grid-active[style*="width"],
+.widget-card.layout-floating-active[style*="width"],
+.widget-card.layout-grid-active[style*="width"] {
+    align-self: flex-start !important;
+    max-width: none !important;
+}
+
 /* O conteúdo do corpo principal (filhos que não são cabeçalhos ou alças) cresce para ocupar 100% da altura do painel */
 .dashboard-panel[style*="height"] > :not(.panel-header):not(h2):not(h3):not(.lyt-resize) {
     flex: 1 1 auto !important;
