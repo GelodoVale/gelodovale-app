@@ -6,6 +6,11 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v37 (11/06/2026 - Antigravity)
+* **Exclusão Definitiva de Itens no Catálogo (COD: CAT-02):**
+  - Implementada a exclusão permanente de produtos em duas etapas. Se o item estiver ativo, clicar na lixeira o inativa (mantendo o histórico comercial e ocultando-o do PDV). Se o item já estiver inativo, clicar na lixeira novamente exibe a opção de excluí-lo definitivamente do banco de dados de forma irreversível.
+  - Bumped build para `v37` e Service Worker cache para `gelodovale-v130`.
+
 #### v36 (11/06/2026 - Antigravity)
 * **Ampliação de Emojis, Ícones e Filtro Inteligente (COD: FAB-05):**
   - Expandido o catálogo de emojis rápidos disponíveis no modal de seleção, agrupando-os em 6 categorias completas (Gelo/Fábrica, Frutas/Doces, Bebidas/Copos, Negócios/Financeiro, Clientes/Entrega e Símbolos/Extras).

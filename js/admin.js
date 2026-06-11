@@ -2726,19 +2726,37 @@ export function deleteProduct(productId) {
     const p = state.products.find(item => item.id === productId);
     if (!p) return;
     
-    window.showConfirm(
-        `Deseja realmente desativar o item "${p.name}"? Ele continuará no histórico, mas não estará disponível para novas operações.`,
-        () => {
-            p.active = false;
-            saveState();
-            renderProductsCatalog();
-            renderPrecos();
-            if (window.renderApp) window.renderApp();
-        },
-        null,
-        "Desativar Item",
-        "Desativar"
-    );
+    if (p.active !== false) {
+        window.showConfirm(
+            `Deseja desativar o item "${p.name}"? Ele continuará no histórico do catálogo, mas não aparecerá no PDV de vendas.`,
+            () => {
+                p.active = false;
+                saveState();
+                renderProductsCatalog();
+                renderPrecos();
+                if (window.renderApp) window.renderApp();
+                window.showToast("Item inativado. Clique na lixeira novamente se desejar excluí-lo de vez.", "info");
+            },
+            null,
+            "Desativar Item",
+            "Desativar"
+        );
+    } else {
+        window.showConfirm(
+            `Deseja realmente EXCLUIR DEFINITIVAMENTE o item "${p.name}" do sistema? Esta ação é irreversível.`,
+            () => {
+                state.products = state.products.filter(item => item.id !== productId);
+                saveState();
+                renderProductsCatalog();
+                renderPrecos();
+                if (window.renderApp) window.renderApp();
+                window.showToast("Item removido definitivamente do sistema!", "success");
+            },
+            null,
+            "Excluir Definitivamente",
+            "Excluir de Vez"
+        );
+    }
 }
 
 export function autoFillFactorySettings() {
