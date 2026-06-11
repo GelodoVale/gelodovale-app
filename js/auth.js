@@ -166,6 +166,11 @@ export function loginUser(userId, password) {
         // Apply user permissions
         applyUserPermissions(user);
         
+        // Trigger weather update upon login to geolocate if necessary
+        if (window.updateWeatherFromAPI) {
+            window.updateWeatherFromAPI();
+        }
+        
         if (window.lucide) {
             window.lucide.createIcons();
         }

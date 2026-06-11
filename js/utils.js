@@ -595,7 +595,32 @@ export async function updateWeatherFromAPI() {
         let lon = config.lon;
         let resolvedCityName = config.city;
 
-        if (lat && lon && (resolvedCityName === "Auto (GPS)" || resolvedCityName === "Local Detectado" || !resolvedCityName)) {
+        const isDefaultSJC = lat === -23.1791 && lon === -45.8872;
+        const isGeneric = resolvedCityName === "Auto (GPS)" || resolvedCityName === "Local Detectado" || !resolvedCityName;
+        const isLoggedIn = !!sessionStorage.getItem("currentUserId");
+
+        if (isLoggedIn && (isDefaultSJC || isGeneric)) {
+            try {
+                const ipGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt`;
+                const ipGeoRes = await fetch(ipGeoUrl);
+                const ipGeoData = await ipGeoRes.json();
+                if (ipGeoData && ipGeoData.latitude && ipGeoData.longitude) {
+                    lat = ipGeoData.latitude;
+                    lon = ipGeoData.longitude;
+                    const cityResolved = ipGeoData.city || ipGeoData.locality || ipGeoData.principalSubdivision || "";
+                    let stateAbbr = "";
+                    if (ipGeoData.principalSubdivisionCode) {
+                        const parts = ipGeoData.principalSubdivisionCode.split("-");
+                        stateAbbr = parts[parts.length - 1];
+                    }
+                    if (cityResolved) {
+                        resolvedCityName = stateAbbr ? `${cityResolved} - ${stateAbbr}` : cityResolved;
+                    }
+                }
+            } catch (err) {
+                console.error("Erro na autodetecção de IP em updateWeatherFromAPI:", err);
+            }
+        } else if (lat && lon && isGeneric) {
             try {
                 const revGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
                 const revGeoRes = await fetch(revGeoUrl);
@@ -780,9 +805,65 @@ export function detectUserLocation() {
         } finally {
             if (btn) btn.innerHTML = originalText;
         }
-    }, (error) => {
-        window.showToast("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.", "warning");
-        if (btn) btn.innerHTML = originalText;
+    }, async (error) => {
+        try {
+            const ipGeoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt`);
+            const ipGeoData = await ipGeoRes.json();
+            if (ipGeoData && ipGeoData.latitude && ipGeoData.longitude) {
+                const ipLat = ipGeoData.latitude;
+                const ipLon = ipGeoData.longitude;
+                const city = ipGeoData.city || ipGeoData.locality || ipGeoData.principalSubdivision || "";
+                let stateAbbr = "";
+                if (ipGeoData.principalSubdivisionCode) {
+                    const parts = ipGeoData.principalSubdivisionCode.split("-");
+                    stateAbbr = parts[parts.length - 1];
+                }
+                const resolvedName = city ? (stateAbbr ? `${city} - ${stateAbbr}` : city) : "Registro - SP";
+                
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${ipLat}&longitude=${ipLon}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                if (weatherData && weatherData.current) {
+                    const temp = Math.round(weatherData.current.temperature_2m);
+                    const code = weatherData.current.weather_code;
+                    const isDay = weatherData.current.is_day;
+
+                    let condition = "sun";
+                    if (code === 0) {
+                        condition = "sun";
+                    } else if ([1, 2, 3, 45, 48].includes(code)) {
+                        condition = "cloud";
+                    } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+                        condition = "cloud-rain";
+                    } else if ([95, 96, 99].includes(code)) {
+                        condition = "cloud-lightning";
+                    } else {
+                        condition = "wind";
+                    }
+
+                    state.weatherForecast = extractDailyForecast(weatherData);
+                    state.weatherConfig = { city: resolvedName, temp, condition, lat: ipLat, lon: ipLon, isDay };
+                    saveState();
+                    renderWeather();
+
+                    document.getElementById("weather-city-input").value = resolvedName;
+                    document.getElementById("weather-temp-input").value = temp;
+                    document.getElementById("weather-cond-select").value = condition;
+
+                    window.showToast(`Localização identificada via IP: ${resolvedName}`, 'success');
+                } else {
+                    window.showToast("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.", "warning");
+                }
+            } else {
+                window.showToast("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.", "warning");
+            }
+        } catch (ipErr) {
+            console.error("Erro no fallback de geolocalização por IP em detectUserLocation:", ipErr);
+            window.showToast("Permissão de geolocalização negada. Por favor, digite a cidade desejada no campo Cidade.", "warning");
+        } finally {
+            if (btn) btn.innerHTML = originalText;
+        }
     });
 }
 

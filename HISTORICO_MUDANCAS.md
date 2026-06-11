@@ -6,6 +6,19 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v44 (11/06/2026 - Antigravity)
+* **IP-Geolocalização Ativa pós-Login e Fallback Manual do Clima (COD: WID-02):**
+  - Adicionado gatilho imediato de atualização de clima pós-autenticação em `loginUser()` (`js/auth.js`): assim que o usuário faz login, a API de Clima tenta autodetectar a cidade dele silenciosamente por IP, sem esperar por recarregamento de página.
+  - Implementado o fallback de IP no botão manual "Detectar Local" em `detectUserLocation()` (`js/utils.js`): se o usuário clicar no botão e a permissão do GPS do navegador falhar ou for bloqueada (comum em `file:///`), o sistema tenta autodetectar a localização por IP em segundo plano, evitando travamentos e exibindo um toast informativo de sucesso via IP.
+  - Bumped build do sistema para `v44` e cache do Service Worker para `gelodovale-v137`.
+
+#### v43 (11/06/2026 - Antigravity)
+* **Prevenção de loop de São José dos Campos e Geolocalização por IP Silenciosa (COD: WID-02):**
+  - Implementado fallback inteligente para o endpoint de geolocalização reversa por IP do **BigDataCloud** (sem passar parâmetros de latitude/longitude) quando o GPS do navegador nega/falha na inicialização do clima (`js/widgets.js`).
+  - Isso remove o loop em que o erro de geolocalização no protocolo `file:///` forçava as coordenadas padrão de São José dos Campos no estado local, travando o widget de clima e forçando prompts repetitivos a cada carregamento de página. Com o salvamento das coordenadas reais obtidas por IP (ex: Registro - SP), reloads subsequentes usam o cache sem novos prompts.
+  - Adicionado controle `saveToState` em `fetchWeatherData()` para garantir que a tela de login (pré-login) exiba apenas placeholders sem persistir coordenadas padrão no estado.
+  - Bumped build do sistema para `v43` e cache do Service Worker para `gelodovale-v136`.
+
 #### v42 (11/06/2026 - Antigravity)
 * **Resolução Forçada de Cidades Travadas em "Auto (GPS)" (COD: WID-02):**
   - Implementado o geocódigo reverso corretivo automático em `updateWeatherFromAPI()`: se o estado local possui coordenadas de latitude/longitude válidas salvas, mas o nome do local está travado como `"Auto (GPS)"` ou `"Local Detectado"`, o sistema agora realiza uma chamada automática em segundo plano para o **BigDataCloud API** para resolver o nome correto (ex: `"Registro - SP"`) e atualiza o estado local e o Firebase.

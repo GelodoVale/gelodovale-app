@@ -342,17 +342,18 @@ async function initWeatherLogic() {
 
     // Se já temos coordenadas GPS e a cidade resolvida salvas no estado, usamos diretamente.
     // Isso evita o prompt de geolocalização repetitivo no protocolo file:///
-    if (state.weatherConfig && state.weatherConfig.lat && state.weatherConfig.lon) {
+    const isDefaultSJC = state.weatherConfig && state.weatherConfig.lat === -23.1791 && state.weatherConfig.lon === -45.8872;
+    if (state.weatherConfig && state.weatherConfig.lat && state.weatherConfig.lon && !isDefaultSJC) {
         const lat = state.weatherConfig.lat;
         const lon = state.weatherConfig.lon;
         const resolvedName = state.weatherConfig.city || "Auto (GPS)";
-        fetchWeatherData(lat, lon, resolvedName, content);
+        fetchWeatherData(lat, lon, resolvedName, content, true);
         return;
     }
 
     // Se o usuário não está logado, não forçar prompt de geolocalização (evita popup na tela de login)
     if (!sessionStorage.getItem("currentUserId")) {
-        fetchWeatherData(-23.1791, -45.8872, "São José dos Campos", content);
+        fetchWeatherData(-23.1791, -45.8872, "São José dos Campos", content, false);
         return;
     }
     
@@ -385,19 +386,59 @@ async function initWeatherLogic() {
                     console.error("Erro na geolocalização reversa inicial:", err);
                 }
                 
-                fetchWeatherData(lat, lon, resolvedName, content);
-            }, () => {
-                fetchWeatherData(lat, lon, "São José dos Campos", content);
+                fetchWeatherData(lat, lon, resolvedName, content, true);
+            }, async () => {
+                try {
+                    const ipGeoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt`);
+                    const ipGeoData = await ipGeoRes.json();
+                    if (ipGeoData && ipGeoData.latitude && ipGeoData.longitude) {
+                        const ipLat = ipGeoData.latitude;
+                        const ipLon = ipGeoData.longitude;
+                        const city = ipGeoData.city || ipGeoData.locality || ipGeoData.principalSubdivision || "";
+                        let stateAbbr = "";
+                        if (ipGeoData.principalSubdivisionCode) {
+                            const parts = ipGeoData.principalSubdivisionCode.split("-");
+                            stateAbbr = parts[parts.length - 1];
+                        }
+                        const resolvedName = city ? (stateAbbr ? `${city} - ${stateAbbr}` : city) : "Registro - SP";
+                        fetchWeatherData(ipLat, ipLon, resolvedName, content, true);
+                    } else {
+                        fetchWeatherData(lat, lon, "São José dos Campos", content, true);
+                    }
+                } catch (err) {
+                    console.error("Erro no fallback de geolocalização por IP no widget:", err);
+                    fetchWeatherData(lat, lon, "São José dos Campos", content, true);
+                }
             });
         } else {
-            fetchWeatherData(lat, lon, "São José dos Campos", content);
+            try {
+                const ipGeoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=pt`);
+                const ipGeoData = await ipGeoRes.json();
+                if (ipGeoData && ipGeoData.latitude && ipGeoData.longitude) {
+                    const ipLat = ipGeoData.latitude;
+                    const ipLon = ipGeoData.longitude;
+                    const city = ipGeoData.city || ipGeoData.locality || ipGeoData.principalSubdivision || "";
+                    let stateAbbr = "";
+                    if (ipGeoData.principalSubdivisionCode) {
+                        const parts = ipGeoData.principalSubdivisionCode.split("-");
+                        stateAbbr = parts[parts.length - 1];
+                    }
+                    const resolvedName = city ? (stateAbbr ? `${city} - ${stateAbbr}` : city) : "Registro - SP";
+                    fetchWeatherData(ipLat, ipLon, resolvedName, content, true);
+                } else {
+                    fetchWeatherData(lat, lon, "São José dos Campos", content, true);
+                }
+            } catch (err) {
+                console.error("Erro no fallback de geolocalização por IP no widget:", err);
+                fetchWeatherData(lat, lon, "São José dos Campos", content, true);
+            }
         }
     } catch(e) {
         content.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar clima</div>';
     }
 }
 
-async function fetchWeatherData(lat, lon, locationName, contentDiv) {
+async function fetchWeatherData(lat, lon, locationName, contentDiv, saveToState = true) {
     try {
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,wind_speed_10m&timezone=auto`);
         const data = await res.json();
@@ -442,13 +483,15 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv) {
             `;
             if (window.lucide) window.lucide.createIcons();
 
-            if (!state.weatherConfig) state.weatherConfig = {};
-            state.weatherConfig.temp = temp;
-            state.weatherConfig.condition = icon;
-            state.weatherConfig.city = locationName;
-            state.weatherConfig.lat = lat;
-            state.weatherConfig.lon = lon;
-            saveState();
+            if (saveToState) {
+                if (!state.weatherConfig) state.weatherConfig = {};
+                state.weatherConfig.temp = temp;
+                state.weatherConfig.condition = icon;
+                state.weatherConfig.city = locationName;
+                state.weatherConfig.lat = lat;
+                state.weatherConfig.lon = lon;
+                saveState();
+            }
 
             const activeEl = document.querySelector(".nav-item.active");
             const activeTab = activeEl ? activeEl.getAttribute("data-tab") : "dashboard";
