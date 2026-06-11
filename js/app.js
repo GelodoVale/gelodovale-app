@@ -657,6 +657,10 @@ export function renderApp() {
     if (window.populateClientDropdowns) window.populateClientDropdowns();
     if (window.populateFreezerDropdowns) window.populateFreezerDropdowns();
     
+    // Garantir que o admin existe ANTES de renderizar a tela de login
+    // (pode ter sido zerado por sync do Firebase ou restauração de backup)
+    initUserAccessControl();
+    
     // Atualizar tela de login e usuários
     initLoginScreen();
 

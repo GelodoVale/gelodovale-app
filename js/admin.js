@@ -624,6 +624,9 @@ export function applyBackupData(payload) {
             state.backupSettings.currentVersion = payload.version;
         }
 
+        // Sempre garantir que o usuário admin existe após restaurar
+        if (window.initUserAccessControl) window.initUserAccessControl();
+
         saveState();
         if (window.renderApp) window.renderApp();
         if (typeof applyCurrentLayout === "function") {
