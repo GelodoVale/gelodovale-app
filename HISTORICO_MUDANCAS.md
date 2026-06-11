@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v33 (11/06/2026 - Antigravity)
+* **Alinhamento do Cabeçalho Superior e Suporte de Resizing Lateral (COD: Layout):**
+  - Otimizado o cabeçalho superior (`.top-header` e `.header-actions`) no `styles.css` para utilizar `flex-wrap: nowrap` no contêiner principal e truncamento inteligente (`ellipsis`) nos textos longos como `"Frente de Caixa (PDV Balcão)"`, impedindo desalinhamento visual e quebras de linha bagunçadas em telas desktop.
+  - Adicionado `flex-wrap: wrap` e gap otimizado para `0.5rem` nos botões da barra de ações, permitindo que os botões se organizem perfeitamente sem deformar o título.
+  - Implementada a validação e reset automático de versão de layout no método `applyBackupData` em `js/admin.js`. Isso garante que restaurar backups de versões de layout antigas (< 5) limpe automaticamente as coordenadas e reposicione os painéis do PDV (`COD: PDV-01` e `COD: PDV-02`) em modo grade fixo, prevenindo que eles fiquem sobrepostos ou fora de foco.
+  - Resolvido o problema de carregamento de estilos antigos definindo a importação como `styles.css?v=33` no `index.html` e limpando cache no PWA com `gelodovale-v126` em `sw.js`.
+
 #### v32 (11/06/2026 - Antigravity)
 * **Prevenção de Desalinhamento de Layout e Recuperação de Painéis (COD: PDV-02):**
   - Implementado reset automático na inicialização do Gerenciador de Layout (`js/layout.js`) caso o usuário tenha um layout com versão desatualizada (menor que `5`).

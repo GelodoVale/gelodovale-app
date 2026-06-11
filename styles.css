@@ -123,6 +123,48 @@
     flex: 1;
     min-width: 0;
 }
+
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    gap: 1rem;
+    flex-wrap: nowrap;
+}
+
+.header-title {
+    min-width: 0;
+    flex: 1;
+}
+
+.header-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.header-title p {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .toast-title {
     font-size: 0.8rem;
     font-weight: 700;
@@ -402,30 +444,7 @@ main.main-content {
     max-width: calc(100vw - 260px);
 }
 
-header.top-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-}
 
-.header-title h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 0.25rem;
-}
-
-.header-title p {
-    color: var(--color-text-muted);
-    font-size: 0.95rem;
-}
-
-.header-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
 
 /* Controle de Volume no Cabecalho */
 .volume-control-wrapper {

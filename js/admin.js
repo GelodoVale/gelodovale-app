@@ -604,7 +604,13 @@ export function applyBackupData(payload) {
             applyAppearanceTheme(state.appearance);
         }
         if (d.widgets) state.widgets = d.widgets;
-        if (d.layoutSettings) state.layoutSettings = d.layoutSettings;
+        if (d.layoutSettings) {
+            state.layoutSettings = d.layoutSettings;
+            if (!state.layoutSettings || state.layoutSettings.layoutVersion !== 5) {
+                state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
+                console.log("[Backup] Layout antigo/incompatível resetado para v5 (fixed).");
+            }
+        }
         if (d.printSettings) state.printSettings = d.printSettings;
         if (d.logisticsSettings) state.logisticsSettings = d.logisticsSettings;
         if (d.firebaseConfig) state.firebaseConfig = d.firebaseConfig;
