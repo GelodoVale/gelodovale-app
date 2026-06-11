@@ -59,18 +59,38 @@ export function renderComodatosAdmin() {
         if (searchVal) {
             const clientName = (c.clientName || "").toLowerCase();
             const freezerCode = (c.freezerCode || "").toLowerCase();
-            if (!clientName.includes(searchVal) && !freezerCode.includes(searchVal)) {
+            const clientAddress = (c.clientAddress || "").toLowerCase();
+            if (!clientName.includes(searchVal) && !freezerCode.includes(searchVal) && !clientAddress.includes(searchVal)) {
                 return false;
             }
         }
         
         return true;
     });
+
+    const sortKey = document.getElementById("comodato-sort-key")?.value || "clientName";
+    const sortOrder = document.getElementById("comodato-sort-order")?.value || "asc";
+
+    filtered.sort((a, b) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+        
+        if (sortKey === "startDate" || sortKey === "expectedReturnDate") {
+            if (!valA) valA = sortOrder === "asc" ? "9999-12-31" : "0000-01-01";
+            if (!valB) valB = sortOrder === "asc" ? "9999-12-31" : "0000-01-01";
+            return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        
+        valA = String(valA || "").toLowerCase().trim();
+        valB = String(valB || "").toLowerCase().trim();
+        
+        return sortOrder === "asc" ? valA.localeCompare(valB, 'pt-BR') : valB.localeCompare(valA, 'pt-BR');
+    });
     
     if (filtered.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align: center; padding: 20px; color: var(--color-text-muted);">
+                <td colspan="8" style="text-align: center; padding: 20px; color: var(--color-text-muted);">
                     Nenhum comodato encontrado.
                 </td>
             </tr>

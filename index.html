@@ -42,7 +42,7 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=45">
+    <link rel="stylesheet" href="styles.css?v=46">
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -1293,15 +1293,31 @@
                                     <!-- Barra de Ações/Filtros -->
                                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                                         <div style="flex: 1; min-width: 200px; position: relative;">
-                                            <input type="text" id="comodato-search-input" class="form-control" placeholder="Buscar por cliente ou código do freezer..." oninput="renderComodatosAdmin()" style="padding-left: 30px;">
+                                            <input type="text" id="comodato-search-input" class="form-control" placeholder="Buscar por cliente, código do freezer ou endereço..." oninput="renderComodatosAdmin()" style="padding-left: 30px;">
                                             <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--color-text-muted);"></i>
                                         </div>
-                                        <div style="width: 180px;">
+                                        <div style="width: 175px;">
                                             <select id="comodato-status-filter" class="form-control" onchange="renderComodatosAdmin()">
                                                 <option value="all">Todos os Status</option>
                                                 <option value="ativo">Ativos (Assinados)</option>
                                                 <option value="pendente_assinatura">Pendentes Assinatura</option>
                                                 <option value="retirado">Retirados (Devolvidos)</option>
+                                            </select>
+                                        </div>
+                                        <div style="width: 175px;">
+                                            <select id="comodato-sort-key" class="form-control" onchange="renderComodatosAdmin()">
+                                                <option value="clientName">Ordenar por: Nome</option>
+                                                <option value="startDate">Ordenar por: Data Início</option>
+                                                <option value="expectedReturnDate">Ordenar por: Data Retorno</option>
+                                                <option value="clientAddress">Ordenar por: Endereço</option>
+                                                <option value="freezerCode">Ordenar por: Cód. Freezer</option>
+                                                <option value="status">Ordenar por: Status</option>
+                                            </select>
+                                        </div>
+                                        <div style="width: 130px;">
+                                            <select id="comodato-sort-order" class="form-control" onchange="renderComodatosAdmin()">
+                                                <option value="asc">Crescente ▲</option>
+                                                <option value="desc">Decrescente ▼</option>
                                             </select>
                                         </div>
                                     </div>
@@ -6002,7 +6018,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=45"></script>
+    <script type="module" src="js/app.js?v=46"></script>
 </body>
 </html>
 

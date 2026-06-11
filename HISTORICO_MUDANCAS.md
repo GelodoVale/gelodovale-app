@@ -6,6 +6,14 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v46 (11/06/2026 - Antigravity)
+* **Busca por Endereço e Ordenação Completa na Gestão de Comodatos (COD: COM-02):**
+  - Implementada a ordenação dinâmica na tabela da Gestão de Comodatos (`js/comodatos.js`). O usuário agora pode ordenar comodatos por Nome, Data de Início, Data de Retorno, Endereço/Local, Código do Freezer ou Status, em ordem Crescente (▲) ou Decrescente (▼).
+  - Adicionadas opções no HTML da barra de ações/filtros (`index.html`) para selecionar a coluna de ordenação (`comodato-sort-key`) e o sentido (`comodato-sort-order`).
+  - Adicionado suporte para busca por Endereço/Local do cliente no campo de pesquisa de comodatos.
+  - Corrigido bug de layout na tabela de comodatos (ajustado `colspan` da mensagem de resultado vazio de 7 para 8 colunas).
+  - Bumped build do sistema para `v46` e cache do Service Worker para `gelodovale-v139`.
+
 #### v45 (11/06/2026 - Antigravity)
 * **Clima em Cache na Tela de Login (COD: WID-02):**
   - Ajustada a inicialização do clima pré-login em `initWeatherLogic()` (`js/widgets.js`) para usar a cidade em cache (ex: Registro - SP) salva anteriormente no estado, em vez de redefinir temporariamente para São José dos Campos.
