@@ -50,7 +50,7 @@ Typo = function (dictionary, affData, wordsData, settings) {
 	this.dictionary = null;
 	
 	this.rules = {};
-	this.dictionaryTable = {};
+	this.dictionaryTable = new Map();
 	
 	this.compoundRules = [];
 	this.compoundRuleCodes = {};
@@ -423,20 +423,20 @@ Typo.prototype = {
 		data = this._removeDicComments(data);
 		
 		var lines = data.split(/\r?\n/);
-		var dictionaryTable = {};
+		var dictionaryTable = new Map();
 		
 		function addWord(word, rules) {
 			// Some dictionaries will list the same word multiple times with different rule sets.
-			if (!dictionaryTable.hasOwnProperty(word)) {
-				dictionaryTable[word] = null;
+			if (!dictionaryTable.has(word)) {
+				dictionaryTable.set(word, null);
 			}
 			
 			if (rules.length > 0) {
-				if (dictionaryTable[word] === null) {
-					dictionaryTable[word] = [];
+				if (dictionaryTable.get(word) === null) {
+					dictionaryTable.set(word, []);
 				}
 
-				dictionaryTable[word].push(rules);
+				dictionaryTable.get(word).push(rules);
 			}
 		}
 		
@@ -676,7 +676,7 @@ Typo.prototype = {
 			throw "Dictionary not loaded.";
 		}
 
-		var ruleCodes = this.dictionaryTable[word];
+		var ruleCodes = this.dictionaryTable.get(word);
 		
 		var i, _len;
 		
@@ -721,7 +721,7 @@ Typo.prototype = {
 
 		if (flag in this.flags) {
 			if (typeof wordFlags === 'undefined') {
-				wordFlags = Array.prototype.concat.apply([], this.dictionaryTable[word]);
+				wordFlags = Array.prototype.concat.apply([], this.dictionaryTable.get(word));
 			}
 			
 			if (wordFlags && wordFlags.indexOf(this.flags[flag]) !== -1) {

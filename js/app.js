@@ -3497,16 +3497,23 @@ export async function testConnectionSpeed() {
 }
 
 export function runClientDiagnosticsFromSupport() {
-    if (window.runFullDiagnostic) {
-        const res = window.runFullDiagnostic();
-        if (res.failed === 0) {
-            showToast(`✨ Auto-Teste concluído: ${res.passed}/${res.total} testes passaram sem falhas! Todos os módulos estão funcionando perfeitamente.`, "success");
-        } else {
-            showToast(`⚠️ Auto-Teste concluído: Foram encontradas ${res.failed} falha(s). Verifique a aba de Configurações para mais detalhes.`, "warning");
-        }
-    } else {
-        showToast("Módulo de diagnósticos não carregado.", "error");
+    if (window.navigateToTab) {
+        window.navigateToTab("admin");
     }
+    if (window.switchAdminSubTab) {
+        window.switchAdminSubTab("tab-seguranca-backup");
+    }
+    setTimeout(() => {
+        const panel = document.getElementById("admin-system-diagnostics-panel");
+        if (panel) {
+            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        if (window.runClientDiagnostics) {
+            window.runClientDiagnostics();
+        } else {
+            showToast("Módulo de autoteste não carregado.", "error");
+        }
+    }, 300);
 }
 
 window.updateSupportTabStatus = updateSupportTabStatus;
