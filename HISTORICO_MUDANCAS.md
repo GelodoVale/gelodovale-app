@@ -6,6 +6,11 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v58 (12/06/2026 - Antigravity)
+* **Melhoria no Salvamento do Backup (COD: BKP-02):**
+  - **Painel Administrativo (`js/admin.js`):** Função `generateBackup()` convertida para `async` e integrada à **File System Access API** (`showSaveFilePicker`). Ao criar um Ponto de Restauração manualmente, o navegador abre agora uma janela do explorador de arquivos permitindo ao usuário escolher em qual pasta salvar o backup (OneDrive, Downloads, HD externo, etc.), com sugestão automática do nome do arquivo. Para backups automáticos (em segundo plano), o comportamento de download direto é mantido sem interromper o usuário. Implementado helper interno `_downloadBackupFallback()` para compatibilidade universal com Firefox, Safari e navegadores que não suportam a API moderna.
+  - **Versionamento & Cache:** Bump do código para `v58` e cache do Service Worker para `gelodovale-v151`.
+
 #### v57 (12/06/2026 - Antigravity)
 * **Correção no Sistema de Ponto de Restauração / Backup (COD: BKP-01):**
   - **Módulo de Utilitários (`js/utils.js`):** Refatorado o helper `getBrazilTimeISO()` para usar `Intl.DateTimeFormat` com `formatToParts()` e `hourCycle: "h23"` visando extrair os componentes de data/hora no fuso horário do Brasil de forma robusta e independente da formatação local do navegador. Adicionada proteção em `formatDateBrazil()` para ignorar e tratar strings contendo `"NaN"`.

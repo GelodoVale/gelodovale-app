@@ -494,7 +494,7 @@ export function renderPrecos() {
 
 
 // 4. Sistema de Backup
-export function generateBackup(isAuto = false) {
+export async function generateBackup(isAuto = false) {
     const version = (state.backupSettings && state.backupSettings.currentVersion) || "1.0";
     const backupDate = window.getBrazilTimeISO();
     
@@ -569,23 +569,60 @@ export function generateBackup(isAuto = false) {
     saveState();
     renderPrecos();
 
-    // Disparar o download físico do arquivo JSON
-    const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
-    const downloadAnchor = document.createElement('a');
+    // Preparar arquivo JSON
+    const jsonContent = JSON.stringify(backupPayload, null, 2);
+    const jsonBlob = new Blob([jsonContent], { type: 'application/json' });
     const cleanDate = (backupDate && !backupDate.includes("NaN")) ? backupDate : window.getBrazilTimeISO();
     const formattedDate = cleanDate.slice(0, 16).replace('T', '_').replace(':', '-');
-    
-    downloadAnchor.setAttribute("href", jsonString);
-    downloadAnchor.setAttribute("download", `gelodovale_backup_v${version}_${formattedDate}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const fileName = `gelodovale_backup_v${version}_${formattedDate}.json`;
 
-    if (isAuto) {
-        window.showToast(`[Backup Automático] Uma cópia de segurança (versão ${version}) foi gerada com sucesso e salva na sua pasta de Downloads.`, "success");
+    // Para backup manual: oferecer seleção de pasta (File System Access API)
+    // Para backup automático: download direto sem interrupção do usuário
+    if (!isAuto && window.showSaveFilePicker) {
+        try {
+            const fileHandle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [{
+                    description: 'Arquivo de Backup Gelo do Vale (.json)',
+                    accept: { 'application/json': ['.json'] }
+                }]
+            });
+            const writable = await fileHandle.createWritable();
+            await writable.write(jsonBlob);
+            await writable.close();
+            window.showToast(`✅ Backup v${version} salvo com sucesso no local escolhido!`, "success");
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                // Usuário fechou a janela sem salvar — não mostrar erro
+                window.showToast("Salvar backup cancelado.", "warning");
+            } else {
+                // Erro inesperado: fallback para download direto
+                console.warn("[Backup] showSaveFilePicker falhou, usando download padrão:", err);
+                _downloadBackupFallback(jsonBlob, fileName);
+                window.showToast(`Backup v${version} salvo em Downloads.`, "success");
+            }
+        }
     } else {
-        window.showToast(`Backup versão ${version} realizado e baixado com sucesso!`, "success");
+        // Fallback: download direto (Firefox, Safari, backup automático)
+        _downloadBackupFallback(jsonBlob, fileName);
+        if (isAuto) {
+            window.showToast(`[Backup Automático] Cópia de segurança v${version} salva em Downloads.`, "success");
+        } else {
+            window.showToast(`Backup v${version} salvo em Downloads!`, "success");
+        }
     }
+}
+
+// Helper interno: download via âncora (fallback universal)
+function _downloadBackupFallback(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function restoreLocalBackup(backupId) {
