@@ -148,12 +148,18 @@ function initSpellCheck() {
   });
 
   // Delegação de eventos nos campos editáveis
-  const selector = 'input[type=text], textarea, [contenteditable="true"]';
+  const selector = 'input[type=text], input:not([type]), input[type=search], textarea, [contenteditable="true"]';
   const delay = 300; // debounce
   let timer = null;
 
   function evaluate(el) {
     if (!dictionary) return; // Se o dicionário ainda não terminou de carregar
+    
+    // Respeitar atributo nativo spellcheck="false"
+    if (el.getAttribute('spellcheck') === 'false' || el.spellcheck === false) {
+      hideTooltip();
+      return;
+    }
     
     const info = getWordInfo(el);
     const { word } = info;
