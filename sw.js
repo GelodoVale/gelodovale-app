@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v161';
+const CACHE_NAME = 'gelodovale-v162';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -29,6 +29,7 @@ const ASSETS = [
   'js/diagnostics.js',
   'js/carne.js',
   'js/spellcheck.js',
+  'js/typo.js',
   'js/dictionaries/pt_BR/pt_BR.aff',
   'js/dictionaries/pt_BR/pt_BR.dic'
 ];
@@ -66,7 +67,7 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       // Scope match exclusively to the current active cache
-      return cache.match(e.request).then((cachedResponse) => {
+      return cache.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
         if (cachedResponse) {
           // Atualizar cache em segundo plano (stale-while-revalidate) com cache: 'no-cache'
           fetch(e.request, { cache: 'no-cache' }).then((networkResponse) => {

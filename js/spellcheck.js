@@ -2,7 +2,7 @@
 // Carrega Typo.js e inicializa o corretor de forma assíncrona
 (function() {
   const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/typo-js@1.2.0/typo.js';
+  script.src = 'js/typo.js?v=65';
   script.onload = () => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initSpellCheck);
