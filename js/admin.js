@@ -262,8 +262,10 @@ export function renderPrecos() {
 
     // 3. Preencher inputs de backup
     if (state.backupSettings) {
-        document.getElementById("cfg-app-version").value = state.backupSettings.currentVersion || "1.0";
-        document.getElementById("cfg-backup-frequency").value = state.backupSettings.frequencyDays !== undefined ? state.backupSettings.frequencyDays : 7;
+        const cfgVer = document.getElementById("cfg-app-version");
+        if (cfgVer) cfgVer.value = state.backupSettings.currentVersion || "1.0";
+        const cfgFreq = document.getElementById("cfg-backup-frequency");
+        if (cfgFreq) cfgFreq.value = state.backupSettings.frequencyDays !== undefined ? state.backupSettings.frequencyDays : 7;
         const lastDateEl = document.getElementById("lbl-last-backup-date");
         if (lastDateEl) {
             lastDateEl.innerText = state.backupSettings.lastBackupDate 
