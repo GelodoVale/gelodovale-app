@@ -6,6 +6,14 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v59 (12/06/2026 - Antigravity)
+* **Correção e Robustez na Sincronização entre Dispositivos (COD: SYNC-01):**
+  - **Módulo de Estado (`js/state.js`):** Ajustada a inicialização do estado em `loadState()`. Quando o app é aberto pela primeira vez em um novo dispositivo ou após limpar o cache (onde o `localStorage` está limpo), definimos `state.lastUpdated = 0` (estado virgem) em vez de dar `Date.now()`. Isso impede que o novo dispositivo seja falsamente identificado como possuindo os dados mais novos e acabe sobrescrevendo o banco de dados da nuvem com dados vazios/MOCK.
+  - **Módulo de Sincronização (`js/sync.js`):**
+    - Refatorada a lógica de primeiro carregamento no listener do Firebase (`startSyncListener`). Em vez de verificar apenas a existência da chave no `localStorage` (que sempre existia após o boot), agora validamos diretamente via flag de estado (`state.lastUpdated === 0`). Se for um boot virgem, o sistema força a puxada imediata dos dados reais salvos no Firebase, garantindo a sincronização correta.
+    - Protegido o salvamento de configurações do Firebase (`saveFirebaseSettings()`) para não atualizar `state.lastUpdated` artificialmente para o horário atual se o estado ainda for inicial (valor `0`), impedindo sobrescritas acidentais do banco.
+  - **Versionamento & Cache:** Bump do código para `v59` e cache do Service Worker para `gelodovale-v152`.
+
 #### v58 (12/06/2026 - Antigravity)
 * **Melhoria no Salvamento do Backup (COD: BKP-02):**
   - **Painel Administrativo (`js/admin.js`):** Função `generateBackup()` convertida para `async` e integrada à **File System Access API** (`showSaveFilePicker`). Ao criar um Ponto de Restauração manualmente, o navegador abre agora uma janela do explorador de arquivos permitindo ao usuário escolher em qual pasta salvar o backup (OneDrive, Downloads, HD externo, etc.), com sugestão automática do nome do arquivo. Para backups automáticos (em segundo plano), o comportamento de download direto é mantido sem interromper o usuário. Implementado helper interno `_downloadBackupFallback()` para compatibilidade universal com Firefox, Safari e navegadores que não suportam a API moderna.

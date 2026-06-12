@@ -5,7 +5,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "3.9";
-export const CODE_BUILD = "v58 (12/06/2026 - Antigravity)";
+export const CODE_BUILD = "v59 (12/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -538,6 +538,7 @@ export function loadState() {
         Object.keys(state).forEach(k => delete state[k]);
         Object.assign(state, JSON.parse(JSON.stringify(MOCK_DATA)));
         initializeDefaultFields();
+        state.lastUpdated = 0; // Marca como estado inicial/virgem para puxar da nuvem no primeiro sync
         saveStateLocalOnly();
     }
     

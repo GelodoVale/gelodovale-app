@@ -67,8 +67,8 @@ export function startSyncListener() {
         if (isFirstLoad) {
             // ── Primeira carga: quem tiver timestamp mais recente ganha ──
             isFirstLoad = false;
-            const hasLocalData = !!localStorage.getItem("gelcontrol_state");
-            if (!hasLocalData) {
+            const isFreshInstall = !state.lastUpdated || state.lastUpdated === 0;
+            if (isFreshInstall) {
                 console.log('[Sync] Novo dispositivo ou cache limpo detectado — puxando dados da nuvem...');
                 aplicarDadosRemoto(remoteData);
             } else if (remoteTs > localTs) {
@@ -260,7 +260,9 @@ export function saveFirebaseSettings() {
     state.firebaseConfig = { enabled, apiKey, projectId, databaseURL, deviceKey };
 
     // Usar pushToFirebaseImediato para não criar loop
-    state.lastUpdated = Date.now();
+    if (state.lastUpdated && state.lastUpdated !== 0) {
+        state.lastUpdated = Date.now();
+    }
     saveStateLocalOnly();
     if (enabled) initFirebase();
 
