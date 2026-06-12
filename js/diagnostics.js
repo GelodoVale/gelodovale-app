@@ -304,6 +304,28 @@ export function runFullDiagnostic() {
         log("Integração WhatsApp API", "error", e.message);
     }
 
+    // 16. Corretor Ortográfico Integrado (Typo.js)
+    try {
+        if (!window.Typo) {
+            throw new Error("Biblioteca Typo.js não carregada no navegador.");
+        }
+        if (window.spellcheckLoadError) {
+            throw new Error(`Falha ao carregar dicionários pt_BR: ${window.spellcheckLoadError}`);
+        }
+        if (!window.spellcheckDictionary) {
+            log("Corretor Ortográfico Integrado", "warning", "Dicionários pt_BR ainda estão sendo carregados em segundo plano. Tente novamente em alguns segundos.");
+        } else {
+            const okVale = window.spellcheckDictionary.check("vale");
+            const errValle = window.spellcheckDictionary.check("valle");
+            if (!okVale || errValle) {
+                throw new Error(`Validação ortográfica falhou: 'vale'=${okVale} (esperado true), 'valle'=${errValle} (esperado false).`);
+            }
+            log("Corretor Ortográfico Integrado", "success", "Biblioteca Typo.js e dicionário pt_BR carregados e validando ortografia perfeitamente.");
+        }
+    } catch (e) {
+        log("Corretor Ortográfico Integrado", "error", e.message);
+    }
+
     return {
         results,
         passed,

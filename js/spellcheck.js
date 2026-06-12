@@ -2,7 +2,7 @@
 // Carrega Typo.js e inicializa o corretor de forma assíncrona
 (function() {
   const script = document.createElement('script');
-  script.src = 'js/typo.js?v=66';
+  script.src = 'js/typo.js?v=67';
   script.onload = () => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initSpellCheck);
@@ -68,8 +68,10 @@ function initSpellCheck() {
     })
   ]).then(([affData, dicData]) => {
     dictionary = new Typo("pt_BR", affData, dicData);
+    window.spellcheckDictionary = dictionary;
     console.log("Corretor ortográfico pt_BR carregado com sucesso!");
   }).catch(err => {
+    window.spellcheckLoadError = err.message || err;
     console.error("Erro ao carregar o dicionário:", err);
   });
 
