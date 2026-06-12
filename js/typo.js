@@ -531,9 +531,6 @@ Typo.prototype = {
 		if (!textCodes) {
 			return [];
 		}
-		else if (!("FLAG" in this.flags)) {
-			return textCodes.split("");
-		}
 		else if (this.flags.FLAG === "long") {
 			var flags = [];
 			
@@ -545,6 +542,9 @@ Typo.prototype = {
 		}
 		else if (this.flags.FLAG === "num") {
 			return textCodes.split(",");
+		}
+		else {
+			return textCodes.split("");
 		}
 	},
 	
