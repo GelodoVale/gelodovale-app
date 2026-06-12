@@ -79,12 +79,12 @@ export function startSyncListener() {
             if (isNaN(localVer)) localVer = 1.0;
             if (isNaN(remoteVer)) remoteVer = 1.0;
 
-            if (isFreshInstall || remoteVer > localVer) {
-                console.log(`[Sync] Nuvem tem versão de dados mais recente (${remoteVer} vs ${localVer}) ou cache limpo — aplicando dados da nuvem.`);
-                aplicarDadosRemoto(remoteData);
-            } else if (localVer > remoteVer) {
+            if (localVer > remoteVer) {
                 console.log(`[Sync] Local tem versão de dados mais recente (${localVer} vs ${remoteVer}) — atualizando nuvem.`);
                 pushToFirebaseImediato();
+            } else if (isFreshInstall || remoteVer > localVer) {
+                console.log(`[Sync] Nuvem tem versão de dados mais recente (${remoteVer} vs ${localVer}) ou cache limpo — aplicando dados da nuvem.`);
+                aplicarDadosRemoto(remoteData);
             } else if (remoteTs > localTs) {
                 console.log('[Sync] Nuvem mais recente na abertura — aplicando dados da nuvem...');
                 aplicarDadosRemoto(remoteData);

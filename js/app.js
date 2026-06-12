@@ -1,5 +1,5 @@
 // --- CENTRAL DE CONTROLE E BOOTSTRAPPER (GELO DO VALE) ---
-import { state, saveState, updateState, MOCK_DATA, APP_VERSION, CODE_BUILD } from './state.js';
+import { state, saveState, updateState, MOCK_DATA, APP_VERSION, CODE_BUILD, initializeDefaultFields } from './state.js';
 import { initLoginScreen, initUserAccessControl } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { renderClientes, openClientModal, populateClientDropdowns, openSalesModal, renderSalesModalProducts } from './clientes.js';
@@ -368,6 +368,7 @@ export function loadState() {
             // Atualizar propriedades do state importado
             Object.keys(state).forEach(key => delete state[key]);
             Object.assign(state, parsed);
+            initializeDefaultFields();
         } catch (e) {
             console.error("Erro ao carregar estado do localStorage:", e);
         }
@@ -394,6 +395,8 @@ export function loadState() {
                 "admin-tab-icones-emojis": true
             }
         }];
+        state.lastUpdated = 0; // Marca como estado inicial/virgem para puxar da nuvem no primeiro sync
+        initializeDefaultFields();
         console.log("Primeiro acesso detectado — Firebase ativado para sincronizar dados da nuvem.");
     }
 }
