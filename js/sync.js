@@ -9,6 +9,17 @@ let isSyncing = false;         // Evita loop de sync (local→nuvem→local→nu
 let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada tecla
 let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
 
+function normalizeVersion(ver) {
+    const v = parseFloat(ver);
+    if (isNaN(v)) return 1.0;
+    // As versões 3.2 a 3.9 foram geradas por um bug antigo/agentes.
+    // Elas devem ser tratadas como a versão base 2.5.
+    if (v >= 3.2 && v <= 3.9) {
+        return 2.5;
+    }
+    return v;
+}
+
 // ─── CARREGAR SDK DO FIREBASE ──────────────────────────────────────────────
 export function loadFirebaseSDK(callback) {
     if (firebaseSDKLoaded || (window.firebase && window.firebase.database)) {
@@ -74,10 +85,8 @@ export function startSyncListener() {
             isFirstLoad = false;
             const isFreshInstall = !state.lastUpdated || state.lastUpdated === 0;
             
-            let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
-            let remoteVer = parseFloat(lastSeenRemoteVersion || "1.0");
-            if (isNaN(localVer)) localVer = 1.0;
-            if (isNaN(remoteVer)) remoteVer = 1.0;
+            let localVer = normalizeVersion(state.backupSettings?.currentVersion);
+            let remoteVer = normalizeVersion(lastSeenRemoteVersion);
 
             if (localVer > remoteVer) {
                 console.log(`[Sync] Local tem versão de dados mais recente (${localVer} vs ${remoteVer}) — atualizando nuvem.`);
@@ -96,10 +105,8 @@ export function startSyncListener() {
             }
         } else {
             // ── Sincronização em tempo real: comparar versões e timestamps ──
-            let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
-            let remoteVer = parseFloat(lastSeenRemoteVersion || "1.0");
-            if (isNaN(localVer)) localVer = 1.0;
-            if (isNaN(remoteVer)) remoteVer = 1.0;
+            let localVer = normalizeVersion(state.backupSettings?.currentVersion);
+            let remoteVer = normalizeVersion(lastSeenRemoteVersion);
 
             if (remoteVer > localVer) {
                 console.log(`[Sync] ⚡ Versão mais recente na nuvem (${remoteVer} vs ${localVer}) — aplicando atualização.`);
@@ -178,10 +185,8 @@ function pushToFirebaseImediato() {
 
     // SAFEGUARD 2: Não enviar para a nuvem se a versão local for menor que a última versão da nuvem observada
     if (lastSeenRemoteVersion) {
-        let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
-        let remoteVer = parseFloat(lastSeenRemoteVersion);
-        if (isNaN(localVer)) localVer = 1.0;
-        if (isNaN(remoteVer)) remoteVer = 1.0;
+        let localVer = normalizeVersion(state.backupSettings?.currentVersion);
+        let remoteVer = normalizeVersion(lastSeenRemoteVersion);
         
         if (remoteVer > localVer) {
             console.warn(`[Sync] Abortado: A nuvem possui uma versão de dados mais recente (${remoteVer}) que a local (${localVer}). Sobrescrita cancelada para evitar regressão.`);

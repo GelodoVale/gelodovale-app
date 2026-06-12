@@ -6,6 +6,25 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v64 (12/06/2026 - Antigravity)
+* **Normalização de Versões Incompatíveis no Sync do Firebase (COD: SYNC-04):**
+  - **Módulo de Sincronização (`js/sync.js`):** Implementada a função `normalizeVersion(ver)` para filtrar e normalizar versões no intervalo `[3.2, 3.9]` de volta para a versão base `2.5`. Isso impede que dispositivos rodando código antigo (com a versão `3.9`) corrompam o Firebase e abortem a sincronização do computador principal por considerá-lo desatualizado (looping de sync por pular e em seguida rejeitar).
+  - **Interface Administrativa (`index.html`):** Adicionado botão vermelho "Limpar Cache e Recarregar" diretamente no painel de Configurações -> Backup e Segurança, permitindo que usuários autenticados limpem e recarreguem instantaneamente o sistema em outros computadores/celulares para atualizar à nova versão build, mesmo que já estejam logados.
+  - **Melhoria no PWA (`js/app.js`):** Ajustado o listener `controllerchange` do Service Worker para recarregar silenciosamente e de forma imediata quando houver atualização de código, evitando conflitos de arquivos JS antigos em cache.
+  - **Versões e Cache-Busting:** Bump do build do app para `v64` e atualização da versão de cache do Service Worker para `gelodovale-v161`.
+
+#### v63 (12/06/2026 - Antigravity)
+* **Resolução de Loops de Sync e Dependência Circular (COD: SYNC-03):**
+  - **Dependência Circular (`js/state.js`, `js/sync.js`):** Removido o import estático de `pushToFirebase` em `state.js`. A chamada passou a ser resolvida dinamicamente através de chamada global `window.pushToFirebase()` em `saveState()`, eliminando o loop de import circular que quebrava o script no boot.
+  - **Listener em Tempo Real (`js/sync.js`):** Ajustado o listener do Firebase para que, caso receba uma atualização de versão antiga da nuvem (`localVer > remoteVer`), ele ignore a alteração (evitando downgrades de outros aparelhos) mas **não envie** de volta de forma imediata, exibindo apenas um toast. Isso quebrou o loop infinito de pings de rede.
+  - **Versões e Cache-Busting:** Bump do build do app para `v63` e atualização do cache do Service Worker para `gelodovale-v160`.
+
+#### v62 (12/06/2026 - Antigravity)
+* **Prevenção de Downgrades de Versão e Loop no Firebase Sync (COD: SYNC-02):**
+  - **Listener do Firebase (`js/sync.js`):** Se localVer > remoteVer durante o primeiro carregamento, envia o estado local mais novo para a nuvem. Se remoteVer > localVer, puxa obrigatoriamente a nuvem.
+  - **Salvar Versão no Admin (`js/state.js`):** Ajustada a lógica de `initializeDefaultFields()` para ignorar e redefinir apenas versões menores que `2.5` ou as versões infladas por agentes anteriores (`3.2` a `3.9`), mas permitindo que o usuário altere manualmente a versão para novos patamares como `2.6`, `2.7`, `2.8`, etc.
+  - **Versões e Cache-Busting:** Bump do build do app para `v62` e cache do PWA para `gelodovale-v159`.
+
 #### v61 (12/06/2026 - Antigravity)
 * **Isolamento de Backups Locais, Diagnósticos de Memória e Proteção contra Regressão de Versão (COD: BKP-03 / MEM-01 / SYNC-02 / DEV-02):**
   - **Isolamento de Backups (`js/state.js`, `js/app.js`, `js/admin.js`):** Desacoplados os backups locais (`localBackups`) do estado global (`localStorage` na chave `gelcontrol_state`) para evitar erros de limite de cota (`QuotaExceededError`) e poupar banda de rede no Firebase. Criada a chave exclusiva `gelcontrol_local_backups` no `localStorage` para gerenciar os backups. Implementada migração automática e silenciosa dos backups antigos na inicialização.

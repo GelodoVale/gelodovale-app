@@ -1,24 +1,14 @@
-$logPath = Join-Path $env:USERPROFILE ".gemini\antigravity-ide\brain\33817b2d-75bc-4a80-9059-8140f470854e\.system_generated\logs\transcript.jsonl"
-if (Test-Path $logPath) {
-    $lines = Get-Content $logPath
-    $errorLines = @()
-    foreach ($line in $lines) {
-        if ($line.Contains("Uncaught") -or $line.Contains("TypeError") -or $line.Contains("Error") -or $line.Contains("console.error")) {
-            $errorLines += $line
-        }
-    }
-    
-    # Get the last 15 matching error entries
-    $lastErrors = $errorLines | Select-Object -Last 15
-    foreach ($line in $lastErrors) {
-        try {
-            $json = ConvertFrom-Json $line
-            Write-Host "=== Error Entry (Step: $($json.step_index)) ==="
-            Write-Host $json.content
-        } catch {
-            Write-Host "Raw match: $line"
+$userProfile = $env:USERPROFILE
+$path = "$userProfile\.gemini\antigravity-ide\brain\60e524c1-361e-4ae7-a0f2-1cfaee58f2aa\.system_generated\logs\transcript.jsonl"
+if (Test-Path $path) {
+    [System.IO.File]::ReadLines($path) | ForEach-Object {
+        $obj = $_ | ConvertFrom-Json
+        if ($obj.step_index -ge 630 -and $obj.step_index -le 650) {
+            Write-Output "=== Step $($obj.step_index) ($($obj.source)) ==="
+            Write-Output $obj.content
+            Write-Output ""
         }
     }
 } else {
-    Write-Host "Log file not found."
+    Write-Output "Path not found"
 }

@@ -42,7 +42,7 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=63">
+    <link rel="stylesheet" href="styles.css?v=64">
     <script src="js/spellcheck.js"></script>
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -2283,6 +2283,9 @@
                                             <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="importBackupFromFile(event)">
                                             <button type="button" class="btn btn-secondary" onclick="document.getElementById('backup-file-input').click()" style="display: inline-flex; align-items: center; gap: 6px;">
                                                 <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Backup (JSON)
+                                            </button>
+                                            <button type="button" class="btn btn-danger" onclick="clearAppCacheAndReload()" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ff4d4d;" title="Limpar cache do navegador e forçar o download dos arquivos mais recentes do GitHub">
+                                                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Limpar Cache e Recarregar
                                             </button>
                                             <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
                                                 <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar Configurações
@@ -6132,7 +6135,7 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=63"></script>
+    <script type="module" src="js/app.js?v=64"></script>
 </body>
 </html>
 

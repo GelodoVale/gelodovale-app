@@ -171,15 +171,12 @@ document.addEventListener("DOMContentLoaded", () => {
         initClientSigningPortal(urlParams);
         return;
     }
-    // Recarregar a página automaticamente se o Service Worker for atualizado
-    let refreshing = false;
+
+    // Monitor de atualização do Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                refreshing = true;
-                console.log('[PWA] Nova versão detectada! Recarregando...');
-                window.location.reload();
-            }
+            console.log('[PWA] Nova versão detectada! Recarregando automaticamente...');
+            window.location.reload();
         });
     }
 
