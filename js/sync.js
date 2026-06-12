@@ -105,8 +105,15 @@ export function startSyncListener() {
                 console.log(`[Sync] ⚡ Versão mais recente na nuvem (${remoteVer} vs ${localVer}) — aplicando atualização.`);
                 aplicarDadosRemoto(remoteData);
             } else if (localVer > remoteVer) {
-                console.warn(`[Sync] ⚡ Ignorada atualização de versão antiga da nuvem (${remoteVer} vs ${localVer}) — forçando nossa versão mais nova.`);
-                pushToFirebaseImediato();
+                console.warn(`[Sync] ⚡ Ignorada atualização de versão antiga da nuvem (${remoteVer} vs ${localVer}).`);
+                updateSyncStatusUI('success');
+                
+                // Mostrar aviso amigável sem loopar (uma vez a cada 30 segundos no máximo)
+                const lastToastTime = window._lastVersionWarningTime || 0;
+                if (Date.now() - lastToastTime > 30000) {
+                    window._lastVersionWarningTime = Date.now();
+                    window.showToast("Aviso: Outro dispositivo está com versão antiga do sistema. Por favor, use 'Limpar Cache e Forçar Recarga' nos outros aparelhos.", "warning");
+                }
             } else if (remoteTs > localTs) {
                 console.log('[Sync] ⚡ Sincronização em tempo real recebida de outro dispositivo!');
                 aplicarDadosRemoto(remoteData);

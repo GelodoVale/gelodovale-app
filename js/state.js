@@ -1,11 +1,10 @@
 // --- ESTADO GLOBAL DA APLICAÇÃO GELO DO VALE ---
-import { pushToFirebase } from './sync.js';
 import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v62 (12/06/2026 - Antigravity)";
+export const CODE_BUILD = "v63 (12/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -930,5 +929,5 @@ export function saveState() {
     }
     
     saveStateLocalOnly();
-    pushToFirebase();
+    if (window.pushToFirebase) window.pushToFirebase();
 }
