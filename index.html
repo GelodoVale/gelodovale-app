@@ -866,13 +866,17 @@
                             <!-- Categoria 3: Configurações & Fábrica -->
                             <div class="admin-menu-section">
                                 <div class="admin-menu-section-title">Configurações & Fábrica</div>
-                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-precos')">
-                                    <i data-lucide="tag"></i>
-                                    <span>Preços & Clientes</span>
-                                </button>
                                 <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-dados-fabrica')">
                                     <i data-lucide="settings"></i>
                                     <span>Fábrica & Aparência</span>
+                                </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-icones-emojis')">
+                                    <i data-lucide="smile"></i>
+                                    <span>Ícones & Emojis</span>
+                                </button>
+                                <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-precos')">
+                                    <i data-lucide="tag"></i>
+                                    <span>Preços & Clientes</span>
                                 </button>
                                 <button type="button" class="admin-menu-btn" onclick="switchAdminSubTab('tab-impressao')">
                                     <i data-lucide="printer"></i>
@@ -1884,41 +1888,61 @@
                             </div>
 
                             <!-- Painel Galeria de Ícones & Emojis -->
-                            <div class="dashboard-row" style="margin-top: 1.5rem; display: flex; flex-direction: column; width: 100%;">
-                                <div class="dashboard-panel" id="admin-icons-gallery-panel" style="width: 100%;">
-                                    <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                        <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Galeria de Ícones & Emojis do Sistema <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: FAB-04</span></h2>
-                                        <div style="display: flex; gap: 8px;">
-                                            <button type="button" class="btn btn-secondary" onclick="triggerCustomIconLibraryUpload()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
-                                                <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Novo Ícone (PNG/JPG)
-                                            </button>
-                                            <input type="file" id="icon-library-file-input" accept="image/*" style="display: none;" onchange="handleLibraryIconUpload(event)">
-                                        </div>
+                        </div>
+
+                        <!-- sub-aba: Ícones & Emojis -->
+                        <div id="tab-icones-emojis" class="admin-subtab-content">
+                            <!-- Painel de Biblioteca de Ícones Customizados -->
+                            <div class="dashboard-panel" id="admin-custom-icons-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Biblioteca de Ícones Customizados <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: ICO-01</span></h2>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn btn-secondary" onclick="triggerCustomIconLibraryUpload()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Novo Ícone (PNG/JPG)
+                                        </button>
+                                        <input type="file" id="icon-library-file-input" accept="image/*" style="display: none;" onchange="handleLibraryIconUpload(event)">
                                     </div>
-                                    
-                                    <div style="padding: 1rem 0 0 0;">
-                                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem; text-align: left;">
-                                            Aqui você pode gerenciar a biblioteca de imagens/ícones importados para o sistema. Esses ícones ficam disponíveis para associar aos seus produtos e abas personalizadas.
-                                        </p>
-                                        
-                                        <!-- Grid de Ícones Customizados -->
-                                        <div id="custom-icons-library-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-bottom: 1.5rem;">
-                                            <!-- Preenchido dinamicamente via JS -->
-                                        </div>
-                                        
-                                        <!-- Configuração dos Emojis das Abas -->
-                                        <div style="margin-top: 2rem; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 1.5rem;">
-                                            <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--color-primary); display: flex; align-items: center; gap: 6px; text-align: left;">
-                                                <i data-lucide="layout-template" style="width: 16px; height: 16px;"></i> Personalizar Ícones das Abas do Menu
-                                            </h3>
-                                            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.25rem; text-align: left;">
-                                                Personalize o emoji ou imagem exibido no início de cada aba do menu de navegação lateral.
-                                            </p>
-                                            
-                                            <div id="tabs-icons-configuration-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; text-align: left;">
-                                                <!-- Preenchido dinamicamente via JS -->
-                                            </div>
-                                        </div>
+                                </div>
+                                <div style="padding: 1rem 0 0 0;">
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem; text-align: left;">
+                                        Envie arquivos PNG ou JPG com fundo transparente para usar como ícones personalizados para produtos e abas do menu.
+                                    </p>
+                                    <div id="custom-icons-library-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;">
+                                        <!-- Preenchido dinamicamente via JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Painel de Emojis e Símbolos Rápidos -->
+                            <div class="dashboard-panel" id="admin-emoji-catalog-panel" style="width: 100%; margin-bottom: 1.5rem;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Catálogo de Emojis & Símbolos <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: ICO-02</span></h2>
+                                    <div style="position: relative; min-width: 240px;">
+                                        <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--color-text-muted);"></i>
+                                        <input type="text" id="admin-emoji-search-input" placeholder="Pesquisar emojis (ex: gelo, fruta)..." style="width: 100%; padding: 6px 12px 6px 32px; font-size: 0.8rem; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 6px;" oninput="handleEmojiSearch(this.value)">
+                                    </div>
+                                </div>
+                                <div style="padding: 1rem 0 0 0;">
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem; text-align: left;">
+                                        Clique em qualquer emoji para copiá-lo automaticamente para a área de transferência. Use-os para personalizar abas, produtos ou descrições.
+                                    </p>
+                                    <div id="emoji-library-container" style="display: flex; flex-direction: column; gap: 1.5rem; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                                        <!-- Preenchido dinamicamente via JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Personalizar Ícones das Abas do Menu -->
+                            <div class="dashboard-panel" id="admin-tabs-icons-panel" style="width: 100%;">
+                                <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+                                    <h2 style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">Personalizar Ícones das Abas do Menu <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold;">COD: ICO-03</span></h2>
+                                </div>
+                                <div style="padding: 1rem 0 0 0;">
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.25rem; text-align: left;">
+                                        Escolha um emoji ou imagem personalizada da biblioteca para ilustrar o botão de cada aba no menu lateral do sistema.
+                                    </p>
+                                    <div id="tabs-icons-configuration-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; text-align: left;">
+                                        <!-- Preenchido dinamicamente via JS -->
                                     </div>
                                 </div>
                             </div>
@@ -5403,6 +5427,10 @@
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
                                     <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-precos" style="accent-color: var(--color-primary);">
                                     <span>Preços de Fábrica / Clientes</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">
+                                    <input type="checkbox" class="perm-checkbox" data-perm="admin-tab-icones-emojis" style="accent-color: var(--color-primary);">
+                                    <span>Ícones & Emojis</span>
                                 </label>
                                 <!-- Gestão de Usuários: exclusiva do administrador master, não configurável aqui -->
                                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin: 0;">

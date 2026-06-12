@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v56 (12/06/2026 - Antigravity)
+* **Nova Sub-aba Administrativa Centralizada "Ícones & Emojis" (COD: ICO-01/ICO-02/ICO-03):**
+  - **Interface (`index.html`):** Adicionado botão de menu "Ícones & Emojis" no menu de configurações do admin. Removida a galeria de ícones do painel de Fábrica & Aparência (`tab-dados-fabrica`). Criada a nova sub-aba (`tab-icones-emojis`) contendo três painéis dedicados: Biblioteca de Ícones Customizados (`COD: ICO-01`), Catálogo de Emojis com pesquisa em tempo real (`COD: ICO-02`) e Customização de Ícones de Aba (`COD: ICO-03`). Adicionada a checkbox de permissão correspondente na lista de privilégios de usuário.
+  - **Módulo (`js/admin.js`):** Adicionado suporte para ativação e renderização da aba em `switchAdminSubTab()`. Implementadas as funções `renderEmojiManagementLibraryGrid()` (renderização por grupos de emojis ou grade filtrada) e `handleEmojiSearch()` com pesquisa reativa utilizando o dicionário de palavras-chave (`EMOJI_KEYWORDS`), incluindo cópia rápida com toast feedback.
+  - **Segurança & Controle (`js/auth.js` e `js/app.js`):** Inserida a nova permissão `"admin-tab-icones-emojis": true` por padrão para usuários com perfil Administrador Master.
+  - **Versão:** Bump do build para `v56` e cache do Service Worker para `gelodovale-v149`.
+
 #### v55 (11/06/2026 - Antigravity)
 * **Correção de Codificação de Caracteres (COD: ACE-01):**
   - **Arquivo `index.html`:** Corrigido problema de codificação double-UTF8 no painel de Acerto de Carga (COD: ACE-01), alterando "OdÃ´metro" para "Odômetro" com a acentuação correta e limpa nas labels e cabeçalhos de KM inicial e final.

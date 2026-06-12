@@ -327,7 +327,8 @@ export function loadState() {
                         "admin-tab-financeiro": true,
                         "admin-tab-relatorios": true,
                         "admin-tab-integracoes": true,
-                        "admin-tab-seguranca-backup": true
+                        "admin-tab-seguranca-backup": true,
+                        "admin-tab-icones-emojis": true
                     }
                 }];
             }
@@ -372,7 +373,8 @@ export function loadState() {
                 "admin-tab-financeiro": true,
                 "admin-tab-relatorios": true,
                 "admin-tab-integracoes": true,
-                "admin-tab-seguranca-backup": true
+                "admin-tab-seguranca-backup": true,
+                "admin-tab-icones-emojis": true
             }
         }];
         console.log("Primeiro acesso detectado — Firebase ativado para sincronizar dados da nuvem.");

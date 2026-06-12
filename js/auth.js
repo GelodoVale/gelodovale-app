@@ -61,7 +61,8 @@ export function initUserAccessControl() {
         "admin-tab-impressao": true,
         "admin-tab-seguranca-backup": true,
         "admin-tab-usuarios": true,
-        "admin-tab-integracoes": true
+        "admin-tab-integracoes": true,
+        "admin-tab-icones-emojis": true
     };
 }
 

@@ -4394,3 +4394,25 @@ body.astro-day.weather-hot {
     vertical-align: middle;
     border-radius: 3px;
 }
+/* Spellcheck tooltip styling */
+#spellcheck-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  z-index: 10000;
+  display: none;
+  max-width: 250px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.spell-suggestion {
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.spell-suggestion:hover {
+  background: rgba(255,255,255,0.2);
+}
+

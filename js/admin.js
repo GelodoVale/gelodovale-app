@@ -100,6 +100,15 @@ export function switchAdminSubTab(subTabId) {
         }
     } catch(e) { console.error("[switchAdminSubTab] renderWidgetsSetupPanel error:", e); }
 
+    // Renderizar nova sub-aba de ícones e emojis
+    try {
+        if (subTabId === "tab-icones-emojis") {
+            renderCustomIconsLibraryGrid();
+            renderTabsIconsConfigGrid();
+            renderEmojiManagementLibraryGrid();
+        }
+    } catch(e) { console.error("[switchAdminSubTab] tab-icones-emojis render error:", e); }
+
     try {
         if (subTabId === "tab-acerto") {
             populateCargoSettlementDrivers();
@@ -4857,6 +4866,145 @@ window.saveSelectedWATemplate = saveSelectedWATemplate;
 window.fetchPendingFormsFirebase = fetchPendingFormsFirebase;
 window.reviewAndApprovePendingForm = reviewAndApprovePendingForm;
 window.rejectPendingForm = rejectPendingForm;
+
+export function renderEmojiManagementLibraryGrid(query = "") {
+    const container = document.getElementById("emoji-library-container");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    const cleanQuery = query.toLowerCase().trim();
+    
+    if (cleanQuery) {
+        // Render filtered view (flat grid of matching emojis)
+        const matchGrid = document.createElement("div");
+        matchGrid.style.cssText = "display: flex; gap: 8px; flex-wrap: wrap;";
+        
+        let foundAny = false;
+        Object.values(SELECTOR_EMOJIS).flat().forEach(emoji => {
+            let keywords = emoji;
+            if (EMOJI_KEYWORDS && EMOJI_KEYWORDS[emoji]) {
+                keywords += " " + EMOJI_KEYWORDS[emoji];
+            }
+            
+            if (keywords.toLowerCase().includes(cleanQuery)) {
+                foundAny = true;
+                const btn = document.createElement("span");
+                btn.className = "emoji-preset-btn";
+                btn.style.cssText = `
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    padding: 8px;
+                    background: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 44px;
+                    height: 44px;
+                `;
+                btn.textContent = emoji;
+                btn.title = EMOJI_KEYWORDS[emoji] || "Clique para copiar";
+                
+                btn.addEventListener("mouseover", () => {
+                    btn.style.borderColor = "var(--color-primary)";
+                    btn.style.background = "rgba(0, 240, 255, 0.08)";
+                });
+                btn.addEventListener("mouseout", () => {
+                    btn.style.borderColor = "rgba(255,255,255,0.05)";
+                    btn.style.background = "rgba(255,255,255,0.02)";
+                });
+                
+                btn.addEventListener("click", () => {
+                    navigator.clipboard.writeText(emoji).then(() => {
+                        if (window.showToast) {
+                            window.showToast(`Emoji ${emoji} copiado para a área de transferência!`, "success");
+                        }
+                    }).catch(err => {
+                        console.error("Erro ao copiar emoji:", err);
+                    });
+                });
+                matchGrid.appendChild(btn);
+            }
+        });
+        
+        if (!foundAny) {
+            container.innerHTML = `
+                <div style="text-align: center; color: var(--color-text-muted); padding: 20px; font-size: 0.8rem;">
+                    Nenhum emoji encontrado para "${query}".
+                </div>
+            `;
+        } else {
+            container.appendChild(matchGrid);
+        }
+    } else {
+        // Render grouped by category
+        Object.entries(SELECTOR_EMOJIS).forEach(([groupName, emojis]) => {
+            const groupDiv = document.createElement("div");
+            groupDiv.style.marginBottom = "10px";
+            
+            const title = document.createElement("div");
+            title.style.cssText = "font-size: 0.8rem; color: var(--color-primary); margin-bottom: 8px; font-weight: bold;";
+            title.textContent = groupName;
+            
+            const grid = document.createElement("div");
+            grid.style.cssText = "display: flex; gap: 8px; flex-wrap: wrap;";
+            
+            emojis.forEach(emoji => {
+                const btn = document.createElement("span");
+                btn.className = "emoji-preset-btn";
+                btn.style.cssText = `
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    padding: 8px;
+                    background: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 44px;
+                    height: 44px;
+                `;
+                btn.textContent = emoji;
+                btn.title = EMOJI_KEYWORDS[emoji] || "Clique para copiar";
+                
+                btn.addEventListener("mouseover", () => {
+                    btn.style.borderColor = "var(--color-primary)";
+                    btn.style.background = "rgba(0, 240, 255, 0.08)";
+                });
+                btn.addEventListener("mouseout", () => {
+                    btn.style.borderColor = "rgba(255,255,255,0.05)";
+                    btn.style.background = "rgba(255,255,255,0.02)";
+                });
+                
+                btn.addEventListener("click", () => {
+                    navigator.clipboard.writeText(emoji).then(() => {
+                        if (window.showToast) {
+                            window.showToast(`Emoji ${emoji} copiado para a área de transferência!`, "success");
+                        }
+                    }).catch(err => {
+                        console.error("Erro ao copiar emoji:", err);
+                    });
+                });
+                grid.appendChild(btn);
+            });
+            
+            groupDiv.appendChild(title);
+            groupDiv.appendChild(grid);
+            container.appendChild(groupDiv);
+        });
+    }
+}
+window.renderEmojiManagementLibraryGrid = renderEmojiManagementLibraryGrid;
+
+export function handleEmojiSearch(val) {
+    renderEmojiManagementLibraryGrid(val);
+}
+window.handleEmojiSearch = handleEmojiSearch;
+
 
 
 
