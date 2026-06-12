@@ -95,9 +95,20 @@ export function startSyncListener() {
                 updateSyncStatusUI('success');
             }
         } else {
-            // ── Atualização em tempo real: outro dispositivo fez uma alteração ──
-            if (remoteTs > localTs) {
-                console.log('[Sync] ⚡ Atualização em tempo real recebida de outro dispositivo!');
+            // ── Sincronização em tempo real: comparar versões e timestamps ──
+            let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
+            let remoteVer = parseFloat(lastSeenRemoteVersion || "1.0");
+            if (isNaN(localVer)) localVer = 1.0;
+            if (isNaN(remoteVer)) remoteVer = 1.0;
+
+            if (remoteVer > localVer) {
+                console.log(`[Sync] ⚡ Versão mais recente na nuvem (${remoteVer} vs ${localVer}) — aplicando atualização.`);
+                aplicarDadosRemoto(remoteData);
+            } else if (localVer > remoteVer) {
+                console.warn(`[Sync] ⚡ Ignorada atualização de versão antiga da nuvem (${remoteVer} vs ${localVer}) — forçando nossa versão mais nova.`);
+                pushToFirebaseImediato();
+            } else if (remoteTs > localTs) {
+                console.log('[Sync] ⚡ Sincronização em tempo real recebida de outro dispositivo!');
                 aplicarDadosRemoto(remoteData);
             } else {
                 updateSyncStatusUI('success');
