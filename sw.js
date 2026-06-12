@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v152';
+const CACHE_NAME = 'gelodovale-v153';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -27,7 +27,9 @@ const ASSETS = [
   'js/widgets.js',
   'js/pdv.js',
   'js/diagnostics.js',
-  'js/carne.js'
+  'js/carne.js',
+  'js/dictionaries/pt_BR/pt_BR.aff',
+  'js/dictionaries/pt_BR/pt_BR.dic'
 ];
 
 self.addEventListener('install', (e) => {

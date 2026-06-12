@@ -390,7 +390,21 @@ export function initNavigation() {
 
     navItems.forEach(item => {
         item.addEventListener("click", () => {
-            const targetTab = item.getAttribute("data-tab");
+            const originalTab = item.getAttribute("data-tab");
+            let targetTab = originalTab;
+            
+            // Mapeamento especial para abas mobile órfãs de conteúdo directo
+            if (targetTab === "logistica") {
+                targetTab = "precos";
+                if (window.switchAdminSubTab) {
+                    window.switchAdminSubTab("tab-acerto");
+                }
+            } else if (targetTab === "admin") {
+                targetTab = "precos";
+                if (window.switchAdminSubTab) {
+                    window.switchAdminSubTab("tab-financeiro");
+                }
+            }
             
             // Interceptar aba baseada em permissões RBAC
             const currentUserId = sessionStorage.getItem("currentUserId");
@@ -422,7 +436,8 @@ export function initNavigation() {
             // Alterar navegação ativa
             navItems.forEach(nav => {
                 nav.classList.remove("active");
-                if (nav.getAttribute("data-tab") === targetTab) {
+                const navTab = nav.getAttribute("data-tab");
+                if (navTab === originalTab) {
                     // Som e vibração ao clicar na aba
                     if (window.playSound) window.playSound('tap');
                     if (window.triggerHaptic) window.triggerHaptic('tap');
@@ -450,8 +465,17 @@ export function initNavigation() {
     window.navigateToTab = function(targetTab) {
         const navs = document.querySelectorAll(".nav-item");
         let targetNav = null;
+        
+        let lookupTab = targetTab;
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+            if (targetTab === "precos") {
+                lookupTab = "admin";
+            }
+        }
+        
         navs.forEach(nav => {
-            if (nav.getAttribute("data-tab") === targetTab) {
+            if (nav.getAttribute("data-tab") === lookupTab) {
                 targetNav = nav;
             }
         });

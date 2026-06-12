@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v60 (12/06/2026 - Antigravity)
+* **Correções de Navegação Mobile e Suporte a Corretor Offline (COD: NAV-01 / SPELL-01):**
+  - **Lógica de Navegação (`js/app.js`):** Corrigido o bug na barra de navegação inferior mobile onde clicar nos botões "Acerto" (`data-tab="logistica"`) e "Config" (`data-tab="admin"`) gerava uma tela preta/em branco devido à inexistência de seções HTML correspondentes a esses IDs. Implementado mapeamento e interceptação inteligentes em `initNavigation()` e `window.navigateToTab()` para direcionar dinamicamente os cliques para o painel principal de Configurações (`precos`), ativando de forma automática a sub-aba de Acerto de Carga (`tab-acerto`) ou a sub-aba padrão (`tab-financeiro`), mantendo a marcação visual correta no botão clicado.
+  - **Suporte Offline do Corretor Ortográfico (`sw.js`):** Adicionados os arquivos de dicionário e afixos de português brasileiro (`js/dictionaries/pt_BR/pt_BR.aff` e `js/dictionaries/pt_BR/pt_BR.dic`, totalizando ~5.4MB) à lista de ativos cacheados do Service Worker (`ASSETS`). Isso garante que a biblioteca Typo.js e o corretor ortográfico funcionem 100% offline em aparelhos na rua sem internet.
+  - **Cache-Busting e Versão (`index.html` e `sw.js`):** Atualizados os cache-busters da folha de estilos principal para `styles.css?v=59` e do script principal para `js/app.js?v=59` em `index.html`. Bumped build para `v60` em `js/state.js` e incrementado cache do Service Worker para `gelodovale-v153` em `sw.js`.
+
 #### v59 (12/06/2026 - Antigravity)
 * **Correção e Robustez na Sincronização entre Dispositivos (COD: SYNC-01):**
   - **Módulo de Estado (`js/state.js`):** Ajustada a inicialização do estado em `loadState()`. Quando o app é aberto pela primeira vez em um novo dispositivo ou após limpar o cache (onde o `localStorage` está limpo), definimos `state.lastUpdated = 0` (estado virgem) em vez de dar `Date.now()`. Isso impede que o novo dispositivo seja falsamente identificado como possuindo os dados mais novos e acabe sobrescrevendo o banco de dados da nuvem com dados vazios/MOCK.
