@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v57 (12/06/2026 - Antigravity)
+* **Correção no Sistema de Ponto de Restauração / Backup (COD: BKP-01):**
+  - **Módulo de Utilitários (`js/utils.js`):** Refatorado o helper `getBrazilTimeISO()` para usar `Intl.DateTimeFormat` com `formatToParts()` e `hourCycle: "h23"` visando extrair os componentes de data/hora no fuso horário do Brasil de forma robusta e independente da formatação local do navegador. Adicionada proteção em `formatDateBrazil()` para ignorar e tratar strings contendo `"NaN"`.
+  - **Painel Administrativo (`js/admin.js`):** Corrigida a função `generateBackup()` e `downloadBackupJSON()` para evitar o uso de `new Date().toISOString()` que lançava erros fatais silenciosos no navegador. Implementada lógica de fatiamento direto na string de data e fallback seguro para o fuso brasileiro caso os dados carregados do cache do usuário contenham datas corrompidas. Atualizada a inicialização em `checkAutoBackupOnLoad()` para lidar graciosamente com backups de data inválida.
+  - **Versionamento & Cache:** Bump da versão do código para `v57` em `js/state.js`, incremento do cache do Service Worker para `gelodovale-v150` em `sw.js` e do cache-busting do CSS para `v=49` no `index.html`.
+
 #### v56 (12/06/2026 - Antigravity)
 * **Nova Sub-aba Administrativa Centralizada "Ícones & Emojis" (COD: ICO-01/ICO-02/ICO-03):**
   - **Interface (`index.html`):** Adicionado botão de menu "Ícones & Emojis" no menu de configurações do admin. Removida a galeria de ícones do painel de Fábrica & Aparência (`tab-dados-fabrica`). Criada a nova sub-aba (`tab-icones-emojis`) contendo três painéis dedicados: Biblioteca de Ícones Customizados (`COD: ICO-01`), Catálogo de Emojis com pesquisa em tempo real (`COD: ICO-02`) e Customização de Ícones de Aba (`COD: ICO-03`). Adicionada a checkbox de permissão correspondente na lista de privilégios de usuário.

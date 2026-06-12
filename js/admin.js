@@ -570,7 +570,8 @@ export function generateBackup(isAuto = false) {
     // Disparar o download físico do arquivo JSON
     const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
     const downloadAnchor = document.createElement('a');
-    const formattedDate = new Date(backupDate).toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+    const cleanDate = (backupDate && !backupDate.includes("NaN")) ? backupDate : window.getBrazilTimeISO();
+    const formattedDate = cleanDate.slice(0, 16).replace('T', '_').replace(':', '-');
     
     downloadAnchor.setAttribute("href", jsonString);
     downloadAnchor.setAttribute("download", `gelodovale_backup_v${version}_${formattedDate}.json`);
@@ -673,7 +674,8 @@ export function downloadBackupJSON(backupId) {
 
     const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup.payload, null, 2));
     const downloadAnchor = document.createElement('a');
-    const formattedDate = new Date(backup.date).toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+    const cleanDate = (backup.date && !backup.date.includes("NaN")) ? backup.date : window.getBrazilTimeISO();
+    const formattedDate = cleanDate.slice(0, 16).replace('T', '_').replace(':', '-');
     downloadAnchor.setAttribute("href", jsonString);
     downloadAnchor.setAttribute("download", `gelodovale_backup_v${backup.version}_${formattedDate}.json`);
     document.body.appendChild(downloadAnchor);
@@ -734,8 +736,8 @@ export function checkAutoBackupOnLoad() {
     if (freq === 0) return;
 
     const lastBackup = state.backupSettings.lastBackupDate;
-    if (!lastBackup) {
-        console.log("Nenhum backup registrado anteriormente. Disparando backup de primeiro uso...");
+    if (!lastBackup || lastBackup.includes("NaN")) {
+        console.log("Nenhum backup válido registrado anteriormente. Disparando backup de primeiro uso...");
         setTimeout(() => {
             generateBackup(true);
         }, 1500);
@@ -744,7 +746,10 @@ export function checkAutoBackupOnLoad() {
 
     const lastTime = new Date(lastBackup).getTime();
     const nowTime = Date.now();
-    const diffDays = (nowTime - lastTime) / (1000 * 60 * 60 * 24);
+    let diffDays = (nowTime - lastTime) / (1000 * 60 * 60 * 24);
+    if (isNaN(diffDays)) {
+        diffDays = freq; // Força backup automático se a data anterior for corrompida
+    }
 
     if (diffDays >= freq) {
         console.log(`Último backup feito há ${diffDays.toFixed(1)} dias (limite: ${freq} dias). Disparando backup automático...`);

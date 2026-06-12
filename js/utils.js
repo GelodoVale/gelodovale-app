@@ -7,17 +7,30 @@ export let selectedCalendarDateStr = "";
 
 // Helper de Fuso Horário (Registro/SP)
 export function getBrazilTimeISO() {
-    const brTime = new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"});
-    const d = new Date(brTime);
-    // Cria formato ISO manual com base no fuso SP para evitar a conversão do toISOString para UTC
-    const pad = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000-03:00`;
+    try {
+        const d = new Date();
+        const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hourCycle: "h23"
+        });
+        const parts = formatter.formatToParts(d);
+        const partVal = type => parts.find(p => p.type === type).value;
+        return `${partVal("year")}-${partVal("month")}-${partVal("day")}T${partVal("hour")}:${partVal("minute")}:${partVal("second")}.000-03:00`;
+    } catch (e) {
+        console.error("Erro ao obter hora de Brasília:", e);
+        const d = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.000-03:00`;
+    }
 }
 
 export function formatDateBrazil(dateStr) {
-    if (!dateStr) return "";
+    if (!dateStr || String(dateStr).includes("NaN")) return "";
     const options = { timeZone: 'America/Sao_Paulo' };
     const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) return "";
     return dateObj.toLocaleDateString('pt-BR', options);
 }
 
