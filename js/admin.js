@@ -3,6 +3,45 @@ import { renderWidgetsSetupPanel } from './widgets.js';
 import { applyCurrentLayout } from './layout.js';
 import { getWhatsappTemplates, saveWhatsappTemplate } from './whatsapp.js';
 
+// Helpers para persistência isolada de backups
+export function getLocalBackups() {
+    try {
+        return JSON.parse(localStorage.getItem("gelcontrol_local_backups")) || [];
+    } catch (e) {
+        console.error("Erro ao ler backups locais:", e);
+        return [];
+    }
+}
+
+export function saveLocalBackups(backups) {
+    try {
+        localStorage.setItem("gelcontrol_local_backups", JSON.stringify(backups));
+    } catch (e) {
+        console.error("Erro ao salvar backups locais:", e);
+    }
+}
+
+export function updateLocalStorageSizeUI() {
+    try {
+        const stateStr = localStorage.getItem("gelcontrol_state") || "";
+        const backupsStr = localStorage.getItem("gelcontrol_local_backups") || "";
+        
+        const stateBytes = new Blob([stateStr]).size;
+        const backupsBytes = new Blob([backupsStr]).size;
+        
+        const stateKb = (stateBytes / 1024).toFixed(1);
+        const backupsKb = (backupsBytes / 1024).toFixed(1);
+        const totalKb = ((stateBytes + backupsBytes) / 1024).toFixed(1);
+        
+        const el = document.getElementById("lbl-local-storage-size");
+        if (el) {
+            el.innerHTML = `App: <strong>${stateKb} KB</strong> | Histórico: <strong>${backupsKb} KB</strong> (Total: <strong>${totalKb} KB</strong> / 5000 KB)`;
+        }
+    } catch (e) {
+        console.error("Erro ao atualizar diagnóstico de armazenamento:", e);
+    }
+}
+
 // 1. Alternador de Sub-abas Administrativas
 export function switchAdminSubTab(subTabId) {
     // Verificar se o usuário logado tem permissão
@@ -278,7 +317,7 @@ export function renderPrecos() {
     const backupsTbody = document.getElementById("local-backups-tbody");
     if (backupsTbody) {
         backupsTbody.innerHTML = "";
-        const backups = state.localBackups || [];
+        const backups = getLocalBackups();
         
         if (backups.length === 0) {
             backupsTbody.innerHTML = `
@@ -316,6 +355,7 @@ export function renderPrecos() {
                 `;
             });
         }
+        updateLocalStorageSizeUI();
     }
 
     // 5. Preencher inputs de dados comerciais
@@ -550,16 +590,17 @@ export async function generateBackup(isAuto = false) {
         payload: backupPayload
     };
 
-    if (!state.localBackups) state.localBackups = [];
-    state.localBackups.push(newBackup);
+    let backups = getLocalBackups();
+    backups.push(newBackup);
 
     // Rotacionar histórico local (limite de 5 backups)
-    if (state.localBackups.length > 5) {
-        state.localBackups.sort((a, b) => new Date(a.date) - new Date(b.date));
-        while (state.localBackups.length > 5) {
-            state.localBackups.shift();
+    if (backups.length > 5) {
+        backups.sort((a, b) => new Date(a.date) - new Date(b.date));
+        while (backups.length > 5) {
+            backups.shift();
         }
     }
+    saveLocalBackups(backups);
 
     if (!state.backupSettings) {
         state.backupSettings = { frequencyDays: 7, lastBackupDate: "", currentVersion: APP_VERSION };
@@ -626,7 +667,7 @@ function _downloadBackupFallback(blob, fileName) {
 }
 
 export function restoreLocalBackup(backupId) {
-    const backup = (state.localBackups || []).find(b => b.id === backupId);
+    const backup = getLocalBackups().find(b => b.id === backupId);
     if (!backup) {
         window.showToast("Backup não encontrado!", "error");
         return;
@@ -708,7 +749,7 @@ export function applyBackupData(payload) {
 }
 
 export function downloadBackupJSON(backupId) {
-    const backup = (state.localBackups || []).find(b => b.id === backupId);
+    const backup = getLocalBackups().find(b => b.id === backupId);
     if (!backup) return;
 
     const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup.payload, null, 2));
@@ -723,13 +764,14 @@ export function downloadBackupJSON(backupId) {
 }
 
 export function deleteLocalBackup(backupId) {
-    const backup = (state.localBackups || []).find(b => b.id === backupId);
+    const backups = getLocalBackups();
+    const backup = backups.find(b => b.id === backupId);
     const labelText = backup ? (backup.label || "este ponto") : "este ponto";
     window.showConfirm(
         `Deseja realmente excluir o ponto "${labelText}" do histórico interno do navegador?`,
         () => {
-            state.localBackups = (state.localBackups || []).filter(b => b.id !== backupId);
-            saveState();
+            const filteredBackups = backups.filter(b => b.id !== backupId);
+            saveLocalBackups(filteredBackups);
             renderPrecos();
         },
         null,

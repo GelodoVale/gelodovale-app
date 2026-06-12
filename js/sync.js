@@ -7,6 +7,7 @@ let fbDatabaseRef = null;
 let isFirstLoad = true;        // Controla se é a primeira carga (não re-renderiza desnecessariamente)
 let isSyncing = false;         // Evita loop de sync (local→nuvem→local→nuvem...)
 let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada tecla
+let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
 
 // ─── CARREGAR SDK DO FIREBASE ──────────────────────────────────────────────
 export function loadFirebaseSDK(callback) {
@@ -52,6 +53,10 @@ export function startSyncListener() {
         if (isSyncing) return;
 
         const remoteData = snapshot.val();
+        
+        if (remoteData && remoteData.backupSettings) {
+            lastSeenRemoteVersion = remoteData.backupSettings.currentVersion || "1.0";
+        }
 
         // ── Sem dados na nuvem: este dispositivo envia os dados locais ──
         if (!remoteData) {
@@ -65,12 +70,21 @@ export function startSyncListener() {
         const remoteTs = remoteData.lastUpdated || 0;
 
         if (isFirstLoad) {
-            // ── Primeira carga: quem tiver timestamp mais recente ganha ──
+            // ── Primeira carga: quem tiver timestamp mais recente ganha, respeitando a versão do banco ──
             isFirstLoad = false;
             const isFreshInstall = !state.lastUpdated || state.lastUpdated === 0;
-            if (isFreshInstall) {
-                console.log('[Sync] Novo dispositivo ou cache limpo detectado — puxando dados da nuvem...');
+            
+            let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
+            let remoteVer = parseFloat(lastSeenRemoteVersion || "1.0");
+            if (isNaN(localVer)) localVer = 1.0;
+            if (isNaN(remoteVer)) remoteVer = 1.0;
+
+            if (isFreshInstall || remoteVer > localVer) {
+                console.log(`[Sync] Nuvem tem versão de dados mais recente (${remoteVer} vs ${localVer}) ou cache limpo — aplicando dados da nuvem.`);
                 aplicarDadosRemoto(remoteData);
+            } else if (localVer > remoteVer) {
+                console.log(`[Sync] Local tem versão de dados mais recente (${localVer} vs ${remoteVer}) — atualizando nuvem.`);
+                pushToFirebaseImediato();
             } else if (remoteTs > localTs) {
                 console.log('[Sync] Nuvem mais recente na abertura — aplicando dados da nuvem...');
                 aplicarDadosRemoto(remoteData);
@@ -142,6 +156,19 @@ function pushToFirebaseImediato() {
     if (!hasLocalData || !state.lastUpdated || state.lastUpdated === 0) {
         console.warn('[Sync] Abortado: estado local parece virgem ou sem dados no localStorage. Não vamos sobrescrever a nuvem com dados vazios.');
         return;
+    }
+
+    // SAFEGUARD 2: Não enviar para a nuvem se a versão local for menor que a última versão da nuvem observada
+    if (lastSeenRemoteVersion) {
+        let localVer = parseFloat(state.backupSettings?.currentVersion || "1.0");
+        let remoteVer = parseFloat(lastSeenRemoteVersion);
+        if (isNaN(localVer)) localVer = 1.0;
+        if (isNaN(remoteVer)) remoteVer = 1.0;
+        
+        if (remoteVer > localVer) {
+            console.warn(`[Sync] Abortado: A nuvem possui uma versão de dados mais recente (${remoteVer}) que a local (${localVer}). Sobrescrita cancelada para evitar regressão.`);
+            return;
+        }
     }
 
     if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {

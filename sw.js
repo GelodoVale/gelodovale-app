@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v153';
+const CACHE_NAME = 'gelodovale-v156';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -28,6 +28,7 @@ const ASSETS = [
   'js/pdv.js',
   'js/diagnostics.js',
   'js/carne.js',
+  'js/spellcheck.js',
   'js/dictionaries/pt_BR/pt_BR.aff',
   'js/dictionaries/pt_BR/pt_BR.dic'
 ];

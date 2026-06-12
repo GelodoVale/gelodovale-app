@@ -4,8 +4,8 @@ import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
-export const APP_VERSION = "3.9";
-export const CODE_BUILD = "v60 (12/06/2026 - Antigravity)";
+export const APP_VERSION = "2.5";
+export const CODE_BUILD = "v61 (12/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -45,7 +45,7 @@ export function updateState(newState, preserveConfigs = false) {
         const keysToPreserve = [
             'users', 'factorySettings', 'backupSettings', 'appearance', 
             'printSettings', 'logisticsSettings', 'firebaseConfig', 
-            'localBackups', 'adminPassword', 'notepadText', 'calendarNotes',
+            'adminPassword', 'notepadText', 'calendarNotes',
             'localEvents', 'ignoredSpikes', 'layoutSettings', 'customIconsLibrary', 'tabIcons'
         ];
         keysToPreserve.forEach(key => {
@@ -527,6 +527,26 @@ export function loadState() {
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
+            
+            // Migração automática de localBackups para armazenamento isolado
+            if (parsed.localBackups && parsed.localBackups.length > 0) {
+                try {
+                    const existingBackups = JSON.parse(localStorage.getItem("gelcontrol_local_backups")) || [];
+                    const merged = [...existingBackups];
+                    parsed.localBackups.forEach(b => {
+                        if (!merged.some(eb => eb.id === b.id)) {
+                            merged.push(b);
+                        }
+                    });
+                    localStorage.setItem("gelcontrol_local_backups", JSON.stringify(merged));
+                } catch (e) {
+                    console.error("Erro ao migrar backups locais:", e);
+                }
+                delete parsed.localBackups;
+                // Salvar estado limpo sem backups acumulados no objeto principal
+                localStorage.setItem("gelcontrol_state", JSON.stringify(parsed));
+            }
+
             Object.keys(state).forEach(k => delete state[k]);
             Object.assign(state, parsed);
             normalizeStateArrays();
@@ -564,7 +584,6 @@ export function initializeDefaultFields() {
     if (!state.orders) state.orders = [];
     if (!state.deliveries) state.deliveries = [];
     if (!state.history) state.history = [];
-    if (!state.localBackups) state.localBackups = [];
     if (!state.equipments) state.equipments = [];
     if (!state.localEvents) state.localEvents = [];
     if (!state.ignoredSpikes) state.ignoredSpikes = [];
@@ -601,8 +620,13 @@ export function initializeDefaultFields() {
     } else {
         if (state.backupSettings.frequencyDays === undefined) state.backupSettings.frequencyDays = 7;
         if (state.backupSettings.lastBackupDate === undefined) state.backupSettings.lastBackupDate = "";
-        if (state.backupSettings.currentVersion === undefined || 
-            ["1.0", "2.5", "2.6", "2.7", "3.0", "3.1"].includes(state.backupSettings.currentVersion)) {
+        
+        const currentVer = state.backupSettings.currentVersion;
+        const currentVerFloat = parseFloat(currentVer);
+        if (currentVer === undefined || 
+            isNaN(currentVerFloat) || 
+            currentVerFloat < 2.5 || 
+            ["2.6", "2.7", "3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9"].includes(currentVer)) {
              state.backupSettings.currentVersion = APP_VERSION;
         }
     }

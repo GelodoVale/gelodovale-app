@@ -293,6 +293,24 @@ export function loadState() {
         try {
             const parsed = JSON.parse(saved);
             
+            // Migração automática de localBackups para armazenamento isolado
+            if (parsed.localBackups && parsed.localBackups.length > 0) {
+                try {
+                    const existingBackups = JSON.parse(localStorage.getItem("gelcontrol_local_backups")) || [];
+                    const merged = [...existingBackups];
+                    parsed.localBackups.forEach(b => {
+                        if (!merged.some(eb => eb.id === b.id)) {
+                            merged.push(b);
+                        }
+                    });
+                    localStorage.setItem("gelcontrol_local_backups", JSON.stringify(merged));
+                } catch (e) {
+                    console.error("Erro ao migrar backups locais:", e);
+                }
+                delete parsed.localBackups;
+                localStorage.setItem("gelcontrol_state", JSON.stringify(parsed));
+            }
+            
             // Garantir todas as chaves
             if (!parsed.clients) parsed.clients = [];
             if (!parsed.freezers) parsed.freezers = [];
@@ -301,7 +319,6 @@ export function loadState() {
             if (!parsed.orders) parsed.orders = [];
             if (!parsed.deliveries) parsed.deliveries = [];
             if (!parsed.history) parsed.history = [];
-            if (!parsed.localBackups) parsed.localBackups = [];
             if (!parsed.factorySettings) parsed.factorySettings = {};
             if (!parsed.backupSettings) parsed.backupSettings = {};
             if (!parsed.appearance) parsed.appearance = {};

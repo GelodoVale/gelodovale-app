@@ -6,6 +6,16 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v61 (12/06/2026 - Antigravity)
+* **Isolamento de Backups Locais, Diagnósticos de Memória e Proteção contra Regressão de Versão (COD: BKP-03 / MEM-01 / SYNC-02 / DEV-02):**
+  - **Isolamento de Backups (`js/state.js`, `js/app.js`, `js/admin.js`):** Desacoplados os backups locais (`localBackups`) do estado global (`localStorage` na chave `gelcontrol_state`) para evitar erros de limite de cota (`QuotaExceededError`) e poupar banda de rede no Firebase. Criada a chave exclusiva `gelcontrol_local_backups` no `localStorage` para gerenciar os backups. Implementada migração automática e silenciosa dos backups antigos na inicialização.
+  - **Diagnósticos de Capacidade de Memória (`index.html`, `js/admin.js`):** Adicionado indicador visual `#lbl-local-storage-size` nas configurações de backup do Admin que exibe a cota ocupada em tempo real (Total em KB do `localStorage`, discriminando tamanho do App vs tamanho dos Backups locais).
+  - **Proteção contra Regressão de Versão no Firebase Sync (`js/sync.js`, `js/state.js`):**
+    - Fixada a versão centralizada dos dados (`APP_VERSION`) em `"2.5"` no `js/state.js`. Corrigida a lógica de `initializeDefaultFields()` para que qualquer versão inferior a `2.5` (como `0.6` remanescente em caches locais) ou versões infladas por engano (de `3.2` a `3.9`) sejam migradas para a versão correta `2.5`, enquanto futuras versões incrementais maiores que `2.5` sejam preservadas.
+    - Implementado rastreamento de `lastSeenRemoteVersion` vindo do listener em tempo real no `js/sync.js`.
+    - Redesenhada a lógica de primeiro carregamento e escrita do sync: se a nuvem tiver uma versão de banco de dados mais recente que a local (`remoteVer > localVer`), o cliente pulla obrigatoriamente a nuvem. Se o cliente tentar enviar dados locais para o Firebase e a nuvem possuir uma versão superior (`remoteVer > localVer`), a operação de push é abortada. Isso impede definitivamente que dispositivos com caches locais desatualizados corrompam e sobrescrevam o banco de dados oficial com estruturas antigas (como aconteceu com o rollback para `0.6`).
+  - **Remoção de Código Morto & Cache-Busting (`sw.js`, `index.html`):** Removido o arquivo inutilizado `js/spellChecker.js`. Cacheado o script correto do corretor (`js/spellcheck.js`) para uso offline no Service Worker. Incrementados os cache-busters da folha de estilos e script principal para `v=61` em `index.html`, e cache do PWA atualizado para `gelodovale-v156` em `sw.js`.
+
 #### v60 (12/06/2026 - Antigravity)
 * **Correções de Navegação Mobile e Suporte a Corretor Offline (COD: NAV-01 / SPELL-01):**
   - **Lógica de Navegação (`js/app.js`):** Corrigido o bug na barra de navegação inferior mobile onde clicar nos botões "Acerto" (`data-tab="logistica"`) e "Config" (`data-tab="admin"`) gerava uma tela preta/em branco devido à inexistência de seções HTML correspondentes a esses IDs. Implementado mapeamento e interceptação inteligentes em `initNavigation()` e `window.navigateToTab()` para direcionar dinamicamente os cliques para o painel principal de Configurações (`precos`), ativando de forma automática a sub-aba de Acerto de Carga (`tab-acerto`) ou a sub-aba padrão (`tab-financeiro`), mantendo a marcação visual correta no botão clicado.
