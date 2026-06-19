@@ -12,11 +12,6 @@ let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem
 function normalizeVersion(ver) {
     const v = parseFloat(ver);
     if (isNaN(v)) return 1.0;
-    // As versões 3.2 a 3.9 foram geradas por um bug antigo/agentes.
-    // Elas devem ser tratadas como a versão base 2.5.
-    if (v >= 3.2 && v <= 3.9) {
-        return 2.5;
-    }
     return v;
 }
 

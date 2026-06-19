@@ -622,10 +622,7 @@ export function initializeDefaultFields() {
         
         const currentVer = state.backupSettings.currentVersion;
         const currentVerFloat = parseFloat(currentVer);
-        if (currentVer === undefined || 
-            isNaN(currentVerFloat) || 
-            currentVerFloat < 2.5 || 
-            ["3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9"].includes(currentVer)) {
+        if (currentVer === undefined || isNaN(currentVerFloat)) {
              state.backupSettings.currentVersion = APP_VERSION;
         }
     }
