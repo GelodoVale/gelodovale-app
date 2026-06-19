@@ -561,15 +561,10 @@ main.main-content {
     transition: var(--transition-fast);
 }
 
-.kpi-card:hover {
+.kpi-card:not(.layout-floating-active):not(.layout-grid-active):hover {
     transform: translateY(-3px);
     border-color: var(--border-card-hover);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.kpi-card.layout-floating-active:hover,
-.kpi-card.layout-grid-active:hover {
-    transform: none !important;
 }
 
 .kpi-info h3 {
@@ -2811,14 +2806,10 @@ body.theme-high-contrast .modal-backdrop {
     grid-column: span 3;
 }
 
-.widget-card:hover {
+.widget-card:not(.layout-floating-active):not(.layout-grid-active):hover {
     transform: translateY(-4px);
     border-color: var(--border-card-hover);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(var(--color-primary-rgb), 0.05);
-}
-.widget-card.layout-floating-active:hover,
-.widget-card.layout-grid-active:hover {
-    transform: none !important;
 }
 
 .widget-header {

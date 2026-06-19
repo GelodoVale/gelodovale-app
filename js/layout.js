@@ -197,10 +197,7 @@ function applyLayoutMode(mode) {
                 hdr.style.cursor      = "";
                 hdr.style.userSelect  = "";
                 hdr.style.touchAction = "";
-                delete hdr.dataset.lytDrag;
             }
-            // Limpa flag do grid drag
-            delete panel.dataset.lytGrid;
         });
 
         // 2. Modo fixo: remove transforms e encerra
@@ -226,7 +223,7 @@ function applyLayoutMode(mode) {
             if (mode === "grid") {
                 panel.classList.add("layout-grid-active");
                 panel.style.position = "relative";
-                if (saved.order !== undefined) panel.style.order  = String(saved.order);
+                if (saved.order !== undefined && !isNaN(saved.order)) panel.style.order  = String(saved.order);
                 if (saved.width)               panel.style.width  = saved.width;
                 if (saved.height)              panel.style.height = saved.height;
                 wrapPanelContents(panel);
@@ -239,8 +236,10 @@ function applyLayoutMode(mode) {
             else if (mode === "floating") {
                 panel.classList.add("layout-floating-active");
                 panel.style.position = "relative";
-                const tx = saved.tx ?? 0;
-                const ty = saved.ty ?? 0;
+                let tx = saved.tx ?? 0;
+                let ty = saved.ty ?? 0;
+                if (isNaN(tx)) tx = 0;
+                if (isNaN(ty)) ty = 0;
                 panel.style.transform = `translate(${tx}px,${ty}px)`;
                 if (saved.width)  panel.style.width  = saved.width;
                 if (saved.height) panel.style.height = saved.height;
@@ -356,6 +355,7 @@ function setupPointerDrag(panel) {
             ev.preventDefault();
             const newTx = startTx + (ev.clientX - startX);
             const newTy = startTy + (ev.clientY - startY);
+            if (isNaN(newTx) || isNaN(newTy)) return;
             panel.style.transform = `translate(${newTx}px, ${newTy}px)`;
 
             // Salva posição no state
@@ -370,6 +370,7 @@ function setupPointerDrag(panel) {
             hdr.releasePointerCapture(e.pointerId);
             hdr.removeEventListener("pointermove", onMove);
             hdr.removeEventListener("pointerup",   onUp);
+            saveState(); // Persist layout change to localStorage / Firebase
         }
 
         hdr.addEventListener("pointermove", onMove);
@@ -420,6 +421,7 @@ function setupGridDrag(panel) {
         panel.style.order  = iA * 10;
         state.layoutSettings.positions[fromId].order  = iB * 10;
         state.layoutSettings.positions[panel.id].order = iA * 10;
+        saveState(); // Persist grid reordering
     });
 }
 
@@ -456,6 +458,7 @@ function injectResizeHandle(panel) {
         function onMove(ev) {
             const newW = Math.max(220, startW + (ev.clientX - startX));
             const newH = Math.max(120, startH + (ev.clientY - startY));
+            if (isNaN(newW) || isNaN(newH)) return;
             panel.style.width  = newW + "px";
             panel.style.height = newH + "px";
 
@@ -469,6 +472,7 @@ function injectResizeHandle(panel) {
             handle.releasePointerCapture(e.pointerId);
             handle.removeEventListener("pointermove", onMove);
             handle.removeEventListener("pointerup",   onUp);
+            saveState(); // Persist resized height/width
         }
 
         handle.addEventListener("pointermove", onMove);

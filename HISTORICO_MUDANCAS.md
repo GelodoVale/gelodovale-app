@@ -6,6 +6,23 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v70 (19/06/2026 - Antigravity)
+* **Correção no Arraste de Widgets e Persistência do Layout (COD: LAYOUT-01):**
+  - **Ajustes de Estilos (`styles.css`):** Corrigido o seletor hover `.widget-card:hover` e `.kpi-card:hover` para excluir os estados ativos de layout flutuante (`:not(.layout-floating-active):not(.layout-grid-active)`). Isso impede que a regra `transform: none !important` no hover anule as coordenadas dinâmicas de arraste (`transform: translate(x, y)`), corrigindo a falha em que os widgets ficavam presos ou retornavam à posição inicial ao serem arrastados.
+  - **Gravação de Estado no Arraste, Redimensionamento e Reordenação (`js/layout.js`):** Adicionada a chamada automática a `saveState()` nos listeners `onUp` (quando o arraste ou redimensionamento de um painel termina) e `drop` (quando a grade é reordenada), garantindo que as modificações de layout sejam salvas permanentemente no `localStorage` e sincronizadas no Firebase em tempo real.
+  - **Prevenção de Coordenadas Nulas (`js/layout.js`):** Implementada validação defensiva contra `NaN` e coordenadas corrompidas durante o arraste e no carregamento inicial dos widgets (restaurando posições padrão para `0px` se necessário), evitando que os widgets sumam da tela.
+  - **Eliminação de Event Listener Leaks (`js/layout.js`):** Mantido o rastreamento estático das flags `lytDrag` e `lytGrid` na limpeza global, evitando que dezenas de escutadores de eventos de clique e arraste duplicados se acumulassem no DOM de painéis fixos.
+  - **Bumping de Versão:** Bump de build para `v70` (`js/state.js`) e cache do Service Worker para `gelodovale-v168` (`sw.js`).
+
+#### v69 (19/06/2026 - Antigravity)
+* **Otimização no Boot e Carregamento Diferido do Corretor (COD: SPELL-03):**
+  - Adicionado carregamento assíncrono e diferido (atraso de 4 segundos) dos dicionários do corretor ortográfico para evitar o travamento e lentidão na tela de login inicial.
+
+#### v65 - v68 (12/06/2026 - Antigravity)
+* **Corretor Ortográfico Offline e Correção de Erros de Memória (COD: SPELL-02):**
+  - Resolvido erro de estouro de propriedades do V8 (`RangeError`) no processamento do dicionário Hunspell de pt_BR ao migrar a tabela de palavras para a estrutura de dados `Map`.
+  - Corrigido parser Hunspell para aceitar a flag `UTF-8` declarada nos arquivos `.aff` locais do corretor.
+
 #### v64 (12/06/2026 - Antigravity)
 * **Normalização de Versões Incompatíveis no Sync do Firebase (COD: SYNC-04):**
   - **Módulo de Sincronização (`js/sync.js`):** Implementada a função `normalizeVersion(ver)` para filtrar e normalizar versões no intervalo `[3.2, 3.9]` de volta para a versão base `2.5`. Isso impede que dispositivos rodando código antigo (com a versão `3.9`) corrompam o Firebase e abortem a sincronização do computador principal por considerá-lo desatualizado (looping de sync por pular e em seguida rejeitar).
