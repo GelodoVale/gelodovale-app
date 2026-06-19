@@ -56,24 +56,35 @@ function initSpellCheck() {
   tooltip.id = 'spellcheck-tooltip';
   document.body.appendChild(tooltip);
 
-  // Carregar arquivos de dicionário de forma assíncrona
-  Promise.all([
-    fetch(affUrl).then(r => {
-      if (!r.ok) throw new Error("Falha ao carregar pt_BR.aff: " + r.statusText);
-      return r.text();
-    }),
-    fetch(dicUrl).then(r => {
-      if (!r.ok) throw new Error("Falha ao carregar pt_BR.dic: " + r.statusText);
-      return r.text();
-    })
-  ]).then(([affData, dicData]) => {
-    dictionary = new Typo("pt_BR", affData, dicData);
-    window.spellcheckDictionary = dictionary;
-    console.log("Corretor ortográfico pt_BR carregado com sucesso!");
-  }).catch(err => {
-    window.spellcheckLoadError = err.message || err;
-    console.error("Erro ao carregar o dicionário:", err);
-  });
+  let isLoading = false;
+  function loadDictionaryFiles() {
+    if (dictionary || window.spellcheckLoadError || isLoading) return;
+    isLoading = true;
+    console.log("Inicializando carregamento do dicionário pt_BR em segundo plano...");
+    Promise.all([
+      fetch(affUrl).then(r => {
+        if (!r.ok) throw new Error("Falha ao carregar pt_BR.aff: " + r.statusText);
+        return r.text();
+      }),
+      fetch(dicUrl).then(r => {
+        if (!r.ok) throw new Error("Falha ao carregar pt_BR.dic: " + r.statusText);
+        return r.text();
+      })
+    ]).then(([affData, dicData]) => {
+      dictionary = new Typo("pt_BR", affData, dicData);
+      window.spellcheckDictionary = dictionary;
+      console.log("Corretor ortográfico pt_BR carregado com sucesso!");
+    }).catch(err => {
+      window.spellcheckLoadError = err.message || err;
+      console.error("Erro ao carregar o dicionário:", err);
+    }).finally(() => {
+      isLoading = false;
+    });
+  }
+  window.loadSpellcheckDictionary = loadDictionaryFiles;
+
+  // Carregar em segundo plano após 4 segundos de inatividade inicial
+  setTimeout(loadDictionaryFiles, 4000);
 
   // Função para verificar caracteres de quebra de palavra
   function isWhitespaceOrPunctuation(char) {
@@ -178,12 +189,14 @@ function initSpellCheck() {
 
   document.addEventListener('input', e => {
     if (!e.target.matches(selector)) return;
+    if (!dictionary) loadDictionaryFiles();
     clearTimeout(timer);
     timer = setTimeout(() => evaluate(e.target), delay);
   });
 
   document.addEventListener('focusin', e => {
     if (!e.target.matches(selector)) return;
+    if (!dictionary) loadDictionaryFiles();
     evaluate(e.target);
   });
 

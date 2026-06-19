@@ -306,6 +306,9 @@ export function runFullDiagnostic() {
 
     // 16. Corretor Ortográfico Integrado (Typo.js)
     try {
+        if (window.loadSpellcheckDictionary) {
+            window.loadSpellcheckDictionary();
+        }
         if (!window.Typo) {
             throw new Error("Biblioteca Typo.js não carregada no navegador.");
         }
