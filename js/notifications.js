@@ -233,10 +233,10 @@ export function updateNotifications() {
         }
     });
 
-    // ─── 9. Insumos/Embalagens com Estoque Baixo (Fábrica) ──────────────────
+    // ─── 9. Insumos/Embalagens com Estoque Baixo (Fábrica) ──────────────────────────────────
     (state.packaging || []).forEach(pkg => {
-        const qty = pkg.quantity || 0;
-        const minQty = pkg.minQuantity || pkg.alertLevel || 0;
+        const qty = pkg.currentStock || 0;
+        const minQty = pkg.minStock || 0;
         if (minQty > 0 && qty <= minQty) {
             notifications.push({
                 type: 'factory',
@@ -245,7 +245,8 @@ export function updateNotifications() {
                 title: qty === 0 ? '🚫 Insumo Zerado' : '📉 Insumo Baixo',
                 text: `${pkg.name || 'Insumo'}: ${qty} un. em estoque (mínimo: ${minQty}).`,
                 severity: qty === 0 ? 'danger' : 'warning',
-                targetTab: 'inventario',
+                targetTab: 'admin',
+                adminSubTab: 'tab-dados-fabrica',
                 searchVal: ''
             });
         }

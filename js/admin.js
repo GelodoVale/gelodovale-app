@@ -3034,10 +3034,10 @@ export function saveProduction() {
             date: window.getBrazilTimeISO(),
             packagingId: pkgId,
             packagingName: pkg.name,
-            type: 'out',
-            qty: qty,
-            afterStock: pkg.currentStock,
-            obs: obs
+            type: 'saida',
+            quantity: qty,
+            balanceAfter: pkg.currentStock,
+            observation: obs
         });
 
         saveState();
