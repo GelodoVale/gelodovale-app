@@ -592,7 +592,7 @@ export function recoverAdminPassword() {
                 id: "admin",
                 username: "admin",
                 name: "Administrador",
-                password: "1120M@z@dr1",
+                password: "1234qwer",
                 permissions: {}
             };
             state.users.unshift(adminUser);

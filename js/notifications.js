@@ -123,7 +123,7 @@ export function updateNotifications() {
 
     // ─── 3. Pedidos Pendentes ───────────────────────────────────────────────
     (state.orders || []).forEach(o => {
-        if (o.status === 'pendente') {
+        if (o.status === 'pending') {
             notifications.push({
                 type: 'order',
                 label: 'Pedido',
@@ -144,14 +144,15 @@ export function updateNotifications() {
         const expected = new Date(r.expectedReturnDate + 'T00:00:00');
         if (expected < today) {
             const diffDays = Math.floor((today - expected) / (1000 * 60 * 60 * 24));
+            const equipDesc = r.tinaCode || r.itemType || 'equipamento';
             notifications.push({
                 type: 'rental',
                 label: 'Aluguel',
                 clientName: r.clientName || 'Cliente',
                 title: '📦 Aluguel Atrasado',
-                text: `${r.clientName || 'Cliente'}: ${r.equipmentName || 'equipamento'} com ${diffDays} dia(s) de atraso.`,
+                text: `${r.clientName || 'Cliente'}: ${equipDesc} com ${diffDays} dia(s) de atraso.`,
                 severity: diffDays >= 3 ? 'danger' : 'warning',
-                targetTab: 'rentals',
+                targetTab: 'tinas',
                 searchVal: r.clientName || ''
             });
         }
@@ -185,7 +186,8 @@ export function updateNotifications() {
                 title: '🔧 Comodato Pendente',
                 text: `Freezer ${cm.freezerCode || ''} aguardando ativação para ${cm.clientName || 'Cliente'}.`,
                 severity: 'warning',
-                targetTab: 'comodatos',
+                targetTab: 'admin',
+                adminSubTab: 'tab-comodatos',
                 searchVal: cm.clientName || ''
             });
         }
@@ -225,7 +227,7 @@ export function updateNotifications() {
                 title: '🧾 Recibo Não Pago',
                 text: `Recibo de R$ ${(d.total || 0).toFixed(2).replace('.', ',')} para ${d.clientName || 'Cliente'} há ${diffDays} dias sem pagamento.`,
                 severity: diffDays >= 14 ? 'danger' : 'warning',
-                targetTab: 'documents',
+                targetTab: 'documentos',
                 searchVal: d.clientName || ''
             });
         }

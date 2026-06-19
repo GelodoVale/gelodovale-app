@@ -4,7 +4,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v70 (19/06/2026 - Antigravity)";
+export const CODE_BUILD = "v71 (19/06/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -569,13 +569,13 @@ export function loadState() {
 export function initializeDefaultFields() {
     // Retrocompatibilidade para arrays operacionais
     if (!state.clients) state.clients = [];
-    // Layout settings — versão 4 usa transform (não mais position:absolute)
+    // Layout settings — versão 5 usa transform (não mais position:absolute)
     if (!state.layoutSettings) {
-        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 4 };
-    } else if (!state.layoutSettings.layoutVersion || state.layoutSettings.layoutVersion < 4) {
-        // Dados antigos (left/top) são incompatíveis com novo sistema (tx/ty transform)
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
+    } else if (!state.layoutSettings.layoutVersion || state.layoutSettings.layoutVersion < 5) {
+        // Dados antigos (left/top ou tx/ty sem versão 5) são incompatíveis com o sistema atual
         // Reset completo: posições limpas, modo volta para fixed
-        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 4 };
+        state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
     }
     if (!state.freezers) state.freezers = [];
     if (!state.rentals) state.rentals = [];
