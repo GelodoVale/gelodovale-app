@@ -113,7 +113,8 @@ export function startSyncListener() {
                 aplicarDadosRemoto(remoteData);
             } else if (localVer > remoteVer) {
                 console.warn(`[Sync] ⚡ Ignorada atualização de versão antiga da nuvem (${remoteVer} vs ${localVer}).`);
-                updateSyncStatusUI('success');
+                const timeStr = new Date().toLocaleTimeString('pt-BR');
+                updateSyncStatusUI('success', `☁️ Dados Locais Preservados contra Concorrência (${timeStr})`);
                 
                 // Mostrar aviso amigável sem loopar (uma vez a cada 30 segundos no máximo)
                 const lastToastTime = window._lastVersionWarningTime || 0;
@@ -151,7 +152,8 @@ function aplicarDadosRemoto(remoteData) {
     if (window.applyAppearanceTheme) window.applyAppearanceTheme();
     if (window.renderPrecos) window.renderPrecos();
 
-    updateSyncStatusUI('success');
+    const timeStr = new Date().toLocaleTimeString('pt-BR');
+    updateSyncStatusUI('success', `☁️ Atualização Recebida em ${timeStr}`);
 
     // Mostrar notificação visual discreta
     mostrarToastSync();
@@ -190,6 +192,8 @@ function pushToFirebaseImediato() {
         
         if (remoteVer > localVer) {
             console.warn(`[Sync] Abortado: A nuvem possui uma versão de dados mais recente (${remoteVer}) que a local (${localVer}). Sobrescrita cancelada para evitar regressão.`);
+            const timeStr = new Date().toLocaleTimeString('pt-BR');
+            updateSyncStatusUI('error', `⚠️ Nuvem tem versão mais recente (${timeStr})`);
             return;
         }
     }
@@ -210,7 +214,8 @@ function pushToFirebaseImediato() {
     const safeState = JSON.parse(JSON.stringify(state));
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
-            updateSyncStatusUI('success');
+            const timeStr = new Date().toLocaleTimeString('pt-BR');
+            updateSyncStatusUI('success', `☁️ Nuvem Atualizada em ${timeStr}`);
             console.log('[Sync] ✅ Dados enviados para a nuvem com sucesso.');
         })
         .catch(err => {
@@ -319,15 +324,20 @@ export function saveFirebaseSettings() {
     window.showToast('Configurações do Firebase salvas!', 'success');
 }
 
-// ─── INDICADOR DE STATUS NO CABEÇALHO ─────────────────────────────────────
-export function updateSyncStatusUI(status) {
+let lastSyncMessage = "";
+
+export function updateSyncStatusUI(status, customMsg = "") {
     const indicator = document.getElementById('cloud-sync-status');
     if (!indicator) return;
 
+    if (customMsg) {
+        lastSyncMessage = customMsg;
+    }
+
     const MAP = {
-        success:  { icon: 'cloud',           color: '#00ff64', title: '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
+        success:  { icon: 'cloud',           color: '#00ff64', title: lastSyncMessage || '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
         syncing:  { icon: 'refresh-cw',       color: '#ffaa00', title: '🔄 Sincronizando com a Nuvem...', spin: true  },
-        error:    { icon: 'alert-triangle',   color: '#ff4d4d', title: '⚠️ Erro de Conexão com a Nuvem', spin: false },
+        error:    { icon: 'alert-triangle',   color: '#ff4d4d', title: lastSyncMessage || '⚠️ Erro de Conexão com a Nuvem', spin: false },
         disabled: { icon: 'cloud-off',        color: 'var(--color-text-muted)', title: 'Sincronização Desativada', spin: false }
     };
 

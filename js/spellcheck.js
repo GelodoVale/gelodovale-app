@@ -162,7 +162,7 @@ function initSpellCheck() {
 
   // Delegação de eventos nos campos editáveis
   const selector = 'input[type=text], input:not([type]), input[type=search], textarea, [contenteditable="true"]';
-  const delay = 300; // debounce
+  const delay = 500; // debounce otimizado de 500ms
   let timer = null;
 
   function evaluate(el) {
@@ -180,7 +180,8 @@ function initSpellCheck() {
     // Limpar pontuação da palavra para checagem
     const cleaned = word.trim().replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'’‘“”]+/g, "").replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’‘“”]+$/g, "");
     
-    if (cleaned && cleaned.length > 1 && !dictionary.check(cleaned)) {
+    // Otimização: ignorar palavras com números (ex: 20kg, d-123) ou excessivamente longas (>35 chars)
+    if (cleaned && cleaned.length > 1 && cleaned.length < 35 && !/\d/.test(cleaned) && !dictionary.check(cleaned)) {
       showTooltip(info, cleaned, el);
     } else {
       hideTooltip();

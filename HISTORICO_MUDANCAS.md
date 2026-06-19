@@ -6,6 +6,14 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v74 (19/06/2026 - Antigravity)
+* **Pacote de Melhorias Arquiteturais e Funcionais (COD: V74-MELHORIAS):**
+  - **Venda "A Prazo" no PDV (`index.html` e `js/pdv.js`):** Inclusão da opção "A Prazo (Carnê)" no seletor de método de pagamento do PDV. Validação preventiva no checkout para exigir a seleção de um cliente cadastrado ao utilizar essa modalidade, exibindo um aviso de aviso (toast warning) caso o cliente não seja informado.
+  - **Criptografia de Senhas (SHA-256) com Migração "On-the-Fly" (`js/auth.js`):** Implementação síncrona do algoritmo de hash SHA-256 e função utilitária `isHashed`. Migração automática e transparente de senhas em texto plano para hashes SHA-256 no momento do login bem-sucedido. Ocultação dos hashes de senha nos campos do modal de edição de usuário (substituindo o preenchimento por um placeholder indicativo e permitindo deixar em branco para manter a senha atual). Atualização da rotina de recuperação da senha do admin e inicialização do administrador padrão para utilizar hashes SHA-256 de forma consistente.
+  - **Otimização do Corretor Ortográfico (`js/spellcheck.js`):** Aumento do debounce de verificação ortográfica para 500ms e introdução de filtros preventivos (rejeitando strings maiores que 35 caracteres ou contendo dígitos numéricos, como "20kg" ou códigos identificadores). Isso reduz drasticamente o processamento inútil no loop do Typo.js, diminuindo o uso de CPU e RAM.
+  - **Indicadores Visuais de Sincronização e Concorrência (`js/sync.js`):** Otimização do componente `#cloud-sync-status` no cabeçalho para exibir dinamicamente o status e o horário exato da última sincronização bem-sucedida, pull de dados da nuvem ou alertas de conflitos de concorrência (ex.: "Dados Locais Preservados contra Concorrência" e "Nuvem tem versão mais recente").
+  - **Versionamento e Testes:** Bump da versão interna para `v74`, Service Worker cache para `gelodovale-v172`, e arquivos com cache-buster em `index.html`.
+
 #### v73 (19/06/2026 - Antigravity)
 * **Correções em App, Comodatos, Rentals e Dashboard (COD: COMP-03):**
   - **WhatsApp de Entregas (`js/app.js`):** Correção do bug de telefone dinâmico recuperado de `state.clients` via `del.clientId` para evitar campos vazios no link do WhatsApp.

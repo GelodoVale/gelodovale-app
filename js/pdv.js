@@ -406,6 +406,12 @@ export function checkoutPDVSale() {
         items[key] = (items[key] || 0) + item.qty;
     });
     
+    // Validar cliente para pagamento A Prazo
+    if (paymentMethod === "A Prazo" && !client) {
+        if (window.showToast) window.showToast("Vendas a prazo requerem a seleção de um cliente cadastrado.", "warning");
+        return;
+    }
+    
     // Validar troco se pago em dinheiro
     if (paymentMethod === "Dinheiro") {
         const cashInput = document.getElementById("pdv-cash-received");

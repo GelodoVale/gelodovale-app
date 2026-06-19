@@ -24,7 +24,7 @@ export function initUserAccessControl() {
             id: "admin",
             username: "admin",
             name: "Administrador",
-            password: state.adminPassword || "1234qwer",
+            password: state.adminPassword || sha256("1234qwer"),
             permissions: {}
         };
         state.users.unshift(adminUser);
@@ -35,8 +35,11 @@ export function initUserAccessControl() {
     adminUser.username = "admin";
     adminUser.name = "Administrador";
     if (!adminUser.password) {
-        adminUser.password = state.adminPassword || "1234qwer";
+        adminUser.password = state.adminPassword || sha256("1234qwer");
     } else {
+        if (!isHashed(adminUser.password)) {
+            adminUser.password = sha256(adminUser.password);
+        }
         state.adminPassword = adminUser.password;
     }
     
@@ -139,7 +142,17 @@ export function loginUser(userId, password) {
         password = pwdEl ? pwdEl.value : "";
     }
     const user = state.users.find(u => u.id === userId);
-    if (user && user.password === password) {
+    const passwordMatch = user ? (isHashed(user.password) ? user.password === sha256(password) : user.password === password) : false;
+    if (user && passwordMatch) {
+        // Migrar senha em texto plano para hash ao logar com sucesso
+        if (!isHashed(user.password)) {
+            user.password = sha256(password);
+            if (user.username === "admin") {
+                state.adminPassword = user.password;
+            }
+            saveState();
+        }
+        
         sessionStorage.setItem("currentUserId", user.id);
         
         // If user is admin, also mark authenticated for settings
@@ -426,7 +439,8 @@ export function openUserModal(userId = "") {
         idInput.value = user.id;
         nameInput.value = user.name;
         usernameInput.value = user.username;
-        passwordInput.value = user.password;
+        passwordInput.value = "";
+        passwordInput.placeholder = "Deixe em branco para manter a atual";
         
         checkboxes.forEach(cb => {
             const permKey = cb.getAttribute("data-perm");
@@ -445,6 +459,7 @@ export function openUserModal(userId = "") {
     } else {
         titleEl.innerText = "Cadastrar Novo Usuário";
         idInput.value = "";
+        passwordInput.placeholder = "Mínimo 4 caracteres";
     }
     
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
@@ -463,7 +478,7 @@ export function saveUser(event) {
     const username = document.getElementById("user-username").value.trim().toLowerCase();
     const password = document.getElementById("user-password").value;
     
-    if (!name || !username || !password) {
+    if (!name || !username || (!id && !password)) {
         window.showToast("Por favor, preencha todos os campos obrigatórios.", "warning");
         return;
     }
@@ -485,17 +500,23 @@ export function saveUser(event) {
         permissions[permKey] = cb.checked;
     });
     
+    const hashedPassword = password ? (isHashed(password) ? password : sha256(password)) : null;
+    
     if (id) {
         const index = (state.users || []).findIndex(u => u.id === id);
         if (index !== -1) {
             if (state.users[index].username === "admin") {
                 state.users[index].name = name;
-                state.users[index].password = password;
-                state.adminPassword = password;
+                if (hashedPassword) {
+                    state.users[index].password = hashedPassword;
+                    state.adminPassword = hashedPassword;
+                }
             } else {
                 state.users[index].name = name;
                 state.users[index].username = username;
-                state.users[index].password = password;
+                if (hashedPassword) {
+                    state.users[index].password = hashedPassword;
+                }
                 state.users[index].permissions = permissions;
             }
         }
@@ -504,7 +525,7 @@ export function saveUser(event) {
             id: "user_" + Date.now(),
             name: name,
             username: username,
-            password: password,
+            password: hashedPassword,
             permissions: permissions
         };
         state.users.push(newUser);
@@ -592,14 +613,14 @@ export function recoverAdminPassword() {
                 id: "admin",
                 username: "admin",
                 name: "Administrador",
-                password: "1234qwer",
+                password: sha256("1234qwer"),
                 permissions: {}
             };
             state.users.unshift(adminUser);
         } else {
-            adminUser.password = "1234qwer";
+            adminUser.password = sha256("1234qwer");
         }
-        state.adminPassword = "1234qwer";
+        state.adminPassword = sha256("1234qwer");
         saveState();
         
         if (window.showToast) {
@@ -661,3 +682,96 @@ window.deleteUser = deleteUser;
 window.toggleSelectAllPermissions = toggleSelectAllPermissions;
 window.recoverAdminPassword = recoverAdminPassword;
 window.clearAppCacheAndReload = clearAppCacheAndReload;
+
+export function sha256(ascii) {
+    function rightRotate(value, amount) {
+        return (value>>>amount) | (value<<(32-amount));
+    }
+    
+    var mathPow = Math.pow;
+    var maxWord = mathPow(2, 32);
+    var lengthProperty = 'length';
+    var i, j;
+
+    var result = '';
+    var words = [];
+    var asciiLength = ascii[lengthProperty];
+    
+    var hash = sha256.h = sha256.h || [];
+    var k = sha256.k = sha256.k || [];
+    var primeCounter = k[lengthProperty];
+
+    var isComposite = {};
+    for (var candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+            for (i = 0; i < 313; i += candidate) {
+                isComposite[i] = 1;
+            }
+            hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
+            k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
+        }
+    }
+    
+    ascii += '\x80';
+    while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+    
+    for (i = 0; i < ascii[lengthProperty]; i++) {
+        j = ascii.charCodeAt(i);
+        if (j >> 8) return;
+        words[i >> 2] |= j << (24 - (i % 4) * 8);
+    }
+    words[words[lengthProperty]] = ((asciiLength >>> 29) & 7);
+    words[words[lengthProperty]] = (asciiLength << 3);
+    
+    var w = [];
+    var hashCopy = hash.slice(0);
+
+    for (var chunkStart = 0; chunkStart < words[lengthProperty]; chunkStart += 16) {
+        var a = hash[0], b = hash[1], c = hash[2], d = hash[3], e = hash[4], f = hash[5], g = hash[6], h = hash[7];
+        
+        for (i = 0; i < 64; i++) {
+            if (i < 16) {
+                w[i] = words[chunkStart + i];
+            } else {
+                var s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+                var s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+                w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+            }
+            
+            var temp1 = (h + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e & f) ^ (~e & g)) + k[i] + w[i]) | 0;
+            var temp2 = ((rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+            
+            h = g;
+            g = f;
+            f = e;
+            e = (d + temp1) | 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (temp1 + temp2) | 0;
+        }
+        
+        hash[0] = (hash[0] + a) | 0;
+        hash[1] = (hash[1] + b) | 0;
+        hash[2] = (hash[2] + c) | 0;
+        hash[3] = (hash[3] + d) | 0;
+        hash[4] = (hash[4] + e) | 0;
+        hash[5] = (hash[5] + f) | 0;
+        hash[6] = (hash[6] + g) | 0;
+        hash[7] = (hash[7] + h) | 0;
+    }
+    
+    for (i = 0; i < 8; i++) {
+        var term = hash[i];
+        hash[i] = hashCopy[i];
+        for (j = 3; j + 1; j--) {
+            var byte = (term >>> (j * 8)) & 255;
+            result += (byte < 16 ? '0' : '') + byte.toString(16);
+        }
+    }
+    return result;
+}
+
+export function isHashed(password) {
+    return typeof password === 'string' && /^[0-9a-f]{64}$/.test(password);
+}
