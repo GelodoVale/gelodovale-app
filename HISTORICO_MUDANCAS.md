@@ -6,6 +6,25 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v73 (19/06/2026 - Antigravity)
+* **Correções em App, Comodatos, Rentals e Dashboard (COD: COMP-03):**
+  - **WhatsApp de Entregas (`js/app.js`):** Correção do bug de telefone dinâmico recuperado de `state.clients` via `del.clientId` para evitar campos vazios no link do WhatsApp.
+  - **Autoria de Notas (`js/app.js` & `js/comodatos.js`):** Substituição de `state.currentUser` (que resetava no sync do Firebase) por `sessionStorage.getItem("currentUserId")` para atribuir corretamente o autor das observações dos clientes.
+  - **Fallback de Faturamento (`js/rentals.js`, `js/comodatos.js` & `js/dashboard.js`):** Correção de fallback incorreto de `totalRevenue` quando igual a zero (cortesias), evitando soma indevida de taxas.
+  - **Auditoria Geral e Versões:** Bumping da build do app para `v73`, Service Worker cache para `gelodovale-v171`, e cache-busters do `index.html` para `v73`.
+
+#### v72 (19/06/2026 - Antigravity)
+* **Correções em Admin e Notificações (COD: COMP-02):**
+  - **Logs de Produção (`js/admin.js`):** Normalizado o tipo de movimentação de saída para `"saida"` (estava `"out"`) e corrigido o mapeamento de campos de movimentação (`quantity`, `balanceAfter`, `observation` em vez de `qty`, `afterStock`, `obs`).
+  - **Estoque Mínimo em Notificações (`js/notifications.js`):** Correção dos nomes de propriedades de estoque mínimo de insumos de `pkg.quantity`/`pkg.minQuantity` para `currentStock`/`minStock`.
+
+#### v71 (19/06/2026 - Antigravity)
+* **Correções de Segurança e Navegação de Notificações (COD: COMP-01):**
+  - **Segurança de Login (`js/auth.js`):** Senha do primeiro reset do administrador ajustada de `"1120M@z@dr1"` para `"1234qwer"`.
+  - **Filtro de Notificações (`js/notifications.js`):** Correção do status de filtro de `'pendente'` para `'pending'`.
+  - **Abas de Notificações (`js/notifications.js`):** Correção das navegações de aluguéis (`'rentals'` -> `'tinas'`), documentos (`'documents'` -> `'documentos'`), e comodatos (para a sub-aba respectiva do painel admin).
+  - **Migração de Versão do Layout (`js/state.js` & `js/layout.js`):** Alinhada a `layoutVersion` em `5` para evitar loops de redefinição de posições.
+
 #### v70 (19/06/2026 - Antigravity)
 * **Correção no Arraste de Widgets e Persistência do Layout (COD: LAYOUT-01):**
   - **Ajustes de Estilos (`styles.css`):** Corrigido o seletor hover `.widget-card:hover` e `.kpi-card:hover` para excluir os estados ativos de layout flutuante (`:not(.layout-floating-active):not(.layout-grid-active)`). Isso impede que a regra `transform: none !important` no hover anule as coordenadas dinâmicas de arraste (`transform: translate(x, y)`), corrigindo a falha em que os widgets ficavam presos ou retornavam à posição inicial ao serem arrastados.
