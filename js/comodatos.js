@@ -747,7 +747,8 @@ export function sendComodatoWhatsAppLink(comId) {
     // Log the WhatsApp send action in the client history notes
     if (client) {
         if (!client.notes) client.notes = [];
-        const authorUser = (state.users && state.currentUser) ? (state.users.find(u => u.id === state.currentUser) || {}).name || 'Admin' : 'Admin';
+        const currentUserId = sessionStorage.getItem("currentUserId");
+        const authorUser = (state.users && currentUserId) ? (state.users.find(u => u.id === currentUserId) || {}).name || 'Admin' : 'Admin';
         client.notes.unshift({
             id: 'n-' + Date.now(),
             text: `💬 Link de assinatura do contrato de comodato enviado por WhatsApp (Freezer: ${comodato.freezerCode})`,
@@ -1596,7 +1597,7 @@ export function updateRentalContractPreview(rentalId) {
     const matchingProd = (state.products || []).find(p => p.id === rental.itemType);
     const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
 
-    const totalGeral = rental.totalRevenue || (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));
+    const totalGeral = rental.totalRevenue !== undefined ? rental.totalRevenue : (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));
 
     const formattedTerms = (rental.rentalTerms || "")
         .replace(/\n/g, '<br>')
@@ -1735,7 +1736,7 @@ export function sendRentalContractWhatsApp() {
     const dataPrevisaoRetirada = rental.expectedReturnDate ? new Date(rental.expectedReturnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '___/___/______';
     const matchingProd = (state.products || []).find(p => p.id === rental.itemType);
     const itemLabel = (matchingProd ? matchingProd.name : rental.itemType) + (rental.tinaColor ? ` (${rental.tinaColor})` : "");
-    const totalGeral = rental.totalRevenue || (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));
+    const totalGeral = rental.totalRevenue !== undefined ? rental.totalRevenue : (rental.rentalFee + (rental.deliveryFee || 0) + (rental.pickupFee || 0));
 
     // Formatar texto de contrato resumido e limpo para WhatsApp
     let text = `❄️ *GELO DO VALE - CONTRATO DE LOCAÇÃO DE EQUIPAMENTO*\n\n`;

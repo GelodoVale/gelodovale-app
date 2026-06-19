@@ -49,7 +49,7 @@ export function renderDashboard() {
         state.rentals.forEach(rent => {
             const rentDate = new Date(rent.deliveryDate);
             if (rentDate.getMonth() === currentMonth && rentDate.getFullYear() === currentYear) {
-                totalRevenueMonth += rent.totalRevenue || ((rent.rentalFee || 0) + (rent.deliveryFee || 0) + (rent.pickupFee || 0) + (rent.extraFee || 0));
+                totalRevenueMonth += rent.totalRevenue !== undefined ? rent.totalRevenue : ((rent.rentalFee || 0) + (rent.deliveryFee || 0) + (rent.pickupFee || 0) + (rent.extraFee || 0));
             }
         });
     }

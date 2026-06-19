@@ -1273,7 +1273,9 @@ export function renderHistorico() {
         }
         
         // Botão WhatsApp de comprovante do histórico
-        const cleanPhone = (del.clientPhone || '').replace(/\D/g, '');
+        const associatedClient = state.clients ? state.clients.find(c => c.id === del.clientId) : null;
+        const rawPhone = associatedClient ? (associatedClient.phone || associatedClient.whatsapp || '') : (del.clientPhone || '');
+        const cleanPhone = rawPhone.replace(/\D/g, '');
         const phoneWithDDI = (cleanPhone.length === 10 || cleanPhone.length === 11) ? '55' + cleanPhone : cleanPhone;
         const waText = encodeURIComponent(
             `*Comprovante de Entrega - Gelo do Vale*\n` +
@@ -3254,7 +3256,8 @@ export function addClientNote(clientId, text) {
     const client = (state.clients || []).find(c => c.id === clientId);
     if (!client || !text.trim()) return;
     if (!client.notes) client.notes = [];
-    const user = (state.users && state.currentUser) ? (state.users.find(u => u.id === state.currentUser) || {}).name || 'Admin' : 'Admin';
+    const currentUserId = sessionStorage.getItem("currentUserId");
+    const user = (state.users && currentUserId) ? (state.users.find(u => u.id === currentUserId) || {}).name || 'Admin' : 'Admin';
     client.notes.unshift({
         id: 'n-' + Date.now(),
         text: text.trim(),

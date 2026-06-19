@@ -75,7 +75,7 @@ export function renderTinas() {
             }
         }
 
-        const totalGeral = r.totalRevenue || ((r.rentalFee || 0) + (r.deliveryFee || 0) + (r.pickupFee || 0));
+        const totalGeral = r.totalRevenue !== undefined ? r.totalRevenue : ((r.rentalFee || 0) + (r.deliveryFee || 0) + (r.pickupFee || 0));
 
         let locationImageSnippet = "";
         if (r.photoRentalLocation) {
