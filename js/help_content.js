@@ -1,6 +1,6 @@
 /**
  * GELCONTROL - Dicionário Central de Ajuda e Tutoriais Contextuais
- * Conteúdo explicativo para abas, sub-abas, modais e painéis operacionais.
+ * Conteúdo explicativo detalhado e específico para cada módulo da fábrica Gelo do Vale.
  */
 
 window.GEL_HELP_DICTIONARY = {
@@ -8,291 +8,323 @@ window.GEL_HELP_DICTIONARY = {
     // ABAS PRINCIPAIS DA SIDEBAR
     // -------------------------------------------------------------
     "dashboard": {
-        title: "Painel Financeiro & Clima",
+        title: "Painel Financeiro & Clima (Cockpit Executivo)",
         badge: "📊 ❓ Entenda o Painel Principal",
         icon: "📊",
-        summary: "Visão geral em tempo real de faturamento, vendas do dia, previsão do tempo e atalhos rápidos.",
-        description: "O Dashboard reúne os principais indicadores da fábrica (KPIs) em um só lugar. Ele mostra o faturamento diário e mensal, total de entregas pendentes, alertas de clientes com estoque baixo e a previsão do tempo local — fundamental para planejar a produção de gelo em dias quentes.",
+        summary: "Cockpit de controle em tempo real: faturamento diário/mensal, monitoramento do clima local, entregas pendentes e atalhos de vendas.",
+        description: "O Dashboard é a central de comando da fábrica de gelo. Ele consolida os Principais Indicadores de Desempenho (KPIs) para a tomada de decisão rápida. Aqui você acompanha em tempo real o faturamento líquido acumulado do dia e do mês, total de fardos comercializados (gelo em cubo 5kg, moído e 20kg), status do caixa, entregas pendentes na rota e a previsão meteorológica de hoje e dos próximos dias — elemento estratégico vital, pois temperaturas acima de 28°C elevam a demanda por gelo em até 50%.",
         steps: [
-            "Acompanhe o faturamento total acumulado no topo da tela.",
-            "Confira a previsão do tempo para antecipar picos de demanda no final de semana.",
-            "Utilize os atalhos rápidos para lançar novas vendas ou cadastrar clientes sem mudar de aba."
+            "<b>1. Acompanhe os Faturamentos no Topo:</b> Os cards superiores destacam o faturamento bruto e líquido do dia, comparado com o mesmo período do mês anterior.",
+            "<b>2. Monitore o Clima Local:</b> O widget de meteorologia consulta o clima em tempo real via Open-Meteo. Se a temperatura subir, prepare a escala de produção dos congeladores com antecedência.",
+            "<b>3. Verifique os Alertas de Estoque e Entregas:</b> A lista central exibe clientes em regime de comodato cujo freezer está com estimativa de estoque abaixo de 20% e pedidos aguardando despacho.",
+            "<b>4. Atalhos de Ação Rápida:</b> Utilize os botões azuis e verdes para lançar 'Novo Pedido', 'Novo Cliente' ou abrir o 'PDV Balcão' diretamente sem precisar navegar pela sidebar."
         ],
         tips: [
-            "💡 Dias com temperatura acima de 28°C costumam aumentar as vendas em até 40%. Prepare o estoque com antecedência!",
-            "⚠️ Fique atento ao indicador de 'Entregas Pendentes' para não atrasar os pedidos dos clientes."
+            "💡 <b>Estratégia de Produção:</b> Dias ensolarados com previsão acima de 28°C exigem abastecimento prévio do galpão. Mantenha pelo menos 500 fardos de 5kg prontos para carregamento rápido nos caminhões.",
+            "⚠️ <b>Entregas Pendentes:</b> Pedidos marcados com relógio amarelo exigem atenção para não estourar a janela de entrega combinada com os estabelecimentos comerciais.",
+            "🔴 <b>Alertas de Fiados:</b> Se o indicador de contas a receber no Dashboard estiver vermelho, consulte a aba de Contas a Receber para disparar lembretes via WhatsApp."
         ]
     },
 
     "pdv": {
-        title: "Frente de Caixa (PDV Balcão)",
+        title: "Frente de Caixa Rápido (PDV Balcão da Fábrica)",
         badge: "🛒 ❓ Entenda o PDV Balcão",
         icon: "🛒",
-        summary: "Ponto de Venda rápido para emitir vendas presenciais no balcão da fábrica com troco e comprovante.",
-        description: "O PDV Balcão é utilizado para registrar vendas diretas na fábrica. Permite adicionar produtos rapidamente ao carrinho, calcular troco em dinheiro, gerar QR Code para pagamento PIX e emitir o comprovante via WhatsApp.",
+        summary: "Ponto de Venda de alta agilidade para vendas presenciais e retiradas no galpão com troco, PIX e comprovante WhatsApp/Cupom.",
+        description: "O PDV Balcão foi desenvolvido para registrar vendas diretas efetuadas na portaria ou galpão da fábrica (retiradas por clientes finais, motoristas autônomos ou compras à vista). Ele possui atalhos visuais para o catálogo de produtos (Gelo Cubo 5kg, Gelo Moído 5kg, Gelo Barra 20kg, Tinas, etc.), cálculo automático de troco em dinheiro, integração com leitor de código de barras, gerador de QR Code PIX estático/dinâmico e emissão de comprovantes formatados para impressoras térmicas (80mm/58mm) ou envio no WhatsApp.",
         steps: [
-            "Clique nos produtos no Catálogo Rápido para adicionar fardos ou unidades ao carrinho.",
-            "Se a venda for para um cliente já cadastrado, selecione o nome dele no campo 'Cliente'. Caso contrário, mantenha '-- Consumidor Final (Balcão) --'.",
-            "Escolha o método de pagamento (PIX, Dinheiro, Cartão ou A Prazo).",
-            "Clique no botão verde 'Concluir Venda Balcão' para finalizar e gerar o comprovante."
+            "<b>1. Adicionar Produtos ao Carrinho:</b> Clique no produto desejado no catálogo rápido ou digite o código de barras. Ajuste a quantidade de fardos/sacos nos botões '+' e '-'.",
+            "<b>2. Identificar o Cliente:</b> Para vendas à vista rápidas, mantenha '-- Consumidor Final (Balcão) --'. Para registrar no histórico de um parceiro ou vender fiado, selecione o cliente cadastrado.",
+            "<b>3. Escolher o Método de Pagamento:</b> Selecione entre Dinheiro, PIX (exibe o QR Code na tela), Cartão de Débito/Crédito ou 'A Prazo (Carnê)'.",
+            "<b>4. Informar o Valor Pago (se Dinheiro):</b> Ao selecionar Dinheiro, digite a nota entregue pelo cliente (ex: R$ 50,00) para o sistema calcular o troco exato em destaque verde.",
+            "<b>5. Finalizar e Emitir Comprovante:</b> Clique no botão verde 'Concluir Venda Balcão'. O sistema dará baixa automática no estoque, atualizará o caixa e exibirá o menu para imprimir cupom térmico ou enviar comprovante no WhatsApp."
         ],
         tips: [
-            "⚠️ **Vendas A Prazo (Carnê):** O pagamento 'A Prazo' exige OBRIGATORIAMENTE que um cliente cadastrado seja selecionado. Vendas para o Consumidor Balcão só podem ser feitas em Dinheiro, Cartão ou PIX.",
-            "💡 Para vendas em dinheiro, você pode digitar o valor pago pelo cliente para o sistema calcular o troco exato na hora."
+            "⚠️ <b>Regra de Negócio para Vendas A Prazo (Fiado):</b> O pagamento 'A Prazo (Carnê)' só é liberado se um CLIENTE CADASTRADO for selecionado e ele possuir limite de crédito ativo. Vendas para o 'Consumidor Final (Balcão)' não permitem parcelamento ou fiado.",
+            "💡 <b>Leitor de Código de Barras:</b> Se você possui um leitor USB/Bluetooth no balcão, basta bipar a embalagem do saco de gelo que ele é inserido instantaneamente no carrinho.",
+            "🖨️ <b>Impressão Térmica:</b> Se sua impressora 80mm estiver configurada, o cupom sai em menos de 2 segundos com o logotipo da Gelo do Vale e a chave PIX."
         ]
     },
 
     "clientes": {
-        title: "Gestão de Clientes & Tabela de Preços",
+        title: "Gestão Completa de Clientes & Tabelas de Preço",
         badge: "👥 ❓ Como Gerenciar Clientes",
         icon: "👥",
-        summary: "Cadastro completo de clientes, controle de saldo devedor, carnê digital e preços personalizados.",
-        description: "Nesta aba você gerencia todos os parceiros comerciais da fábrica (supermercados, distribuidores, quiosques, postos). É possível visualizar o histórico de compras, controlar o carnê de fiados, ajustar preços por tabela e acompanhar a estimativa de estoque do freezer de cada cliente.",
+        summary: "Cadastro unificado de parceiros comerciais, controle do carnê de fiados, limites de crédito e tabelas de preços personalizadas.",
+        description: "Nesta central você administra toda a carteira de parceiros comerciais da Gelo do Vale (supermercados, conveniências, distribuidores, bares, restaurantes, quiosques de praia e postos de combustível). O módulo armazena dados cadastrais completos (Razão Social, CNPJ/CPF, Inscrição Estadual, endereço geo-localizado com mapa, contatos e WhatsApp), histórico financeiro de compras, controle do carnê digital de fiados com parcelas a vencer, capacidade do conservador em comodato e permissão para definir preços diferenciados por fardo para cada cliente.",
         steps: [
-            "Utilize a barra de pesquisa para localizar um cliente por Nome, Razão Social ou Cidade.",
-            "Clique no botão 'Novo Cliente' para cadastrar um novo estabelecimento.",
-            "Clique no card do cliente para abrir a ficha completa: histórico de compras, carnê de débitos e capacidade do freezer.",
-            "Acesse o botão 'Preços do Cliente' para definir valores diferenciados por fardo se necessário."
+            "<b>1. Buscar ou Filtrar Clientes:</b> Digite o Nome Fantasia, Razão Social, Cidade ou Bairro na caixa de pesquisa superior para localizar instantaneamente qualquer cliente.",
+            "<b>2. Cadastrar Novo Cliente:</b> Clique no botão azul 'Novo Cliente', preencha os dados de contato, CNPJ, limite de crédito pré-aprovado e o tamanho do freezer instalado no local.",
+            "<b>3. Abrir Ficha do Cliente:</b> Clique em qualquer card de cliente para acessar o painel 360°: histórico de notas emitidas, extrato do carnê de débitos, posição do freezer e botão de rota no GPS.",
+            "<b>4. Configurar Preço Personalizado:</b> Na ficha do cliente, clique em 'Preços Especiais' para fixar um valor customizado por fardo (ex: R$ 10,00/fardo para grande distribuidor vs R$ 12,00 preço padrão)."
         ],
         tips: [
-            "💡 Clientes com o aviso amarelo '⚠️ Estoque Baixo' precisam de uma visita de reabastecimento em breve.",
-            "🔴 Clientes com o selo 'Devedor' possuem parcelas em aberto no carnê digital."
+            "🔴 <b>Selo 'Inadimplente / Devedor':</b> Clientes com parcelas do carnê vencidas há mais de 5 dias recebem um selo vermelho automático e o sistema bloqueia novas vendas a prazo até a quitação.",
+            "🟡 <b>Alerta 'Estoque Baixo no Freezer':</b> Com base no consumo médio diário registrado nas entregas, o sistema calcula a reserva estimada de sacos no freezer do cliente e avisa quando é hora de enviar o caminhão de reabastecimento.",
+            "📱 <b>Atalho de Conversa WhatsApp:</b> Clique no ícone verde de WhatsApp no card do cliente para abrir a conversa direta com mensagem de saudação pronta."
         ]
     },
 
     "freezers": {
-        title: "Inventário de Equipamentos (Freezers)",
+        title: "Inventário Patrimonial de Equipamentos (Freezers em Comodato)",
         badge: "🧊 ❓ Ajuda com Freezers & Conservadores",
         icon: "🧊",
-        summary: "Controle patrimonial de conservadores e freezers alocados em clientes ou disponíveis no galpão.",
-        description: "Mapeie todo o patrimônio de conservadores de gelo da fábrica. Cadastre o número de patrimônio/tombamento, número de série, marca, capacidade em sacos (ex: 200 fardos) e acompanhe a localização exata de cada equipamento em tempo real.",
+        summary: "Controle patrimonial rigoroso de conservadores horizontais/verticais alocados em clientes ou armazenados na fábrica.",
+        description: "Este módulo realiza a gestão patrimonial de todo o acervo de freezers e conservadores de gelo da fábrica. Para garantir que nenhum equipamento seja perdido ou extraviado durante trocas comerciais, você registra a placa de tombamento (número de patrimônio interno), número de série do fabricante, marca (Metalfrio, Fricon, Gelopar, etc.), voltagem (110V/220V), capacidade em sacos (ex: 150 fardos de 5kg) e a localização exata do equipamento (alocado no cliente X, disponível no depósito ou em manutenção técnica).",
         steps: [
-            "Filtre os equipamentos por status: 'Alocado em Cliente', 'Disponível na Fábrica' ou 'Em Manutenção'.",
-            "Para alocar um freezer novo, clique em 'Novo Equipamento', preencha a identificação e escolha o cliente de destino.",
-            "Clique no card do freezer para ver a data da última manutenção preventiva e o tempo de uso."
+            "<b>1. Filtrar por Status Patrimonial:</b> Utilize as abas superiores para visualizar apenas equipamentos 'Alocados em Cliente', 'Disponíveis no Galpão' ou 'Em Manutenção'.",
+            "<b>2. Cadastrar Novo Equipamento:</b> Clique em 'Novo Equipamento', insira a etiqueta de tombamento (ex: `FRZ-0042`), número de série da fábrica, capacidade e fotos do aparelho.",
+            "<b>3. Alocar ou Transferir Equipamento:</b> Na lista de freezers disponíveis, clique em 'Alocar em Cliente', selecione o estabelecimento de destino e confirme o termo de comodato.",
+            "<b>4. Registrar Manutenção Preventiva:</b> Clique na engrenagem do card para lançar trocas de borracha, carga de gás, motor ou limpeza técnica, mantendo o histórico de conservação."
         ],
         tips: [
-            "💡 Manter os registros de tombamento atualizados evita perdas de patrimônio durante trocas de clientes.",
-            "⚠️ Equipamentos em manutenção exibem um alerta para que a equipe técnica providencie o reparo."
+            "💡 <b>Identificação Visual QR Code:</b> O sistema permite gerar e imprimir uma etiqueta QR Code para colar no freezer. Ao escanear o código com a câmera do celular, o entregador abre a ficha do equipamento na hora.",
+            "⚠️ <b>Controle de Garantia e ROI:</b> Manter a data de compra e nota fiscal cadastradas permite acionar a garantia do fabricante em caso de falha no compressor.",
+            "📊 <b>Relatório de Giro Mínimo:</b> Freezers que vendem menos de 30 fardos por mês acendem um alerta para que a equipe comercial avalie a retirada ou recolocação do equipamento."
         ]
     },
 
     "rentals": {
-        title: "Aluguel de Equipamentos (Tinas & Mesas)",
+        title: "Aluguel de Equipamentos (Tinas Térmicas & Mobiliário para Eventos)",
         badge: "🏕️ ❓ Ajuda com Aluguel de Tinas",
         icon: "🏕️",
-        summary: "Locação de tinas térmicas, caixas térmicas e mesas para eventos, festas e feiras locais.",
-        description: "Controle o faturamento e a entrega de tinas térmicas locadas temporariamente para eventos. Registre a data de retirada, previsão de devolução, caução de garantia e valor cobrado por diária.",
+        summary: "Gestão comercial de locações temporárias de tinas térmicas de 360L, caixas isotérmicas e kits de mesas para festas e eventos.",
+        description: "Controle as locações de tinas térmicas (tinas de 360 litros em cores variadas para bebidas), caixas térmicas e conjuntos de mesas e cadeiras alugados para eventos corporativos, casamentos, shows e festas particulares. O módulo registra a data e hora de retirada, prazo limite de devolução, valor da diária, caução de garantia retida e o contrato digital de locação.",
         steps: [
-            "Clique em 'Novo Aluguel de Tina/Mesa' para abrir o formulário.",
-            "Informe o nome do locatário, telefone, quantidade de tinas e a data limite de devolução.",
-            "Ao receber a tina de volta na fábrica, clique em 'Registrar Devolução' para liberar o equipamento e fechar a locação."
+            "<b>1. Registrar Nova Locação:</b> Clique em 'Novo Aluguel de Tina/Mesa', selecione ou digite o nome do locatário, CPF/Telefone e endereço do evento.",
+            "<b>2. Selecionar Equipamentos e Período:</b> Marque quantas tinas (ex: 2 Tinas Azuis 360L) e jogos de mesas estão sendo entregues, definindo as datas de saída e retorno.",
+            "<b>3. Registrar Caução e Pagamento:</b> Insira o valor cobrado pela diária e o valor retido como garantia (caução em dinheiro ou PIX).",
+            "<b>4. Dar Baixa na Devolução:</b> Quando o cliente devolver os equipamentos no galpão, localize o contrato e clique em 'Registrar Devolução'. Confira o estado das peças e libere o estorno da caução."
         ],
         tips: [
-            "⚠️ Tinas não devolvidas na data prevista são destacadas em vermelho como 'Atrasadas' no painel.",
-            "💡 Sempre confirme o estado físico da tina no momento da devolução antes de restituir o valor da caução."
+            "⚠️ <b>Alertas de Atraso na Devolução:</b> Tinas não devolvidas no dia combinado ficam destacadas em vermelho como 'ATRASADA' para que a equipe entre em contato via telefone ou WhatsApp.",
+            "💡 <b>Venda Casada de Gelo:</b> Aproveite o lançamento do aluguel da tina para incluir os fardos de gelo de 5kg e 20kg necessários para abastecê-la, gerando uma venda completa no mesmo recibo."
         ]
     },
 
     "recibos": {
-        title: "Recibos & Orçamentos (Documentos)",
+        title: "Recibos, Orçamentos & Comprovantes Formais",
         badge: "📜 ❓ Como Emitir Recibos & Orçamentos",
         icon: "📜",
-        summary: "Gerador instantâneo de comprovantes formais, recibos de pagamento e orçamentos em PDF.",
-        description: "Emita recibos timbrados e orçamentos profissionais para clientes empresariais ou eventos que exigem comprovação formal. O documento é gerado em PDF com o logotipo da Gelo do Vale e pode ser compartilhado por WhatsApp ou impresso.",
+        summary: "Gerador de documentos timbrados em PDF: recibos de quitação de pagamento, comprovantes de entrega e orçamentos comerciais.",
+        description: "Ferramenta para emissão de documentos formais em PDF com o cabeçalho timbrado oficial da Gelo do Vale. Ideal para atender empresas, órgãos públicos, condomínios ou eventos que exigem prestação de contas detalhada. É possível emitir Recibos de Pagamento, Orçamentos Comerciais válidos por X dias e Comprovantes de Entrega com discriminação de itens, valores unitários, impostos e assinatura.",
         steps: [
-            "Escolha o tipo de documento: 'Recibo de Pagamento' ou 'Orçamento Comercial'.",
-            "Selecione o cliente desejado ou preencha os dados avulsos do recebedor.",
-            "Insira os itens, quantidades e valores discriminados.",
-            "Clique em 'Gerar Documento (PDF)' para visualizar ou compartilhar no WhatsApp."
+            "<b>1. Selecionar o Tipo de Documento:</b> Escolha no menu se deseja emitir um 'Recibo de Pagamento', 'Orçamento Comercial' ou 'Comprovante de Entrega'.",
+            "<b>2. Preencher Dados do Destinatário:</b> Selecione um cliente da lista cadastrada ou digite manualmente os dados de um recebedor avulso (Nome, CPF/CNPJ, Cidade).",
+            "<b>3. Discriminar Itens e Valores:</b> Adicione as linhas de produto (ex: 50 Fardos de Gelo Cubo 5kg a R$ 12,00 = R$ 600,00) e desconto se houver.",
+            "<b>4. Gerar e Compartilhar PDF:</b> Clique em 'Gerar Documento (PDF)'. O sistema exibirá o documento formatado na tela com botões para baixar em PDF, imprimir ou disparar o PDF via WhatsApp."
         ],
         tips: [
-            "💡 Todos os orçamentos gerados ficam salvos no histórico e podem ser convertidos em pedido real com apenas 1 clique."
+            "💡 <b>Conversão Instantânea de Orçamento em Pedido:</b> Todos os orçamentos emitidos ficam salvos na aba. Quando o cliente aprovar o orçamento, basta clicar em 'Converter em Pedido' para gerar a entrega sem re-digitar nada!"
         ]
     },
 
     "pedidos": {
-        title: "Pedidos Pendentes & Solicitações",
+        title: "Central de Pedidos Pendentes & Programação",
         badge: "📦 ❓ Como Gerenciar Pedidos Pendentes",
         icon: "📦",
-        summary: "Central de pedidos recebidos via WhatsApp, formulário web ou agendados pela equipe de vendas.",
-        description: "Acompanhe a fila de solicitações que aguardam separação ou envio para a rota de entregas. Aqui você pode aprovar pedidos, ajustar quantidades e encaminhar para a folha de carga do motorista.",
+        summary: "Fila de recepção e triagem de pedidos originados via WhatsApp, catálogo web ou chamados da equipe de vendas.",
+        description: "Centraliza todas as solicitações de compra de gelo que entram no sistema e aguardam separação de estoque ou inclusão no roteiro dos motoristas. Permite revisar pedidos recebidos, ajustar quantidades conforme a disponibilidade dos congeladores, aprovar solicitações e despachar a ordem de carregamento diretamente para os caminhões de rota.",
         steps: [
-            "Confira os novos pedidos na lista por ordem de prioridade/horário.",
-            "Clique em 'Aprovar Pedido' para confirmar o envio.",
-            "Caso o cliente deseje alterar a quantidade de fardos, clique em 'Editar' antes de liberar para rota."
+            "<b>1. Monitorar Pedidos Recebidos:</b> Acompanhe a lista de pedidos organizados por ordem cronológica e nível de urgência.",
+            "<b>2. Conferir e Editar Detalhes:</b> Clique sobre um pedido pendente para conferir o endereço de entrega, itens solicitados, forma de pagamento e observações do cliente.",
+            "<b>3. Aprovar e Enviar para Rota:</b> Clique no botão verde 'Aprovar Pedido' para confirmar a solicitação. O pedido será transferido automaticamente para a aba de 'Acerto de Carga & Viagem'."
         ],
         tips: [
-            "💡 Pedidos aprovados são enviados automaticamente para a aba de 'Acerto de Carga & Viagem'."
+            "💡 <b>Notificação Automática ao Cliente:</b> Ao clicar em 'Aprovar Pedido', o sistema pode disparar um aviso automático no WhatsApp do cliente informando que o pedido entrou na fila de entrega do motorista."
         ]
     },
 
     "historico": {
-        title: "Histórico de Entregas & Rotas",
+        title: "Histórico Geral de Entregas & Auditoria de Rotas",
         badge: "🚚 ❓ Entenda o Histórico de Entregas",
         icon: "🚚",
-        summary: "Registro completo de todas as entregas concluídas, rotas finalizadas e comprovantes digitais.",
-        description: "Consulte o histórico retroativo de todas as rotas efetuadas pela frota. Filtre por data, entregador, cliente ou status de pagamento para auditorias e acertos de contas.",
+        summary: "Arquivo histórico e auditável de todas as notas, entregas concluídas, comprovantes e fechamentos efetuados no sistema.",
+        description: "Módulo de consulta retroativa para conciliação financeira e conferência de entregas passadas. Permite pesquisar qualquer entrega efetuada pela fábrica por período, motorista, cliente, número do pedido ou status financeiro (pago em dinheiro, PIX, cartão ou lançado no carnê de fiados).",
         steps: [
-            "Selecione o intervalo de datas desejado (ex: Hoje, Esta Semana, Este Mês).",
-            "Utilize a caixa de busca para pesquisar o nome de um cliente ou código da entrega.",
-            "Clique em uma entrega para ver os detalhes: horário de chegada, fardos entregues e responsável pelo recebimento."
+            "<b>1. Definir Período de Busca:</b> Selecione o intervalo no filtro de datas (Hoje, Esta Semana, Este Mês ou Seleção Personalizada).",
+            "<b>2. Filtrar por Motorista ou Cliente:</b> Utilize os menus suspensos para isolar as entregas efetuadas por um motorista específico ou para um determinado cliente.",
+            "<b>3. Visualizar Ficha da Entrega:</b> Clique na linha da entrega para abrir o detalhamento: horário exato de conclusão, foto do comprovante assinado e forma de pagamento utilizada.",
+            "<b>4. Re-emitir Comprovante:</b> Se o cliente solicitar a segunda via de um comprovante passado, clique no botão 'Enviar 2ª Via WhatsApp'."
         ],
         tips: [
-            "💡 Você pode re-emitir o comprovante de qualquer entrega passada diretamente por esta tela."
+            "💡 <b>Exportação de Dados:</b> Você pode exportar o histórico filtrado para relatórios em planilha Excel ou PDF para entregar ao departamento de contabilidade."
         ]
     },
 
     // -------------------------------------------------------------
     // SUB-ABAS DO PAINEL ADMINISTRATIVO (CONFIGURAÇÕES & PREÇOS)
     // -------------------------------------------------------------
-    "viagem": {
-        title: "Acerto de Viagem & Fechamento de Carga",
-        badge: "📋 ❓ Como Fazer Acerto de Carga",
-        icon: "📋",
-        summary: "Fechamento diário da rota do caminhão: conferência de sacos carregados, devolvidos e acerto financeiro.",
-        description: "Esta tela é usada ao final da rota de entregas para auditar o caminhão. Compara a quantidade de fardos de gelo que saíram da fábrica com as vendas efetuadas no aplicativo e o estoque retornado no veículo, calculando eventuais divergências e a comissão do motorista.",
+    "precos": {
+        title: "Tabela Mestra de Preços & Descontos por Volume",
+        badge: "🏷️ ❓ Configurar Tabela Mestra de Preços",
+        icon: "🏷️",
+        summary: "Definição dos preços base da fábrica para sacos de gelo em cubo 5kg, moído 5kg, 20kg e promoções de atacado.",
+        description: "Esta sub-aba gerencia a tabela geral de preços praticada pela Gelo do Vale no balcão e nas entregas padrão. Você define os preços de venda no varejo e atacado para cada produto do catálogo (Gelo Cubo 5kg, Gelo Moído 5kg, Gelo Barra 20kg, Tinas, etc.), margens de lucro esperadas e regras de desconto progressivo por quantidade de fardos comprados.",
         steps: [
-            "Selecione o Motorista/Entregador responsável pela viagem.",
-            "Confira os fardos de saída (carregados) e informe a quantidade de fardos que retornaram no caminhão.",
-            "Digite o valor em dinheiro vivo entregue pelo motorista na tesouraria.",
-            "Insira as despesas da viagem (combustível, alimentação, pedágio).",
-            "Verifique o resultado da auditoria: se houver divergência, o sistema alertará na cor amarela/vermelha."
+            "<b>1. Localizar o Produto:</b> Encontre o item desejado na lista da Tabela Mestra de Preços.",
+            "<b>2. Ajustar Preço Base:</b> Digite o novo preço de venda unitário no campo correspondente (ex: R$ 12,00 por fardo de 5kg).",
+            "<b>3. Configurar Faixas de Desconto:</b> Defina preços reduzidos para compras em lote (ex: acima de 50 fardos = R$ 10,50 / acima de 100 fardos = R$ 9,50).",
+            "<b>4. Salvar Tabela:</b> Clique no botão verde 'Salvar Alterações de Preço' para atualizar a tabela em todo o sistema (PDV Balcão e Pedidos de Rota)."
         ],
         tips: [
-            "💡 O sistema calcula o custo por KM rodado e o lucro líquido exato de cada viagem!",
-            "⚠️ Sempre confira as notas de combustível antes de fechar o acerto do motorista."
+            "⚠️ <b>Impacto Imediato:</b> A alteração na Tabela Mestra atualiza instantaneamente o PDV Balcão para todas as novas vendas. Clientes que possuem 'Preço Especial Personalizado' manterão a sua tabela própria."
+        ]
+    },
+
+    "viagem": {
+        title: "Acerto de Viagem, Fechamento de Carga & Prestação de Contas",
+        badge: "📋 ❓ Como Fazer Acerto de Carga",
+        icon: "📋",
+        summary: "Auditoria diária de acerto de contas do caminhão: conferência de fardos carregados, devolvidos, despesas e valor em dinheiro entregue na tesouraria.",
+        description: "Ferramenta essencial para o encerramento do dia de trabalho dos motoristas e entregadores. O acerto de viagem faz o cruzamento exato entre a carga de gelo que saiu do galpão no início do turno, o volume total de entregas confirmadas no aplicativo pelo entregador, os fardos não vendidos que retornaram no baú do caminhão e o dinheiro vivo/comprovantes PIX recolhidos na rota. O sistema calcula automaticamente se houve sobra, furo de carga (perda ou desvio de fardos), custo com combustível/pedágios e a comissão a ser paga ao motorista.",
+        steps: [
+            "<b>1. Selecionar a Rota / Motorista:</b> Escolha o nome do entregador e a data da viagem que será prestada conta.",
+            "<b>2. Informar a Carga Inicial e Retorno:</b> Insira o total de fardos carregados no caminhão na saída da fábrica (ex: 300 fardos) e o total de fardos que sobraram no baú na volta (ex: 20 fardos).",
+            "<b>3. Conferir Vendas do Sistema:</b> O aplicativo soma automaticamente os fardos faturados nas entregas concluídas pelo aplicativo (ex: 280 fardos).",
+            "<b>4. Lançar Valores em Dinheiro Vivo:</b> Digite o montante de dinheiro em cédulas entregue pelo motorista na tesouraria da fábrica.",
+            "<b>5. Registrar Despesas da Rota:</b> Insira gastos comprovados com notas fiscais de combustível, pedágios ou alimentação do ajudante.",
+            "<b>6. Finalizar Acerto:</b> O painel exibirá o resultado em verde (Acerto Perfeito sem Divergência) ou em amarelo/vermelho se houver diferença de dinheiro ou faltar sacos de gelo."
+        ],
+        tips: [
+            "💡 <b>Cálculo de Desperdício / Derretimento:</b> Em dias de calor extremo, é possível registrar uma margem técnica de perda por derretimento no baú para não penalizar o motorista indevidamente.",
+            "⚠️ <b>Furo de Carga:</b> Se o saldo final indicar diferença de fardos não justificadas, o sistema permite lançar o valor correspondente como débito na folha do entregador."
         ]
     },
 
     "insumos": {
-        title: "Insumos & Estoque de Matéria-Prima",
+        title: "Estoque de Insumos & Matéria-Prima da Fábrica",
         badge: "🏭 ❓ Como Controlar Insumos da Fábrica",
         icon: "🏭",
-        summary: "Gestão do estoque interno de sacos plásticos, fechos/arames, xaropes e componentes de embalagem.",
-        description: "Controle a matéria-prima usada na produção de gelo em cubo, triturado e saborizado. Acompanhe a quantidade disponível de embalagens de 2kg, 5kg e 20kg e receba alertas quando precisar comprar mais insumos.",
+        summary: "Gestão do estoque de embalagens plásticas (sacos 2kg, 5kg, 20kg), fechos metálicos, bobinas e insumos para gelo saborizado.",
+        description: "Este módulo controla todo o inventário de materiais necessários para empacotar e produzir o gelo na fábrica. Você acompanha o saldo em estoque de bobinas plásticas, sacos impressos de 2kg, 5kg e 20kg, fechos/arames de selagem e essências para gelo saborizado (coco, limão, maracujá). Ao lançar os custos de aquisição dessas embalagens, o sistema calcula o custo exato de produção de cada fardo para exibir sua margem de lucro real.",
         steps: [
-            "Visualize a quantidade atual de cada insumo no estoque da fábrica.",
-            "Ao receber uma nova compra de embalagens do fornecedor, clique em 'Dar Entrada de Insumos'.",
-            "Defina a quantidade mínima de alerta para o sistema avisar quando o estoque de sacos estiver acabando."
+            "<b>1. Verificar Saldos Atuais:</b> Acompanhe a quantidade disponível de cada insumo no almoxarifado da fábrica.",
+            "<b>2. Dar Entrada de Compra de Insumos:</b> Ao receber um lote de sacos plásticos do fornecedor, clique em 'Dar Entrada de Insumos', digite a quantidade recebida e o valor pago na nota fiscal.",
+            "<b>3. Ajustar Estoque Mínimo de Alerta:</b> Configure a quantidade limite de segurança (ex: aviso quando restarem menos de 2.000 sacos de 5kg) para o sistema alertar a necessidade de nova compra."
         ],
         tips: [
-            "💡 Cadastrar o custo unitário dos sacos plásticos ajuda o sistema a calcular a margem de lucro exata de cada fardo produzido!"
+            "💡 <b>Cálculo da Margem de Lucro Real:</b> Mantenha o custo unitário dos sacos sempre atualizado para que o Dashboard calcule a rentabilidade exata por fardo produzido!"
         ]
     },
 
     "rentabilidade": {
-        title: "Rentabilidade de Freezers & ROI",
+        title: "Análise de Rentabilidade de Freezers & ROI por Cliente",
         badge: "📈 ❓ Como Analisar o ROI dos Freezers",
         icon: "📈",
-        summary: "Análise de retorno financeiro por conservador alocado: faturamento por cliente x custo do equipamento.",
-        description: "Descubra quais clientes oferecem o melhor retorno sobre o investimento (ROI) para os freezers instalados em regime de comodato. O relatório compara o custo do equipamento com a média mensal de fardos comprados pelo cliente.",
+        summary: "Relatório de inteligência comercial que analisa a taxa de giro e o retorno sobre o investimento de cada freezer alocado em clientes.",
+        description: "Módulo estratégico para avaliar se a alocação de um freezer em determinado ponto comercial é vantajosa para a fábrica. O relatório cruza o custo de aquisição e amortização do equipamento (freezer conservador) com o volume mensal de fardos comprados pelo cliente. Locais com alto giro garantem rápida recuperação do investimento (ROI elevado), enquanto pontos fracos consomem energia e patrimônio sem dar o retorno esperado.",
         steps: [
-            "Observe a lista de clientes com equipamentos alocados.",
-            "Confira a taxa de giro de fardos por mês.",
-            "Identifique pontos comerciais com baixo desempenho para remanejar o freezer para outro cliente mais rentável."
+            "<b>1. Analisar a Tabela de Giro por Cliente:</b> Consulte a lista de parceiros comerciais que possuem freezers de propriedade da fábrica.",
+            "<b>2. Verificar o Volume Mensal Vendido:</b> Acompanhe a média de fardos consumidos por mês por cada equipamento.",
+            "<b>3. Identificar Equipamentos Sob-aproveitados:</b> Filtre clientes marcados com o indicador vermelho de 'Baixo Desempenho' (giro inferior à meta de viabilidade de 30 fardos/mês).",
+            "<b>4. Tomar Ação Comercial:</b> Decida entre realizar um trabalho de incentivo de vendas no cliente ou solicitar a recolocação do freezer para um estabelecimento com maior potencial de vendas."
         ],
         tips: [
-            "💡 Um freezer com menos de 30 fardos vendidos por mês pode estar dando prejuízo. Avalie uma conversa comercial com o cliente!"
+            "💡 <b>Remanejamento Inteligente:</b> Retirar um freezer ocioso de um bar pequeno e instalá-lo em um posto de combustível de grande movimento pode aumentar o faturamento do equipamento em até 300%!"
         ]
     },
 
     "contas_receber": {
-        title: "Contas a Receber & Gestão de Fiados",
+        title: "Contas a Receber, Fiados & Cobrança Automática WhatsApp",
         badge: "💳 ❓ Como Gerenciar Contas a Receber",
         icon: "💳",
-        summary: "Painel financeiro de parcelas pendentes do carnê, cobrança por WhatsApp e quitação de débitos.",
-        description: "Centralize todas as contas a receber da fábrica. Registre recebimentos em dinheiro ou PIX, emita relatórios de cobrança e envie lembretes amigáveis de pagamento diretamente no WhatsApp dos clientes inadimplentes.",
+        summary: "Gestão financeira de duplicatas a receber, parcelas do carnê de fiados, baixa de notas e cobrança facilitada por PIX no WhatsApp.",
+        description: "Painel de controle financeiro para acompanhamento e liquidação de todas as vendas realizadas a prazo ou com pagamento pendente. Permite filtrar títulos vencidos ou a vencer, dar baixa total ou parcial de recebimentos em Dinheiro, PIX ou Cartão, gerar a chave PIX Copia e Cola para pagamento imediato e disparar mensagens de cobrança amigáveis e formatadas diretamente no WhatsApp do cliente.",
         steps: [
-            "Filtre os títulos por status: 'Pendentes', 'Vencidos' ou 'Quitados'.",
-            "Para dar baixa em um pagamento recebido, localize o cliente e clique no botão verde 'Receber'.",
-            "Digite o valor pago, escolha a forma de recebimento (Dinheiro/PIX/Cartão) e confirme.",
-            "Clique no botão 'Cobrar via WhatsApp' para enviar uma mensagem formatada com a chave PIX e o saldo pendente."
+            "<b>1. Filtrar Títulos por Status:</b> Alterne entre as abas 'Todas as Contas', 'Vencidas (Inadimplentes)', 'A Vencer' e 'Quitadas'.",
+            "<b>2. Localizar o Débito do Cliente:</b> Digite o nome do cliente na caixa de busca para visualizar todas as parcelas em aberto e o valor total acumulado.",
+            "<b>3. Registrar Recebimento / Dar Baixa:</b> Clique no botão verde 'Receber' na linha do título. Escolha a forma de pagamento recebida (Dinheiro, PIX ou Cartão), digite o valor pago e confirme a quitação.",
+            "<b>4. Enviar Lembrete de Cobrança no WhatsApp:</b> Clique no botão azul 'Cobrar via WhatsApp'. O sistema abrirá a mensagem preenchida com a discriminação das notas vencidas, o valor total e a chave PIX da fábrica pronta para ser copiada pelo cliente."
         ],
         tips: [
-            "💡 O botão de cobrança no WhatsApp gera automaticamente a chave PIX Copia e Cola para facilitar o pagamento do cliente."
+            "💡 <b>Cobrança Facilitada por PIX:</b> A mensagem de WhatsApp gerada inclui automaticamente a chave PIX oficial da fábrica, permitindo que o cliente Quite a dívida em segundos sem precisar ir até a fábrica.",
+            "⚠️ <b>Baixa Parcial de Pagamento:</b> Se o cliente pagar apenas uma parte da dívida, digite o valor parcial no campo de baixa. O sistema abaterá a quantia e manterá o saldo restante pendente no carnê."
         ]
     },
 
     "integracoes": {
-        title: "Integrações (PIX & WhatsApp API)",
+        title: "Integração de Pagamentos (PIX) & Gateway de Comunicação (WhatsApp API)",
         badge: "⚙️ ❓ Como Configurar PIX e WhatsApp",
         icon: "⚙️",
-        summary: "Configuração da Chave PIX estática/dinâmica e gateway de envio de mensagens do WhatsApp.",
-        description: "Configure os dados financeiros e de comunicação da fábrica. Defina a chave PIX que aparece nos recibos e QR Codes offline e conecte sua API do WhatsApp (Z-API, Evolution API ou Webhook) para disparos automáticos.",
+        summary: "Configuração dos dados bancários da chave PIX oficial e integração com servidores de API para envio automático de comprovantes via WhatsApp.",
+        description: "Central de conexão técnica do aplicativo com serviços externos de pagamento e mensagens. Nesta tela você cadastra a Chave PIX oficial da Gelo do Vale (CNPJ, Celular, E-mail ou Chave Aleatória) exibida nos comprovantes e QR Codes do balcão. Além disso, permite conectar a conta da fábrica a provedores de API do WhatsApp (como Z-API, Evolution API ou Webhooks) para que o aplicativo consiga enviar comprovantes de venda e lembretes de cobrança em segundo plano sem depender da abertura manual do WhatsApp Web.",
         steps: [
-            "Insira sua chave PIX principal (E-mail, CNPJ, Celular ou Aleatória) e clique em 'Salvar Chave PIX'.",
-            "Para ativar o envio de recibos no WhatsApp sem abrir a tela do celular, selecione o provedor de API e insira o Token da conta.",
-            "Teste o envio utilizando o botão 'Enviar Mensagem de Teste'."
+            "<b>1. Configurar Chave PIX Principal:</b> Escolha o tipo de chave (CNPJ, Telefone, E-mail ou EVP), digite o código da chave e clique em 'Salvar Chave PIX'.",
+            "<b>2. Selecionar Provedor de WhatsApp API:</b> Escolha o gateway utilizado pela fábrica no menu (Z-API, Evolution API, Webhook Próprio ou Modo Manual via Navegador).",
+            "<b>3. Inserir Instância e Token de Acesso:</b> Cole o Token da API e o ID da instância fornecidos pelo seu provedor de WhatsApp.",
+            "<b>4. Testar Conexão:</b> Clique no botão 'Enviar Mensagem de Teste' para receber uma confirmação no seu número de celular de que a integração está ativa e operacional."
         ],
         tips: [
-            "💡 Utilizar a chave PIX correta garante que os QR Codes gerados no PDV recebam o pagamento diretamente na conta da fábrica."
+            "💡 <b>Chave PIX Correta:</b> Certifique-se de digitar a Chave PIX sem espaços ou caracteres inválidos para evitar rejeição no momento do cliente realizar a transferência bancária."
         ]
     },
 
     "whatsapp_central": {
-        title: "Central do WhatsApp & Modelos de Mensagem",
+        title: "Central de Modelos de Mensagem (Templates para WhatsApp)",
         badge: "💬 ❓ Como Usar os Templates de Mensagem",
         icon: "💬",
-        summary: "Personalização de modelos de texto para comprovantes, lembretes de cobrança, aniversários e visitas.",
-        description: "Cadastre e edite os modelos de mensagens (templates) disparados pelo sistema. Você pode personalizar o texto e utilizar variáveis automáticas como `{nome}`, `{valor}`, `{data}` e `{link}`.",
+        summary: "Editor e personalizador de textos pré-formatados para envio de recibos, avisos de cobrança, confirmação de pedido e felicitações.",
+        description: "Permite criar, editar e personalizar os textos de todas as mensagens automáticas disparadas pela Gelo do Vale para os clientes via WhatsApp. É possível utilizar 'Variáveis Dinâmicas' entre chaves — como `{nome}`, `{valor}`, `{data}`, `{itens}` e `{chave_pix}` — que são substituídas automaticamente pelo sistema com os dados reais do cliente no momento do envio.",
         steps: [
-            "Selecione o tipo de mensagem no menu superior (ex: 'Comprovante de Venda', 'Lembrete de Dívida').",
-            "Edite o texto do modelo mantendo as variáveis entre chaves `{...}`.",
-            "Observe a pré-visualização em tempo real do texto formatado.",
-            "Clique em 'Salvar Template' para atualizar."
+            "<b>1. Selecionar o Tipo de Template:</b> Escolha o modelo que deseja editar no menu superior (ex: 'Comprovante de Venda Balcão', 'Lembrete de Cobrança de Fiado', 'Aviso de Saída do Motorista').",
+            "<b>2. Editar o Texto da Mensagem:</b> Escreva a mensagem utilizando formatações do WhatsApp (asteriscos para *negrito*, underline para _itálico_) e insira as variáveis necessárias.",
+            "<b>3. Visualizar a Pré-Visualização:</b> Observe o quadro de pré-visualização ao lado para ver como a mensagem será exibida na tela do cliente.",
+            "<b>4. Salvar Alterações:</b> Clique no botão verde 'Salvar Template' para atualizar o modelo de texto."
         ],
         tips: [
-            "💡 Mensagens com o nome do cliente `{nome}` e a saudação correta têm maior taxa de resposta no WhatsApp!"
+            "💡 <b>Exemplo de Uso de Variáveis:</b> Um texto como `Olá {nome}, seu pedido no valor de R$ {valor} saiu para entrega!` será enviado para o cliente João como `Olá João, seu pedido no valor de R$ 150,00 saiu para entrega!`."
         ]
     },
 
     "seguranca": {
-        title: "Segurança, Backup & Versão dos Dados",
+        title: "Segurança, Backup dos Dados & Controle de Versão",
         badge: "🛡️ ❓ Entenda Backup e Versão",
         icon: "🛡️",
-        summary: "Gerenciamento da versão dos dados, backups automáticos no OneDrive e sincronização com a nuvem.",
-        description: "Proteja as informações financeiras e operacionais da fábrica. Faça backups manuais em JSON, configure a frequência de download automático e restaure pontos de restauração em caso de troca de computador.",
+        summary: "Gerenciamento de cópias de segurança (backups em arquivo JSON e OneDrive), restauração do banco de dados e controle de versão.",
+        description: "Central de proteção dos dados operacionais da fábrica. O GelControl opera com um modelo de alta redundância de dados: salva as informações instantaneamente no armazenamento do navegador (LocalStorage/IndexedDB), mantém cópia sincronizada no arquivo do OneDrive no computador e realiza sincronização em tempo real na nuvem (Firebase). Nesta tela você pode fazer downloads de backups manuais em arquivo `.json`, restaurar dados antigos ou atualizar a versão do banco de dados em caso de manutenção do sistema.",
         steps: [
-            "Verifique o status do 'Backup Local OneDrive' no topo do painel.",
-            "Para salvar uma cópia de segurança no seu computador agora, clique em 'Gravar no OneDrive (Salvar)'.",
-            "Para atualizar a versão do banco de dados (ex: `v4.4`), digite a nova versão no campo correspondente e clique em 'Salvar Configurações'."
+            "<b>1. Verificar Status do OneDrive:</b> Observe o indicador no topo para confirmar que o salvamento no arquivo do OneDrive está ativo.",
+            "<b>2. Fazer Backup Manual (Download JSON):</b> Clique no botão 'Fazer Download do Backup (JSON)' para salvar um arquivo de segurança no seu computador ou pendrive.",
+            "<b>3. Restaurar um Backup Antigo:</b> Em caso de troca de computador, clique em 'Restaurar Arquivo de Backup', selecione o arquivo `.json` salvo anteriormente e confirme a restauração dos dados.",
+            "<b>4. Ajustar Versão do Banco:</b> Caso seja necessário liberar compatibilidade com versões antigas ou ajustar permissões, altere o número da versão e clique em 'Salvar Configurações'."
         ],
         tips: [
-            "🛡️ O GelControl possui salvamento automático redundante no navegador, no OneDrive e no banco de dados em tempo real (Firebase)."
+            "🛡️ <b>Segurança Máxima:</b> Recomenda-se realizar o download do arquivo de backup em JSON no último dia de cada mês e armazená-lo em um pendrive ou e-mail de segurança."
         ]
     },
 
     "usuarios": {
-        title: "Gerenciar Usuários, Senhas e Acessos",
+        title: "Gestão de Usuários, Senhas & Controle de Acessos",
         badge: "🔑 ❓ Como Gerenciar Permissões de Usuários",
         icon: "🔑",
-        summary: "Controle de colaboradores, cadastro de perfis (Admin, Operador, Entregador) e criptografia de senhas.",
-        description: "Cadastre os logins e senhas da equipe da fábrica e defina exatamente quais abas cada usuário pode acessar. As senhas são armazenadas de forma segura com criptografia SHA-256.",
+        summary: "Cadastro da equipe de funcionários, perfis de acesso (Administrador, Operador de Balcão, Entregador) e criptografia de senhas.",
+        description: "Controle de segurança e permissões de acesso dos colaboradores que utilizam o GelControl. Permite cadastrar logins e senhas individuais para cada funcionário (atendentes de balcão, gerentes, caixa e motoristas) e definir exatamente a quais abas e relatórios cada um terá acesso. As senhas de usuário são protegidas com criptografia hash SHA-256 para impedir vazamentos.",
         steps: [
-            "Clique em 'Novo Usuário' para adicionar um colaborador.",
-            "Preencha o Nome Completo, Login de Usuário e crie uma Senha inicial.",
-            "Marque ou desmarque as caixas de seleção da 'Grade de Permissões' para liberar apenas as telas necessárias para a função dele.",
-            "Ao editar um usuário existente, deixe o campo de senha em branco se não desejar alterá-la."
+            "<b>1. Visualizar Usuários Cadastrados:</b> Acompanhe a lista de colaboradores que possuem acesso ao sistema.",
+            "<b>2. Cadastrar Novo Usuário:</b> Clique no botão 'Novo Usuário', digite o Nome Completo, Login de Acesso (ex: `atendente.marcos`) e defina uma senha inicial.",
+            "<b>3. Configurar Grade de Permissões:</b> Marque as caixas de seleção correspondentes às abas que o funcionário pode visualizar (ex: para um atendente de balcão, marque apenas 'PDV Balcão' e desmarque relatórios financeiros e configurações).",
+            "<b>4. Salvar Perfil:</b> Clique em 'Salvar Usuário' para ativar o novo login."
         ],
         tips: [
-            "🔒 **Segurança:** Operadores de balcão podem ter acesso restrito apenas à aba 'PDV Balcão', protegendo os relatórios financeiros do sistema."
+            "🔒 <b>Proteção de Dados Financeiros:</b> Restringir os acessos dos colaboradores garante que apenas a diretoria e os gerentes consigam visualizar as margens de lucro e faturamento total da fábrica.",
+            "🔑 <b>Alteração de Senha:</b> Para alterar a senha de um colaborador existente, abra a edição do perfil dele, digite a nova senha e salve. Se não quiser alterar a senha, mantenha o campo em branco."
         ]
     },
 
     "ajuda": {
-        title: "Dúvidas & Soluções (Central de Suporte)",
+        title: "Central de Suporte, Diagnóstico & Teste de Impressora",
         badge: "❓ ❓ Manual de Ajuda & Auto-Diagnóstico",
         icon: "❓",
-        summary: "Perguntas frequentes, manual de instruções e ferramentas de teste de conexão e impressão.",
-        description: "Central completa de treinamento e soluções rápidas para eventuais dúvidas da equipe. Conta com testes automáticos para verificar a internet, teste de impressão em impressoras térmicas e guia interativo.",
+        summary: "Manual de instruções do sistema, auto-teste de integridade dos dados, utilitários de diagnóstico de rede e teste de impressão térmica.",
+        description: "Central de auto-atendimento e suporte técnico do sistema GelControl. Reúne tutoriais completos em texto e vídeo para treinamento de novos funcionários, módulo de teste automático para checagem da conexão com a internet e com a nuvem, além de ferramenta para testar a comunicação com impressoras térmicas de cupom (80mm/58mm).",
         steps: [
-            "Para testar se a internet da fábrica está online, clique em 'Testar Conexão'.",
-            "Para testar sua impressora de cupons de balcão (USB/Bluetooth), clique em 'Imprimir Cupom de Teste'.",
-            "Clique nas perguntas do FAQ para expandir os tutoriais detalhados."
+            "<b>1. Executar Auto-Diagnóstico de Integridade:</b> Clique no botão 'Rodar Auto-Diagnóstico' para que o aplicativo verifique 13 pontos cruciais do sistema (banco de dados, arquivos de layout, sincronização e armazenamento).",
+            "<b>2. Testar Impressora Térmica:</b> Clique no botão 'Imprimir Cupom de Teste' para enviar um comprovante de demonstração para a impressora configurada no balcão.",
+            "<b>3. Consultar Perguntas Frequentes (FAQ):</b> Clique nas categorias do FAQ para tirar dúvidas sobre fechamento de caixa, cancelamento de vendas e emissão de recibos."
         ],
         tips: [
-            "💡 O 'Auto-Teste do Sistema' executa 13 verificações de integridade nos seus dados para garantir que tudo está funcionando perfeitamente."
+            "💡 <b>Solução Rápida para Problemas:</b> Em caso de comportamento inesperado no aplicativo, utilize o botão 'Limpar Cache e Forçar Recarga' para recarregar o sistema com a versão mais recente sem perder nenhum dado salvo."
         ]
     }
 };

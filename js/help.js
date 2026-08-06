@@ -129,6 +129,8 @@
         stepsOL.innerHTML = "";
         (topic.steps || []).forEach(step => {
             const li = document.createElement('li');
+            li.style.marginBottom = '10px';
+            li.style.lineHeight = '1.6';
             li.innerHTML = step;
             stepsOL.appendChild(li);
         });
@@ -138,6 +140,8 @@
         tipsUL.innerHTML = "";
         (topic.tips || []).forEach(tip => {
             const li = document.createElement('li');
+            li.style.marginBottom = '8px';
+            li.style.lineHeight = '1.5';
             li.innerHTML = tip;
             tipsUL.appendChild(li);
         });
