@@ -221,23 +221,41 @@
             }
         }
 
-        // Identificar qual aba/sub-aba está visível no momento
+        // Identificar qual aba/sub-aba está visível no momento via sidebar (.nav-item.active)
         let activeKey = 'dashboard';
-        const activeTab = document.querySelector('.tab-content.active, section.tab-content:not([style*="display: none"])');
-        if (activeTab && activeTab.id) {
-            activeKey = activeTab.id.replace('view-', '');
+        const activeNav = document.querySelector('.nav-item.active');
+        if (activeNav) {
+            activeKey = activeNav.getAttribute('data-tab') || 'dashboard';
         }
 
-        // Mapeamento de sinonimos de abas para o dicionario
+        // Mapeamento de sinonimos de abas principais para o dicionario
         if (activeKey === 'tinas' || activeKey === 'equipamentos') activeKey = 'rentals';
         if (activeKey === 'inventario') activeKey = 'freezers';
         if (activeKey === 'documentos') activeKey = 'recibos';
 
         // Se estiver no Admin / Preços / Configurações, verificar sub-aba ativa
         if (activeKey === 'admin' || activeKey === 'configuracoes' || activeKey === 'precos') {
-            const activeSubtab = document.querySelector('.admin-subtab-content:not([style*="display: none"]), .subtab-content.active, [id^="tab-"]:not([style*="display: none"])');
-            if (activeSubtab && activeSubtab.id) {
-                let subId = activeSubtab.id.replace('tab-', '').replace('admin-tab-', '');
+            let subId = window.activeAdminSubTab || '';
+            if (!subId) {
+                const activeMenuBtn = document.querySelector('.admin-menu-btn.active');
+                if (activeMenuBtn) {
+                    const attr = activeMenuBtn.getAttribute('onclick') || '';
+                    const match = attr.match(/['"]([^'"]+)['"]/);
+                    if (match) subId = match[1];
+                }
+            }
+            if (!subId) {
+                const activeSubtab = document.querySelector('.admin-subtab-content:not([style*="display: none"]), .admin-subtab-content.active');
+                if (activeSubtab && activeSubtab.id) subId = activeSubtab.id;
+            }
+            if (subId) {
+                subId = subId.replace('tab-', '').replace('admin-tab-', '');
+                if (subId === 'rentabilidade-freezers') subId = 'rentabilidade';
+                if (subId === 'suprimentos') subId = 'insumos';
+                if (subId === 'seguranca-backup') subId = 'seguranca';
+                if (subId === 'catalogo' || subId === 'financeiro') subId = 'precos';
+                if (subId === 'acerto') subId = 'viagem';
+                if (subId === 'contas-receber') subId = 'contas_receber';
                 if (subId) activeKey = subId;
             }
         }
