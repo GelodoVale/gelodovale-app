@@ -2831,7 +2831,12 @@ export function initForms() {
 
 export function openModal(modalId) {
     const el = document.getElementById(modalId);
-    if (el) el.classList.add("active");
+    if (el) {
+        el.classList.add("active");
+        if (window.attachHelpIconToSingleModal) {
+            window.attachHelpIconToSingleModal(modalId);
+        }
+    }
 }
 
 export function closeModal(modalId) {

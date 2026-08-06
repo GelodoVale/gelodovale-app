@@ -312,11 +312,16 @@
             const match = attr.match(/['"]([^'"]+)['"]/);
             if (match) {
                 updateTopHeaderHelpBadge(match[1]);
+                setTimeout(attachInternalHelpButtons, 40);
             }
+        }
+        const modalTrigger = e.target.closest('[onclick*="openModal"], [onclick*="openClientModal"], [onclick*="openFreezerModal"], [onclick*="openRentalModal"], [onclick*="openDocModal"]');
+        if (modalTrigger) {
+            setTimeout(attachInternalHelpButtons, 60);
         }
     }, true);
 
-    // 5. Injeção Automática de Ícones ? (sem título) em Janelas Internas (Modais) e Sub-abas
+    // 5. Injeção Específica de Ícones ? (sem título) em Janelas Internas (Modais) e Sub-abas
     const MODAL_HELP_MAP = {
         'modal-client': 'modal_client',
         'modal-order': 'modal_order',
@@ -342,79 +347,82 @@
         'modal-supplier': 'modal_supplier'
     };
 
-    window.attachInternalHelpButtons = function () {
-        // A) Anexar ícone ? em Modais Internos
-        Object.keys(MODAL_HELP_MAP).forEach(modalId => {
-            const modalEl = document.getElementById(modalId);
-            if (!modalEl) return;
+    window.attachHelpIconToSingleModal = function (modalId) {
+        const helpKey = MODAL_HELP_MAP[modalId];
+        if (!helpKey) return;
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl) return;
 
-            const headerTitle = modalEl.querySelector('h2, h3, h4, .modal-title, .modal-header h3, .modal-header h2, .confirm-dialog h3');
-            if (headerTitle && !headerTitle.querySelector('.btn-help-icon-only')) {
-                const helpKey = MODAL_HELP_MAP[modalId];
+        const headerTitle = modalEl.querySelector('h2, h3, h4, .modal-title, .modal-header h3, .modal-header h2, .confirm-dialog h3');
+        if (headerTitle && !headerTitle.querySelector('.btn-help-icon-only')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-help-icon-only';
+            btn.title = 'Como funciona esta janela?';
+            btn.innerText = '?';
+            btn.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.openHelpTopic(helpKey);
+            };
 
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn-help-icon-only';
-                btn.title = 'Como funciona esta janela?';
-                btn.innerText = '?';
-                btn.onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.openHelpTopic(helpKey);
-                };
-
-                headerTitle.style.display = 'inline-flex';
-                headerTitle.style.alignItems = 'center';
-                headerTitle.style.gap = '8px';
-
-                headerTitle.appendChild(btn);
-            }
-        });
-
-        // B) Anexar ícone ? em Sub-abas internas do Admin / Preços / Configurações
-        const subtabs = document.querySelectorAll('.admin-subtab-content, .subtab-content');
-        subtabs.forEach(subtab => {
-            if (!subtab.id) return;
-            let subId = subtab.id.replace('tab-', '').replace('admin-tab-', '');
-            const dict = window.GEL_HELP_DICTIONARY || {};
-            if (!dict[subId]) return;
-
-            const subHeader = subtab.querySelector('h2, h3, h4, .section-title, .card-header h3');
-            if (subHeader && !subHeader.querySelector('.btn-help-icon-only')) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn-help-icon-only';
-                btn.title = 'Como funciona esta sub-aba?';
-                btn.innerText = '?';
-                btn.onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.openHelpTopic(subId);
-                };
-
-                subHeader.style.display = 'inline-flex';
-                subHeader.style.alignItems = 'center';
-                subHeader.style.gap = '8px';
-
-                subHeader.appendChild(btn);
-            }
-        });
+            headerTitle.style.display = 'inline-flex';
+            headerTitle.style.alignItems = 'center';
+            headerTitle.style.gap = '8px';
+            headerTitle.appendChild(btn);
+        }
     };
 
-    // Injetar o modal e botões no carregamento e em intervalo contínuo
+    window.attachInternalHelpButtons = function () {
+        // Processar apenas modais que possuem a classe active no momento
+        const activeModals = document.querySelectorAll('.modal-backdrop.active, .modal-overlay.active, .confirm-overlay:not(.hidden)');
+        activeModals.forEach(modal => {
+            if (modal.id && MODAL_HELP_MAP[modal.id]) {
+                window.attachHelpIconToSingleModal(modal.id);
+            }
+        });
+
+        // Processar apenas a sub-aba ativa visível no momento
+        const activeSubtab = document.querySelector('.admin-subtab-content:not([style*="display: none"]), .admin-subtab-content.active');
+        if (activeSubtab && activeSubtab.id) {
+            let subId = activeSubtab.id.replace('tab-', '').replace('admin-tab-', '');
+            const dict = window.GEL_HELP_DICTIONARY || {};
+            if (dict[subId]) {
+                const subHeader = activeSubtab.querySelector('h2, h3, h4, .section-title, .card-header h3');
+                if (subHeader && !subHeader.querySelector('.btn-help-icon-only')) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-help-icon-only';
+                    btn.title = 'Como funciona esta sub-aba?';
+                    btn.innerText = '?';
+                    btn.onclick = function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.openHelpTopic(subId);
+                    };
+
+                    subHeader.style.display = 'inline-flex';
+                    subHeader.style.alignItems = 'center';
+                    subHeader.style.gap = '8px';
+                    subHeader.appendChild(btn);
+                }
+            }
+        }
+    };
+
+    // Inicializar no carregamento inicial da página (F5) sem polling no evento de loop
     document.addEventListener('DOMContentLoaded', function () {
         injectHelpModalHTML();
-        updateTopHeaderHelpBadge();
-        attachInternalHelpButtons();
+        setTimeout(function () {
+            updateTopHeaderHelpBadge();
+            attachInternalHelpButtons();
+        }, 80);
     });
 
-    window.addEventListener('load', function() {
-        updateTopHeaderHelpBadge();
-        attachInternalHelpButtons();
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            updateTopHeaderHelpBadge();
+            attachInternalHelpButtons();
+        }, 150);
     });
-
-    setInterval(function() {
-        updateTopHeaderHelpBadge();
-        attachInternalHelpButtons();
-    }, 500);
 })();
