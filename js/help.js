@@ -172,68 +172,77 @@
         }
     });
 
-    // 4. Mapeamento e Injeção Automática de Botões de Ajuda nos Cabeçalhos
-    const HELP_MAP = [
-        { selector: '#view-pdv, #pdv', key: 'pdv', text: '🛒 ❓ Entenda o PDV Balcão' },
-        { selector: '#view-dashboard, #dashboard', key: 'dashboard', text: '📊 ❓ Entenda o Painel Principal' },
-        { selector: '#view-clientes, #clientes', key: 'clientes', text: '👥 ❓ Como Gerenciar Clientes' },
-        { selector: '#view-freezers, #freezers', key: 'freezers', text: '🧊 ❓ Ajuda com Freezers' },
-        { selector: '#view-rentals, #rentals', key: 'rentals', text: '🏕️ ❓ Ajuda com Aluguel de Tinas' },
-        { selector: '#view-recibos, #recibos', key: 'recibos', text: '📜 ❓ Como Emitir Recibos' },
-        { selector: '#view-pedidos, #pedidos', key: 'pedidos', text: '📦 ❓ Como Gerenciar Pedidos' },
-        { selector: '#view-historico, #historico', key: 'historico', text: '🚚 ❓ Entenda o Histórico de Entregas' },
-        { selector: '#tab-viagem, #admin-tab-viagem', key: 'viagem', text: '📋 ❓ Como Fazer Acerto de Carga' },
-        { selector: '#tab-insumos, #admin-tab-insumos', key: 'insumos', text: '🏭 ❓ Como Controlar Insumos' },
-        { selector: '#tab-rentabilidade, #admin-tab-rentabilidade', key: 'rentabilidade', text: '📈 ❓ Como Analisar o ROI' },
-        { selector: '#tab-contas-receber, #admin-tab-contas-receber', key: 'contas_receber', text: '💳 ❓ Como Gerenciar Contas a Receber' },
-        { selector: '#tab-integracoes, #admin-tab-integracoes', key: 'integracoes', text: '⚙️ ❓ Como Configurar PIX e WhatsApp' },
-        { selector: '#tab-whatsapp, #admin-tab-whatsapp', key: 'whatsapp_central', text: '💬 ❓ Como Usar os Templates' },
-        { selector: '#tab-seguranca, #admin-tab-seguranca', key: 'seguranca', text: '🛡️ ❓ Entenda Backup e Versão' },
-        { selector: '#tab-usuarios, #admin-tab-usuarios', key: 'usuarios', text: '🔑 ❓ Como Gerenciar Permissões' },
-        { selector: '#view-ajuda, #ajuda', key: 'ajuda', text: '❓ ❓ Manual de Ajuda & Auto-Diagnóstico' }
-    ];
+    // 4. Mapeamento do Botão de Ajuda Principal do Topo (ao lado do Nome Principal no Cabeçalho)
+    window.updateTopHeaderHelpBadge = function () {
+        let slotEl = document.getElementById('header-help-slot');
+        const pageTitleEl = document.getElementById('page-title');
+        if (!pageTitleEl) return;
 
-    window.attachHelpBadges = function () {
-        HELP_MAP.forEach(item => {
-            const containers = document.querySelectorAll(item.selector);
-            containers.forEach(container => {
-                if (!container) return;
+        if (!slotEl) {
+            slotEl = document.createElement('span');
+            slotEl.id = 'header-help-slot';
+            slotEl.style.display = 'inline-flex';
+            slotEl.style.alignItems = 'center';
+            slotEl.style.marginLeft = '12px';
+            if (pageTitleEl.parentNode) {
+                pageTitleEl.parentNode.insertBefore(slotEl, pageTitleEl.nextSibling);
+            }
+        }
 
-                // Procurar título h1, h2 ou h3 dentro do container
-                const header = container.querySelector('h1, h2, h3, .section-title, .page-header');
-                if (header && !header.querySelector('.btn-help-badge')) {
-                    // Criar o botão de ajuda
-                    const helpBtn = document.createElement('button');
-                    helpBtn.type = 'button';
-                    helpBtn.className = 'btn-help-badge';
-                    helpBtn.innerHTML = item.text;
-                    helpBtn.style.marginLeft = '12px';
-                    helpBtn.onclick = function (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.openHelpTopic(item.key);
-                    };
+        // Identificar qual aba/sub-aba está visível no momento
+        let activeKey = 'dashboard';
+        const activeTab = document.querySelector('.tab-content.active, section.tab-content:not([style*="display: none"])');
+        if (activeTab && activeTab.id) {
+            activeKey = activeTab.id.replace('view-', '');
+        }
 
-                    // Ajustar alinhamento do header
-                    header.style.display = 'flex';
-                    header.style.alignItems = 'center';
-                    header.style.justifyContent = 'space-between';
-                    header.style.flexWrap = 'wrap';
-                    header.style.gap = '8px';
+        // Mapeamento de sinonimos de abas para o dicionario
+        if (activeKey === 'tinas' || activeKey === 'equipamentos') activeKey = 'rentals';
+        if (activeKey === 'inventario') activeKey = 'freezers';
+        if (activeKey === 'documentos') activeKey = 'recibos';
 
-                    header.appendChild(helpBtn);
-                }
-            });
-        });
+        // Se estiver no Admin / Preços / Configurações, verificar sub-aba ativa
+        if (activeKey === 'admin' || activeKey === 'configuracoes' || activeKey === 'precos') {
+            const activeSubtab = document.querySelector('.admin-subtab-content:not([style*="display: none"]), .subtab-content.active, [id^="tab-"]:not([style*="display: none"])');
+            if (activeSubtab && activeSubtab.id) {
+                let subId = activeSubtab.id.replace('tab-', '').replace('admin-tab-', '');
+                if (subId) activeKey = subId;
+            }
+        }
+
+        const dict = window.GEL_HELP_DICTIONARY || {};
+        const topic = dict[activeKey] || dict['dashboard'];
+
+        // Se o botão já existir no slot e corresponder à aba atual, não recriar
+        const existingBtn = slotEl.querySelector('.btn-help-badge');
+        if (existingBtn && existingBtn.getAttribute('data-help-key') === activeKey) {
+            return;
+        }
+
+        slotEl.innerHTML = '';
+
+        if (topic && topic.badge) {
+            const helpBtn = document.createElement('button');
+            helpBtn.type = 'button';
+            helpBtn.className = 'btn-help-badge';
+            helpBtn.setAttribute('data-help-key', activeKey);
+            helpBtn.innerHTML = topic.badge;
+            helpBtn.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.openHelpTopic(activeKey);
+            };
+
+            slotEl.appendChild(helpBtn);
+        }
     };
 
-    // Injetar o modal e botões no carregamento e em intervalos curtos
+    // Injetar o modal e botões no carregamento e em intervalo contínuo
     document.addEventListener('DOMContentLoaded', function () {
         injectHelpModalHTML();
-        attachHelpBadges();
+        updateTopHeaderHelpBadge();
     });
 
-    // Observar mudanças de abas para reinjetar botões se necessário
-    window.addEventListener('load', attachHelpBadges);
-    setInterval(attachHelpBadges, 1500);
+    window.addEventListener('load', updateTopHeaderHelpBadge);
+    setInterval(updateTopHeaderHelpBadge, 400);
 })();
