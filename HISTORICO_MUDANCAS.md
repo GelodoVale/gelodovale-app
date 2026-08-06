@@ -6,6 +6,11 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v77 (06/08/2026 - Antigravity)
+* **Central de Ajuda Mapeada Card por Card com Códigos Oficiais (COD: XXX-XX):**
+  - **Mapeamento Exaustivo de Cards (`js/help_content.js`):** Reestruturação completa de todas as abas e modais para listar individualmente **cada card presente na tela com seu código oficial** (ex: `COD: KPI-01`, `COD: KPI-02`, `COD: KPI-03`, `COD: KPI-04`, `COD: DASH-00`, `COD: WID-01`, `COD: WID-02`, `COD: WID-03`, `COD: CLT-01`, `COD: CLT-02`, `COD: CLT-03`, `COD: FRZ-01`, `COD: FRZ-02`, `COD: FRZ-03`, `COD: LOC-01`, `COD: LOC-02`, `COD: DOC-01`, `COD: DOC-02`, `COD: PED-01`, `COD: PED-02`, `COD: HIS-01`, `COD: HIS-02`, `COD: PRC-01`, `COD: PRC-02`, `COD: VIA-01`, `COD: VIA-02`, `COD: INS-01`, `COD: INS-02`, `COD: ROI-01`, `COD: ROI-02`, `COD: REC-01`, `COD: REC-02`, `COD: INT-01`, `COD: INT-02`, `COD: WTP-01`, `COD: SEG-01`, `COD: SEG-02`, `COD: SEG-04`, `COD: USU-01`, `COD: USU-02`, `COD: PDV-01`, `COD: PDV-02`, `COD: PDV-03`, `COD: AJU-01`, `COD: AJU-02`), explicando exatamente a função, campos, botões e interações de cada um.
+  - **Versionamento e PWA:** Atualização da build para `v77`, Service Worker para `gelodovale-v176` e cache-busters `?v=77`.
+
 #### v76 (06/08/2026 - Antigravity)
 * **Central de Ajuda ContextualHiper-Detalhada & Ícones por Janela (COD: HELP-V76):**
   - **Mapeamento Espacial de Telas (`js/help_content.js`):** Reescrita completa do dicionário central de ajuda para catalogar de forma hiper-específica todos os cards (ex: `KPI-01`, `KPI-02`, `CLT-01`, `DASH-00`), botões, seletores, tabelas e regras operacionais da fábrica Gelo do Vale.

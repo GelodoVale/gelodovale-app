@@ -1,6 +1,6 @@
 /**
  * GELCONTROL - Dicionário Central de Ajuda e Tutoriais Contextuais
- * Conteúdo explicativo hiper-detalhado, mapeando cada card, código, botão e campo de cada tela do GelControl.
+ * Conteúdo explicativo hiper-detalhado, estruturado CARD POR CARD com os códigos oficiais (COD: XXX-XX).
  */
 
 window.GEL_HELP_DICTIONARY = {
@@ -8,559 +8,288 @@ window.GEL_HELP_DICTIONARY = {
     // ABAS PRINCIPAIS DA SIDEBAR
     // -------------------------------------------------------------
     "dashboard": {
-        title: "Dashboard - Painel Financeiro & Clima",
-        badge: "📊 ❓ Entenda o Painel Principal",
+        title: "Dashboard - Painel Principal (Visão Geral por Cards)",
+        badge: "📊 ❓ Entenda os Cards do Dashboard",
         icon: "📊",
-        summary: "Cockpit executivo: KPIs de faturamento, widget de clima Open-Meteo, alertas de picos e atalhos rápidos.",
-        description: "O Dashboard é a central de comando da Gelo do Vale. Aqui você encontra a distribuição espacial dos principais indicadores de desempenho da fábrica.",
+        summary: "Cockpit executivo detalhado card por card: KPIs financeiros, alertas atípicos, clima e atalhos.",
+        description: "O Dashboard reúne os principais painéis (cards) de inteligência da fábrica. Abaixo está a explicação direta e específica de cada card presente nesta tela:",
         steps: [
-            "<b>📌 Card 'KPI-01' (Clientes / Freezers):</b> No canto superior esquerdo, mostra o total de parceiros cadastrados e quantos freezers estão alocados na rua. Clique direto no card para abrir o inventário de equipamentos.",
-            "<b>📌 Card 'KPI-02' (Gelo Entregue Mês):</b> Exibe a tonelada/fardos totais de gelo em cubo e moído entregues no mês atual com código de acompanhamento.",
-            "<b>📌 Card 'KPI-03' (Pedidos Pendentes):</b> Exibe o número de pedidos que aguardam separação ou carregamento no caminhão de rota. Clique para abrir a central de pedidos.",
-            "<b>📌 Card 'KPI-04' (Faturamento Mensal):</b> Mostra o total faturado acumulado no mês líquido em R$ com destaque na cor verde.",
-            "<b>📌 Painel de Alertas de Faturamento Atípico:</b> Na área central superior, exibe caixas amarelas avisando quando um dia registrar vendas 50% acima da média diária, com campo para cadastrar eventos locais (ex: Festa do Peão, Rodeio, Quermesse).",
-            "<b>📌 Painel de Meteorologia & Clima (COD: WID-02):</b> No módulo inferior, exibe a temperatura local atualizada via Open-Meteo e a curva dos próximos dias. Dias acima de 28°C elevam a demanda por gelo em até 50%.",
-            "<b>📌 Barra de Atalhos Rápido (COD: DASH-00):</b> Botões diretos para 'Registrar Pedido', 'Novo Contrato', 'Cadastrar Freezer', 'Emitir Recibo' e 'Fechar Caixa'."
+            "<b>🔲 Card [COD: KPI-01] - Total de Clientes & Freezers Alocados:</b> Localizado no canto superior esquerdo. Mostra a quantidade exata de parceiros comerciais ativos e quantos conservadores de gelo estão instalados em clientes na rua. <br><i>• Como interagir:</i> Clique direto sobre este card para ser redirecionado automaticamente à tela de Inventário Patrimonial de Freezers.",
+            "<b>🔲 Card [COD: KPI-02] - Volume de Gelo Entregue no Mês:</b> Exibe a tonelada/fardos totais de gelo em cubo (5kg/2kg) e gelo moído/barra distribuídos no mês atual. <br><i>• Como interagir:</i> Acompanhe este indicador para medir a velocidade de saída de estoque do galpão.",
+            "<b>🔲 Card [COD: KPI-03] - Pedidos Pendentes de Carregamento:</b> Indica quantos pedidos foram solicitados por clientes ou representantes e estão aguardando triagem, separação ou carregamento no caminhão de rota. <br><i>• Como interagir:</i> Clique no card para abrir a Central de Pedidos e despachar a carga.",
+            "<b>🔲 Card [COD: KPI-04] - Faturamento Mensal Líquido (R$):</b> Mostra em destaque verde a receita bruta acumulada no mês corrente, deduzida de eventuais descontos. <br><i>• Como interagir:</i> Serve para monitorar a meta financeira mensal da fábrica em tempo real.",
+            "<b>🔲 Painel [COD: DASH-00] - Barra de Atalhos Operacionais Rápidos:</b> Localizada logo abaixo dos KPIs principais. Possui botões diretos de 1-clique para: <br><i>• 'Registrar Pedido'</i> (Abre novo pedido de rota); <br><i>• 'Novo Contrato'</i> (Abre locação de tinas); <br><i>• 'Cadastrar Freezer'</i> (Inclui novo patrimônio); <br><i>• 'Emitir Recibo'</i> (Abre gerador de PDF); <br><i>• 'Fechar Caixa'</i> (Abre acerto diário).",
+            "<b>🔲 Painel [COD: WID-01] - Alertas de Faturamento Atípico & Eventos Locais:</b> Exibe caixas amareladas de aviso quando o faturamento diário ultrapassar 50% da média diária. <br><i>• Como interagir:</i> Permite cadastrar festas locais (Festa do Peão, Quermesses, Carnavais) para que o sistema entenda o motivo do pico e projete o estoque dos anos seguintes.",
+            "<b>🔲 Painel [COD: WID-02] - Widget Meteorológico & Inteligência de Clima (Open-Meteo):</b> Conectado à API meteorológica, exibe a temperatura atual da região da fábrica e a previsão dos próximos 7 dias. <br><i>• Como interagir:</i> Dias com temperatura acima de 28°C geram picos de consumo de gelo de até 50%. Use a previsão para abastecer a fábrica preventivamente.",
+            "<b>🔲 Painel [COD: WID-03] - Gráficos & Comparativos Comerciais:</b> Exibe o gráfico de barras comparando o volume de vendas por dia da semana e a curva comparativa com o mês anterior."
         ],
         tips: [
-            "💡 <b>Previsão de Picos:</b> Ao observar temperaturas >28°C no widget de clima, prepare o carregamento prévio dos caminhões com pelo menos 500 fardos de 5kg.",
-            "⚠️ <b>Alertas Amarelos:</b> Se o card 'Pedidos Pendentes' indicar mais de 5 pedidos, acione a equipe de separação no galpão para não atrasar a rota."
+            "💡 <b>Dica de Operação:</b> Ao verificar temperaturas elevadas no [COD: WID-02], utilize o atalho rápido do [COD: DASH-00] para antecipar a produção de fardos de 5kg.",
+            "⚠️ <b>Alerta de Pedidos:</b> Se o card [COD: KPI-03] ultrapassar 5 pedidos, ordene a triagem imediata no galpão para evitar atrasos na rota dos caminhões."
         ]
     },
 
     "pdv": {
-        title: "Frente de Caixa Rápido (PDV Balcão da Fábrica)",
-        badge: "🛒 ❓ Entenda o PDV Balcão",
+        title: "Frente de Caixa Balcão - PDV (Visão Geral por Cards)",
+        badge: "🛒 ❓ Entenda os Cards do PDV Balcão",
         icon: "🛒",
-        summary: "Ponto de Venda balcão: catálogo visual de produtos, leitor de código de barras, troco e cupom 80mm.",
-        description: "Janela de operação de caixa para vendas diretas na portaria e retiradas no galpão da fábrica.",
+        summary: "Mapeamento dos 3 cards operacionais do PDV: Catálogo visual, Leitor de código de barras e Checkout/Troco.",
+        description: "A tela de Frente de Caixa Balcão é dividida em 3 cards operacionais principais para vendas rápidas na portaria da fábrica:",
         steps: [
-            "<b>📌 Catálogo Rápido de Produtos (Lado Esquerdo):</b> Grade de botões com as fotos e preços unitários dos sacos de Gelo Cubo 5kg, Gelo 2kg, Moído 5kg, Barra 20kg e Tinas. Clique no card para colocar o item no carrinho.",
-            "<b>📌 Leitor de Código de Barras (Topo do Carrinho):</b> Campo onde você pode bipar com leitor USB/Bluetooth a embalagem do gelo para inserção automática no pedido.",
-            "<b>📌 Seletor de Cliente:</b> Menu suspenso para escolher entre '-- Consumidor Final (Balcão) --' para vendas à vista ou um cliente cadastrado para lançar no histórico/carnê.",
-            "<b>📌 Botões de Forma de Pagamento:</b> Botões seletores para 'Dinheiro', 'PIX (QR Code)', 'Cartão Débito/Crédito' ou 'A Prazo (Carnê)'.",
-            "<b>📌 Calculadora de Troco em Dinheiro:</b> Campo 'Valor Entregue pelo Cliente' onde você digita a nota recebida (ex: R$ 50,00) e o sistema calcula o troco exato em letras verdes.",
-            "<b>📌 Botão Verde 'Concluir Venda Balcão':</b> Dá baixa imediata no estoque de sacos, lança o dinheiro no caixa e abre o menu de impressão térmica (80mm/58mm) ou envio via WhatsApp."
+            "<b>🔲 Card [COD: PDV-01] - Catálogo Visual de Produtos (Lado Esquerdo):</b> Grade de cartões de produtos com imagem, nome e preço unitário dos fardos (Gelo Cubo 5kg, Gelo 2kg, Moído 5kg, Barra 20kg, Tinas). <br><i>• Como funciona:</i> Basta clicar no cartão do produto desejado para adicioná-lo imediatamente ao carrinho de compras.",
+            "<b>🔲 Card [COD: PDV-02] - Painel do Carrinho de Compras & Leitor de Código de Barras:</b> Fica no centro/topo do caixa. Exibe a lista de itens adicionados, quantidades, preço unitário e subtotal acumulado. <br><i>• Leitor de Código de Barras:</i> Possui o campo de busca onde você pode bipar com leitor USB/Bluetooth a embalagem de saco de gelo para inserção instantânea no carrinho.",
+            "<b>🔲 Card [COD: PDV-03] - Painel de Recebimento, Troco & Impressão (Lado Direito):</b> Módulo de fechamento financeiro da venda. <br><i>• Seletor de Cliente:</i> Permite escolher entre '-- Consumidor Final (Balcão) --' ou selecionar um cliente cadastrado para lançar no histórico; <br><i>• Formas de Pagamento:</i> Botões visuais para 'Dinheiro', 'PIX (QR Code)', 'Cartão Débito/Crédito' ou 'A Prazo (Carnê)'; <br><i>• Calculadora de Troco:</i> Campo 'Valor Entregue' onde você digita a nota recebida (ex: R$ 50,00) e o sistema calcula o troco em letras verdes; <br><i>• Botão Verde 'Concluir Venda':</i> Dá baixa imediata no estoque de sacos, registra o dinheiro e aciona a impressora térmica (80mm/58mm)."
         ],
         tips: [
-            "⚠️ <b>Regra A Prazo:</b> Vendas a prazo (carnê) só são liberadas se um cliente cadastrado for selecionado. Consumidor Balcão exige pagamento imediato à vista.",
-            "🖨️ <b>Impressão Térmica:</b> A impressora de cupom 80mm imprime o recibo completo com a chave PIX da fábrica em 2 segundos."
+            "⚠️ <b>Regra A Prazo no [COD: PDV-03]:</b> A modalidade 'A Prazo (Carnê)' só é ativada se um cliente cadastrado for selecionado. Vendas para Consumidor Balcão exigem pagamento à vista.",
+            "🖨️ <b>Impressão Térmica:</b> O cupom impresso pelo [COD: PDV-03] já inclui o QR Code PIX e o endereço da fábrica."
         ]
     },
 
     "clientes": {
-        title: "Gestão Completa de Clientes & Tabela de Preços",
-        badge: "👥 ❓ Como Gerenciar Clientes",
+        title: "Gestão de Clientes & Carnê (Visão Geral por Cards)",
+        badge: "👥 ❓ Entenda os Cards da Tela de Clientes",
         icon: "👥",
-        summary: "Painel de carteira de parceiros: busca por CNPJ, carnê de fiados, nível de estoque do freezer e tabela especial.",
-        description: "Módulo de administração da carteira comercial de supermercados, conveniências, bares, quiosques e distribuidores.",
+        summary: "Detalhamento card por card da carteira comercial: busca, cards de clientes, barra de estoque e carnê.",
+        description: "Esta tela gerencia a carteira de parceiros comerciais. Ela é composta pelos seguintes cards e estruturas:",
         steps: [
-            "<b>📌 Barra de Busca e Filtros (COD: CLT-01):</b> No topo da página, caixa para pesquisar por Nome Fantasia, Razão Social, Bairro ou CNPJ. Filtros suspensos para 'Status: Todos / Em Dia / Inadimplentes'.",
-            "<b>📌 Botão Verde '+ Adicionar' (Canto Superior):</b> Abre a janela para cadastrar um novo parceiro comercial.",
-            "<b>📌 Card do Cliente (COD: CLT-02):</b> Exibe o Nome Fantasia, CNPJ/Telefone, Endereço completo, Tombamento do freezer instalado (ex: `FRZ-RO-01`), voltagem e capacidade.",
-            "<b>📌 Selos de Status no Card:</b> Selo vermelho 'ESTOQUE CRÍTICO' (freezer precisando de gelo urgente), amarelo 'ATENÇÃO' ou cinza 'EM DIA'.",
-            "<b>📌 Barras de Progresso de Estoque Estimado:</b> No rodapé de cada card, mostra barras visuais de nível restante para Pacote Gelo 5kg (Cubo), Gelo 2kg e Gelo Triturado 20kg.",
-            "<b>📌 Botões de Ação na Ficha:</b> Botões para abrir o 'Carnê de Fiados', 'Editar Cadastro', 'Definir Preços Especiais' e 'Conversar no WhatsApp'."
+            "<b>🔲 Card [COD: CLT-01] - Barra de Busca, Filtros & Novo Cadastro:</b> Localizado no topo da tela. <br><i>• Caixa de Pesquisa:</i> Digite Razão Social, Nome Fantasia, CNPJ/CPF ou Bairro para localizar qualquer parceiro; <br><i>• Filtros de Status:</i> Botões seletores 'Todos', 'Em Dia', 'Inadimplentes'; <br><i>• Botão Verde '+ Adicionar Cliente':</i> Abre o formulário [modal-client] para incluir novo parceiro.",
+            "<b>🔲 Card [COD: CLT-02] - Ficha do Cliente & Nível de Estoque do Freezer:</b> Cada cliente possui seu card individual exibindo: <br><i>• Dados Principais:</i> Nome Fantasia, CNPJ, Telefone com botão direto de WhatsApp e Endereço; <br><i>• Dados do Conservador:</i> Tombamento do freezer instalado (ex: `FRZ-RO-01`), voltagem e capacidade em sacos; <br><i>• Selos de Alerta:</i> Selo vermelho 'ESTOQUE CRÍTICO' (freezer precisando de abastecimento urgente), amarelo 'ATENÇÃO' ou cinza 'EM DIA'; <br><i>• Barra de Progresso de Estoque:</i> Indicador gráfico de sacos restantes de Gelo 5kg, Gelo 2kg e Triturado 20kg; <br><i>• Botões de Ação:</i> Botão 'Carnê de Fiados', 'Editar', 'Preços Especiais' e 'Conversar no WhatsApp'.",
+            "<b>🔲 Card [COD: CLT-03] - Extrato & Gerenciador do Carnê de Fiados:</b> Abre ao clicar no botão 'Carnê' de um cliente. <br><i>• Tabela de Parcelas:</i> Exibe datas de lançamento, vencimento, valor e status ('Pendente', 'Vencido', 'Pago'); <br><i>• Botão Azul 'Cobrar via WhatsApp':</i> Dispara mensagem pronta com extrato e chave PIX Copia e Cola."
         ],
         tips: [
-            "🔴 <b>Selo Inadimplente:</b> Clientes com parcelas vencidas há mais de 5 dias ficam travados para novas vendas a prazo até a quitação.",
-            "📱 <b>WhatsApp Direto:</b> Clique no ícone de WhatsApp para enviar a tabela de preços ou orçamento sem digitar o telefone."
+            "🔴 <b>Bloqueio no [COD: CLT-02]:</b> Clientes com parcelas no [COD: CLT-03] vencidas há mais de 5 dias ficam travados para novas compras a prazo.",
+            "📱 <b>WhatsApp em 1 Clique:</b> O ícone de WhatsApp no [COD: CLT-02] abre o aplicativo com o número formatado com DDD."
         ]
     },
 
     "freezers": {
-        title: "Inventário Patrimonial de Equipamentos (Freezers em Comodato)",
-        badge: "🧊 ❓ Ajuda com Freezers & Conservadores",
+        title: "Inventário Patrimonial de Freezers (Visão Geral por Cards)",
+        badge: "🧊 ❓ Entenda os Cards do Inventário de Freezers",
         icon: "🧊",
-        summary: "Gestão patrimonial: controle de placas de tombamento, marcas, capacidades e manutenções técnicas.",
-        description: "Módulo de controle patrimonial para evitar perdas ou extravios de conservadores de gelo em clientes.",
+        summary: "Detalhamento card por card do controle patrimonial: filtros, cards de equipamentos e histórico técnico.",
+        description: "Controle físico e patrimonial dos conservadores de gelo cedidos em regime de comodato:",
         steps: [
-            "<b>📌 Filtros de Status Patrimonial:</b> Botões no topo para isolar equipamentos 'Alocados em Cliente', 'Disponíveis no Galpão' ou 'Em Manutenção'.",
-            "<b>📌 Botão 'Novo Equipamento':</b> Cadastra um novo conservador com placa de tombamento, número de série da fábrica e voltagem (110V/220V).",
-            "<b>📌 Card do Freezer:</b> Mostra a etiqueta de tombamento (ex: `FRZ-0042`), marca (Metalfrio, Fricon, Gelopar), capacidade em sacos (ex: 200 fardos 5kg) e cliente atual.",
-            "<b>📌 Botão 'Gerar Etiqueta QR Code':</b> Gera a imagem da etiqueta adesiva QR Code para imprimir e colar no freezer físico.",
-            "<b>📌 Botão 'Lançar Manutenção':</b> Abre a janela de registro de troca de compressor, carga de gás ou borracha de vedação."
+            "<b>🔲 Card [COD: FRZ-01] - Barra de Filtros Patrimoniais & Novo Equipamento:</b> Fica no topo da tela. <br><i>• Filtros de Situação:</i> Botões para isolar 'Alocados em Cliente', 'Disponíveis na Fábrica' ou 'Em Manutenção'; <br><i>• Botão Verde '+ Novo Equipamento':</i> Abre a janela [modal-freezer] para cadastrar novo conservador.",
+            "<b>🔲 Card [COD: FRZ-02] - Ficha de Tombamento do Conservador & QR Code:</b> Cada freezer possui seu card individual apresentando: <br><i>• Placa de Tombamento:</i> Código gravado no chassi (ex: `FRZ-0042`); <br><i>• Dados Técnicos:</i> Marca (Metalfrio, Fricon, Gelopar), capacidade total (ex: 200 fardos 5kg) e voltagem (110V/220V); <br><i>• Endereço Atual:</i> Nome do cliente onde está alocado ou 'Galpão Principal'; <br><i>• Botão 'Gerar Etiqueta QR Code':</i> Exibe e imprime a etiqueta adesiva QR Code para colar no aparelho físico.",
+            "<b>🔲 Card [COD: FRZ-03] - Histórico de Manutenções & Reparos Técnicos:</b> Painel dentro da ficha detalhada do equipamento. <br><i>• Tabela de Serviços:</i> Lista trocas de borrachas de vedação, cargas de gás refrigerante e substituições de motor compressor; <br><i>• Botão 'Lançar Manutenção':</i> Registra nova intervenção feita pela equipe técnica."
         ],
         tips: [
-            "💡 <b>Consulta por Câmera:</b> Ao escanear o QR Code colado no freezer com o celular do motorista, a ficha do equipamento abre na hora.",
-            "📊 <b>Giro Mínimo:</b> Freezers que vendem menos de 30 fardos/mês são sinalizados para avaliação de recolocação."
+            "💡 <b>Leitura por Celular no [COD: FRZ-02]:</b> Ao apontar a câmera do celular para o QR Code colado no freezer, a ficha do equipamento abre no sistema.",
+            "📊 <b>Aviso de Rendimento:</b> Freezers que vendem menos de 30 fardos/mês são destacados para avaliação de recolocação."
         ]
     },
 
     "rentals": {
-        title: "Aluguel de Equipamentos (Tinas Térmicas & Mobiliário para Eventos)",
-        badge: "🏕️ ❓ Ajuda com Aluguel de Tinas",
+        title: "Aluguel de Tinas & Mobiliário (Visão Geral por Cards)",
+        badge: "🏕️ ❓ Entenda os Cards da Tela de Tinas",
         icon: "🏕️",
-        summary: "Controle de locação de tinas 360L, caixas térmicas, cálculo de diárias, garantia e devoluções.",
-        description: "Gestão comercial de contratos temporários de tinas térmicas de 360 litros e jogos de mesas para festas e eventos.",
+        summary: "Detalhamento card por card dos contratos de aluguel: cadastro de locação e tabela de contratos ativos.",
+        description: "Módulo de controle comercial para contratos temporários de tinas térmicas de 360L e jogos de mesas:",
         steps: [
-            "<b>📌 Botão 'Novo Aluguel de Tina/Mesa':</b> Abre o formulário para registrar o locatário, evento e equipamentos.",
-            "<b>📌 Lista de Contratos Ativos:</b> Exibe os cards de aluguel com nome do locatário, telefone com WhatsApp, quantidade de tinas alugadas (ex: 2 Tinas Azuis 360L) e data limite de devolução.",
-            "<b>📌 Selos de Situação:</b> Selo verde 'Ativo', selo vermelho 'ATRASADO' e selo cinza 'Devolvido'.",
-            "<b>📌 Painel Financeiro de Caução:</b> Mostra o valor cobrado pela diária e o montante retido como caução de garantia.",
-            "<b>📌 Botão 'Registrar Devolução':</b> Dá baixa na locação, inspeciona o estado das peças e efetua a liberação da caução."
+            "<b>🔲 Card [COD: LOC-01] - Cadastro de Novo Aluguel de Tina/Mesa:</b> Fica no topo da página. <br><i>• Formulário de Saída:</i> Campos para registrar nome do locatário, CPF, telefone, quantidade de tinas 360L e jogos de mesas retirados; <br><i>• Definição de Diárias & Caução:</i> Campos para digitar o valor da diária e o valor retido como garantia financeira (caução); <br><i>• Botão Verde 'Registrar Aluguel':</i> Confirma a saída das tinas do galpão.",
+            "<b>🔲 Card [COD: LOC-02] - Tabela de Contratos Ativos, Garantias & Devoluções:</b> Exibe a lista de locações em aberto. <br><i>• Ficha do Contrato:</i> Nome do locatário, telefone de contato com WhatsApp, data de retirada e data limite de devolução; <br><i>• Selos de Status:</i> Selo verde 'Ativo', selo vermelho 'ATRASADO' e selo cinza 'Devolvido'; <br><i>• Botão 'Registrar Devolução':</i> Abre a janela de vistoria de danos e efetua a restituição do valor da caução ao cliente."
         ],
         tips: [
-            "⚠️ <b>Inspecione antes de devolver caução:</b> Sempre confira se as tinas não possuem furadas ou travas quebradas antes de devolver o dinheiro da caução."
+            "⚠️ <b>Vistoria no [COD: LOC-02]:</b> Antes de clicar em 'Registrar Devolução', verifique se as tinas não possuem travas quebradas ou perfurações."
         ]
     },
 
     "recibos": {
-        title: "Recibos, Orçamentos & Comprovantes Formais",
-        badge: "📜 ❓ Como Emitir Recibos & Orçamentos",
+        title: "Recibos & Orçamentos em PDF (Visão Geral por Cards)",
+        badge: "📜 ❓ Entenda os Cards de Documentos",
         icon: "📜",
-        summary: "Emissor de documentos timbrados em PDF: recibos de pagamento, orçamentos e comprovantes formais.",
-        description: "Módulo de confecção de recibos e orçamentos em PDF com o logotipo timbrado oficial da Gelo do Vale.",
+        summary: "Detalhamento card por card do gerador de recibos e histórico de documentos timbrados.",
+        description: "Módulo de confecção e controle de documentos comerciais timbrados em PDF:",
         steps: [
-            "<b>📌 Seletor de Tipo de Documento:</b> Alternador entre 'Recibo de Pagamento', 'Orçamento Comercial' e 'Comprovante de Entrega'.",
-            "<b>📌 Seleção de Cliente ou Avulso:</b> Escolha um parceiro da lista ou digite o nome e CPF/CNPJ de um recebedor avulso.",
-            "<b>📌 Tabela de Itens e Valores:</b> Campos para adicionar produtos, quantidades de fardos, preço unitário e descontos.",
-            "<b>📌 Botão 'Gerar Documento (PDF)':</b> Confecciona o PDF timbrado na tela com opções para baixar, imprimir ou enviar link no WhatsApp."
+            "<b>🔲 Card [COD: DOC-01] - Emissor de Recibos, Orçamentos & Comprovantes Timbrados:</b> Formulário gerador do documento. <br><i>• Seletor de Tipo:</i> Alternador entre 'Recibo de Pagamento', 'Orçamento Comercial' e 'Comprovante de Entrega'; <br><i>• Seletor de Cliente:</i> Escolha um parceiro da carteira ou digite um recebedor avulso; <br><i>• Tabela de Descriminação de Itens:</i> Adicione descrições dos fardos, quantidades e preços unitários; <br><i>• Botão Verde 'Gerar Documento (PDF)':</i> Confecciona o PDF timbrado oficial na tela com logotipo da Gelo do Vale.",
+            "<b>🔲 Card [COD: DOC-02] - Histórico de Documentos Emitidos & 2ª Via:</b> Exibe a lista de documentos gerados anteriormente. <br><i>• Ações:</i> Permite baixar novamente o arquivo PDF, imprimir ou enviar o link timbrado no WhatsApp do cliente."
         ],
         tips: [
-            "💡 <b>Converter Orçamento em Pedido:</b> Orçamentos aprovados possuem o botão 'Converter em Pedido' para abrir a rota sem redigitar nada."
+            "💡 <b>Converter Orçamento no [COD: DOC-01]:</b> Orçamentos aprovados possuem o botão 'Converter em Pedido' para abrir a entrega automaticamente."
         ]
     },
 
     "pedidos": {
-        title: "Central de Pedidos Pendentes & Programação",
-        badge: "📦 ❓ Como Gerenciar Pedidos Pendentes",
+        title: "Central de Pedidos Pendentes (Visão Geral por Cards)",
+        badge: "📦 ❓ Entenda os Cards da Tela de Pedidos",
         icon: "📦",
-        summary: "Fila de recepção de pedidos via WhatsApp ou representante para triagem e envio aos caminhões.",
-        description: "Gerencia a fila de solicitações de fardos de gelo que aguardam separação no estoque ou inclusão na rota.",
+        summary: "Detalhamento card por card da fila de triagem de entregas e aprovação de cargas.",
+        description: "Fila de recepção e despacho de pedidos que aguardam envio nos caminhões:",
         steps: [
-            "<b>📌 Lista Cronológica de Pedidos:</b> Cards organizados por horário de chegada, nome do cliente e urgência.",
-            "<b>📌 Detalhamento da Solicitado:</b> Mostra os fardos pedidos (ex: 40 Fardos 5kg Cubo), valor total, forma de pagamento e observações do motorista.",
-            "<b>📌 Botão Verde 'Aprovar Pedido':</b> Confirma o pedido e despacha a ordem para a folha de carga do caminhão.",
-            "<b>📌 Botão 'Editar / Cancelar':</b> Permite alterar quantidades antes do carregamento do veículo."
+            "<b>🔲 Card [COD: PED-01] - Fila de Pedidos Pendentes para Triagem:</b> Painel principal com a lista de solicitações. <br><i>• Ordenação Cronológica:</i> Exibe os pedidos organizados por horário de chegada, cliente e grau de urgência; <br><i>• Resumo do Pedido:</i> Mostra o fardamento solicitado (ex: 40 Fardos 5kg Cubo), valor total em R$ e forma de pagamento combinada.",
+            "<b>🔲 Card [COD: PED-02] - Painel de Detalhes, Edição & Aprovação para Rota:</b> Ficha expandida de cada pedido. <br><i>• Observações do Motorista:</i> Exibe recados de entrega (ex: 'Entregar na portaria dos fundos'); <br><i>• Botão Verde 'Aprovar Pedido':</i> Confirma o pedido e inclui os fardos na folha de carga do caminhão; <br><i>• Botões 'Editar / Cancelar':</i> Permitem modificar quantidades antes do carregamento do veículo."
         ],
         tips: [
-            "💡 Ao aprovar o pedido, o sistema dispara um aviso no WhatsApp do cliente avisando que o caminhão saiu para entrega."
+            "💡 Ao clicar em 'Aprovar Pedido' no [COD: PED-02], o sistema envia aviso automático no WhatsApp do cliente informando que o caminhão saiu."
         ]
     },
 
     "historico": {
-        title: "Histórico Geral de Entregas & Auditoria de Rotas",
-        badge: "🚚 ❓ Entenda o Histórico de Entregas",
+        title: "Histórico Geral de Entregas (Visão Geral por Cards)",
+        badge: "🚚 ❓ Entenda os Cards do Histórico",
         icon: "🚚",
-        summary: "Consulta retroativa auditável de todas as entregas concluídas, notas, comprovantes e valores.",
-        description: "Arquivo de auditoria de entregas concluídas para conciliação contábil e conferência de rotas passadas.",
+        summary: "Detalhamento card por card da auditoria de entregas concluídas e re-emissão de comprovantes.",
+        description: "Registro histórico auditável de todas as entregas finalizadas pela frota da fábrica:",
         steps: [
-            "<b>📌 Filtro por Intervalo de Datas:</b> Menus para filtrar por 'Hoje', 'Esta Semana', 'Este Mês' ou intervalo customizado.",
-            "<b>📌 Filtro por Motorista / Cliente:</b> Caixas de seleção para isolar as entregas de um entregador específico.",
-            "<b>📌 Tabela Auditável de Entregas:</b> Mostra data/hora da conclusão, fardos entregues, valor total, forma de pagamento e foto do comprovante assinado.",
-            "<b>📌 Botão 'Re-emitir Comprovante':</b> Re-envia a 2ª via do recibo no WhatsApp do cliente."
+            "<b>🔲 Card [COD: HIS-01] - Filtros por Período, Motorista & Cliente:</b> Fica no topo da página. <br><i>• Seletor de Intervalo:</i> Filtre por 'Hoje', 'Esta Semana', 'Este Mês' ou escolha datas no calendário; <br><i>• Seletor de Entregador:</i> Isola as entregas feitas por um motorista específico para conferência.",
+            "<b>🔲 Card [COD: HIS-02] - Tabela Auditável de Entregas Concluídas:</b> Lista completa de comprovantes gravados. <br><i>• Detalhes do Registro:</i> Mostra data/hora da conclusão, fardos entregues, valor recebido e foto do comprovante assinado pelo cliente; <br><i>• Botão 'Re-emitir Comprovante':</i> Envia a 2ª via do recibo diretamente no WhatsApp do cliente."
         ],
         tips: [
-            "💡 Exporte a lista filtrada para planilha Excel ou PDF para conciliação bancária mensal."
+            "💡 Exporte a tabela filtrada do [COD: HIS-02] para planilha Excel para fazer a conciliação bancária mensal."
         ]
     },
 
     // -------------------------------------------------------------
-    // SUB-ABAS DO PAINEL ADMINISTRATIVO (CONFIGURAÇÕES & PREÇOS)
+    // SUB-ABAS DO PAINEL ADMINISTRATIVO
     // -------------------------------------------------------------
     "precos": {
-        title: "Tabela Mestra de Preços & Descontos por Volume",
-        badge: "🏷️ ❓ Configurar Tabela Mestra de Preços",
+        title: "Tabela Mestra de Preços (Visão Geral por Cards)",
+        badge: "🏷️ ❓ Entenda os Cards de Preços",
         icon: "🏷️",
-        summary: "Tabela geral de preços da fábrica para Gelo Cubo 5kg, Moído 5kg, Barra 20kg e faixas de atacado.",
-        description: "Sub-aba para definir os preços de tabela praticados no balcão e nas entregas padrão da fábrica.",
+        summary: "Detalhamento card por card da tabela mestra de produtos e faixas de desconto por volume.",
+        description: "Sub-aba para gerenciamento dos preços oficiais praticados pela fábrica:",
         steps: [
-            "<b>📌 Lista Mestra de Produtos:</b> Exibe todos os itens produzidos pela Gelo do Vale.",
-            "<b>📌 Campo de Preço Base de Venda:</b> Edite o valor unitário por fardo (ex: R$ 12,00 por saco de 5kg).",
-            "<b>📌 Tabela de Desconto por Volume:</b> Configure preços reduzidos para compras no atacado (ex: acima de 100 fardos = R$ 9,50).",
-            "<b>📌 Botão Verde 'Salvar Alterações':</b> Atualiza a tabela mestra em todo o sistema (PDV Balcão e Pedidos de Rota)."
+            "<b>🔲 Card [COD: PRC-01] - Tabela Mestra de Preços da Fábrica:</b> Exibe a lista de produtos (Gelo Cubo 5kg, Gelo 2kg, Moído 5kg, Barra 20kg). <br><i>• Campo 'Preço Base R$':</i> Digite o valor unitário por fardo para vendas padrão de balcão e entregas; <br><i>• Botão Verde 'Salvar Alterações':</i> Atualiza a tabela imediatamente em todo o sistema.",
+            "<b>🔲 Card [COD: PRC-02] - Matriz de Desconto por Volume de Atacado:</b> Tabela de faixas promocionais por quantidade. <br><i>• Configuração de Faixas:</i> Permite definir preços reduzidos para grandes compras (ex: acima de 100 fardos = R$ 9,50)."
         ],
         tips: [
-            "⚠️ A alteração da Tabela Mestra atualiza o PDV Balcão na hora. Clientes com 'Preço Especial' mantêm sua tabela própria."
+            "⚠️ Salvar alterações no [COD: PRC-01] atualiza o PDV Balcão na hora. Clientes com 'Preço Especial' mantêm sua tabela própria."
         ]
     },
 
     "viagem": {
-        title: "Acerto de Viagem, Fechamento de Carga & Prestação de Contas",
-        badge: "📋 ❓ Como Fazer Acerto de Carga",
+        title: "Acerto de Viagem & Carga (Visão Geral por Cards)",
+        badge: "📋 ❓ Entenda os Cards de Acerto de Carga",
         icon: "📋",
-        summary: "Fechamento diário do caminhão: conferência de fardos carregados, devolvidos, despesas e acerto financeiro.",
-        description: "Sub-aba usada no final do dia para auditar a prestação de contas dos motoristas de rota.",
+        summary: "Detalhamento card por card da conferência de carga de saída, retorno, despesas e saldo do caminhão.",
+        description: "Sub-aba usada no final do dia para auditar a prestação de contas dos motoristas de rota:",
         steps: [
-            "<b>📌 Seletor de Motorista e Data:</b> Escolha o entregador responsável pelo fechamento.",
-            "<b>📌 Campos de Carga (Saída vs Retorno):</b> Digite o total de fardos que saíram do galpão (ex: 300 fardos) e o total retornado no baú (ex: 20 fardos).",
-            "<b>📌 Campo de Dinheiro Recolhido:</b> Digite o montante de cédulas entregues na tesouraria pelo motorista.",
-            "<b>📌 Tabela de Despesas da Viagem:</b> Lance gastos comprovados com combustível, pedágio ou refeição do ajudante.",
-            "<b>📌 Painel de Resultado da Auditoria:</b> Mostra em verde (Acerto Perfeito sem Divergência) ou amarelo/vermelho se houver furo de carga (sacos faltantes)."
+            "<b>🔲 Card [COD: VIA-01] - Conferência de Carga (Saída vs Retorno do Baú):</b> Módulo de contagem física de fardos. <br><i>• Seletor de Motorista e Data:</i> Escolha o entregador responsável pela rota; <br><i>• Campos de Fardamento:</i> Digite a quantidade de fardos carregados na saída (ex: 300 fardos) e a quantidade retornada no baú (ex: 20 fardos).",
+            "<b>🔲 Card [COD: VIA-02] - Prestação de Contas, Despesas & Auditoria de Divergência:</b> Fechamento financeiro da rota. <br><i>• Campo 'Dinheiro Recolhido':</i> Digite o montante de cédulas entregues na tesouraria pelo motorista; <br><i>• Tabela de Despesas da Rota:</i> Lance notas fiscais de combustível, pedágio ou refeição do ajudante; <br><i>• Indicador de Auditoria:</i> Exibe em verde (Sem Diferença) ou amarelo/vermelho se houver furo de carga (sacos faltantes ou diferença no caixa)."
         ],
         tips: [
-            "💡 Permite lançar margem técnica de derretimento em dias de calor extremo para não penalizar o entregador indevidamente."
+            "💡 O [COD: VIA-02] permite lançar uma margem técnica de derretimento em dias de calor extremo."
         ]
     },
 
     "insumos": {
-        title: "Estoque de Insumos & Matéria-Prima da Fábrica",
-        badge: "🏭 ❓ Como Controlar Insumos da Fábrica",
+        title: "Estoque de Insumos da Fábrica (Visão Geral por Cards)",
+        badge: "🏭 ❓ Entenda os Cards de Insumos",
         icon: "🏭",
-        summary: "Gestão do estoque de embalagens plásticas (2kg, 5kg, 20kg), fechos metálicos e essências saborizadas.",
-        description: "Controle do estoque de insumos necessários para empacotar e produzir o gelo.",
+        summary: "Detalhamento card por card do controle de almoxarifado, embalagens plásticas e compras.",
+        description: "Controle de estoque de insumos e matérias-primas de produção:",
         steps: [
-            "<b>📌 Grade de Insumos no Almoxarifado:</b> Mostra o saldo de sacos plásticos de 2kg, 5kg e 20kg, bobinas e arames de selagem.",
-            "<b>📌 Botão 'Dar Entrada de Insumos':</b> Registra a compra de novos lotes de sacos plásticos com valor pago na nota fiscal.",
-            "<b>📌 Campo de Estoque Mínimo de Alerta:</b> Define a quantidade limite para o sistema avisar quando for hora de comprar mais sacos."
+            "<b>🔲 Card [COD: INS-01] - Estoque do Almoxarifado de Sacos Plásticos & Matéria-Prima:</b> Painel de saldos de estoque. <br><i>• Saldos Atuais:</i> Mostra o total de sacos plásticos de 2kg, 5kg e 20kg, bobinas de celofane e fechos metálicos; <br><i>• Nível de Alerta:</i> Alerta quando o estoque atingir a quantidade mínima de segurança.",
+            "<b>🔲 Card [COD: INS-02] - Lançamento de Entradas & Compras de Embalagens:</b> Formulário de recepção de notas de compra. <br><i>• Campos de Entrada:</i> Digite o lote de sacos recebidos e o valor pago na nota fiscal para atualizar o custo unitário por embalagem."
         ],
         tips: [
-            "💡 O custo unitário das embalagens é utilizado pelo Dashboard para calcular a margem de lucro real por fardo."
+            "💡 O custo da embalagem lançado no [COD: INS-02] é usado pelo Dashboard para calcular o lucro líquido real por fardo."
         ]
     },
 
     "rentabilidade": {
-        title: "Análise de Rentabilidade de Freezers & ROI por Cliente",
-        badge: "📈 ❓ Como Analisar o ROI dos Freezers",
+        title: "Rentabilidade ROI de Freezers (Visão Geral por Cards)",
+        badge: "📈 ❓ Entenda os Cards de Rentabilidade ROI",
         icon: "📈",
-        summary: "Relatório comercial que analisa o volume de compras por freezer alocado para medir o retorno do investimento.",
-        description: "Relatório de giro de fardos por conservador instalado em regime de comodato.",
+        summary: "Detalhamento card por card do giro mensal por freezer alocado e análise de substituição.",
+        description: "Relatório de desempenho comercial dos conservadores cedidos em comodato:",
         steps: [
-            "<b>📌 Tabela de Giro por Cliente:</b> Exibe a média mensal de fardos comprados por cada cliente que possui freezer da fábrica.",
-            "<b>📌 Indicadores de Desempenho:</b> Selo verde (Giro Alto) ou vermelho (Giro Baixo < 30 fardos/mês).",
-            "<b>📌 Ação Comercial de Remanejamento:</b> Permite identificar locais fracos para retirar o freezer e recolocá-lo em um parceiro mais rentável."
+            "<b>🔲 Card [COD: ROI-01] - Tabela de Giro Mensal por Freezer em Comodato:</b> Exibe a média mensal de fardos comprados por cada cliente que possui freezer da fábrica. <br><i>• Medidor de Volume:</i> Exibe o faturamento gerado pelo conservador instalado.",
+            "<b>🔲 Card [COD: ROI-02] - Análise de Performance & Remanejamento de Conservador:</b> Módulo de tomada de decisão. <br><i>• Indicadores Visuais:</i> Selo verde 'Giro Alto' ou vermelho 'Giro Baixo (< 30 fardos/mês)'; <br><i>• Ação Comercial:</i> Permite identificar conservadores ociosos para recolocar em estabelecimentos de maior movimento."
         ],
         tips: [
-            "💡 Recolocar um freezer ocioso em um ponto comercial forte pode triplicar o faturamento do equipamento."
+            "💡 Recolocar um freezer ocioso mapeado no [COD: ROI-02] em um novo cliente pode aumentar as vendas em até 300%."
         ]
     },
 
     "contas_receber": {
-        title: "Contas a Receber, Fiados & Cobrança Automática WhatsApp",
-        badge: "💳 ❓ Como Gerenciar Contas a Receber",
+        title: "Contas a Receber & Fiados (Visão Geral por Cards)",
+        badge: "💳 ❓ Entenda os Cards de Contas a Receber",
         icon: "💳",
-        summary: "Painel de duplicatas pendentes, baixa de valores recebidos e cobrança facilitada por PIX no WhatsApp.",
-        description: "Central de liquidação financeira de vendas realizadas a prazo no carnê de fiados.",
+        summary: "Detalhamento card por card do controle de duplicatas, liquidação de carnês e cobrança por PIX.",
+        description: "Central de controle financeiro para liquidação de vendas a prazo:",
         steps: [
-            "<b>📌 Filtros de Títulos:</b> Alternador para 'Todas', 'Vencidas (Inadimplentes)', 'A Vencer' e 'Quitadas'.",
-            "<b>📌 Botão Verde 'Receber':</b> Abre a janela de baixa de pagamento em Dinheiro, PIX ou Cartão (suporta baixa parcial ou total).",
-            "<b>📌 Botão Azul 'Cobrar via WhatsApp':</b> Abre a mensagem formatada contendo o extrato da dívida e a chave PIX Copia e Cola pronta."
+            "<b>🔲 Card [COD: REC-01] - Central de Contas a Receber & Duplicatas A Vencer:</b> Painel de controle de títulos. <br><i>• Filtros de Situação:</i> Alternador para 'Todas', 'Vencidas (Inadimplentes)', 'A Vencer' e 'Quitadas'; <br><i>• Visão de Totais:</i> Soma total a receber acumulada na rua.",
+            "<b>🔲 Card [COD: REC-02] - Baixa de Pagamento & Cobrança PIX WhatsApp:</b> Módulo de liquidação de parcelas. <br><i>• Botão Verde 'Receber':</i> Abre a janela de baixa de valores em Dinheiro, PIX ou Cartão (aceita baixa parcial ou total); <br><i>• Botão Azul 'Cobrar via WhatsApp':</i> Dispara mensagem contendo o extrato da dívida e a chave PIX Copia e Cola pronta."
         ],
         tips: [
-            "💡 A cobrança via WhatsApp gera automaticamente o código PIX Copia e Cola para o cliente pagar pelo app do banco em segundos."
+            "💡 O botão de cobrança do [COD: REC-02] gera o PIX Copia e Cola para o cliente colar no aplicativo do banco."
         ]
     },
 
     "integracoes": {
-        title: "Integração de Pagamentos (PIX) & Gateway de Comunicação (WhatsApp API)",
-        badge: "⚙️ ❓ Como Configurar PIX e WhatsApp",
+        title: "Integrações PIX & WhatsApp API (Visão Geral por Cards)",
+        badge: "⚙️ ❓ Entenda os Cards de Integração",
         icon: "⚙️",
-        summary: "Configuração da Chave PIX oficial da fábrica e servidores de envio automático de WhatsApp.",
-        description: "Central de conexões de pagamento e servidores de envio de mensagens do sistema.",
+        summary: "Detalhamento card por card das configurações de chave PIX e servidores de WhatsApp API.",
+        description: "Central de conexões de pagamento e servidores de mensagens:",
         steps: [
-            "<b>📌 Campo de Chave PIX Principal:</b> Insira sua chave oficial (CNPJ, Celular, E-mail ou Chave Aleatória) exibida nos comprovantes e QR Codes.",
-            "<b>📌 Configuração WhatsApp API:</b> Selecione o provedor (Z-API, Evolution API, Webhook) e digite o Token e Instância de acesso.",
-            "<b>📌 Botão 'Enviar Mensagem de Teste':</b> Testa o disparo de mensagens para confirmar que a integração está ativa."
+            "<b>🔲 Card [COD: INT-01] - Configuração da Chave PIX Oficial da Fábrica:</b> Módulo de cadastro da chave bancária. <br><i>• Campo de Chave PIX:</i> Digite a chave oficial da fábrica (CNPJ, Celular, E-mail ou EVP) exibida em comprovantes e QR Codes.",
+            "<b>🔲 Card [COD: INT-02] - Gateway de Comunicação WhatsApp API:</b> Servidor de envio automático de mensagens. <br><i>• Parâmetros de Conexão:</i> Selecione o provedor (Z-API, Evolution API) e insira o Token e a Instância de envio; <br><i>• Botão 'Testar Envio':</i> Dispara uma mensagem de teste para validar a conexão."
         ],
         tips: [
-            "💡 A chave PIX correta evita que os pagamentos gerados no balcão sejam rejeitados pelo banco."
+            "💡 Manter a chave PIX correta no [COD: INT-01] garante que o QR Code do caixa seja lido sem erros."
         ]
     },
 
     "whatsapp_central": {
-        title: "Central de Modelos de Mensagem (Templates para WhatsApp)",
-        badge: "💬 ❓ Como Usar os Templates de Mensagem",
+        title: "Central de Templates WhatsApp (Visão Geral por Cards)",
+        badge: "💬 ❓ Entenda os Cards da Central WhatsApp",
         icon: "💬",
-        summary: "Editor de modelos de texto pré-formatados com variáveis dinâmicas `{nome}`, `{valor}`, `{chave_pix}`.",
-        description: "Personalizador de mensagens automáticas disparadas pelo aplicativo.",
+        summary: "Detalhamento card por card do editor de mensagens dinâmicas com variáveis automáticas.",
+        description: "Central de personalização de mensagens disparadas pelo aplicativo:",
         steps: [
-            "<b>📌 Seletor de Modelo:</b> Escolha entre 'Comprovante de Venda', 'Lembrete de Cobrança', 'Aviso de Saída do Motorista'.",
-            "<b>📌 Editor de Texto:</b> Digite a mensagem utilizando variáveis dinâmicas entre chaves `{...}`.",
-            "<b>📌 Painel de Pré-Visualização:</b> Mostra como a mensagem será exibida na tela do celular do cliente.",
-            "<b>📌 Botão 'Salvar Template':</b> Atualiza o modelo de texto no sistema."
+            "<b>🔲 Card [COD: WTP-01] - Editor de Modelos de Mensagem com Variáveis Dinâmicas:</b> Formulário de confecção de textos. <br><i>• Seletor de Modelo:</i> Escolha entre 'Comprovante de Venda', 'Lembrete de Cobrança', 'Aviso de Saída do Motorista'; <br><i>• Editor de Texto:</i> Digite a mensagem utilizando variáveis dinâmicas `{nome}`, `{valor}`, `{chave_pix}`; <br><i>• Pré-Visualização:</i> Exibe na hora como a mensagem ficará no WhatsApp do cliente."
         ],
         tips: [
-            "💡 Variáveis como `{nome}` e `{valor}` são substituídas automaticamente pelos dados reais da venda no envio."
+            "💡 As variáveis entre chaves `{...}` no [COD: WTP-01] são substituídas automaticamente pelos dados reais da venda."
         ]
     },
 
     "seguranca": {
-        title: "Segurança, Backup dos Dados & Controle de Versão",
-        badge: "🛡️ ❓ Entenda Backup e Versão",
+        title: "Segurança & Backup dos Dados (Visão Geral por Cards)",
+        badge: "🛡️ ❓ Entenda os Cards de Segurança & Backup",
         icon: "🛡️",
-        summary: "Gerenciamento de backups manuais em JSON, salvamento redundante no OneDrive e sincronização em nuvem.",
-        description: "Painel de proteção e segurança dos dados operacionais e financeiros da fábrica.",
+        summary: "Detalhamento card por card do status do OneDrive, backup em JSON e pontos de restauração.",
+        description: "Painel de proteção contra perdas e salvamento redundante dos dados:",
         steps: [
-            "<b>📌 Indicador de Status OneDrive / Nuvem:</b> Confirma se o salvamento no arquivo do OneDrive e Firebase está ativo.",
-            "<b>📌 Botão 'Download Backup (JSON)':</b> Baixa uma cópia física de segurança dos dados no seu computador.",
-            "<b>📌 Botão 'Restaurar Arquivo de Backup':</b> Carrega um arquivo `.json` salvo anteriormente em caso de troca de computador."
+            "<b>🔲 Card [COD: SEG-01] - Status de Sincronização em Nuvem & OneDrive:</b> Indicador de salvamento online. <br><i>• Indicador LED:</i> Confirma se os dados estão sincronizados com a pasta do OneDrive e Firebase em tempo real.",
+            "<b>🔲 Card [COD: SEG-02] - Download de Backup Físico JSON:</b> Módulo de cópia de segurança manual. <br><i>• Botão 'Download Backup (JSON)':</i> Gera e baixa um arquivo `.json` contendo todas as vendas, clientes e estoque no seu computador.",
+            "<b>🔲 Card [COD: SEG-04] - Restauração de Dados & Versão do Aplicativo:</b> Gerenciador de restauração. <br><i>• Botão 'Restaurar Arquivo de Backup':</i> Carrega um arquivo de backup salvo anteriormente em caso de troca de computador."
         ],
         tips: [
-            "🛡️ Faça o download do arquivo de backup em JSON no último dia de cada mês para guarda de segurança."
+            "🛡️ Faça o download do arquivo de backup no [COD: SEG-02] no último dia útil de cada mês para guarda externa."
         ]
     },
 
     "usuarios": {
-        title: "Gestão de Usuários, Senhas & Controle de Acessos",
-        badge: "🔑 ❓ Como Gerenciar Permissões de Usuários",
+        title: "Gestão de Usuários & Permissões (Visão Geral por Cards)",
+        badge: "🔑 ❓ Entenda os Cards de Gerenciamento de Usuários",
         icon: "🔑",
-        summary: "Cadastro de funcionários, senhas com criptografia SHA-256 e limitação de telas por perfil.",
-        description: "Controle de acessos dos colaboradores aos módulos do sistema.",
+        summary: "Detalhamento card por card dos logins de colaboradores, senhas SHA-256 e matriz de permissões.",
+        description: "Controle de segurança dos colaboradores e acessos aos módulos do sistema:",
         steps: [
-            "<b>📌 Tabela de Usuários:</b> Lista os funcionários cadastrados e seus perfis (Admin, Atendente Balcão, Entregador).",
-            "<b>📌 Botão 'Novo Usuário':</b> Cadastra um novo funcionário com login de acesso e senha criptografada SHA-256.",
-            "<b>📌 Grade de Checkboxes de Permissões:</b> Marque quais abas da sidebar o funcionário tem permissão para acessar (ex: liberando apenas 'PDV Balcão')."
+            "<b>🔲 Card [COD: USU-01] - Segurança da Conta do Administrador:</b> Módulo de proteção de acesso master. <br><i>• Alteração de Senha Master:</i> Permite atualizar a senha do usuário Administrador com criptografia SHA-256.",
+            "<b>🔲 Card [COD: USU-02] - Tabela de Funcionários & Matriz de Permissões por Tela:</b> Cadastro de colaboradores. <br><i>• Cadastro de Login:</i> Permite criar novo funcionário com usuário e senha próprios; <br><i>• Matriz de Permissões:</i> Marque quais abas da sidebar o funcionário pode visualizar (ex: bloqueando abas de faturamento)."
         ],
         tips: [
-            "🔒 Restringir acessos protege relatórios de faturamento e margens de lucro contra visualizações de funcionários do balcão."
+            "🔒 Restringir acessos no [COD: USU-02] evita que atendentes do balcão visualizem margens de lucro ou relatórios sigilosos."
         ]
     },
 
     "ajuda": {
-        title: "Central de Suporte, Diagnóstico & Teste de Impressora",
-        badge: "❓ ❓ Manual de Ajuda & Auto-Diagnóstico",
+        title: "Central de Suporte & Auto-Diagnóstico (Visão Geral por Cards)",
+        badge: "❓ ❓ Entenda os Cards da Central de Ajuda",
         icon: "❓",
-        summary: "Módulo de auto-teste do sistema (13 verificações), teste de impressão térmica e guia de treinamento.",
-        description: "Central de suporte técnico e integridade do GelControl.",
+        summary: "Detalhamento card por card do auto-teste de 13 pontos, impressora térmica e limpeza de cache.",
+        description: "Central de auditoria de integridade técnica e testes do sistema:",
         steps: [
-            "<b>📌 Botão 'Rodar Auto-Diagnóstico (13 Pontos)':</b> Executa testes de integridade no banco de dados, layout, conexão e armazenamento.",
-            "<b>📌 Botão 'Imprimir Cupom de Teste':</b> Envia um cupom de teste para validar a impressora térmica 80mm/58mm do balcão.",
-            "<b>📌 Guia de Perguntas Frequentes (FAQ):</b> Expanda as perguntas para ler tutoriais de treinamento."
+            "<b>🔲 Card [COD: AJU-01] - Auto-Diagnóstico de Integridade do Sistema (13 Pontos):</b> Teste técnico automatizado. <br><i>• Botão 'Rodar Auto-Diagnóstico':</i> Executa 13 testes em tempo real verificando banco de dados, conexão, layout, memória e sincronização.",
+            "<b>🔲 Card [COD: AJU-02] - Teste de Impressora Térmica 80mm/58mm:</b> Módulo de validação de hardware. <br><i>• Botão 'Imprimir Cupom de Teste':</i> Dispara uma impressão de validação para conferir o alinhamento do papel e QR Code."
         ],
         tips: [
-            "💡 Utilize o botão 'Limpar Cache e Forçar Recarga' para atualizar o sistema imediatamente se houver atualizações pendentes."
-        ]
-    },
-
-    // -------------------------------------------------------------
-    // AJUDA ESPECÍFICA PARA JANELAS INTERNAS & MODAIS
-    // -------------------------------------------------------------
-    "modal_client": {
-        title: "Janela: Cadastro & Edição de Cliente",
-        icon: "👥",
-        summary: "Mapeamento completo dos campos do formulário de cadastro do cliente.",
-        description: "Esta janela é usada para cadastrar ou editar um parceiro comercial da Gelo do Vale.",
-        steps: [
-            "<b>📌 Campo 'Razão Social / Nome Fantasia':</b> Digite o nome comercial do estabelecimento (ex: Supermercado Rondon).",
-            "<b>📌 Campo 'CNPJ / CPF':</b> Insira o documento fiscal para identificação e emissão de recibos.",
-            "<b>📌 Campo 'Telefone / WhatsApp (com DDD)':</b> Insira o número de celular com 11 dígitos. Esse campo habilita o botão de envio direto de cobranças e comprovantes via WhatsApp.",
-            "<b>📌 Campo 'Endereço, Bairro e Cidade':</b> Preencha o endereço completo. O sistema usa esses dados para gerar a localização no mapa do GPS da frota.",
-            "<b>📌 Campo 'Limite de Crédito Aprovado':</b> Digite o valor teto para compras no carnê de fiados (ex: R$ 2.000,00).",
-            "<b>📌 Seletor 'Capacidade do Freezer Instalado':</b> Selecione quantos fardos cabem no conservador do cliente para o cálculo do alerta de estoque baixo.",
-            "<b>📌 Botão Verde 'Salvar Cliente':</b> Grava o cadastro no banco de dados local e sincroniza na nuvem."
-        ],
-        tips: [
-            "💡 Após salvar o cliente, você pode definir uma tabela de preços diferenciada para ele clicando em 'Preços Especiais'."
-        ]
-    },
-
-    "modal_order": {
-        title: "Janela: Novo Pedido de Rota",
-        icon: "📦",
-        summary: "Mapeamento dos campos para agendamento de entregas de gelo.",
-        description: "Janela para abrir um pedido de rota de carregamento para os motoristas.",
-        steps: [
-            "<b>📌 Menu Suspenso 'Selecionar Cliente':</b> Escolha o parceiro comercial cadastrado que solicitou a entrega.",
-            "<b>📌 Campos de Quantidades de Produtos:</b> Digite quantos fardos de Gelo Cubo 5kg, Gelo 2kg ou Barra 20kg o cliente pediu.",
-            "<b>📌 Campo 'Data de Entrega Agendada':</b> Escolha a data de envio da carga no calendário.",
-            "<b>📌 Seletor 'Forma de Pagamento Combinada':</b> Escolha entre Dinheiro, PIX, Cartão ou Carnê A Prazo.",
-            "<b>📌 Campo 'Observações para o Motorista':</b> Digite recados específicos (ex: 'Entregar na porta dos fundos antes das 11h').",
-            "<b>📌 Botão Verde 'Confirmar Pedido':</b> Transmite o pedido para a central de Pedidos Pendentes e rota dos caminhões."
-        ],
-        tips: [
-            "⚠️ O sistema alertará em vermelho se o cliente selecionado possuir parcelas vencidas no carnê de fiados."
-        ]
-    },
-
-    "modal_sales": {
-        title: "Janela: Finalizar Venda no Balcão (Checkout PDV)",
-        icon: "🛒",
-        summary: "Mapeamento da janela de recebimento, troco e impressão do balcão.",
-        description: "Janela de fechamento de vendas diretas na fábrica.",
-        steps: [
-            "<b>📌 Seleção do Método de Pagamento:</b> Clique nos botões visuais para 'Dinheiro', 'PIX', 'Cartão' ou 'Carnê A Prazo'.",
-            "<b>📌 Campo 'Valor Entregue pelo Cliente':</b> Digite a nota em cédulas recebida (ex: R$ 50,00) para o cálculo automático do troco em verde.",
-            "<b>📌 Quadrado de QR Code PIX:</b> Mostra o QR Code dinâmico/estático na tela para o cliente escanear com o celular do banco.",
-            "<b>📌 Botão Verde 'Concluir Venda Balcão':</b> Dá baixa imediata no estoque, lança a receita no caixa e ativa a impressão no cupom 80mm."
-        ],
-        tips: [
-            "🖨️ A impressora térmica de balcão imprime o cupom automaticamente em 2 segundos."
-        ]
-    },
-
-    "modal_freezer": {
-        title: "Janela: Cadastro & Edição de Freezer (Conservador)",
-        icon: "🧊",
-        summary: "Mapeamento dos campos de tombamento, marca, número de série e voltagem.",
-        description: "Janela de controle patrimonial para incluir ou alterar um conservador de gelo.",
-        steps: [
-            "<b>📌 Campo 'Código de Tombamento (Patrimônio)':</b> Digite o identificador interno da fábrica colado no freezer (ex: `FRZ-0089`).",
-            "<b>📌 Campo 'Marca e Número de Série':</b> Insira o fabricante (Metalfrio, Fricon, Gelopar) e o número de série da nota fiscal.",
-            "<b>📌 Campo 'Voltagem (110V / 220V)':</b> Escolha a voltagem elétrica do aparelho.",
-            "<b>📌 Campo 'Capacidade Total em Sacos':</b> Digite a capacidade em fardos de 5kg (ex: 150 fardos).",
-            "<b>📌 Seletor 'Status de Alocação':</b> Defina se o equipamento está 'Na Fábrica (Disponível)' ou 'Alocado em Cliente'.",
-            "<b>📌 Botão Verde 'Salvar Equipamento':</b> Registra o freezer no sistema patrimonial."
-        ],
-        tips: [
-            "💡 Etiquetas de tombamento corretas evitam perdas de patrimônio em trocas de clientes."
-        ]
-    },
-
-    "modal_freezer_detail": {
-        title: "Janela: Ficha Detalhada do Conservador",
-        icon: "🧊",
-        summary: "Visão 360° do equipamento: cliente instalado, histórico de manutenções e transferência.",
-        description: "Ficha de informações técnicas e operacionais do freezer.",
-        steps: [
-            "<b>📌 Bloco de Dados do Cliente Instalado:</b> Mostra o nome do estabelecimento comercial onde o freezer está fisicamente.",
-            "<b>📌 Tabela de Manutenções Registradas:</b> Lista trocas de borrachas, compressores e cargas de gás efetuadas.",
-            "<b>📌 Botão 'Lançar Manutenção':</b> Registra um novo reparo técnico efetuado pela equipe da fábrica.",
-            "<b>📌 Botão 'Transferir de Cliente':</b> Abre o formulário de recolocação para mover o freezer para outro endereço."
-        ],
-        tips: [
-            "⚠️ Registrar manutenções previne falhas no compressor em finais de semana ensolarados."
-        ]
-    },
-
-    "modal_rental": {
-        title: "Janela: Contrato de Aluguel de Tinas & Mobiliário",
-        icon: "🏕️",
-        summary: "Mapeamento dos campos de locação de tinas 360L, caixas térmicas, diárias e caução.",
-        description: "Formulário de contrato temporário de locação para festas e eventos.",
-        steps: [
-            "<b>📌 Campos de Dados do Locatário:</b> Preencha o Nome Completo, CPF e Telefone com WhatsApp do cliente.",
-            "<b>📌 Seletor de Equipamentos Retirados:</b> Digite quantas tinas térmicas (ex: 2 Tinas Azuis 360L) e jogos de mesas estão sendo entregues.",
-            "<b>📌 Campos 'Data de Saída' e 'Data Limite de Devolução':</b> Defina o período total da locação.",
-            "<b>📌 Campos 'Valor da Diária' e 'Valor da Caução de Garantia':</b> Insira os valores financeiros negociados.",
-            "<b>📌 Botão Verde 'Gerar Contrato de Aluguel':</b> Grava o contrato e emite o comprovante em PDF."
-        ],
-        tips: [
-            "⚠️ Sempre inspecione o estado físico da tina antes de liberar a restituição da caução."
-        ]
-    },
-
-    "modal_document": {
-        title: "Janela: Emissão de Recibos & Orçamentos (PDF)",
-        icon: "📜",
-        summary: "Mapeamento do gerador de documentos timbrados em PDF.",
-        description: "Janela de confecção de recibos e orçamentos comerciais formais.",
-        steps: [
-            "<b>📌 Seletor 'Tipo de Documento':</b> Alternador entre 'Recibo de Pagamento', 'Orçamento Comercial' e 'Comprovante de Entrega'.",
-            "<b>📌 Tabela de Discriminação de Itens:</b> Digite a descrição do produto, quantidade de fardos e valor unitário por linha.",
-            "<b>📌 Campo 'Observações / Condições Comerciais':</b> Insira dados de validade do orçamento ou conta bancária para depósito.",
-            "<b>📌 Botão Verde 'Gerar Documento (PDF)':</b> Confecciona o arquivo PDF na tela pronto para baixar, imprimir ou enviar via WhatsApp."
-        ],
-        tips: [
-            "💡 Orçamentos gerados podem ser convertidos em pedido real com apenas 1 clique."
-        ]
-    },
-
-    "modal_client_prices": {
-        title: "Janela: Tabela de Preços Especiais do Cliente",
-        icon: "🏷️",
-        summary: "Mapeamento dos campos de desconto exclusivo por cliente.",
-        description: "Janela para fixar tabela personalizada por fardo para grandes distribuidores.",
-        steps: [
-            "<b>📌 Tabela de Produtos:</b> Lista os produtos da fábrica (Gelo 5kg, Gelo 2kg, 20kg, etc.).",
-            "<b>📌 Campo 'Preço Especial R$':</b> Digite o valor negociado exclusivo por fardo para este cliente.",
-            "<b>📌 Botão Verde 'Salvar Tabela do Cliente':</b> Grava os preços especiais."
-        ],
-        tips: [
-            "⚠️ Preços definidos nesta janela substituem a tabela mestra da fábrica apenas para este cliente."
-        ]
-    },
-
-    "modal_receive_payment": {
-        title: "Janela: Baixa de Pagamento & Liquidação de Carnê",
-        icon: "💳",
-        summary: "Mapeamento dos campos de baixa de duplicatas recebidas em Dinheiro/PIX.",
-        description: "Janela para liquidar débitos e dar baixa no carnê de fiados.",
-        steps: [
-            "<b>📌 Campo 'Valor Recebido R$':</b> Digite a quantia entregue pelo cliente (aceita quitação total ou parcial).",
-            "<b>📌 Seletor 'Forma de Pagamento':</b> Marque Dinheiro, PIX ou Cartão.",
-            "<b>📌 Botão Verde 'Confirmar Recebimento':</b> Dá baixa na dívida e atualiza o saldo do cliente."
-        ],
-        tips: [
-            "💡 Em baixas parciais, o saldo restante permanece pendente no carnê do cliente."
-        ]
-    },
-
-    "modal_user_form": {
-        title: "Janela: Cadastro de Usuário & Grade de Permissões",
-        icon: "🔑",
-        summary: "Mapeamento de logins, senhas SHA-256 e grade de permissões por tela.",
-        description: "Janela para cadastrar funcionários e definir acessos às abas.",
-        steps: [
-            "<b>📌 Campos 'Nome Completo', 'Login' e 'Senha':</b> Digite os dados de acesso do colaborador.",
-            "<b>📌 Grade de Checkboxes de Permissões:</b> Marque ou desmarque as caixas de seleção correspondentes a cada aba da sidebar.",
-            "<b>📌 Botão Verde 'Salvar Usuário':</b> Grava o perfil criptografado em SHA-256."
-        ],
-        tips: [
-            "🔒 Restringir acessos dos funcionários do balcão protege relatórios de faturamento e margens de lucro."
-        ]
-    },
-
-    "modal_packaging_entry": {
-        title: "Janela: Entrada de Insumos & Sacos Plásticos",
-        icon: "🏭",
-        summary: "Mapeamento dos campos de entrada de bobinas e sacos de embalagem.",
-        description: "Formulário de abastecimento de matéria-prima.",
-        steps: [
-            "<b>📌 Campo 'Quantidade de Sacos Recebidos':</b> Digite o número de embalagens de 2kg, 5kg ou 20kg entregues pelo fornecedor.",
-            "<b>📌 Campo 'Valor Total da Nota Fiscal R$':</b> Digite o valor pago para atualizar o custo unitário por embalagem.",
-            "<b>📌 Botão Verde 'Registrar Entrada':</b> Soma a quantidade no estoque do almoxarifado."
-        ],
-        tips: [
-            "💡 O custo da embalagem é usado pelo Dashboard para calcular a margem de lucro real da fábrica."
-        ]
-    },
-
-    "modal_carne": {
-        title: "Janela: Extrato do Carnê Digital de Fiados",
-        icon: "💳",
-        summary: "Mapeamento de parcelas pendentes e cobrança via WhatsApp.",
-        description: "Janela de extrato financeiro detalhado do cliente.",
-        steps: [
-            "<b>📌 Tabela de Parcelas:</b> Lista todas as notas com datas de vencimento, valores e status.",
-            "<b>📌 Botão Azul 'Cobrar via WhatsApp':</b> Abre a mensagem formatada com o valor total e a chave PIX Copia e Cola."
-        ],
-        tips: [
-            "🔴 Notas vencidas há mais de 5 dias bloqueiam automaticamente novos pedidos a prazo."
-        ]
-    },
-
-    "modal_caixa_diario": {
-        title: "Janela: Fechamento de Caixa Diário",
-        icon: "💵",
-        summary: "Mapeamento da conferência de saldo em gaveta vs sistema.",
-        description: "Janela de encerramento diário do caixa do balcão.",
-        steps: [
-            "<b>📌 Totais Registrados no Sistema:</b> Exibe os valores acumulados no dia em Dinheiro e PIX.",
-            "<b>📌 Campo 'Valor em Dinheiro Contado na Gaveta':</b> Digite a quantia física presente na gaveta.",
-            "<b>📌 Botão Verde 'Confirmar Fechamento':</b> Registra o fechamento diário do caixa."
-        ],
-        tips: [
-            "⚠️ Divergências entre o sistema e a gaveta são destacadas em amarelo/vermelho."
-        ]
-    },
-
-    "modal_weather_forecast": {
-        title: "Janela: Previsão Meteorológica & Demandas de Gelo",
-        icon: "🌤️",
-        summary: "Mapeamento da curva de temperatura semanal Open-Meteo.",
-        description: "Janela de inteligência climática da fábrica.",
-        steps: [
-            "<b>📌 Gráfico / Curva de Temperatura:</b> Acompanhe as máximas previstas para os próximos dias.",
-            "<b>📌 Alerta de Demanda:</b> Dias ensolarados acima de 28°C exigem estoques reforçados."
-        ],
-        tips: [
-            "💡 80% do volume de gelo é consumido em dias quentes e finais de semana ensolarados."
-        ]
-    },
-
-    "modal_pwa": {
-        title: "Janela: Instalação do App no Celular (Modo PWA)",
-        icon: "📱",
-        summary: "Mapeamento do passo a passo de instalação no Android/iOS.",
-        description: "Guia para utilizar o GelControl offline como app nativo.",
-        steps: [
-            "<b>📌 No Android (Google Chrome):</b> Menu de 3 pontos > 'Instalar Aplicativo'.",
-            "<b>📌 No iPhone / iPad (Safari):</b> Botão 'Compartilhar' > 'Adicionar à Tela de Início'.",
-            "<b>📌 No Computador (Chrome/Edge):</b> Ícone de computador na barra de endereço > 'Instalar'."
-        ],
-        tips: [
-            "📱 O modo PWA roda em tela cheia e funciona 100% offline no galpão."
+            "💡 Utilize o botão 'Limpar Cache e Forçar Recarga' para atualizar o aplicativo imediatamente caso uma nova versão seja disponibilizada."
         ]
     }
 };
