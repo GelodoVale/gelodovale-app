@@ -6,6 +6,13 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v76 (06/08/2026 - Antigravity)
+* **Central de Ajuda ContextualHiper-Detalhada & Ícones por Janela (COD: HELP-V76):**
+  - **Mapeamento Espacial de Telas (`js/help_content.js`):** Reescrita completa do dicionário central de ajuda para catalogar de forma hiper-específica todos os cards (ex: `KPI-01`, `KPI-02`, `CLT-01`, `DASH-00`), botões, seletores, tabelas e regras operacionais da fábrica Gelo do Vale.
+  - **Ícones de Ajuda em Modais Internos e Sub-abas (`js/help.js`):** Injeção automática de botões circulares redondos `?` (apenas ícone, sem texto) nos títulos de todas as janelas internas/modais e sub-abas administrativas (Acerto de Carga, Insumos, ROI, Contas a Receber, Integrações PIX, WhatsApp, etc.).
+  - **Arquitetura 100% Reativa (Event-Driven):** Remoção de loops pesados de `setInterval` e substituição por delegação de eventos em 0ms no clique da sidebar e chamadas reativas na abertura de modais (`openModal`), eliminando lags.
+  - **Purga de Cache do PWA e Versionamento:** Atualização do Service Worker para `gelodovale-v174`, scripts e CSS para `v76`, e atualização das etiquetas de versão na tela de login e rodapé.
+
 #### v74 (19/06/2026 - Antigravity)
 * **Pacote de Melhorias Arquiteturais e Funcionais (COD: V74-MELHORIAS):**
   - **Venda "A Prazo" no PDV (`index.html` e `js/pdv.js`):** Inclusão da opção "A Prazo (Carnê)" no seletor de método de pagamento do PDV. Validação preventiva no checkout para exigir a seleção de um cliente cadastrado ao utilizar essa modalidade, exibindo um aviso de aviso (toast warning) caso o cliente não seja informado.
