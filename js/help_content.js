@@ -1,6 +1,6 @@
 /**
  * GELCONTROL - Dicionário Central de Ajuda e Tutoriais Contextuais
- * Conteúdo explicativo detalhado e específico para cada módulo da fábrica Gelo do Vale.
+ * Conteúdo explicativo detalhado e específico para cada módulo e janela interna da fábrica Gelo do Vale.
  */
 
 window.GEL_HELP_DICTIONARY = {
@@ -303,7 +303,7 @@ window.GEL_HELP_DICTIONARY = {
         steps: [
             "<b>1. Visualizar Usuários Cadastrados:</b> Acompanhe a lista de colaboradores que possuem acesso ao sistema.",
             "<b>2. Cadastrar Novo Usuário:</b> Clique no botão 'Novo Usuário', digite o Nome Completo, Login de Acesso (ex: `atendente.marcos`) e defina uma senha inicial.",
-            "<b>3. Configurar Grade de Permissões:</b> Marque as caixas de seleção correspondentes às abas que o funcionário pode visualizar (ex: para um atendente de balcão, marque apenas 'PDV Balcão' e desmarque relatórios financeiros e configurações).",
+            "<b>3. Configurar Grade de Permissões:</b> Marque as caixas de seleção correspondentes às abas que o funcionário pode acessar (ex: para um atendente de balcão, marque apenas 'PDV Balcão' e desmarque relatórios financeiros e configurações).",
             "<b>4. Salvar Perfil:</b> Clique em 'Salvar Usuário' para ativar o novo login."
         ],
         tips: [
@@ -325,6 +325,239 @@ window.GEL_HELP_DICTIONARY = {
         ],
         tips: [
             "💡 <b>Solução Rápida para Problemas:</b> Em caso de comportamento inesperado no aplicativo, utilize o botão 'Limpar Cache e Forçar Recarga' para recarregar o sistema com a versão mais recente sem perder nenhum dado salvo."
+        ]
+    },
+
+    // -------------------------------------------------------------
+    // AJUDA ESPECÍFICA PARA JANELAS INTERNAS & MODAIS
+    // -------------------------------------------------------------
+    "modal_client": {
+        title: "Janela: Cadastro & Edição de Cliente",
+        icon: "👥",
+        summary: "Guia completo para preencher cadastros, editar dados, limite de crédito e congelador do cliente.",
+        description: "Esta janela permite registrar um novo parceiro comercial da Gelo do Vale ou editar os dados existentes (endereço, contatos, CNPJ, limite de crédito pré-aprovado e tamanho do freezer).",
+        steps: [
+            "<b>Como Cadastrar / Alterar Nome e CNPJ:</b> Digite a Razão Social ou Nome Fantasia no campo principal e insira o CNPJ/CPF.",
+            "<b>Como Configurar Telefone / WhatsApp:</b> Digite o número com DDD no formato de 11 dígitos. Esse número é usado para envio direto de comprovantes e boletos.",
+            "<b>Como Definir Limite de Crédito:</b> Insira o valor limite em 'Limite de Crédito' (ex: R$ 2.000,00). O sistema usará este teto para autorizar vendas a prazo no carnê de fiados.",
+            "<b>Como Informar o Freezer Instalado:</b> Selecione a capacidade em fardos do conservador em comodato instalado no estabelecimento.",
+            "<b>Como Salvar:</b> Clique no botão verde 'Salvar Cliente' no rodapé."
+        ],
+        tips: [
+            "💡 Se o cliente tiver uma tabela de preços diferenciada, você poderá configurá-la após salvar o cadastro clicando em 'Preços Especiais'."
+        ]
+    },
+
+    "modal_order": {
+        title: "Janela: Novo Pedido de Rota",
+        icon: "📦",
+        summary: "Guia para agendar pedidos de fardos de gelo para a rota dos motoristas.",
+        description: "Esta janela permite abrir uma ordem de pedido com data de entrega agendada para os caminhões da fábrica.",
+        steps: [
+            "<b>Como Selecionar o Cliente:</b> Escolha o cliente na lista suspensa.",
+            "<b>Como Selecionar Produtos e Quantidades:</b> Digite a quantidade de fardos de Gelo Cubo 5kg, Moído 5kg ou 20kg desejados.",
+            "<b>Como Definir a Data de Entrega:</b> Selecione o dia em que a carga deve ser entregue.",
+            "<b>Como Configurar Observações:</b> Digite instruções para o motorista (ex: 'Entregar antes das 10h').",
+            "<b>Como Salvar:</b> Clique em 'Salvar Pedido' para encaminhá-lo para aprovação."
+        ],
+        tips: [
+            "⚠️ Pedidos com clientes inadimplentes exibirão um aviso na tela antes de permitir o salvamento."
+        ]
+    },
+
+    "modal_sales": {
+        title: "Janela: Finalizar Venda no Balcão (Checkout PDV)",
+        icon: "🛒",
+        summary: "Guia para concluir a venda, calcular troco em dinheiro, gerar QR Code PIX e emitir comprovante.",
+        description: "Janela de recebimento e fechamento rápido no balcão da fábrica.",
+        steps: [
+            "<b>Como Escolher a Forma de Pagamento:</b> Clique nos botões Dinheiro, PIX, Cartão ou A Prazo.",
+            "<b>Como Calcular Troco:</b> Se o cliente pagar em Dinheiro, digite a nota entregue (ex: R$ 100,00) para o sistema calcular o troco.",
+            "<b>Como Usar o PIX:</b> Ao escolher PIX, a tela exibe o QR Code e a chave copia e cola para o cliente escanear no celular.",
+            "<b>Como Concluir:</b> Clique em 'Concluir Venda Balcão' para dar baixa no estoque e emitir o cupom térmico."
+        ],
+        tips: [
+            "🖨️ A impressora 80mm imprime o cupom automaticamente se estiver conectada."
+        ]
+    },
+
+    "modal_freezer": {
+        title: "Janela: Cadastro & Edição de Freezer",
+        icon: "🧊",
+        summary: "Guia para registrar placas de tombamento, número de série, marca e capacidade do conservador.",
+        description: "Janela de controle patrimonial para incluir ou alterar dados de um freezer conservador de gelo.",
+        steps: [
+            "<b>Como Informar o Tombamento:</b> Digite o código da etiqueta de patrimônio da fábrica (ex: `FRZ-0089`).",
+            "<b>Como Cadastrar Marca e Série:</b> Insira a marca (Metalfrio, Gelopar, Fricon) e o número de série da nota fiscal.",
+            "<b>Como Definir Capacidade:</b> Digite a capacidade total de fardos que cabem no freezer (ex: 200 fardos).",
+            "<b>Como Configurar a Localização:</b> Marque se o equipamento está 'Disponível na Fábrica' ou 'Alocado em Cliente'.",
+            "<b>Como Salvar:</b> Clique no botão 'Salvar Equipamento'."
+        ],
+        tips: [
+            "💡 Etiquetas de tombamento corretas evitam extravios de equipamentos em trocas de clientes."
+        ]
+    },
+
+    "modal_freezer_detail": {
+        title: "Janela: Ficha Detalhada do Conservador",
+        icon: "🧊",
+        summary: "Visão geral do equipamento: cliente atual, manutenções técnicas e botão de transferência.",
+        description: "Exibe a ficha completa de um freezer da fábrica.",
+        steps: [
+            "<b>Como Ver Histórico:</b> Acompanhe quando o freezer foi instalado e quantos fardos o cliente comprou no último mês.",
+            "<b>Como Registrar Manutenção:</b> Clique em 'Lançar Manutenção' para anotar trocas de gás, borrachas ou motor.",
+            "<b>Como Transferir o Freezer:</b> Clique em 'Transferir de Cliente' para recolocar o freezer em outro ponto comercial."
+        ],
+        tips: [
+            "⚠️ Mantenha os registros de manutenção atualizados para controle de custos operacionais."
+        ]
+    },
+
+    "modal_rental": {
+        title: "Janela: Contrato de Aluguel de Tinas & Mobiliário",
+        icon: "🏕️",
+        summary: "Guia para locação de tinas 360L, caixas térmicas, cálculo de diárias e retenção de caução.",
+        description: "Janela de abertura e edição de contratos temporários de locação para festas e eventos.",
+        steps: [
+            "<b>Como Preencher o Locatário:</b> Digite o Nome Completo, CPF e Telefone do responsável.",
+            "<b>Como Selecionar Itens:</b> Indique a quantidade de tinas térmicas (ex: 2 Tinas Azuis 360L) e jogos de mesas.",
+            "<b>Como Configurar Período e Caução:</b> Defina a data de saída, data limite de devolução e o valor retido como garantia.",
+            "<b>Como Salvar:</b> Clique no botão 'Gerar Contrato de Aluguel'."
+        ],
+        tips: [
+            "⚠️ Sempre inspecione o estado físico da tina antes de liberar a caução no momento do retorno."
+        ]
+    },
+
+    "modal_document": {
+        title: "Janela: Emissão de Recibos & Orçamentos (PDF)",
+        icon: "📜",
+        summary: "Guia para confeccionar documentos timbrados oficiais em PDF para clientes e empresas.",
+        description: "Janela de geração de comprovantes formais e orçamentos comerciais em PDF.",
+        steps: [
+            "<b>Como Escolher o Documento:</b> Selecione entre 'Recibo de Pagamento', 'Orçamento Comercial' ou 'Comprovante de Entrega'.",
+            "<b>Como Discriminar Itens:</b> Digite as descrições dos produtos, quantidades de fardos e valores unitários.",
+            "<b>Como Gerar e Enviar:</b> Clique em 'Gerar Documento (PDF)' para visualizar na tela, baixar ou enviar no WhatsApp do cliente."
+        ],
+        tips: [
+            "💡 Orçamentos gerados podem ser convertidos em pedido real a qualquer momento."
+        ]
+    },
+
+    "modal_client_prices": {
+        title: "Janela: Tabela de Preços Especiais do Cliente",
+        icon: "🏷️",
+        summary: "Guia para fixar valores diferenciados por fardo para clientes VIP ou grandes distribuidores.",
+        description: "Janela de desconto personalizado por cliente.",
+        steps: [
+            "<b>Como Alterar Preço por Produto:</b> Digite o valor especial combinado para o Gelo Cubo 5kg, Moído 5kg ou 20kg.",
+            "<b>Como Salvar:</b> Clique em 'Salvar Tabela do Cliente'."
+        ],
+        tips: [
+            "⚠️ Preços cadastrados aqui se sobrepõem à tabela mestra da fábrica apenas para este cliente."
+        ]
+    },
+
+    "modal_receive_payment": {
+        title: "Janela: Baixa de Pagamento & Liquidação de Carnê",
+        icon: "💳",
+        summary: "Guia para dar baixa em notas fiadas recebidas em Dinheiro, PIX ou Cartão.",
+        description: "Janela de liquidação financeira de débitos pendentes.",
+        steps: [
+            "<b>Como Informar o Valor Pago:</b> Digite a quantia entregue pelo cliente (aceita quitação total ou parcial).",
+            "<b>Como Escolher a Forma de Pagamento:</b> Marque Dinheiro, PIX ou Cartão.",
+            "<b>Como Confirmar a Baixa:</b> Clique no botão verde 'Confirmar Recebimento'."
+        ],
+        tips: [
+            "💡 Em baixas parciais, o saldo restante permanece pendente no carnê do cliente."
+        ]
+    },
+
+    "modal_user_form": {
+        title: "Janela: Cadastro de Usuário & Grade de Permissões",
+        icon: "🔑",
+        summary: "Guia para criar logins da equipe, senhas salvas com hash SHA-256 e limitar acesso a abas.",
+        description: "Janela de segurança e controle de acessos.",
+        steps: [
+            "<b>Como Definir Login e Senha:</b> Insira o nome do funcionário, nome de usuário e defina a senha.",
+            "<b>Como Marcar Permissões:</b> Marque quais telas da sidebar o colaborador pode visualizar (ex: liberando apenas 'PDV Balcão' para o atendente).",
+            "<b>Como Salvar:</b> Clique em 'Salvar Usuário'."
+        ],
+        tips: [
+            "🔒 Restringir acessos protege os relatórios financeiros da fábrica contra visualizações não autorizadas."
+        ]
+    },
+
+    "modal_packaging_entry": {
+        title: "Janela: Entrada de Insumos & Sacos Plásticos",
+        icon: "🏭",
+        summary: "Guia para lançar compras de sacos de 2kg, 5kg e 20kg e atualizar custo de produção.",
+        description: "Janela de abastecimento do estoque de embalagens da fábrica.",
+        steps: [
+            "<b>Como Informar Quantidades:</b> Digite o número de sacos plásticos ou bobinas recebidos da fábrica de embalagens.",
+            "<b>Como Lançar Custo:</b> Digite o valor total da nota fiscal de compra.",
+            "<b>Como Salvar:</b> Clique em 'Registrar Entrada de Insumo'."
+        ],
+        tips: [
+            "💡 O custo da embalagem é usado pelo sistema no cálculo do lucro líquido por fardo."
+        ]
+    },
+
+    "modal_carne": {
+        title: "Janela: Extrato do Carnê Digital de Fiados",
+        icon: "💳",
+        summary: "Guia para consultar parcelas em aberto, débitos vencidos e disparar cobrança PIX no WhatsApp.",
+        description: "Janela de extrato financeiro detalhado do cliente.",
+        steps: [
+            "<b>Como Conferir Débitos:</b> Acompanhe a lista de notas com datas de vencimento e valores.",
+            "<b>Como Disparar Cobrança:</b> Clique no botão 'Cobrar via WhatsApp' para enviar o extrato formatado com a chave PIX da fábrica."
+        ],
+        tips: [
+            "🔴 Notas vencidas há mais de 5 dias bloqueiam automaticamente novos pedidos a prazo."
+        ]
+    },
+
+    "modal_caixa_diario": {
+        title: "Janela: Fechamento de Caixa Diário",
+        icon: "💵",
+        summary: "Guia para conferir o saldo inicial, vendas do dia em dinheiro/PIX e encerrar o caixa.",
+        description: "Janela de encerramento diário do caixa do balcão.",
+        steps: [
+            "<b>Como Conferir Lançamentos:</b> Verifique o valor total registrado pelo sistema em Dinheiro e PIX.",
+            "<b>Como Digitar Valor Físico:</b> Insira a quantia em notas contadas na gaveta do caixa.",
+            "<b>Como Fechar:</b> Clique em 'Confirmar Fechamento do Caixa'."
+        ],
+        tips: [
+            "⚠️ Divergências entre a gaveta e o sistema são indicadas no relatório de fechamento."
+        ]
+    },
+
+    "modal_weather_forecast": {
+        title: "Janela: Previsão do Tempo & Meteorologia",
+        icon: "🌤️",
+        summary: "Guia para analisar a temperatura semanal e planejar o estoque de gelo.",
+        description: "Janela de dados climáticos consultados via Open-Meteo.",
+        steps: [
+            "<b>Como Interpretar as Temperaturas:</b> Acompanhe as máximas previstas para o final de semana.",
+            "<b>Como Planejar o Estoque:</b> Dias ensolarados acima de 28°C exigem estoques reforçados nos congeladores."
+        ],
+        tips: [
+            "💡 80% do volume de gelo é consumido em dias quentes e finais de semana ensolarados."
+        ]
+    },
+
+    "modal_pwa": {
+        title: "Janela: Instalação do App no Celular (Modo PWA)",
+        icon: "📱",
+        summary: "Guia para instalar o GelControl como aplicativo nativo no Android, iOS ou Windows.",
+        description: "Instruções de instalação para uso offline no celular ou tablet.",
+        steps: [
+            "<b>No Android (Google Chrome):</b> Abra o menu de 3 pontos do navegador e selecione 'Instalar Aplicativo'.",
+            "<b>No iPhone / iPad (Safari):</b> Toque no botão 'Compartilhar' no rodapé e escolha 'Adicionar à Tela de Início'.",
+            "<b>No Computador (Chrome/Edge):</b> Clique no ícone de computador na barra de endereço superior e selecione 'Instalar'."
+        ],
+        tips: [
+            "📱 O aplicativo instalado funciona 100% offline no galpão sem depender de conexão contínua."
         ]
     }
 };

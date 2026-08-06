@@ -88,6 +88,9 @@ export function switchAdminSubTab(subTabId) {
         }
     });
     
+    if (window.updateTopHeaderHelpBadge) window.updateTopHeaderHelpBadge();
+    if (window.attachInternalHelpButtons) window.attachInternalHelpButtons();
+    
     try {
         if (subTabId === "tab-rentabilidade-freezers" && typeof window.renderFreezerRentability === "function") {
             window.renderFreezerRentability();

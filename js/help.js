@@ -9,6 +9,34 @@
         const style = document.createElement('style');
         style.id = 'gel-help-css';
         style.textContent = `
+            .btn-help-icon-only {
+                background: rgba(56, 189, 248, 0.15) !important;
+                border: 1px solid rgba(56, 189, 248, 0.4) !important;
+                color: #38bdf8 !important;
+                width: 24px !important;
+                height: 24px !important;
+                min-width: 24px !important;
+                min-height: 24px !important;
+                border-radius: 50% !important;
+                font-size: 0.8rem !important;
+                font-weight: 700 !important;
+                cursor: pointer !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s ease !important;
+                margin-left: 8px !important;
+                vertical-align: middle !important;
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
+                padding: 0 !important;
+                line-height: 1 !important;
+            }
+            .btn-help-icon-only:hover {
+                background: rgba(56, 189, 248, 0.35) !important;
+                color: #ffffff !important;
+                transform: scale(1.15) !important;
+                box-shadow: 0 0 14px rgba(56, 189, 248, 0.5) !important;
+            }
             .btn-help-badge {
                 background: rgba(56, 189, 248, 0.1) !important;
                 border: 1px solid rgba(56, 189, 248, 0.35) !important;
@@ -241,12 +269,105 @@
         }
     };
 
+    // 5. Injeção Automática de Ícones ? (sem título) em Janelas Internas (Modais) e Sub-abas
+    const MODAL_HELP_MAP = {
+        'modal-client': 'modal_client',
+        'modal-order': 'modal_order',
+        'modal-sales': 'modal_sales',
+        'modal-freezer': 'modal_freezer',
+        'modal-freezer-detail': 'modal_freezer_detail',
+        'modal-comodato': 'modal_comodato',
+        'modal-create-comodato': 'modal_comodato',
+        'modal-rental': 'modal_rental',
+        'modal-document': 'modal_document',
+        'modal-client-prices': 'modal_client_prices',
+        'modal-receive-payment': 'modal_receive_payment',
+        'modal-user-form': 'modal_user_form',
+        'modal-packaging-entry': 'modal_packaging_entry',
+        'modal-carne': 'modal_carne',
+        'modal-caixa-diario': 'modal_caixa_diario',
+        'modal-weather-forecast': 'modal_weather_forecast',
+        'modal-pwa-tutorial': 'modal_pwa',
+        'modal-pix-local': 'modal_pix_local',
+        'modal-edit-local-event': 'modal_local_event',
+        'modal-confirm-delivery': 'modal_confirm_delivery',
+        'modal-product-mgmt': 'modal_product_mgmt',
+        'modal-supplier': 'modal_supplier'
+    };
+
+    window.attachInternalHelpButtons = function () {
+        // A) Anexar ícone ? em Modais Internos
+        Object.keys(MODAL_HELP_MAP).forEach(modalId => {
+            const modalEl = document.getElementById(modalId);
+            if (!modalEl) return;
+
+            const headerTitle = modalEl.querySelector('h2, h3, h4, .modal-title, .modal-header h3, .modal-header h2, .confirm-dialog h3');
+            if (headerTitle && !headerTitle.querySelector('.btn-help-icon-only')) {
+                const helpKey = MODAL_HELP_MAP[modalId];
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-help-icon-only';
+                btn.title = 'Como funciona esta janela?';
+                btn.innerText = '?';
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.openHelpTopic(helpKey);
+                };
+
+                headerTitle.style.display = 'inline-flex';
+                headerTitle.style.alignItems = 'center';
+                headerTitle.style.gap = '8px';
+
+                headerTitle.appendChild(btn);
+            }
+        });
+
+        // B) Anexar ícone ? em Sub-abas internas do Admin / Preços / Configurações
+        const subtabs = document.querySelectorAll('.admin-subtab-content, .subtab-content');
+        subtabs.forEach(subtab => {
+            if (!subtab.id) return;
+            let subId = subtab.id.replace('tab-', '').replace('admin-tab-', '');
+            const dict = window.GEL_HELP_DICTIONARY || {};
+            if (!dict[subId]) return;
+
+            const subHeader = subtab.querySelector('h2, h3, h4, .section-title, .card-header h3');
+            if (subHeader && !subHeader.querySelector('.btn-help-icon-only')) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-help-icon-only';
+                btn.title = 'Como funciona esta sub-aba?';
+                btn.innerText = '?';
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.openHelpTopic(subId);
+                };
+
+                subHeader.style.display = 'inline-flex';
+                subHeader.style.alignItems = 'center';
+                subHeader.style.gap = '8px';
+
+                subHeader.appendChild(btn);
+            }
+        });
+    };
+
     // Injetar o modal e botões no carregamento e em intervalo contínuo
     document.addEventListener('DOMContentLoaded', function () {
         injectHelpModalHTML();
         updateTopHeaderHelpBadge();
+        attachInternalHelpButtons();
     });
 
-    window.addEventListener('load', updateTopHeaderHelpBadge);
-    setInterval(updateTopHeaderHelpBadge, 400);
+    window.addEventListener('load', function() {
+        updateTopHeaderHelpBadge();
+        attachInternalHelpButtons();
+    });
+
+    setInterval(function() {
+        updateTopHeaderHelpBadge();
+        attachInternalHelpButtons();
+    }, 500);
 })();
