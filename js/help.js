@@ -205,7 +205,7 @@
     });
 
     // 4. Mapeamento do Botão de Ajuda Principal do Topo (ao lado do Nome Principal no Cabeçalho)
-    window.updateTopHeaderHelpBadge = function () {
+    window.updateTopHeaderHelpBadge = function (explicitKey) {
         let slotEl = document.getElementById('header-help-slot');
         const pageTitleEl = document.getElementById('page-title');
         if (!pageTitleEl) return;
@@ -221,14 +221,24 @@
             }
         }
 
-        // Identificar qual aba/sub-aba está visível no momento via sidebar (.nav-item.active)
-        let activeKey = 'dashboard';
-        const activeNav = document.querySelector('.nav-item.active');
-        if (activeNav) {
-            activeKey = activeNav.getAttribute('data-tab') || 'dashboard';
+        // Determinar chave ativa com prioridade imediata
+        let activeKey = explicitKey || '';
+
+        if (!activeKey) {
+            const activeNav = document.querySelector('.nav-item.active');
+            if (activeNav) {
+                activeKey = activeNav.getAttribute('data-tab') || '';
+            }
         }
 
-        // Mapeamento de sinonimos de abas principais para o dicionario
+        if (!activeKey) {
+            activeKey = 'dashboard';
+        }
+
+        // Sanitizar chaves e sinonimos principais
+        if (typeof activeKey === 'string' && activeKey.startsWith('view-')) {
+            activeKey = activeKey.replace('view-', '');
+        }
         if (activeKey === 'tinas' || activeKey === 'equipamentos') activeKey = 'rentals';
         if (activeKey === 'inventario') activeKey = 'freezers';
         if (activeKey === 'documentos') activeKey = 'recibos';
@@ -286,6 +296,25 @@
             slotEl.appendChild(helpBtn);
         }
     };
+
+    // Delegação instantânea de clique (0ms de atraso na resposta visual)
+    document.addEventListener('click', function (e) {
+        const navItem = e.target.closest('.nav-item');
+        if (navItem) {
+            const tab = navItem.getAttribute('data-tab');
+            if (tab) {
+                updateTopHeaderHelpBadge(tab);
+            }
+        }
+        const adminBtn = e.target.closest('.admin-menu-btn');
+        if (adminBtn) {
+            const attr = adminBtn.getAttribute('onclick') || '';
+            const match = attr.match(/['"]([^'"]+)['"]/);
+            if (match) {
+                updateTopHeaderHelpBadge(match[1]);
+            }
+        }
+    }, true);
 
     // 5. Injeção Automática de Ícones ? (sem título) em Janelas Internas (Modais) e Sub-abas
     const MODAL_HELP_MAP = {

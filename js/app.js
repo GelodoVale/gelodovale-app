@@ -626,7 +626,7 @@ export function updateHeaderForTab(tab) {
             break;
     }
     if (window.lucide) window.lucide.createIcons();
-    if (window.updateTopHeaderHelpBadge) window.updateTopHeaderHelpBadge();
+    if (window.updateTopHeaderHelpBadge) window.updateTopHeaderHelpBadge(tab);
 }
 
 export function renderTabContent(tab) {
