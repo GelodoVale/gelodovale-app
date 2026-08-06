@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v174';
+const CACHE_NAME = 'gelodovale-v175';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -39,7 +39,6 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Force fetch with cache: 'reload' to bypass browser HTTP cache and get fresh copies
       const requests = ASSETS.map(url => new Request(url, { cache: 'reload' }));
       return cache.addAll(requests);
     }).then(() => self.skipWaiting())
@@ -61,19 +60,38 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Ignorar requisições externas como CDNs ou de extensão do chrome
+  // Ignorar requisições externas como CDNs ou extensões
   if (!e.request.url.startsWith(self.location.origin)) {
     return;
   }
 
+  const url = e.request.url;
+  const isCacheBusted = url.includes('cb=') || url.includes('nocache') || url.includes('v=76');
+  const isNavigation = e.request.mode === 'navigate';
+
+  // Network-First para navegação e requisições com cache-buster (garante código novo ao dar F5)
+  if (isCacheBusted || isNavigation) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-cache' }).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseClone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(e.request, { ignoreSearch: true });
+      })
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate para outros arquivos estáticos
   e.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
-      // Scope match exclusively to the current active cache
-      return cache.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
+      return cache.match(e.request).then((cachedResponse) => {
         if (cachedResponse) {
-          // Atualizar cache em segundo plano (stale-while-revalidate) com cache: 'no-cache'
           fetch(e.request, { cache: 'no-cache' }).then((networkResponse) => {
-            if (networkResponse.status === 200) {
+            if (networkResponse && networkResponse.status === 200) {
               cache.put(e.request, networkResponse);
             }
           }).catch(() => {});
@@ -81,10 +99,6 @@ self.addEventListener('fetch', (e) => {
         }
         return fetch(e.request);
       });
-    }).catch(() => {
-      if (e.request.mode === 'navigate') {
-        return caches.open(CACHE_NAME).then((cache) => cache.match('index.html'));
-      }
     })
   );
 });

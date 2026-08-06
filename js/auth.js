@@ -654,16 +654,17 @@ export function clearAppCacheAndReload() {
             }
         });
     }
+    const reloadFresh = () => {
+        sessionStorage.clear();
+        const freshUrl = window.location.origin + window.location.pathname + '?cb=' + Date.now();
+        window.location.href = freshUrl;
+    };
     if (window.caches) {
         caches.keys().then(keys => {
             return Promise.all(keys.map(key => caches.delete(key)));
-        }).then(() => {
-            sessionStorage.clear();
-            window.location.reload();
-        });
+        }).then(reloadFresh).catch(reloadFresh);
     } else {
-        sessionStorage.clear();
-        window.location.reload();
+        reloadFresh();
     }
 }
 
