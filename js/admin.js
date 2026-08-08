@@ -3172,13 +3172,18 @@ export async function generateAndSendMP(event, clientId, amount) {
         if (link) {
             // Abre o WhatsApp com o link
             const phone = client.phone ? client.phone.replace(/\D/g, '') : '';
-            const msg = `Olá! Segue o link de pagamento do Mercado Pago referente ao acerto pendente (R$ ${amount.toFixed(2).replace('.', ',')}).\nVocê pode escolher pagar via PIX ou Boleto:\n${link}`;
+            const msg = `Olá! Segue o link de pagamento do Mercado Pago referente ao acerto pendente (R$ ${amount.toFixed(2).replace('.', ',')}).\nVocê pode escolher pagar via PIX, Boleto ou Cartão clicando aqui:\n${link}`;
             
-            if (phone.length >= 10) {
-                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            if (window.showMPCheckoutModal) {
+                window.showMPCheckoutModal({
+                    link: link,
+                    clientName: client.name,
+                    amount: amount,
+                    phone: phone,
+                    message: msg
+                });
             } else {
-                // Se não tem telefone, apenas copia pro clipboard ou mostra na tela
-                window.showToast(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`, "success");
+                window.showToast(`Link Mercado Pago gerado com sucesso:\n${link}`, "success");
             }
         }
     } finally {

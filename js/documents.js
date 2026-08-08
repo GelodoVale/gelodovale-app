@@ -958,12 +958,18 @@ export async function generateMpFromDocument() {
         const link = await window.generateMercadoPagoLink(`Recibo - ${d.clientName}`, d.total);
         if (link) {
             const phone = d.phone ? d.phone.replace(/\D/g, '') : '';
-            const msg = `Olá! Segue o link de pagamento do Mercado Pago (R$ ${(parseFloat(d.total) || 0).toFixed(2).replace('.', ',')}) referente ao seu recibo.\nVocê pode escolher pagar via PIX ou Boleto clicando aqui:\n${link}`;
+            const msg = `Olá! Segue o link de pagamento do Mercado Pago (R$ ${(parseFloat(d.total) || 0).toFixed(2).replace('.', ',')}) referente ao seu pedido.\nVocê pode escolher pagar via PIX, Boleto ou Cartão clicando aqui:\n${link}`;
             
-            if (phone.length >= 10) {
-                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            if (window.showMPCheckoutModal) {
+                window.showMPCheckoutModal({
+                    link: link,
+                    clientName: d.clientName,
+                    amount: d.total,
+                    phone: phone,
+                    message: msg
+                });
             } else {
-                window.showToast(`Link gerado com sucesso (cliente sem telefone cadastrado):\n${link}`, "success");
+                window.showToast(`Link Mercado Pago gerado com sucesso:\n${link}`, "success");
             }
         }
     } finally {

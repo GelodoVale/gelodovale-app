@@ -1006,11 +1006,39 @@ export function getGPSLocation(callback) {
         callback(null);
         return;
     }
-    navigator.geolocation.getCurrentPosition(
-        (pos) => callback({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => callback(null),
-        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
-    );
+    let handled = false;
+    const safetyTimer = setTimeout(() => {
+        if (!handled) {
+            handled = true;
+            callback(null);
+        }
+    }, 1500);
+
+    try {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                if (!handled) {
+                    handled = true;
+                    clearTimeout(safetyTimer);
+                    callback({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                }
+            },
+            (err) => {
+                if (!handled) {
+                    handled = true;
+                    clearTimeout(safetyTimer);
+                    callback(null);
+                }
+            },
+            { enableHighAccuracy: false, timeout: 1200, maximumAge: 60000 }
+        );
+    } catch (e) {
+        if (!handled) {
+            handled = true;
+            clearTimeout(safetyTimer);
+            callback(null);
+        }
+    }
 }
 
 export function deductPackagingStock(productId, qtyFardos, qtyUnits, ref) {
@@ -2359,6 +2387,10 @@ export function initForms() {
                 saveState();
                 closeModal("modal-document");
                 renderApp();
+                const savedDocId = docId || (newDoc ? newDoc.id : null);
+                if (savedDocId && window.openDocumentPrint) {
+                    window.openDocumentPrint(savedDocId);
+                }
             });
         });
     }
@@ -3124,6 +3156,70 @@ export async function generateMercadoPagoLink(title, amount) {
     }
 }
 window.generateMercadoPagoLink = generateMercadoPagoLink;
+
+let currentMPModalData = { link: "", phone: "", message: "" };
+
+export function showMPCheckoutModal({ link, clientName, amount, phone, message }) {
+    currentMPModalData = { link, phone, message };
+    
+    const modal = document.getElementById("modal-mp-checkout-link");
+    const inputLink = document.getElementById("mp-generated-link-input");
+    const infoEl = document.getElementById("mp-link-client-info");
+    
+    if (inputLink) inputLink.value = link || "";
+    if (infoEl) {
+        const valFormatted = (parseFloat(amount) || 0).toFixed(2).replace('.', ',');
+        infoEl.innerHTML = `<strong>Cliente:</strong> ${clientName || 'Cliente'} &nbsp;|&nbsp; <strong>Valor Total:</strong> R$ ${valFormatted}`;
+    }
+    
+    if (modal) {
+        modal.classList.add("active");
+        if (window.lucide) window.lucide.createIcons();
+    }
+}
+window.showMPCheckoutModal = showMPCheckoutModal;
+
+export function copyMPGeneratedLink() {
+    if (!currentMPModalData.link) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentMPModalData.link).then(() => {
+            if (window.showToast) window.showToast("Link copiado para a área de transferência!", "success");
+        }).catch(() => {
+            fallbackCopy(currentMPModalData.link);
+        });
+    } else {
+        fallbackCopy(currentMPModalData.link);
+    }
+}
+function fallbackCopy(text) {
+    const input = document.getElementById("mp-generated-link-input");
+    if (input) {
+        input.select();
+        document.execCommand("copy");
+        if (window.showToast) window.showToast("Link copiado!", "success");
+    }
+}
+window.copyMPGeneratedLink = copyMPGeneratedLink;
+
+export function openMPGeneratedLink() {
+    if (currentMPModalData.link) {
+        window.open(currentMPModalData.link, '_blank');
+    }
+}
+window.openMPGeneratedLink = openMPGeneratedLink;
+
+export function sendMPGeneratedLinkWhatsApp() {
+    if (!currentMPModalData.link) return;
+    const phone = currentMPModalData.phone ? currentMPModalData.phone.replace(/\D/g, '') : '';
+    const msg = currentMPModalData.message || `Olá! Segue o link de pagamento do Mercado Pago:\n${currentMPModalData.link}`;
+    
+    if (phone.length >= 10) {
+        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    } else {
+        if (window.showToast) window.showToast("Informe ou cadastre um número de telefone com DDD válido para enviar via WhatsApp.", "warning");
+    }
+}
+window.sendMPGeneratedLinkWhatsApp = sendMPGeneratedLinkWhatsApp;
 
 export function initConnectionStatusMonitor() {
     const banner = document.getElementById("offline-status-banner");

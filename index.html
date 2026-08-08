@@ -4801,7 +4801,7 @@
                     <i data-lucide="qr-code" style="width: 14px; height: 14px;"></i> PIX Local (Sem Taxa)
                 </button>
                 <button type="button" class="btn" id="btn-mp-doc" onclick="generateMpFromDocument()" style="display: none; align-items: center; gap: 6px; background: #009ee3; border: 1px solid #009ee3; color: #fff;">
-                    <i data-lucide="link" style="width: 14px; height: 14px;"></i> MP (Pix/Boleto)
+                    <i data-lucide="link" style="width: 14px; height: 14px;"></i> MP (Pix/Boleto/Cartão)
                 </button>
                 <button type="button" class="btn btn-email" id="btn-share-email" onclick="shareDocumentEmail()">
                     <i data-lucide="mail"></i> E-mail
@@ -4812,6 +4812,50 @@
                 <button type="button" class="btn btn-primary" onclick="printDocument()">
                     <i data-lucide="printer"></i> Imprimir Documento
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Link de Pagamento Mercado Pago -->
+    <div class="modal-backdrop" id="modal-mp-checkout-link">
+        <div class="modal-content" style="width: 520px; max-width: 95vw;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0, 158, 227, 0.3);">
+                <h3 style="color: #009ee3; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="credit-card" style="width: 18px; height: 18px;"></i> Link Mercado Pago (Pix / Boleto / Cartão)
+                </h3>
+                <button type="button" class="close-btn" onclick="closeModal('modal-mp-checkout-link')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.25rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.5;">
+                    O link de checkout foi gerado! Ao abrir esse link, seu cliente pode escolher pagar via <strong>PIX</strong>, <strong>Boleto Bancário</strong> ou <strong>Cartão de Crédito</strong>.
+                </p>
+
+                <div style="background: rgba(0, 158, 227, 0.08); border: 1px solid rgba(0, 158, 227, 0.25); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 0.72rem; color: #7dd3fc; margin-bottom: 6px; font-weight: 700; text-transform: uppercase;">Link de Pagamento Oficial:</div>
+                    <input type="text" id="mp-generated-link-input" class="form-control" readonly style="font-size: 0.82rem; font-family: monospace; background: rgba(0,0,0,0.5); color: #00f0ff; text-align: center; font-weight: bold; cursor: pointer;" onclick="this.select();">
+                </div>
+
+                <div id="mp-link-client-info" style="font-size: 0.8rem; color: var(--color-text-muted); background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 0.25rem;">
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="window.copyMPGeneratedLink()" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem;">
+                            <i data-lucide="copy" style="width: 14px; height: 14px;"></i> Copiar Link
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="window.openMPGeneratedLink()" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem;">
+                            <i data-lucide="external-link" style="width: 14px; height: 14px;"></i> Abrir Checkout
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-whatsapp" id="btn-send-mp-whatsapp" onclick="window.sendMPGeneratedLinkWhatsApp()" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0.65rem; font-weight: bold;">
+                        <i data-lucide="message-square" style="width: 16px; height: 16px;"></i> Enviar pelo WhatsApp
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-mp-checkout-link')">Fechar</button>
             </div>
         </div>
     </div>
@@ -6139,10 +6183,10 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Sistema de Ajuda Contextual -->
-    <script src="js/help_content.js?v=77"></script>
-    <script src="js/help.js?v=77"></script>
+    <script src="js/help_content.js?v=78"></script>
+    <script src="js/help.js?v=78"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=77"></script>
+    <script type="module" src="js/app.js?v=78"></script>
 </body>
 </html>
 
