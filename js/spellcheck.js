@@ -81,10 +81,29 @@ function initSpellCheck() {
       isLoading = false;
     });
   }
-  window.loadSpellcheckDictionary = loadDictionaryFiles;
+  // Carregar em segundo plano usando requestIdleCallback para zerar o lag na transição de abas
+  const scheduleLoad = () => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => loadDictionaryFiles(), { timeout: 15000 });
+    } else {
+      setTimeout(loadDictionaryFiles, 8000);
+    }
+  };
+  
+  if (document.readyState === 'complete') {
+    scheduleLoad();
+  } else {
+    window.addEventListener('load', scheduleLoad);
+  }
 
-  // Carregar em segundo plano após 4 segundos de inatividade inicial
-  setTimeout(loadDictionaryFiles, 4000);
+  // Se o usuário clicar para digitar em um campo de texto, iniciar carregamento no fundo
+  document.addEventListener('focusin', (e) => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+      if (!dictionary && !isLoading) {
+        scheduleLoad();
+      }
+    }
+  }, { once: true });
 
   // Função para verificar caracteres de quebra de palavra
   function isWhitespaceOrPunctuation(char) {

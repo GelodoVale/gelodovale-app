@@ -6,6 +6,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v79 (08/08/2026 - Antigravity)
+* **Eliminação do Lag do Corretor com `requestIdleCallback` (COD: SPELL-V79):**
+  - **Processamento 100% Ocioso:** Substituído o gatilho fixo de 4 segundos por `requestIdleCallback` com timeout de 15 segundos e gatilho de foco inteligente (`focusin`), garantindo que a análise das 500 mil palavras do dicionário `pt_BR` ocorra estritamente quando a CPU estiver 100% ociosa.
+  - **Zero Lag em Navegações:** Eliminado o engasgo visual de ~4s durante a transição de abas e carregamento inicial (F5).
+  - **Versionamento e Deploy:** Atualizado Service Worker para `gelodovale-v179`, scripts com cache-buster `?v=79` e publicado no GitHub Pages.
+
 #### v78 (08/08/2026 - Antigravity)
 * **Modal de Checkout Mercado Pago sem Autoplay de WhatsApp e Otimização de GPS (COD: MP-V78):**
   - **Fim do Disparo Automático no WhatsApp:** Substituído o envio direto sem confirmação pelo novo modal de visualização e controle do link do Mercado Pago (`#modal-mp-checkout-link`).
