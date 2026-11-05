@@ -2643,6 +2643,237 @@ window.applyBackupData = applyBackupData;
 window.downloadBackupJSON = downloadBackupJSON;
 window.deleteLocalBackup = deleteLocalBackup;
 window.importBackupFromFile = importBackupFromFile;
+
+// ============================================================================
+// FASE 7C.2B - RESTAURAÇÃO MANUAL SEGURA, DIFF E SNAPSHOT COMPULSÓRIO
+// ============================================================================
+let currentPendingRestore = null;
+
+export function normalizeBackupPayload(raw, fileMeta = {}) {
+    if (!raw || typeof raw !== 'object') {
+        throw new Error('O arquivo não contém um objeto JSON válido.');
+    }
+    if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
+        return {
+            isEncapsulated: true,
+            version: raw.version || 'desconhecida',
+            date: raw.date || (fileMeta.lastModified ? new Date(fileMeta.lastModified).toISOString() : new Date().toISOString()),
+            label: raw.label || 'Backup do Sistema',
+            data: raw.data
+        };
+    }
+    const hasKnownEntities = Array.isArray(raw.clients) || Array.isArray(raw.freezers) || typeof raw.prices === 'object';
+    if (hasKnownEntities) {
+        const inferredDate = raw.lastUpdated 
+            ? new Date(raw.lastUpdated).toISOString() 
+            : (fileMeta.lastModified ? new Date(fileMeta.lastModified).toISOString() : new Date().toISOString());
+        return {
+            isEncapsulated: false,
+            version: raw.backupSettings?.currentVersion || '4.0 (Plano)',
+            date: inferredDate,
+            label: 'Backup Direto de Estado (OneDrive/Export)',
+            data: raw
+        };
+    }
+    throw new Error('Estrutura de dados não reconhecida como um backup do GelControl.');
+}
+
+export function validateBackupPayload(normalized) {
+    const errors = [];
+    const warnings = [];
+    if (!normalized || !normalized.data) {
+        return { valid: false, errors: ['Payload nulo ou sem dados.'], warnings };
+    }
+    const d = normalized.data;
+    const arrayEntities = ['clients', 'freezers', 'orders', 'rentals', 'deliveries', 'documents', 'products', 'comodatos'];
+    for (const key of arrayEntities) {
+        if (d[key] !== undefined && !Array.isArray(d[key])) {
+            errors.push(`Entidade '${key}' corrompida (esperado array, recebido ${typeof d[key]}).`);
+        }
+    }
+    const totalEntitiesCount = (d.clients?.length || 0) + (d.freezers?.length || 0) + (d.orders?.length || 0);
+    if (totalEntitiesCount === 0 && (!d.prices || Object.keys(d.prices).length === 0)) {
+        warnings.push('O backup parece estar completamente vazio (0 clientes, 0 freezers, 0 pedidos).');
+    }
+    const backupTimestamp = new Date(normalized.date).getTime();
+    return {
+        valid: errors.length === 0,
+        errors,
+        warnings,
+        timestamp: isNaN(backupTimestamp) ? Date.now() : backupTimestamp
+    };
+}
+
+export function computeDiffSummary(currentState, normalized, backupTimestamp) {
+    const currentTimestamp = currentState.lastUpdated 
+        ? new Date(currentState.lastUpdated).getTime() 
+        : (currentState.backupSettings?.lastBackupDate ? new Date(currentState.backupSettings.lastBackupDate).getTime() : Date.now());
+
+    const isDowngrade = backupTimestamp < currentTimestamp;
+    const diffMs = currentTimestamp - backupTimestamp;
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const d = normalized.data;
+
+    return {
+        isDowngrade,
+        diffHours,
+        diffDays,
+        current: {
+            version: currentState.backupSettings?.currentVersion || 'v4.4',
+            date: new Date(currentTimestamp).toISOString(),
+            clientsCount: (currentState.clients || []).length,
+            freezersCount: (currentState.freezers || []).length,
+            ordersCount: (currentState.orders || []).length,
+            rentalsCount: (currentState.rentals || []).length
+        },
+        backup: {
+            version: normalized.version,
+            date: normalized.date,
+            label: normalized.label,
+            isEncapsulated: normalized.isEncapsulated,
+            clientsCount: (d.clients || []).length,
+            freezersCount: (d.freezers || []).length,
+            ordersCount: (d.orders || []).length,
+            rentalsCount: (d.rentals || []).length
+        },
+        delta: {
+            clients: (d.clients || []).length - (currentState.clients || []).length,
+            freezers: (d.freezers || []).length - (currentState.freezers || []).length,
+            orders: (d.orders || []).length - (currentState.orders || []).length,
+            rentals: (d.rentals || []).length - (currentState.rentals || []).length
+        }
+    };
+}
+
+export function createEmergencySnapshot(currentState, reason = 'Pré-Restauração Manual') {
+    const nowIso = new Date().toISOString();
+    const id = 'snap_pre_restore_' + Date.now();
+    const snapshotState = JSON.parse(JSON.stringify(currentState));
+
+    return {
+        id,
+        date: nowIso,
+        version: currentState.backupSettings?.currentVersion || '4.4',
+        label: `[EMERGÊNCIA] ${reason} (${new Date().toLocaleTimeString('pt-BR')})`,
+        isEmergency: true,
+        payload: {
+            version: currentState.backupSettings?.currentVersion || '4.4',
+            date: nowIso,
+            label: 'Snapshot de Emergência pré-restauração',
+            data: snapshotState
+        }
+    };
+}
+
+export function handleFileSelectedForPreview(event, origin) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const raw = JSON.parse(e.target.result);
+            const norm = normalizeBackupPayload(raw, { lastModified: file.lastModified });
+            const val = validateBackupPayload(norm);
+
+            if (!val.valid) {
+                window.showToast("Falha na validação do backup: " + val.errors.join("; "), "error");
+                return;
+            }
+
+            const diff = computeDiffSummary(state, norm, val.timestamp);
+            currentPendingRestore = { norm, diff };
+
+            const banner = document.getElementById('restore-diff-banner');
+            const icon   = document.getElementById('restore-diff-icon');
+            const msg    = document.getElementById('restore-diff-message');
+
+            if (diff.isDowngrade) {
+                banner.style.background = 'rgba(239, 68, 68, 0.15)';
+                banner.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                banner.style.color = '#fca5a5';
+                if (icon) icon.setAttribute('data-lucide', 'alert-octagon');
+                msg.innerHTML = "<strong>ATENÇÃO (DOWNGRADE DETECTADO):</strong> Este arquivo foi salvo há <strong>" + diff.diffDays + " dias</strong> atrás (" + new Date(norm.date).toLocaleDateString('pt-BR') + "). Restaurá-lo reverterá o sistema para um estado antigo!";
+            } else {
+                banner.style.background = 'rgba(0, 240, 255, 0.1)';
+                banner.style.border = '1px solid rgba(0, 240, 255, 0.3)';
+                banner.style.color = '#38bdf8';
+                if (icon) icon.setAttribute('data-lucide', 'check-circle');
+                msg.innerHTML = "<strong>Backup Recente / Compatível:</strong> O arquivo selecionado possui data igual ou posterior ao estado operacional atual.";
+            }
+
+            const tbody = document.getElementById('restore-diff-tbody');
+            const rows = [
+                { name: 'Data do Registro', cur: new Date(diff.current.date).toLocaleDateString('pt-BR') + ' ' + new Date(diff.current.date).toLocaleTimeString('pt-BR'), bkp: new Date(diff.backup.date).toLocaleDateString('pt-BR') + ' ' + new Date(diff.backup.date).toLocaleTimeString('pt-BR'), delta: diff.diffDays > 0 ? ('-' + diff.diffDays + ' dias') : 'Mais recente' },
+                { name: 'Versão do Sistema', cur: diff.current.version, bkp: diff.backup.version, delta: '-' },
+                { name: 'Clientes Cadastrados', cur: diff.current.clientsCount, bkp: diff.backup.clientsCount, delta: diff.delta.clients },
+                { name: 'Freezers Alocados', cur: diff.current.freezersCount, bkp: diff.backup.freezersCount, delta: diff.delta.freezers },
+                { name: 'Pedidos Registrados', cur: diff.current.ordersCount, bkp: diff.backup.ordersCount, delta: diff.delta.orders },
+                { name: 'Contratos / Aluguéis', cur: diff.current.rentalsCount, bkp: diff.backup.rentalsCount, delta: diff.delta.rentals }
+            ];
+
+            tbody.innerHTML = rows.map(r => {
+                const deltaColor = (typeof r.delta === 'number' && r.delta < 0) ? '#f87171' : (r.delta > 0 ? '#4ade80' : 'var(--color-text-muted)');
+                const deltaPrefix = (typeof r.delta === 'number' && r.delta > 0) ? '+' : '';
+                return "<tr style='border-bottom: 1px solid rgba(255,255,255,0.04);'>" +
+                    "<td style='padding: 8px 14px; font-weight: 600; color: #fff;'>" + r.name + "</td>" +
+                    "<td style='padding: 8px 14px; text-align: center; color: var(--color-text-muted);'>" + r.cur + "</td>" +
+                    "<td style='padding: 8px 14px; text-align: center; color: #00f0ff;'>" + r.bkp + "</td>" +
+                    "<td style='padding: 8px 14px; text-align: right; font-weight: bold; color: " + deltaColor + ";'>" + deltaPrefix + r.delta + "</td>" +
+                "</tr>";
+            }).join('');
+
+            const chk = document.getElementById('chk-confirm-restore-backup');
+            if (chk) chk.checked = false;
+            window.toggleConfirmRestoreBtn();
+
+            if (window.lucide) window.lucide.createIcons();
+            window.openModal('modal-preview-restore-backup');
+        } catch (err) {
+            console.error(err);
+            window.showToast("Erro ao processar arquivo de backup: " + err.message, "error");
+        }
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
+
+export function toggleConfirmRestoreBtn() {
+    const chk = document.getElementById('chk-confirm-restore-backup');
+    const btn = document.getElementById('btn-confirm-restore-backup');
+    if (!chk || !btn) return;
+    btn.disabled = !chk.checked;
+    btn.style.opacity = chk.checked ? '1' : '0.5';
+    btn.style.cursor = chk.checked ? 'pointer' : 'not-allowed';
+}
+
+export function executeConfirmedRestore() {
+    if (!currentPendingRestore) return;
+    try {
+        const snap = createEmergencySnapshot(state, 'Restauração Manual Assistida');
+        if (!state.backupSettings) state.backupSettings = {};
+        if (!Array.isArray(state.backupSettings.localBackups)) state.backupSettings.localBackups = [];
+        state.backupSettings.localBackups.unshift(snap);
+
+        applyBackupData(currentPendingRestore.norm);
+
+        window.closeModal('modal-preview-restore-backup');
+        window.showToast("Backup restaurado com sucesso! Ponto de emergência salvo no histórico.", "success");
+        currentPendingRestore = null;
+    } catch (e) {
+        console.error(e);
+        window.showToast("Erro ao aplicar restauração: " + e.message, "error");
+    }
+}
+
+window.handleFileSelectedForPreview = handleFileSelectedForPreview;
+window.toggleConfirmRestoreBtn      = toggleConfirmRestoreBtn;
+window.executeConfirmedRestore     = executeConfirmedRestore;
+window.normalizeBackupPayload       = normalizeBackupPayload;
+window.validateBackupPayload        = validateBackupPayload;
+window.computeDiffSummary           = computeDiffSummary;
+window.createEmergencySnapshot      = createEmergencySnapshot;
 window.checkAutoBackupOnLoad = checkAutoBackupOnLoad;
 window.applyAppearanceTheme = applyAppearanceTheme;
 window.getCurrentUIThemeSettings = getCurrentUIThemeSettings;

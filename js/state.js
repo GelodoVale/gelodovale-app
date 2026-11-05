@@ -4,7 +4,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v79 (08/08/2026 - Antigravity)";
+export const CODE_BUILD = "v80 (05/11/2026 - Antigravity)";
 
 export let state = {
     prices: {

@@ -42,8 +42,8 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=79">
-    <script src="js/spellcheck.js?v=79"></script>
+    <link rel="stylesheet" href="styles.css?v=80">
+    <script src="js/spellcheck.js?v=80"></script>
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -84,7 +84,7 @@
             </div>
             
             <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff; letter-spacing: -0.5px; font-size: 1.3rem;">GelControl - Acesso</h3>
-<p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v79 (08/08/2026)</p>
+<p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v80 (05/11/2026)</p>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">Selecione seu perfil e digite a senha para continuar.</p>
             
             <form id="app-login-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
@@ -203,7 +203,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v79 (08/08/2026 - Antigravity)</p>
+                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v80 (05/11/2026 - Antigravity)</p>
                 <p>Painel de Distribuição</p>
                 <button type="button" onclick="openModal('modal-pwa-tutorial')" style="font-size: 0.72rem; padding: 5px 8px; margin-top: 8px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
                     <i data-lucide="help-circle" style="width: 12px; height: 12px;"></i> Como instalar no Celular
@@ -2159,7 +2159,7 @@
                                     
                                     <!-- Botoes de Acao do OneDrive -->
                                     <div style="display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                                        <button type="button" class="btn btn-primary" onclick="checkOneDriveSync()" style="font-size: 0.8rem; padding: 6px 12px; height: auto; display: inline-flex; align-items: center; gap: 6px; background: #0072ff; border-color: #0072ff;">
+                                        <button type="button" class="btn btn-primary" onclick="handleBotaoLerBackupOneDrive()" style="font-size: 0.8rem; padding: 6px 12px; height: auto; display: inline-flex; align-items: center; gap: 6px; background: #0072ff; border-color: #0072ff;">
                                             <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Puxar Backup Salvo (Ler)
                                         </button>
                                         <button type="button" class="btn btn-secondary" onclick="saveStateToOneDrive()" style="font-size: 0.8rem; padding: 6px 12px; height: auto; display: inline-flex; align-items: center; gap: 6px;">
@@ -6178,15 +6178,85 @@
         </div>
     </div>
 
+    <!-- MODAL DE INSPEÇÃO PRÉVIA E RESTAURAÇÃO SEGURA (FASE 7C.2B) -->
+    <div class="modal-backdrop" id="modal-preview-restore-backup" style="z-index: 10005;">
+        <div class="modal-content" style="max-width: 680px; width: 95vw; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 14px; backdrop-filter: blur(16px); box-shadow: 0 10px 40px rgba(0,0,0,0.6);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.25); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="shield-check" style="color: #00f0ff; width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 700;">Inspeção Prévia de Restauração</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--color-text-muted);">Auditoria comparativa antes de qualquer alteração de dados</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-preview-restore-backup')" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px;">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                <!-- Banner Dinâmico de Alerta -->
+                <div id="restore-diff-banner" style="border-radius: 10px; padding: 12px 16px; margin-bottom: 1.2rem; display: flex; align-items: flex-start; gap: 12px; font-size: 0.85rem; line-height: 1.4;">
+                    <i id="restore-diff-icon" data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div id="restore-diff-message">Carregando auditoria...</div>
+                </div>
+
+                <!-- Tabela Comparativa de Metadados -->
+                <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; margin-bottom: 1.2rem;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--color-text-muted);">
+                                <th style="padding: 10px 14px;">Entidade / Metadado</th>
+                                <th style="padding: 10px 14px; text-align: center;">Estado Atual</th>
+                                <th style="padding: 10px 14px; text-align: center;">Arquivo Selecionado</th>
+                                <th style="padding: 10px 14px; text-align: right;">Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restore-diff-tbody">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Aviso de Salvaguarda Compulsória -->
+                <div style="background: rgba(0,255,100,0.05); border: 1px solid rgba(0,255,100,0.15); border-radius: 8px; padding: 10px 14px; margin-bottom: 1.2rem; font-size: 0.78rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #4ade80;"></i>
+                        <span>Ponto de emergência automático será criado no histórico local antes da substituição.</span>
+                    </div>
+                </div>
+
+                <!-- Trava de Consentimento Obrigatória -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px;">
+                    <input type="checkbox" id="chk-confirm-restore-backup" onchange="window.toggleConfirmRestoreBtn()" style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer;">
+                    <label for="chk-confirm-restore-backup" style="font-size: 0.8rem; color: #e2e8f0; cursor: pointer; user-select: none;">
+                        Confirmo que revisei a tabela comparativa e autorizo a substituição dos dados atuais pelo conteúdo deste backup.
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-preview-restore-backup')" style="padding: 8px 16px; font-size: 0.85rem;">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirm-restore-backup" class="btn btn-danger" disabled onclick="window.executeConfirmedRestore()" style="padding: 8px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px; opacity: 0.5; cursor: not-allowed;">
+                    <i data-lucide="refresh-cw" style="width: 15px; height: 15px;"></i> Substituir e Restaurar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Biblioteca Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Sistema de Ajuda Contextual -->
-    <script src="js/help_content.js?v=79"></script>
-    <script src="js/help.js?v=79"></script>
+    <script src="js/help_content.js?v=80"></script>
+    <script src="js/help.js?v=80"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=79"></script>
+    <script type="module" src="js/app.js?v=80"></script>
 </body>
 </html>
 

@@ -397,57 +397,63 @@ export function updateOneDriveStatusUI(status) {
     const indicator = document.getElementById("onedrive-sync-status");
     if (!indicator) return;
     
-    // Sempre mostrar ativo e pronto para backup (azul pulsante)
-    const title = "OneDrive: Pronto (Clique para Backup)";
-    indicator.title = title;
-    indicator.setAttribute("data-title", title);
-    indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
-    indicator.style.background = "rgba(0, 240, 255, 0.05)";
-    indicator.innerHTML = `<i data-lucide="cloud" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
-    indicator.classList.add("pulse-glow-onedrive");
+    // Indicador informativo neutro: apenas reporta a pasta de armazenamento no computador
+    let title = "Localização do Sistema: Pasta GelControl";
+    if (status === "onedrive-folder") {
+        title = "Localização do Sistema: Pasta OneDrive";
+        indicator.title = title;
+        indicator.setAttribute("data-title", title);
+        indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
+        indicator.style.background = "rgba(0, 240, 255, 0.05)";
+        indicator.innerHTML = `<i data-lucide="folder" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
+        indicator.classList.remove("pulse-glow-onedrive");
+    } else {
+        title = "Localização do Sistema: Pasta Local (Fora do OneDrive)";
+        indicator.title = title;
+        indicator.setAttribute("data-title", title);
+        indicator.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        indicator.style.background = "rgba(255, 255, 255, 0.03)";
+        indicator.innerHTML = `<i data-lucide="folder" style="width: 18px; height: 18px; color: #94a3b8;"></i>`;
+        indicator.classList.remove("pulse-glow-onedrive");
+    }
     
     if (window.lucide) window.lucide.createIcons();
 }
 
 export async function checkOneDriveSync() {
-    const isOneDrivePath = window.location.pathname.includes("OneDrive") || window.location.pathname.includes("GelodoVale-system");
+    // CONDICAO 1: Apenas caminhos expressos com /onedrive/ (sem 'GelodoVale-system' como falso positivo)
+    const norm = (window.location.pathname || "").replace(/\\/g, '/').toLowerCase();
+    const isOneDrivePath = norm.includes('/onedrive/');
     if (isOneDrivePath) {
-        updateOneDriveStatusUI("connected");
+        updateOneDriveStatusUI("onedrive-folder");
+    } else {
+        updateOneDriveStatusUI("local-folder");
     }
 
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-        const response = await fetch("../state_backup.json", { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (response.ok) {
-            const payload = await response.json();
-            const actualData = payload.data ? payload.data : payload;
-            
-            if (actualData && (actualData.clients || actualData.freezers || actualData.prices)) {
-                updateOneDriveStatusUI("connected");
-                
-                const backupLastUpdated = actualData.lastUpdated || 0;
-                const localLastUpdated = state.lastUpdated || 0;
-                const hasLocalStorage = !!localStorage.getItem("gelcontrol_state");
-                
-                if (!hasLocalStorage || backupLastUpdated > localLastUpdated) {
-                    console.log("OneDrive backup is newer. Restoring data automatically...");
-                    updateState(actualData);
-                    saveStateLocalOnly();
-                    if (window.applyAppearanceTheme) window.applyAppearanceTheme();
-                    renderApp();
-                    showOneDriveToast("Dados do OneDrive carregados automaticamente!");
-                }
+    // FASE 7C.2A: ELIMINAÇÃO TOTAL DA IMPORTAÇÃO AUTOMÁTICA
+    // O fetch('../state_backup.json') e a sobrescrita silenciosa de dados foram removidos
+    // para proteger integralmente a operação contra perda de dados.
+}
+
+export function handleBotaoLerBackupOneDrive() {
+    let input = document.getElementById('onedrive-backup-file-input');
+    if (!input) {
+        input = document.createElement('input');
+        input.id = 'onedrive-backup-file-input';
+        input.type = 'file';
+        input.accept = '.json';
+        input.style.display = 'none';
+        input.onchange = (e) => {
+            if (typeof window.handleFileSelectedForPreview === 'function') {
+                window.handleFileSelectedForPreview(e, 'onedrive');
+            } else {
+                window.showToast("Módulo de restauração segura em carregamento...", "warning");
             }
-        }
-    } catch (err) {
-        if (err.name === 'AbortError') {
-            console.log("OneDrive backup fetch timed out after 5s — skipping.");
-        } else {
-            console.log("OneDrive local backup not loaded automatically via fetch:", err);
-        }
+        };
+        document.body.appendChild(input);
     }
+    input.value = '';
+    input.click();
 }
 
 export function saveStateToOneDrive() {
@@ -511,3 +517,4 @@ window.initFirebase         = initFirebase;
 window.updateOneDriveStatusUI = updateOneDriveStatusUI;
 window.checkOneDriveSync     = checkOneDriveSync;
 window.saveStateToOneDrive   = saveStateToOneDrive;
+window.handleBotaoLerBackupOneDrive = handleBotaoLerBackupOneDrive;

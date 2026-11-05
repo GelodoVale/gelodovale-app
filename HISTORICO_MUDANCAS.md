@@ -6,6 +6,36 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v80 (05/11/2026 - Antigravity) — Fase 7D: Sincronização Segura, Restauração Assistida e Blindagem Operacional (COD: REL-V80)
+* **Consolidação da Etapa 7 (Sincronização Segura e Proteção de Dados):**
+  - **Fim da Importação Automática e Sobrescrita Silenciosa (Fase 7C.2A):** Eliminada em definitivo a chamada `fetch("../state_backup.json")` e o `updateState()` no carregamento da aplicação (`js/sync.js`), erradicando o risco de reversão não solicitada ou perda de dados operacionais.
+  - **Indicador de Nuvem Neutralizado:** O botão/ícone no cabeçalho foi convertido para um identificador neutro de pasta local/OneDrive sem pulsos visuais errôneos.
+  - **Módulo de Restauração Manual Segura e Inspeção Prévia (Fase 7C.2B):** Novo fluxo em `js/admin.js` e modal Glassmorphic `#modal-preview-restore-backup` em `index.html`.
+  - **Auditoria Comparativa (Diff) e Detecção de Downgrade:** Compara lado a lado os quantitativos de Clientes, Freezers, Pedidos e Contratos, emitindo alerta visual vermelho com cálculo exato de defasagem em dias para backups antigos.
+  - **Trava de Consentimento Compulsória:** Botão de restauração permanece bloqueado até a marcação ativa da caixa de consentimento pelo operador.
+  - **Salvaguarda Automática Pré-Restauração:** Snapshot compulsório gravado no histórico de backups antes de qualquer alteração de estado em memória ou disco.
+  - **Suporte Universal a Formatos de Backup:** Reconhece e processa com integridade tanto arquivos no formato encapsulado moderno (`{ version, date, data }`) quanto no formato plano legado (`state_backup.json`).
+* **Parâmetros de Atualização e Cache do Sistema (Fase 7D):**
+  - **Build e Identificação do Sistema:** Atualizado para `v80 (05/11/2026 - Antigravity)` em `js/state.js` e nos elementos de interface (`#login-version` e `#app-sidebar-version`).
+  - **Service Worker (PWA):** Cache renovado de `gelodovale-v179` para `gelodovale-v180` (`sw.js`), forçando a invalidação de caches defasados no cliente.
+  - **Cache-Busters:** Parâmetros `?v=80` aplicados em todos os scripts e folhas de estilo do `index.html`.
+  - **Validação de Produção:** 100% dos testes E2E em navegador isolado e 70 testes unitários homologados com zero falhas.
+
+#### Fase 7C — Sincronização Segura e Restauração Manual Protegida (05/11/2026 - Em Andamento)
+* **Fase 7C.2A — Concluída em Produção (COD: SYNC-7C2A):**
+  - **Eliminação Total da Sobrescrita Automática:** Removidos o `fetch("../state_backup.json")` e o método `updateState(actualData)` disparados no carregamento inicial da aplicação (`js/sync.js`). O sistema agora preserva integralmente o `localStorage` sem risco de perda involuntária.
+  - **Status Neutro de Localização:** O indicador `#onedrive-sync-status` no cabeçalho foi convertido para um componente estático de identificação de pasta física (`folder`), desprovido de animações de pulso falso e sem conexão direta com o ciclo do Firebase.
+  - **Proteção do Botão de Leitura:** A chamada legada `checkOneDriveSync()` no botão do painel (`index.html`) foi substituída por `handleBotaoLerBackupOneDrive()`, que exibe aviso informativo enquanto o fluxo seguro é preparado.
+  - **Validação E2E e Salvaguardas:** Salvaguardas gravadas em `backups/v79_seguranca_etapa7c/` e testes com Chrome Headless (CDP) confirmando estabilidade da tela e neutralidade no indicador.
+* **Fase 7C.2B — Concluída e Auditada em Produção (COD: RESTORE-7C2B):**
+  - **Mapeamento de Backups Reais:** Confirmada a compatibilidade com todos os arquivos `.json` existentes no OneDrive, mapeando e normalizando tanto o formato encapsulado (`{ version, date, data }`) quanto o formato plano legado (`state_backup.json`).
+  - **Modal de Inspeção Prévia e Diff:** Implementado o modal Glassmorphic `#modal-preview-restore-backup` em `index.html`, apresentando tabela comparativa lado a lado (clientes, freezers, pedidos, contratos) e banner de advertência contra downgrade temporal.
+  - **Trava de Consentimento Explícito:** Restauração bloqueada até a marcação ativa da caixa de consentimento pelo operador.
+  - **Snapshot Compulsório Pré-Restauração:** Geração automática e não destrutiva de ponto de emergência em `localBackups` antes de qualquer mutação de estado.
+  - **Instalação Atômica Win32:** Script `aplicar_fase7c2b.ps1` executado com código de saída 0. Salvaguardas gravadas em `backups/v79_seguranca_etapa7c/` e sintaxe V8 (`node --check`) validada com 0 erros.
+  - **Auditoria Pós-Instalação:** 10 de 10 checagens de integridade estrutural e de funções aprovadas.
+  - **Status da Fase 7:** Fase 7C 100% finalizada (~90% da Etapa 7 consolidada). Pendente exclusivamente a Fase 7D (versionamento `v80` e deploy). Não iniciar a Fase 7D sem aprovação.
+
 #### v79 (08/08/2026 - Antigravity)
 * **Eliminação do Lag do Corretor com `requestIdleCallback` (COD: SPELL-V79):**
   - **Processamento 100% Ocioso:** Substituído o gatilho fixo de 4 segundos por `requestIdleCallback` com timeout de 15 segundos e gatilho de foco inteligente (`focusin`), garantindo que a análise das 500 mil palavras do dicionário `pt_BR` ocorra estritamente quando a CPU estiver 100% ociosa.
