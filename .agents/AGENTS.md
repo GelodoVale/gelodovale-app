@@ -37,7 +37,7 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 - **Últimas Implementações Concluídas (Histórico Recente):**
   - **Fase 7D (`05/11/2026` — `COD: REL-V80` e `COD: BACKUP-FSAPI`):**
     - **Backup Direto via File System Access API:** Implementado salvamento nativo diretamente na pasta do OneDrive ou disco local pelo seletor de arquivos do Windows (`showSaveFilePicker`), eliminando necessidade de mover arquivos manualmente.
-    - **Nomenclatura Única e Bloqueio Estrito de Sobrescrita:** Carimbo de segundo no nome sugerido e verificação estrita via `handle.getFile()`. Bloqueia arquivos existentes com dados ou vazios (0 bytes), e apenas `NotFoundError` autoriza escrita como arquivo novo (erros de I/O cancelam por segurança).
+    - **Backup Direto via Directory Picker com Proteção Absoluta contra Sobrescrita:** Operador seleciona a pasta de destino uma única vez (`showDirectoryPicker`). A existência de arquivos é verificada previamente com `{ create: false }`. Havendo coincidência de nome (com dados ou 0 bytes), o sistema incrementa automaticamente o sufixo numérico `_(1).json`, `_(2).json`, gravando o novo backup em arquivo exclusivo com validação pós-escrita (`size > 0`) e mantendo todos os arquivos pré-existentes 100% intactos.
     - **Cancelamento e Fallback Assistido:** Cancelamento voluntário aborta sem downloads automáticos; falha de permissão em disco aciona download de emergência carimbado.
     - **Transparência de Status:** Ícone do cabeçalho redefinido para `hard-drive-download` e rótulo claro de backup manual sob demanda.
     - **Incremento da Build Oficial:** Sistema atualizado para `v80 (05/11/2026 - Antigravity)` em `js/state.js`, `#login-version` e `#app-sidebar-version`.

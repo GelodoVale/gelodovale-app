@@ -452,58 +452,75 @@ export async function saveStateToOneDrive() {
         };
         const contentStr = JSON.stringify(backupPayload, null, 2);
 
-        // Tentativa de gravação direta via File System Access API
-        if ('showSaveFilePicker' in window) {
+        // Tentativa de gravação direta na pasta do OneDrive via File System Access API
+        if ('showDirectoryPicker' in window) {
             try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: suggestedName,
-                    types: [{
-                        description: 'Arquivo de Backup GelControl (*.json)',
-                        accept: { 'application/json': ['.json'] }
-                    }]
-                });
+                // Solicita ao operador que selecione a pasta de backup (OneDrive ou local)
+                const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
 
-                // VERIFICAÇÃO ATIVA DE SOBRESCRITA (Proteção contra colisão ou seleção manual de arquivo existente)
-                if (typeof handle.getFile === 'function') {
+                let finalName = suggestedName;
+                let attempts = 0;
+
+                // PROTEÇÃO ABSOLUTA: Varredura de existência prévia com { create: false }
+                // Se o arquivo já existir no diretório (com dados ou vazio), gera sufixo exclusivo incremental
+                while (attempts < 100) {
+                    let fileExists = false;
                     try {
-                        const existingFile = await handle.getFile();
-                        if (existingFile) {
-                            // Bloqueia qualquer arquivo que já exista fisicamente (com dados ou mesmo vazio com 0 bytes)
-                            console.warn('[Backup] Arquivo existente selecionado. Gravação cancelada para evitar sobrescrita:', handle.name);
-                            window.showToast("Gravação cancelada: o arquivo selecionado já existe no disco. Escolha um nome novo para não sobrescrever.", "warning");
-                            return;
+                        const existingHandle = await dirHandle.getFileHandle(finalName, { create: false });
+                        if (existingHandle) {
+                            fileExists = true;
                         }
-                    } catch (inspectErr) {
-                        // Apenas NotFoundError comprova que o arquivo é genuinamente novo e ainda não existe
-                        if (inspectErr.name === 'NotFoundError') {
-                            // Arquivo novo confirmado, segue normalmente para criação e escrita
+                    } catch (checkErr) {
+                        if (checkErr.name === 'NotFoundError') {
+                            fileExists = false; // Arquivo não existe: nome exclusivo confirmado
                         } else {
-                            // Qualquer outro erro (permissão, I/O, arquivo em uso, etc.) cancela a gravação com aviso
-                            console.warn('[Backup] Erro ao inspecionar existência do arquivo:', inspectErr);
-                            window.showToast("Gravação cancelada por segurança: não foi possível confirmar o status do arquivo (" + inspectErr.message + ").", "warning");
-                            return;
+                            throw checkErr;
                         }
                     }
+
+                    if (!fileExists) break;
+
+                    attempts++;
+                    const extIdx = suggestedName.lastIndexOf('.');
+                    const namePart = suggestedName.substring(0, extIdx);
+                    const extPart = suggestedName.substring(extIdx);
+                    finalName = `${namePart}_(${attempts})${extPart}`;
                 }
 
-                const writable = await handle.createWritable();
+                if (attempts >= 100) {
+                    console.warn('[Backup] Limite de 100 tentativas esgotado sem encontrar nome vago.');
+                    window.showToast("Gravação cancelada por segurança: limite de tentativas para nome exclusivo esgotado. Nenhum arquivo foi modificado.", "warning");
+                    return;
+                }
+
+                // Cria o arquivo garantidamente novo e exclusivo no disco
+                const fileHandle = await dirHandle.getFileHandle(finalName, { create: true });
+                const writable = await fileHandle.createWritable();
                 await writable.write(contentStr);
                 await writable.close();
+
+                // Validação física pós-gravação: confirma dados preenchidos no disco
+                if (typeof fileHandle.getFile === 'function') {
+                    const savedFile = await fileHandle.getFile();
+                    if (!savedFile || savedFile.size === 0) {
+                        throw new Error("O arquivo gravado resultou em 0 bytes.");
+                    }
+                }
 
                 if (!state.backupSettings) state.backupSettings = {};
                 state.backupSettings.lastBackupDate = new Date().toISOString();
                 saveStateLocalOnly();
 
-                showOneDriveToast("Backup gravado com sucesso no arquivo escolhido!");
+                showOneDriveToast(`Backup gravado com sucesso: ${finalName}`);
                 return;
-            } catch (fsErr) {
-                // Caso o usuário cancele a janela nativa do Windows Explorer, não faz nada
-                if (fsErr.name === 'AbortError') {
-                    console.log('[Backup] Escolha de arquivo cancelada pelo usuário.');
+            } catch (dirErr) {
+                // Caso o operador feche o seletor de pasta sem escolher, encerra silenciosamente
+                if (dirErr.name === 'AbortError') {
+                    console.log('[Backup] Seleção de pasta cancelada pelo usuário.');
                     return;
                 }
-                console.warn('[Backup] Falha na gravação direta via File System API, acionando alternativa:', fsErr);
-                window.showToast("Falha na gravação direta. Gerando download alternativo...", "warning");
+                console.warn('[Backup] Falha ao gravar via Directory Picker, acionando alternativa:', dirErr);
+                window.showToast("Falha na gravação na pasta selecionada. Gerando download alternativo...", "warning");
             }
         }
 
