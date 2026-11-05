@@ -35,11 +35,15 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
 - **Versão Atual em Produção:** **Sistema: `v80` (`05/11/2026` - Antigravity / Fase 7 Concluída) | Dados: `v4.4` | Cache PWA: `gelodovale-v180`**
 - **Últimas Implementações Concluídas (Histórico Recente):**
-  - **Fase 7D (`05/11/2026` — `COD: REL-V80`):**
+  - **Fase 7D (`05/11/2026` — `COD: REL-V80` e `COD: BACKUP-FSAPI`):**
+    - **Backup Direto via File System Access API:** Implementado salvamento nativo diretamente na pasta do OneDrive ou disco local pelo seletor de arquivos do Windows (`showSaveFilePicker`), eliminando necessidade de mover arquivos manualmente.
+    - **Nomenclatura Única e Bloqueio Estrito de Sobrescrita:** Carimbo de segundo no nome sugerido e verificação estrita via `handle.getFile()`. Bloqueia arquivos existentes com dados ou vazios (0 bytes), e apenas `NotFoundError` autoriza escrita como arquivo novo (erros de I/O cancelam por segurança).
+    - **Cancelamento e Fallback Assistido:** Cancelamento voluntário aborta sem downloads automáticos; falha de permissão em disco aciona download de emergência carimbado.
+    - **Transparência de Status:** Ícone do cabeçalho redefinido para `hard-drive-download` e rótulo claro de backup manual sob demanda.
     - **Incremento da Build Oficial:** Sistema atualizado para `v80 (05/11/2026 - Antigravity)` em `js/state.js`, `#login-version` e `#app-sidebar-version`.
     - **Invalidação e Renovação de Cache (PWA):** `CACHE_NAME` atualizado para `gelodovale-v180` no `sw.js`.
     - **Cache-Busters Atualizados:** Tags `<script>` e `<link>` em `index.html` incrementadas para `?v=80`.
-    - **Consolidação Integral da Etapa 7:** Homologação E2E concluída em navegador isolado (Chrome Headless) com 100% de sucesso. Etapa 7 finalizada. Deploy e envio para o GitHub pendentes de autorização explícita do usuário.
+    - **Consolidação Integral da Etapa 7:** Homologação E2E concluída em navegador isolado (Chrome Headless) e unitários com 100% de sucesso. Etapa 7 finalizada. Deploy e envio para o GitHub pendentes de autorização explícita do usuário.
   - **Fase 7C.2A (`05/11/2026` — `COD: SYNC-7C2A`):**
     - **Eliminação da Importação Automática Perigosa:** Removido o `fetch("../state_backup.json")` e `updateState(actualData)` no boot do app, eliminando risco de sobrescrita acidental de dados operacionais.
     - **Neutralização do Status do OneDrive:** Indicador de nuvem neutralizado para reportar exclusivamente localização de pasta física (`folder`), com remoção da animação de pulso.

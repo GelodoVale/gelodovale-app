@@ -7,6 +7,12 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 ### 🚀 Últimas Alterações Realizadas
 
 #### v80 (05/11/2026 - Antigravity) — Fase 7D: Sincronização Segura, Restauração Assistida e Blindagem Operacional (COD: REL-V80)
+* **Backup Direto no OneDrive via File System Access API (COD: BACKUP-FSAPI):**
+  - **Gravação Direta na Pasta Escolhida:** O botão de backup agora utiliza a API nativa `showSaveFilePicker()` quando disponível (Chrome, Edge), permitindo que o operador escolha diretamente a pasta do OneDrive ou qualquer diretório do computador, gravando o arquivo sem passar pela pasta Downloads.
+  - **Nomenclatura Única e Bloqueio Estrito de Sobrescrita:** Geração automática e padronizada `backup_gelcontrol_YYYY-MM-DD_HH-mm-ss.json`. Além disso, implementada verificação ativa estrita (`handle.getFile()`): qualquer arquivo existente no disco (com dados ou vazio de 0 bytes) bloqueia imediatamente a gravação. Ademais, somente `NotFoundError` autoriza a gravação como arquivo novo; qualquer outro erro (permissão, I/O) cancela a operação com aviso preventivo.
+  - **Cancelamento Seguro e Tratamento de Erro:** Se o operador fechar a janela nativa sem salvar, a rotina é abortada silenciosamente sem downloads automáticos indesejados. Caso haja erro de escrita em disco, o sistema emite alerta e aciona download alternativo imediatamente.
+  - **Transparência Visual:** Ícone no cabeçalho atualizado para `hard-drive-download` e rótulo redefinido para "Fazer Backup do Sistema (Salvar no OneDrive / Disco)", eliminando a falsa impressão de sincronização em segundo plano.
+  - **Retenção Manual pelo Windows:** Backups antigos permanecem como arquivos `.json` independentes, podendo ser excluídos manualmente pelo administrador no Windows Explorer sem afetar o sistema.
 * **Consolidação da Etapa 7 (Sincronização Segura e Proteção de Dados):**
   - **Fim da Importação Automática e Sobrescrita Silenciosa (Fase 7C.2A):** Eliminada em definitivo a chamada `fetch("../state_backup.json")` e o `updateState()` no carregamento da aplicação (`js/sync.js`), erradicando o risco de reversão não solicitada ou perda de dados operacionais.
   - **Indicador de Nuvem Neutralizado:** O botão/ícone no cabeçalho foi convertido para um identificador neutro de pasta local/OneDrive sem pulsos visuais errôneos.

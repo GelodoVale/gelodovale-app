@@ -397,42 +397,20 @@ export function updateOneDriveStatusUI(status) {
     const indicator = document.getElementById("onedrive-sync-status");
     if (!indicator) return;
     
-    // Indicador informativo neutro: apenas reporta a pasta de armazenamento no computador
-    let title = "Localização do Sistema: Pasta GelControl";
-    if (status === "onedrive-folder") {
-        title = "Localização do Sistema: Pasta OneDrive";
-        indicator.title = title;
-        indicator.setAttribute("data-title", title);
-        indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
-        indicator.style.background = "rgba(0, 240, 255, 0.05)";
-        indicator.innerHTML = `<i data-lucide="folder" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
-        indicator.classList.remove("pulse-glow-onedrive");
-    } else {
-        title = "Localização do Sistema: Pasta Local (Fora do OneDrive)";
-        indicator.title = title;
-        indicator.setAttribute("data-title", title);
-        indicator.style.borderColor = "rgba(255, 255, 255, 0.2)";
-        indicator.style.background = "rgba(255, 255, 255, 0.03)";
-        indicator.innerHTML = `<i data-lucide="folder" style="width: 18px; height: 18px; color: #94a3b8;"></i>`;
-        indicator.classList.remove("pulse-glow-onedrive");
-    }
+    // Indicador funcional de Backup Sob Demanda (OneDrive / Disco)
+    const title = "Fazer Backup do Sistema (Salvar no OneDrive / Disco)";
+    indicator.title = title;
+    indicator.setAttribute("data-title", title);
+    indicator.style.borderColor = "rgba(0, 240, 255, 0.4)";
+    indicator.style.background = "rgba(0, 240, 255, 0.05)";
+    indicator.innerHTML = `<i data-lucide="hard-drive-download" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
+    indicator.classList.remove("pulse-glow-onedrive");
     
     if (window.lucide) window.lucide.createIcons();
 }
 
 export async function checkOneDriveSync() {
-    // CONDICAO 1: Apenas caminhos expressos com /onedrive/ (sem 'GelodoVale-system' como falso positivo)
-    const norm = (window.location.pathname || "").replace(/\\/g, '/').toLowerCase();
-    const isOneDrivePath = norm.includes('/onedrive/');
-    if (isOneDrivePath) {
-        updateOneDriveStatusUI("onedrive-folder");
-    } else {
-        updateOneDriveStatusUI("local-folder");
-    }
-
-    // FASE 7C.2A: ELIMINAÇÃO TOTAL DA IMPORTAÇÃO AUTOMÁTICA
-    // O fetch('../state_backup.json') e a sobrescrita silenciosa de dados foram removidos
-    // para proteger integralmente a operação contra perda de dados.
+    updateOneDriveStatusUI("ready");
 }
 
 export function handleBotaoLerBackupOneDrive() {
@@ -456,28 +434,98 @@ export function handleBotaoLerBackupOneDrive() {
     input.click();
 }
 
-export function saveStateToOneDrive() {
+export async function saveStateToOneDrive() {
     try {
         state.lastUpdated = Date.now();
         saveStateLocalOnly();
         
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const dateStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+        const timeStr = pad(now.getHours()) + '-' + pad(now.getMinutes()) + '-' + pad(now.getSeconds());
+        const suggestedName = `backup_gelcontrol_${dateStr}_${timeStr}.json`;
+        
         const backupPayload = {
             version: state.backupSettings?.currentVersion || APP_VERSION,
-            date: window.getBrazilTimeISO(),
+            date: window.getBrazilTimeISO ? window.getBrazilTimeISO() : now.toISOString(),
             data: state
         };
-        
-        const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+        const contentStr = JSON.stringify(backupPayload, null, 2);
+
+        // Tentativa de gravação direta via File System Access API
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: suggestedName,
+                    types: [{
+                        description: 'Arquivo de Backup GelControl (*.json)',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+
+                // VERIFICAÇÃO ATIVA DE SOBRESCRITA (Proteção contra colisão ou seleção manual de arquivo existente)
+                if (typeof handle.getFile === 'function') {
+                    try {
+                        const existingFile = await handle.getFile();
+                        if (existingFile) {
+                            // Bloqueia qualquer arquivo que já exista fisicamente (com dados ou mesmo vazio com 0 bytes)
+                            console.warn('[Backup] Arquivo existente selecionado. Gravação cancelada para evitar sobrescrita:', handle.name);
+                            window.showToast("Gravação cancelada: o arquivo selecionado já existe no disco. Escolha um nome novo para não sobrescrever.", "warning");
+                            return;
+                        }
+                    } catch (inspectErr) {
+                        // Apenas NotFoundError comprova que o arquivo é genuinamente novo e ainda não existe
+                        if (inspectErr.name === 'NotFoundError') {
+                            // Arquivo novo confirmado, segue normalmente para criação e escrita
+                        } else {
+                            // Qualquer outro erro (permissão, I/O, arquivo em uso, etc.) cancela a gravação com aviso
+                            console.warn('[Backup] Erro ao inspecionar existência do arquivo:', inspectErr);
+                            window.showToast("Gravação cancelada por segurança: não foi possível confirmar o status do arquivo (" + inspectErr.message + ").", "warning");
+                            return;
+                        }
+                    }
+                }
+
+                const writable = await handle.createWritable();
+                await writable.write(contentStr);
+                await writable.close();
+
+                if (!state.backupSettings) state.backupSettings = {};
+                state.backupSettings.lastBackupDate = new Date().toISOString();
+                saveStateLocalOnly();
+
+                showOneDriveToast("Backup gravado com sucesso no arquivo escolhido!");
+                return;
+            } catch (fsErr) {
+                // Caso o usuário cancele a janela nativa do Windows Explorer, não faz nada
+                if (fsErr.name === 'AbortError') {
+                    console.log('[Backup] Escolha de arquivo cancelada pelo usuário.');
+                    return;
+                }
+                console.warn('[Backup] Falha na gravação direta via File System API, acionando alternativa:', fsErr);
+                window.showToast("Falha na gravação direta. Gerando download alternativo...", "warning");
+            }
+        }
+
+        // Fallback robusto com nome único (para navegadores sem suporte ou em caso de erro na API)
+        const blob = new Blob([contentStr], { type: 'application/json;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
         const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", jsonString);
-        downloadAnchor.setAttribute("download", "state_backup.json");
+        downloadAnchor.setAttribute("href", blobUrl);
+        downloadAnchor.setAttribute("download", suggestedName);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
-        
-        showOneDriveToast("Backup baixado! Substitua na pasta GelodoVale-system do OneDrive.");
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+        if (!state.backupSettings) state.backupSettings = {};
+        state.backupSettings.lastBackupDate = new Date().toISOString();
+        saveStateLocalOnly();
+
+        showOneDriveToast(`Backup baixado com sucesso: ${suggestedName}`);
     } catch (e) {
-        window.showToast("Erro ao salvar no OneDrive: " + e.message, "error");
+        console.error('[Backup] Erro ao executar backup:', e);
+        window.showToast("Erro ao gerar backup: " + e.message, "error");
     }
 }
 
@@ -496,7 +544,7 @@ function showOneDriveToast(msg) {
         animation: fadeIn 0.3s ease-out;
         box-shadow: 0 4px 20px rgba(0,114,255,0.2);
     `;
-    toast.innerHTML = `<i data-lucide="cloud" style="width:15px;height:15px;"></i> ${msg}`;
+    toast.innerHTML = `<i data-lucide="hard-drive-download" style="width:15px;height:15px;"></i> ${msg}`;
     document.body.appendChild(toast);
     if (window.lucide) window.lucide.createIcons();
 
