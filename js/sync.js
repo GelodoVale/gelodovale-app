@@ -11,6 +11,90 @@ let isSyncing = false;         // Evita loop de sync (local→nuvem→local→nu
 let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada tecla
 let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
 
+// ─── BOOT PUSH GUARD (BLINDAGEM TÉCNICA ETAPA 9.3B / v82) ───────────────────
+export const SYNC_ENGINE_BUILD = "v82-boot-push-guard (05/11/2026)";
+if (typeof console !== 'undefined' && console.log) {
+    console.log('%c[GelControl] Motor de Sincronização: ' + SYNC_ENGINE_BUILD, 'color: #00f0ff; font-weight: bold;');
+}
+// Bloqueia toda e qualquer rota de escrita (pushToFirebase, pushToFirebaseImediato, etc.)
+// até que o snapshot da nuvem seja recebido, validado e aplicado no estado local.
+let isCloudPushLocked = true;
+let bootGuardState = 'INITIAL_LOCKED'; // 'INITIAL_LOCKED' | 'VALIDATING' | 'UNLOCKED' | 'BLOCKED_ERROR'
+
+export function isBootPushLocked() {
+    return isCloudPushLocked;
+}
+
+export function getBootGuardState() {
+    return bootGuardState;
+}
+
+export function _setBootPushLockedForTesting(locked, stateVal = 'INITIAL_LOCKED') {
+    isCloudPushLocked = locked;
+    bootGuardState = stateVal;
+}
+
+/**
+ * Salva cópia local de emergência com timestamp e razão em caso de divergência.
+ * Nunca sobrescreve backups existentes (gera chave única e anexa ao histórico).
+ */
+export function salvarBackupEmergenciaDivergencia(motivo, dadosLocais, dadosRemotos) {
+    try {
+        const timestamp = Date.now();
+        const dateIso = new Date(timestamp).toISOString();
+        const backupEntry = {
+            id: `emergency_boot_${timestamp}`,
+            type: 'emergency_divergence_boot',
+            date: dateIso,
+            reason: motivo,
+            localTimestamp: dadosLocais?.lastUpdated || 0,
+            remoteTimestamp: dadosRemotos?.lastUpdated || 0,
+            localVersion: dadosLocais?.backupSettings?.currentVersion || "1.0",
+            remoteVersion: dadosRemotos?.backupSettings?.currentVersion || "1.0",
+            data: JSON.parse(JSON.stringify(dadosLocais || {}))
+        };
+
+        // 1. Chave exclusiva e imutável por timestamp no localStorage
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(`gelcontrol_emergency_backup_${timestamp}`, JSON.stringify(backupEntry));
+
+            // 2. Anexar à lista do painel de restauração de backups sem sobrescrever nada
+            const existingRaw = localStorage.getItem("gelcontrol_local_backups");
+            let list = [];
+            if (existingRaw) {
+                try { list = JSON.parse(existingRaw); } catch (e) { list = []; }
+            }
+            if (!Array.isArray(list)) list = [];
+            list.push(backupEntry);
+            if (list.length > 50) list = list.slice(-50); // preserva os 50 mais recentes
+            localStorage.setItem("gelcontrol_local_backups", JSON.stringify(list));
+        }
+
+        console.warn(`[BootPushGuard] 🛡️ Backup de emergência preservado: emergency_boot_${timestamp} (${motivo})`);
+    } catch (e) {
+        console.error('[BootPushGuard] Erro ao gravar backup de emergência local:', e);
+    }
+}
+
+/**
+ * Validação rigorosa da integridade estrutural do snapshot recebido do Firebase.
+ */
+export function validarEstadoRemoto(remoteData) {
+    if (!remoteData || typeof remoteData !== 'object') {
+        return { valid: false, reason: 'Dados remotos nulos ou com formato inválido.' };
+    }
+    // Para ser considerado um banco GelControl íntegro, deve possuir ao menos lastUpdated
+    // ou uma das coleções fundamentais (clients, orders, products, etc.)
+    const hasCoreFields = typeof remoteData.lastUpdated === 'number' ||
+        Array.isArray(remoteData.clients) ||
+        Array.isArray(remoteData.orders) ||
+        Array.isArray(remoteData.products);
+    if (!hasCoreFields) {
+        return { valid: false, reason: 'Objeto remoto não contém os campos essenciais do GelControl.' };
+    }
+    return { valid: true };
+}
+
 let granularAdapterInstance = null;
 
 // ─── FEATURE FLAG: SINCRONIZAÇÃO GRANULAR (FASE 8E) ─────────────────────────
@@ -52,10 +136,18 @@ export function loadFirebaseSDK(callback) {
             firebaseSDKLoaded = true;
             if (callback) callback();
         };
-        scriptDB.onerror = () => updateSyncStatusUI('error');
+        scriptDB.onerror = () => {
+            isCloudPushLocked = true;
+            bootGuardState = 'BLOCKED_ERROR';
+            updateSyncStatusUI('error', '⚠️ Falha ao carregar banco do Firebase. Gravação bloqueada.');
+        };
         document.head.appendChild(scriptDB);
     };
-    scriptApp.onerror = () => updateSyncStatusUI('error');
+    scriptApp.onerror = () => {
+        isCloudPushLocked = true;
+        bootGuardState = 'BLOCKED_ERROR';
+        updateSyncStatusUI('error', '⚠️ Falha ao carregar SDK do Firebase. Gravação bloqueada.');
+    };
     document.head.appendChild(scriptApp);
 }
 
@@ -75,51 +167,78 @@ export function startSyncListener() {
     isFirstLoad = true;
 
     fbDatabaseRef.on('value', snapshot => {
-        // Ignorar atualizações que VIeram deste próprio dispositivo (evita loop)
+        // Ignorar atualizações que vieram deste próprio dispositivo (evita loop)
         if (isSyncing) return;
 
         const remoteData = snapshot.val();
-        
-        if (remoteData && remoteData.backupSettings) {
-            lastSeenRemoteVersion = remoteData.backupSettings.currentVersion || "1.0";
-        }
 
-        // ── Sem dados na nuvem: este dispositivo envia os dados locais ──
+        // ── 1. Nuvem vazia ou nula: REJEITAR E MANTER BLOQUEADO (Proteção contra perda) ──
         if (!remoteData) {
-            console.log('[Sync] Nuvem vazia — enviando dados locais...');
-            pushToFirebaseImediato();
+            console.warn('[BootPushGuard] 🛑 Resposta do Firebase é NULA ou VAZIA. NENHUM dado local será enviado. A base não será recriada automaticamente!');
+            isCloudPushLocked = true;
+            bootGuardState = 'BLOCKED_ERROR';
+            updateSyncStatusUI('error', '⚠️ Nuvem retornou vazia ou inacessível. Gravação bloqueada.');
             isFirstLoad = false;
             return;
         }
 
-        const localTs  = state.lastUpdated || 0;
+        // ── 2. Validação rigorosa da integridade dos dados remotos ──
+        const validCheck = validarEstadoRemoto(remoteData);
+        if (!validCheck.valid) {
+            console.warn('[BootPushGuard] 🛑 Dados da nuvem inválidos:', validCheck.reason);
+            isCloudPushLocked = true;
+            bootGuardState = 'BLOCKED_ERROR';
+            updateSyncStatusUI('error', '⚠️ Dados da nuvem corrompidos ou incompletos. Gravação bloqueada.');
+            isFirstLoad = false;
+            return;
+        }
+
+        if (remoteData && remoteData.backupSettings) {
+            lastSeenRemoteVersion = remoteData.backupSettings.currentVersion || "1.0";
+        }
+
+        const localTs = state.lastUpdated || 0;
         const remoteTs = remoteData.lastUpdated || 0;
 
         if (isFirstLoad) {
-            // ── Primeira carga: quem tiver timestamp mais recente ganha, respeitando a versão do banco ──
+            // ── Primeira carga (BOOT): Validação segura sem sobrescrita destrutiva ──
             isFirstLoad = false;
+            bootGuardState = 'VALIDATING';
+
             const isFreshInstall = !state.lastUpdated || state.lastUpdated === 0;
-            
             let localVer = normalizeVersion(state.backupSettings?.currentVersion);
             let remoteVer = normalizeVersion(lastSeenRemoteVersion);
 
-            if (localVer > remoteVer) {
-                console.log(`[Sync] Local tem versão de dados mais recente (${localVer} vs ${remoteVer}) — atualizando nuvem.`);
-                pushToFirebaseImediato();
-            } else if (isFreshInstall || remoteVer > localVer) {
-                console.log(`[Sync] Nuvem tem versão de dados mais recente (${remoteVer} vs ${localVer}) ou cache limpo — aplicando dados da nuvem.`);
+            const hasDivergence = (localTs > remoteTs) || (localVer > remoteVer);
+            const hasOfflineChanges = Array.isArray(state.offlineChangesQueue) && state.offlineChangesQueue.length > 0;
+
+            if ((hasDivergence && !isFreshInstall) || hasOfflineChanges) {
+                // HOUVE DIVERGÊNCIA OU ALTERAÇÕES OFFLINE PENDENTES NO BOOT:
+                // REGRA INVIOLÁVEL: NUNCA enviar os dados locais para a nuvem no boot!
+                // A nuvem é a autoridade central. Preservamos o estado local divergente em backup de emergência.
+                const motivo = hasOfflineChanges
+                    ? 'Alterações locais realizadas offline pendentes no boot'
+                    : `Divergência no boot (Local: ts=${localTs}, v=${localVer} vs Nuvem: ts=${remoteTs}, v=${remoteVer})`;
+                console.warn(`[BootPushGuard] ⚠️ ${motivo}. Arquivando estado local em backup de emergência e adotando nuvem central.`);
+                salvarBackupEmergenciaDivergencia(motivo, state, remoteData);
+
                 aplicarDadosRemoto(remoteData);
-            } else if (remoteTs > localTs) {
-                console.log('[Sync] Nuvem mais recente na abertura — aplicando dados da nuvem...');
-                aplicarDadosRemoto(remoteData);
-            } else if (localTs > remoteTs) {
-                console.log('[Sync] Local mais recente na abertura — enviando para nuvem...');
-                pushToFirebaseImediato();
+
+                if (window.showToast) {
+                    window.showToast("Aviso: Dados sincronizados com a nuvem central. O estado local anterior foi guardado no backup de emergência.", "info", 6000);
+                }
             } else {
-                updateSyncStatusUI('success');
+                console.log(`[BootPushGuard] Nuvem validada com sucesso no boot (ts=${remoteTs}, v=${remoteVer}). Aplicando dados remotos.`);
+                aplicarDadosRemoto(remoteData);
             }
+
+            // A trava de escrita SÓ É LIBERADA após aplicar os dados da nuvem com sucesso!
+            isCloudPushLocked = false;
+            bootGuardState = 'UNLOCKED';
+            console.log('[BootPushGuard] 🔓 Trava de escrita liberada com sucesso após validação da nuvem.');
+            updateSyncStatusUI('success');
         } else {
-            // ── Sincronização em tempo real: comparar versões e timestamps ──
+            // ── Sincronização em tempo real (pós-boot): comparar versões e timestamps ──
             let localVer = normalizeVersion(state.backupSettings?.currentVersion);
             let remoteVer = normalizeVersion(lastSeenRemoteVersion);
 
@@ -130,7 +249,7 @@ export function startSyncListener() {
                 console.warn(`[Sync] ⚡ Ignorada atualização de versão antiga da nuvem (${remoteVer} vs ${localVer}).`);
                 const timeStr = new Date().toLocaleTimeString('pt-BR');
                 updateSyncStatusUI('success', `☁️ Dados Locais Preservados contra Concorrência (${timeStr})`);
-                
+
                 // Mostrar aviso amigável sem loopar (uma vez a cada 30 segundos no máximo)
                 const lastToastTime = window._lastVersionWarningTime || 0;
                 if (Date.now() - lastToastTime > 30000) {
@@ -146,7 +265,9 @@ export function startSyncListener() {
         }
     }, error => {
         console.error('[Sync] Erro no listener:', error);
-        updateSyncStatusUI('error');
+        isCloudPushLocked = true;
+        bootGuardState = 'BLOCKED_ERROR';
+        updateSyncStatusUI('error', '⚠️ Erro de conexão com a nuvem. Gravação bloqueada.');
     });
 }
 
@@ -162,7 +283,7 @@ function aplicarDadosRemoto(remoteData) {
 
     saveStateLocalOnly();
     renderApp();
-    
+
     // Atualizar visual (Aparência) e campos de configurações se estiverem abertos
     if (window.applyAppearanceTheme) window.applyAppearanceTheme();
     if (window.renderPrecos) window.renderPrecos();
@@ -176,6 +297,10 @@ function aplicarDadosRemoto(remoteData) {
 
 export async function triggerGranularSync() {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) return;
+    if (isCloudPushLocked) {
+        console.warn(`[BootPushGuard] 🛑 triggerGranularSync bloqueado: Trava de boot ativa (${bootGuardState}).`);
+        return;
+    }
     if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
         initFirebase(() => triggerGranularSync());
         return;
@@ -207,6 +332,12 @@ export function pushToFirebase() {
         return;
     }
 
+    if (isCloudPushLocked) {
+        console.warn(`[BootPushGuard] 🛑 pushToFirebase bloqueado: Trava de boot ativa (${bootGuardState}). Gravação cancelada.`);
+        updateSyncStatusUI('syncing', '🔒 Inicialização Segura: Aguardando Validação da Nuvem...');
+        return;
+    }
+
     // FEATURE FLAG: Se granularSync estiver desativada (padrão v80), mantém fluxo legado exato
     if (!isGranularSyncActive()) {
         clearTimeout(pushDebounceTimer);
@@ -225,6 +356,11 @@ export function pushToFirebase() {
 function pushToFirebaseImediato() {
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) return;
 
+    if (isCloudPushLocked) {
+        console.warn(`[BootPushGuard] 🛑 pushToFirebaseImediato bloqueado: Trava de boot ativa (${bootGuardState}). Gravação cancelada.`);
+        return;
+    }
+
     // SAFEGUARD: Não enviar para a nuvem se o estado local for um estado virgem/vazio (ex: primeira abertura no PC novo)
     // para não correr o risco de zerar os dados que já estão salvos lá.
     const hasLocalData = !!localStorage.getItem("gelcontrol_state");
@@ -237,7 +373,7 @@ function pushToFirebaseImediato() {
     if (lastSeenRemoteVersion) {
         let localVer = normalizeVersion(state.backupSettings?.currentVersion);
         let remoteVer = normalizeVersion(lastSeenRemoteVersion);
-        
+
         if (remoteVer > localVer) {
             console.warn(`[Sync] Abortado: A nuvem possui uma versão de dados mais recente (${remoteVer}) que a local (${localVer}). Sobrescrita cancelada para evitar regressão.`);
             const timeStr = new Date().toLocaleTimeString('pt-BR');
@@ -322,6 +458,11 @@ export function forceManualSync() {
         window.showToast('Sincronização desativada. Ative nas configurações primeiro.', 'warning');
         return;
     }
+    if (isCloudPushLocked) {
+        window.showToast('Aguarde a conclusão da validação da nuvem antes de sincronizar.', 'warning');
+        console.warn(`[BootPushGuard] 🛑 forceManualSync bloqueado: Trava de boot ativa (${bootGuardState}).`);
+        return;
+    }
     state.lastUpdated = Date.now();
     saveStateLocalOnly();
 
@@ -355,11 +496,11 @@ export function toggleFirebaseSync(checked) {
 
 // ─── SALVAR CONFIGURAÇÕES FIREBASE DO PAINEL ADMIN ────────────────────────
 export function saveFirebaseSettings() {
-    const enabled    = document.getElementById('cfg-fb-enabled').checked;
-    const apiKey     = document.getElementById('cfg-fb-api-key').value.trim();
-    const projectId  = document.getElementById('cfg-fb-project-id').value.trim();
-    const databaseURL= document.getElementById('cfg-fb-db-url').value.trim();
-    const deviceKey  = document.getElementById('cfg-fb-device-key').value.trim();
+    const enabled = document.getElementById('cfg-fb-enabled').checked;
+    const apiKey = document.getElementById('cfg-fb-api-key').value.trim();
+    const projectId = document.getElementById('cfg-fb-project-id').value.trim();
+    const databaseURL = document.getElementById('cfg-fb-db-url').value.trim();
+    const deviceKey = document.getElementById('cfg-fb-device-key').value.trim();
 
     // Validar se todos os campos estão preenchidos ao ativar
     if (enabled && (!apiKey || !projectId || !databaseURL || !deviceKey)) {
@@ -390,10 +531,10 @@ export function updateSyncStatusUI(status, customMsg = "") {
     }
 
     const MAP = {
-        success:  { icon: 'cloud',           color: '#00ff64', title: lastSyncMessage || '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
-        syncing:  { icon: 'refresh-cw',       color: '#ffaa00', title: '🔄 Sincronizando com a Nuvem...', spin: true  },
-        error:    { icon: 'alert-triangle',   color: '#ff4d4d', title: lastSyncMessage || '⚠️ Erro de Conexão com a Nuvem', spin: false },
-        disabled: { icon: 'cloud-off',        color: 'var(--color-text-muted)', title: 'Sincronização Desativada', spin: false }
+        success: { icon: 'cloud', color: '#00ff64', title: lastSyncMessage || '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
+        syncing: { icon: 'refresh-cw', color: '#ffaa00', title: '🔄 Sincronizando com a Nuvem...', spin: true },
+        error: { icon: 'alert-triangle', color: '#ff4d4d', title: lastSyncMessage || '⚠️ Erro de Conexão com a Nuvem', spin: false },
+        disabled: { icon: 'cloud-off', color: 'var(--color-text-muted)', title: 'Sincronização Desativada', spin: false }
     };
 
     const cfg = MAP[status] || MAP.disabled;
@@ -456,7 +597,7 @@ function mostrarToastSync() {
 export function updateOneDriveStatusUI(status) {
     const indicator = document.getElementById("onedrive-sync-status");
     if (!indicator) return;
-    
+
     // Indicador funcional de Backup Sob Demanda (OneDrive / Disco)
     const title = "Fazer Backup do Sistema (Salvar no OneDrive / Disco)";
     indicator.title = title;
@@ -465,7 +606,7 @@ export function updateOneDriveStatusUI(status) {
     indicator.style.background = "rgba(0, 240, 255, 0.05)";
     indicator.innerHTML = `<i data-lucide="hard-drive-download" style="width: 18px; height: 18px; color: #00f0ff;"></i>`;
     indicator.classList.remove("pulse-glow-onedrive");
-    
+
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -498,13 +639,13 @@ export async function saveStateToOneDrive() {
     try {
         state.lastUpdated = Date.now();
         saveStateLocalOnly();
-        
+
         const now = new Date();
         const pad = (n) => String(n).padStart(2, '0');
         const dateStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
         const timeStr = pad(now.getHours()) + '-' + pad(now.getMinutes()) + '-' + pad(now.getSeconds());
         const suggestedName = `backup_gelcontrol_${dateStr}_${timeStr}.json`;
-        
+
         const backupPayload = {
             version: state.backupSettings?.currentVersion || APP_VERSION,
             date: window.getBrazilTimeISO ? window.getBrazilTimeISO() : now.toISOString(),
@@ -633,16 +774,21 @@ function showOneDriveToast(msg) {
 }
 
 // ─── EXPORTS GLOBAIS ───────────────────────────────────────────────────────
-window.toggleFirebaseSync   = toggleFirebaseSync;
+window.toggleFirebaseSync = toggleFirebaseSync;
 window.saveFirebaseSettings = saveFirebaseSettings;
-window.forceManualSync      = forceManualSync;
-window.updateSyncStatusUI   = updateSyncStatusUI;
-window.pushToFirebase       = pushToFirebase;
-window.initFirebase         = initFirebase;
+window.forceManualSync = forceManualSync;
+window.updateSyncStatusUI = updateSyncStatusUI;
+window.pushToFirebase = pushToFirebase;
+window.initFirebase = initFirebase;
 window.updateOneDriveStatusUI = updateOneDriveStatusUI;
-window.checkOneDriveSync     = checkOneDriveSync;
-window.saveStateToOneDrive   = saveStateToOneDrive;
+window.checkOneDriveSync = checkOneDriveSync;
+window.saveStateToOneDrive = saveStateToOneDrive;
 window.handleBotaoLerBackupOneDrive = handleBotaoLerBackupOneDrive;
-window.isGranularSyncActive  = isGranularSyncActive;
-window.getGranularAdapter    = getGranularAdapter;
-window.triggerGranularSync   = triggerGranularSync;
+window.isGranularSyncActive = isGranularSyncActive;
+window.getGranularAdapter = getGranularAdapter;
+window.triggerGranularSync = triggerGranularSync;
+window.isBootPushLocked = isBootPushLocked;
+window.getBootGuardState = getBootGuardState;
+window.salvarBackupEmergenciaDivergencia = salvarBackupEmergenciaDivergencia;
+window.validarEstadoRemoto = validarEstadoRemoto;
+window.SYNC_ENGINE_BUILD = SYNC_ENGINE_BUILD;

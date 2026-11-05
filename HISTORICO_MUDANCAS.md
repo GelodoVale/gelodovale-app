@@ -6,7 +6,43 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
-#### Etapa 8 — Sincronização Granular, Resiliência Offline e Concorrência Multi-PC (05/11/2026 - Em Andamento / Sandbox Isolado)
+#### Etapa 9 — Validação Multi-Computador e Testes Reais (05/11/2026 - Em Andamento)
+* **Passo 9.3D — Preparação e Pré-Publicação Controlada da v82 (COD: GELCONTROL-ETAPA9.3D):**
+  - **Versionamento Oficial da Build v82:** Rótulos atualizados em `index.html` (`#login-version` e `#app-sidebar-version`), constante `CODE_BUILD` em `js/state.js` para `"v82 (05/11/2026 - Antigravity)"`.
+  - **Purga Ativa de Cache do PWA (Service Worker):** `CACHE_NAME` incrementado para `gelodovale-v182` em `sw.js`. Modernizado o tratamento `isCacheBusted` para qualquer requisição com parâmetro de versão `v=`, garantindo renovação Network-First. Todos os 38 arquivos essenciais verificados na lista `ASSETS`.
+  - **Identificador de Motor e Verificação em Tempo de Execução:** Carimbada e exportada a constante `SYNC_ENGINE_BUILD = "v82-boot-push-guard (05/11/2026)"` em `js/sync.js`, permitindo ao operador auditar no Console do navegador (`F12 -> window.SYNC_ENGINE_BUILD`) a versão real do código de sincronização em execução, distinguindo a interface do motor real.
+  - **Homologação e Regressão Zero (44 Testes Aprovados):** Executadas com sucesso as suítes do Boot Push Guard (18 testes), Bloqueio de Rotas (8 testes), Outbox Pattern (10 testes) e GranularSync (8 testes).
+  - **Status de Pré-Publicação:** Código preparado localmente e sincronizado via OneDrive. Git commit, git push e deploy mantidos estritamente sob bloqueio aguardando autorização final.
+* **Passo 9.3B — Implementação Segura do Boot Push Guard (COD: GELCONTROL-ETAPA9.3B):**
+  - **Trava de Escrita Ativa no Boot (`isCloudPushLocked = true`):** Criada trava de segurança mecânica e imediata em `js/sync.js`. Toda rota de saída para a nuvem (`pushToFirebase`, `pushToFirebaseImediato`, `triggerGranularSync` e `forceManualSync`) é estritamente bloqueada no carregamento da aplicação até que o primeiro snapshot do Firebase seja baixado, validado e aplicado no estado local.
+  - **Extinção do Envio Automático por Timestamp/Versão:** Eliminada a lógica legada que enviava automaticamente dados locais para a nuvem quando `localTs > remoteTs` ou `localVer > remoteVer`. O sistema agora estabelece a nuvem central como autoridade de produção (`cloud-first safe`).
+  - **Preservação Compulsória de Backup de Emergência:** Caso ocorra divergência de timestamps ou existam alterações offline pendentes no momento do boot, o sistema grava automaticamente uma cópia completa dos dados locais em `gelcontrol_emergency_backup_[timestamp]` e anexa ao painel de backups locais (`emergency_divergence_boot`) antes de aplicar o estado da nuvem. Backups anteriores nunca são sobrescritos.
+  - **Bloqueio em Casos de Nuvem Vazia, Inválida ou Erro de Rede:** Se o Firebase retornar dados nulos, estrutura incompleta ou falha no listener/SDK, o sistema mantém as gravações bloqueadas (`bootGuardState = 'BLOCKED_ERROR'`) e alerta o usuário, impedindo a recriação involuntária ou destruição da base.
+  - **Homologação com 26 Testes Automatizados Aprovados:** Desenvolvidas e executadas as suítes `scratch/test_boot_push_guard.mjs` (18 testes) e `scratch/test_push_routes_blocked.mjs` (8 testes), cobrindo todos os cenários críticos com 100% de sucesso.
+  - **Garantias Operacionais:** Feature flag `granularSync: false` mantida desligada; backups prévios verificados em `backups_pre_etapa9_3b/`; zero alterações no Firebase de produção; zero deploy, Git push ou ativação no PC 2 nesta fase.
+* **Passo 9.2 — Homologação Plena do Backup Físico do PC 2 (COD: GELCONTROL-ETAPA9.2G):**
+  - **Execução Auditada às 19h24:** Recebido e validado o relatório `relatorio_diagnostico_pc2.txt`. Homologação 100% concluída sem erros ou pendências.
+  - **Preservação Física Integral de Código e Banco:** Confirmados 117 de 117 arquivos de código local do GelControl preservados em `Backups_Seguros_GelControl_PC2\Backup_PC2_2026-11-05_19-24-09\GelControl_App_Files`.
+  - **Preservação de Todos os 4 Perfis do Chrome (31 arquivos LevelDB):** 11 arquivos do perfil `Default` (com detecção física ativa e confirmada do estado do GelControl: `gelcontrol_state`), 6 do `Guest Profile`, 8 do `Profile 1` e 6 do `System Profile`. Total de 31 arquivos brutos LevelDB salvos fora do repositório.
+  - **Versões e Git no PC 2:** Confirmada a versão local `v81`, Service Worker `gelodovale-v181` e commit `b8b1406` sincronizados via OneDrive.
+  - **Status do Passo 9.2:** Homologado e encerrado com sucesso com 100% dos dados físicos do segundo computador garantidos antes de qualquer teste de sincronização.
+
+* **Passo 9.1 — Preparação Segura do Segundo Computador (COD: GELCONTROL-ETAPA9.1):**
+  - **Roteiro Operacional para o Computador do Escritório (PC 2):** Estruturado procedimento passo a passo em português para diagnóstico e alinhamento do segundo computador.
+  - **Diagnóstico em Modo 100% Leitura:** Verificação prévia de `git status`, identificação de eventuais arquivos modificados localmente antes da pausa de 3 meses, validação dos caminhos do OneDrive e histórico de backups locais.
+  - **Preservação de Dados Locais Pré-Sincronização:** Salvaguarda compulsória do `localStorage` do Computador 2 em arquivo físico `.json` antes de qualquer conexão online ou comando `git pull`, eliminando qualquer risco de perda de alterações isoladas.
+  - **Prevenção contra Sobrescrita Temporal:** Mapeamento do comportamento do listener do Firebase (`remoteTs vs localTs`). Como a versão de produção na nuvem possui carimbo recente (`v81` de Novembro/2026), dados legados em repouso no Computador 2 são impedidos de sobrescrever o Firebase.
+  - **Validação da Release v81:** Verificação visual e de cache (`CACHE_NAME = 'gelodovale-v181'`) no navegador com atalho de purga forçada (`Ctrl + F5`).
+  - **Ambiente de Teste Bidirecional Neutro:** Planejamento de testes utilizando cliente/registro exclusivo de homologação (`homologacao_teste_sync`), sem alterar clientes, pedidos, estoques ou comodatos reais de produção.
+  - **Confirmação "TUDO SINCRONIZADO — PODE DESLIGAR":** Verificação do retorno da promessa do Firebase e do indicador `#cloud-sync-status`, assegurando que a mensagem verde só apareça após a resposta positiva real do servidor.
+  - **Garantias Operacionais:** Feature flag `granularSync: false` mantida desligada por padrão; nenhuma escrita no Firebase e nenhum commit/push realizado nesta fase preparatória.
+
+#### v81 (05/11/2026 - Antigravity) — Publicada no GitHub Pages (COD: REL-V81)
+* **Publicação Oficial da Release v81:** Commit `b8b140624c24c5a55efd4c99067ef201f77bc904` enviado para `origin/main`. Publicada no GitHub Pages com Service Worker `gelodovale-v181`.
+* **Módulos Integrados em Produção com Feature Flag Desativada:** Adicionados `js/outbox.js` e `js/granular_sync.js`. A sincronização de produção permanece 100% no motor monolítico v80 (`granularSync = false`).
+* **Salvaguarda Cirúrgica de Fila:** Conectado `defaultOutbox.clearOperationsUpTo(pushStartedAt)` em `js/sync.js`, preservando operações criadas durante o trânsito do envio.
+
+#### Etapa 8 — Sincronização Granular, Resiliência Offline e Concorrência Multi-PC (Concluída - 41 testes aprovados)
 * **Fase 8F — Verificação Final, Blindagem de Corrida e Homologação em Firebase Real (COD: GELCONTROL-ETAPA8F):**
   - **Eliminação da Condição de Corrida em Transações de Estoque (Ponto 1):** Substituído o padrão "check-then-act" por blindagem atômica dentro do callback `ref.transaction()`. O histórico `_processedOps` agora é mantido e verificado atomicamente no próprio nó de saldo; caso o `opId` já tenha sido aplicado, a função aborta com `return undefined`, fazendo o Firebase rejeitar segundas tentativas concorrentes no servidor.
   - **Validação de Concorrência Real no Firebase na Nuvem (Ponto 2):** Esclarecido o escopo dos testes (Fases 8B a 8E usaram Mocks e Chrome Headless; a Fase 8F executou **operações reais de rede via REST contra o servidor do Firebase** no nó isolado `factories/homologacao_etapa8f`). Testadas duas deduções concorrentes simultâneas (-35) com o mesmo `opId`: o saldo foi reduzido de 100 para exatamente 65 e a segunda foi rejeitada (`skipped_idempotent`). O nó de produção `factories/gelodovale_oficial` permaneceu 100% inalterado (confirmado via HTTP).

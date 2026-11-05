@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v181';
+const CACHE_NAME = 'gelodovale-v182';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -68,7 +68,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   const url = e.request.url;
-  const isCacheBusted = url.includes('cb=') || url.includes('nocache') || url.includes('v=76');
+  const isCacheBusted = url.includes('cb=') || url.includes('nocache') || url.includes('v=');
   const isNavigation = e.request.mode === 'navigate';
 
   // Network-First para navegação e requisições com cache-buster (garante código novo ao dar F5)
