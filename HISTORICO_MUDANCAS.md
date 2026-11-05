@@ -7,10 +7,11 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 ### 🚀 Últimas Alterações Realizadas
 
 #### v80 (05/11/2026 - Antigravity) — Fase 7D: Sincronização Segura, Restauração Assistida e Blindagem Operacional (COD: REL-V80)
-* **Backup Direto na Pasta do OneDrive via Directory Picker com Proteção Absoluta contra Sobrescrita (COD: BACKUP-FSAPI):**
+* **Backup Direto na Pasta do OneDrive via Directory Picker com Proteção Ativa contra Sobrescrita (COD: BACKUP-FSAPI):**
+  - **Homologação Prática em Produção (05/11/2026):** Validado com sucesso no computador do usuário o salvamento direto na pasta `OneDrive/GelodoVale-system`. O arquivo `backup_gelcontrol_2026-11-05_16-03-11.json` foi gravado com 32 KB e integridade total de dados (4 clientes, 7 freezers, 2 pedidos), mantendo todos os backups anteriores 100% intactos.
   - **Seleção Direta da Pasta do OneDrive:** Implementada a API `showDirectoryPicker({ mode: 'readwrite' })`. O operador seleciona a pasta de destino (como `OneDrive/GelodoVale-system`), eliminando a janela de arquivos do Windows Explorer onde ocorriam substituições acidentais.
   - **Detecção Prévia Não Destrutiva com `{ create: false }`:** O sistema inspeciona se o arquivo sugerido já existe no diretório sem criá-lo previamente.
-  - **Algoritmo de Sufixo Exclusivo Automático:** Caso já exista um arquivo com o mesmo nome (com dados ou vazio de 0 bytes), o sistema incrementa automaticamente o sufixo numérico `backup_..._(1).json`, `_(2).json`, gravando o novo backup em arquivo 100% exclusivo sem jamais sobrescrever os históricos.
+  - **Algoritmo de Sufixo Exclusivo Automático:** Caso já exista um arquivo com o mesmo nome (com dados ou vazio de 0 bytes), o sistema incrementa automaticamente o sufixo numérico `backup_..._(1).json`, `_(2).json`, gravando o novo backup em arquivo 100% exclusivo sem jamais sobrescrever os históricos. No limite de 100 tentativas, a operação é cancelada preventivamente sem modificar nenhum arquivo.
   - **Gravação Atômica e Validação de Tamanho:** Os dados JSON são gravados na íntegra via stream e validados fisicamente (`savedFile.size > 0`), impedindo a criação de arquivos de 0 KB.
   - **Cancelamento Seguro e Tratamento de Erro:** Fechar o seletor aborta silenciosamente; falha de permissão no diretório aciona download alternativo imediatamente.
   - **Transparência Visual:** Ícone no cabeçalho atualizado para `hard-drive-download` e rótulo "Fazer Backup do Sistema (Salvar no OneDrive / Disco)".
