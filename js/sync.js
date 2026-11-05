@@ -1,6 +1,8 @@
 // --- SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE) ---
 import { state, updateState, saveStateLocalOnly, APP_VERSION } from './state.js';
 import { renderApp } from './app.js';
+import { defaultOutbox } from './outbox.js';
+import { GranularSyncAdapter } from './granular_sync.js';
 
 let firebaseSDKLoaded = false;
 let fbDatabaseRef = null;
@@ -8,6 +10,24 @@ let isFirstLoad = true;        // Controla se é a primeira carga (não re-rende
 let isSyncing = false;         // Evita loop de sync (local→nuvem→local→nuvem...)
 let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada tecla
 let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
+
+let granularAdapterInstance = null;
+
+// ─── FEATURE FLAG: SINCRONIZAÇÃO GRANULAR (FASE 8E) ─────────────────────────
+// Por padrão, DESATIVADA (false). Quando false, o sistema utiliza 100% o mecanismo
+// monolítico v80 sem nenhuma alteração no comportamento de produção.
+export function isGranularSyncActive() {
+    return !!(state && state.featureFlags && state.featureFlags.granularSync);
+}
+
+export function getGranularAdapter() {
+    if (!granularAdapterInstance) {
+        granularAdapterInstance = new GranularSyncAdapter({
+            deviceKey: (state.firebaseConfig && state.firebaseConfig.deviceKey) || 'gelodovale_oficial'
+        });
+    }
+    return granularAdapterInstance;
+}
 
 function normalizeVersion(ver) {
     const v = parseFloat(ver);
@@ -154,6 +174,31 @@ function aplicarDadosRemoto(remoteData) {
     mostrarToastSync();
 }
 
+export async function triggerGranularSync() {
+    if (!state.firebaseConfig || !state.firebaseConfig.enabled) return;
+    if (!window.firebase || !window.firebase.apps || window.firebase.apps.length === 0) {
+        initFirebase(() => triggerGranularSync());
+        return;
+    }
+
+    const adapter = getGranularAdapter();
+    defaultOutbox.registerSyncHandler(async (op) => {
+        return await adapter.applyOperation(firebase.database(), op);
+    });
+
+    updateSyncStatusUI('syncing');
+    try {
+        const res = await defaultOutbox.processQueue();
+        if (res.status === 'completed') {
+            const timeStr = new Date().toLocaleTimeString('pt-BR');
+            updateSyncStatusUI('success', `☁️ Sincronização Granular (${timeStr})`);
+        }
+    } catch (e) {
+        console.warn('[Sync] Erro no processamento granular do outbox:', e);
+        updateSyncStatusUI('error');
+    }
+}
+
 // ─── ENVIAR PARA O FIREBASE (COM DEBOUNCE) ─────────────────────────────────
 // Debounce de 1.5s: espera o usuário parar de digitar antes de enviar
 export function pushToFirebase() {
@@ -161,11 +206,19 @@ export function pushToFirebase() {
         updateSyncStatusUI('disabled');
         return;
     }
-    clearTimeout(pushDebounceTimer);
-    updateSyncStatusUI('syncing');
-    pushDebounceTimer = setTimeout(() => {
-        pushToFirebaseImediato();
-    }, 1500);
+
+    // FEATURE FLAG: Se granularSync estiver desativada (padrão v80), mantém fluxo legado exato
+    if (!isGranularSyncActive()) {
+        clearTimeout(pushDebounceTimer);
+        updateSyncStatusUI('syncing');
+        pushDebounceTimer = setTimeout(() => {
+            pushToFirebaseImediato();
+        }, 1500);
+        return;
+    }
+
+    // Fluxo Granular Seguro (Fase 8E) quando habilitado
+    triggerGranularSync();
 }
 
 // Envio imediato (sem debounce) — usado internamente
@@ -206,12 +259,19 @@ function pushToFirebaseImediato() {
 
     // Para permitir login de colaboradores e manter a mesma senha de administrador
     // em múltiplos aparelhos conectados, sincronizamos o estado com as senhas preservadas.
+    const pushStartedAt = Date.now();
     const safeState = JSON.parse(JSON.stringify(state));
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
             const timeStr = new Date().toLocaleTimeString('pt-BR');
             updateSyncStatusUI('success', `☁️ Nuvem Atualizada em ${timeStr}`);
             console.log('[Sync] ✅ Dados enviados para a nuvem com sucesso.');
+            // Salvaguarda cirúrgica de transição: limpa estritamente as operações enfileiradas ATÉ
+            // o instante pushStartedAt em que o safeState foi capturado. Qualquer operação nova
+            // que tenha sido gerada pelo usuário enquanto o envio estava trafegando na rede é 100% PRESERVADA!
+            if (defaultOutbox && typeof defaultOutbox.clearOperationsUpTo === 'function') {
+                defaultOutbox.clearOperationsUpTo(pushStartedAt);
+            }
         })
         .catch(err => {
             console.error('[Sync] Erro ao enviar:', err);
@@ -583,3 +643,6 @@ window.updateOneDriveStatusUI = updateOneDriveStatusUI;
 window.checkOneDriveSync     = checkOneDriveSync;
 window.saveStateToOneDrive   = saveStateToOneDrive;
 window.handleBotaoLerBackupOneDrive = handleBotaoLerBackupOneDrive;
+window.isGranularSyncActive  = isGranularSyncActive;
+window.getGranularAdapter    = getGranularAdapter;
+window.triggerGranularSync   = triggerGranularSync;

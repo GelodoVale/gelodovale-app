@@ -4,7 +4,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v80 (05/11/2026 - Antigravity)";
+export const CODE_BUILD = "v81 (05/11/2026 - Antigravity)";
 
 export let state = {
     prices: {
@@ -45,7 +45,8 @@ export function updateState(newState, preserveConfigs = false) {
             'users', 'factorySettings', 'backupSettings', 'appearance', 
             'printSettings', 'logisticsSettings', 'firebaseConfig', 
             'adminPassword', 'notepadText', 'calendarNotes',
-            'localEvents', 'ignoredSpikes', 'layoutSettings', 'customIconsLibrary', 'tabIcons'
+            'localEvents', 'ignoredSpikes', 'layoutSettings', 'customIconsLibrary', 'tabIcons',
+            'featureFlags'
         ];
         keysToPreserve.forEach(key => {
             if (state[key] !== undefined) {
@@ -783,6 +784,9 @@ export function initializeDefaultFields() {
     if (!state.cargoSettlements) state.cargoSettlements = [];
     if (state.factorySettings) {
         if (state.factorySettings.pixKey === undefined) state.factorySettings.pixKey = '';
+    }
+    if (!state.featureFlags) {
+        state.featureFlags = { granularSync: false }; // Feature flag desligada por padrão (Fase 8E)
     }
     if (state.lastUpdated === undefined) {
         state.lastUpdated = Date.now();

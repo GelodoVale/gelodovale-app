@@ -6,6 +6,42 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Etapa 8 — Sincronização Granular, Resiliência Offline e Concorrência Multi-PC (05/11/2026 - Em Andamento / Sandbox Isolado)
+* **Fase 8F — Verificação Final, Blindagem de Corrida e Homologação em Firebase Real (COD: GELCONTROL-ETAPA8F):**
+  - **Eliminação da Condição de Corrida em Transações de Estoque (Ponto 1):** Substituído o padrão "check-then-act" por blindagem atômica dentro do callback `ref.transaction()`. O histórico `_processedOps` agora é mantido e verificado atomicamente no próprio nó de saldo; caso o `opId` já tenha sido aplicado, a função aborta com `return undefined`, fazendo o Firebase rejeitar segundas tentativas concorrentes no servidor.
+  - **Validação de Concorrência Real no Firebase na Nuvem (Ponto 2):** Esclarecido o escopo dos testes (Fases 8B a 8E usaram Mocks e Chrome Headless; a Fase 8F executou **operações reais de rede via REST contra o servidor do Firebase** no nó isolado `factories/homologacao_etapa8f`). Testadas duas deduções concorrentes simultâneas (-35) com o mesmo `opId`: o saldo foi reduzido de 100 para exatamente 65 e a segunda foi rejeitada (`skipped_idempotent`). O nó de produção `factories/gelodovale_oficial` permaneceu 100% inalterado (confirmado via HTTP).
+  - **Segurança Bidirecional no Retorno ao Modo Legado (Salvaguarda clearOperationsUpTo):** Substituída a limpeza indiscriminada da Outbox pela nova função cirúrgica `defaultOutbox.clearOperationsUpTo(pushStartedAt)`. Operações geradas pelo operador enquanto o envio monolítico viajava pela rede são 100% preservadas.
+  - **Total Geral Consolidado:** 41 testes automatizados com 100% de sucesso (4 no Firebase Real, 4 no Chrome Headless e 33 no Node.js sandbox).
+  - **Preparação da Release v81 (COD: GELCONTROL-V81):** Versão atualizada em `index.html`, `js/state.js` (`v81 - 05/11/2026`), Service Worker `gelodovale-v181` e cache-busters `?v=81`. Feature flag `granularSync: false` desligada por padrão. Produção v80 100% ativa. Deploy mantido sob bloqueio.
+
+* **Fase 8E — Homologação Controlada e Blindagem de Concorrência (COD: GELCONTROL-ETAPA8E):**
+  - **Integração no Código Oficial com Feature Flag Desativada:** Integrados os módulos `js/outbox.js` e `js/granular_sync.js` em `js/state.js` e `js/sync.js`. A feature flag `state.featureFlags.granularSync = false` permanece desligada por padrão, garantindo que o aplicativo em produção continue no fluxo monolítico v80 sem nenhuma descontinuidade ou alteração comportamental.
+  - **Base de Homologação 100% Separada da Produção:** Configurada e utilizada a base de testes isolada `factories/homologacao_gelcontrol_etapa8e`. Comprovado por auditoria de logs de acesso que o nó de produção `factories/gelodovale_oficial` não sofreu nenhuma leitura adicional ou escrita.
+  - **Verificação Específica de Concorrência com Mesmo opId (Condição 4):** Submetidas chamadas concorrentes simultâneas com o mesmo `opId` (`Promise.all`). Comprovado que o nó do cliente não é duplicado e segundas tentativas de transações de estoque retornam `skipped_idempotent` com saldo matemático preservado (80 pacotes), eliminando risco de dupla baixa em retransmissões.
+  - **Dois Clientes Concorrentes em Entidades Distintas:** Validada a inserção concorrente simultânea de pedidos (PC 1) e clientes (PC 2) na base de homologação sem colisões.
+  - **Quedas e Retorno de Rede:** Simulado corte abrupto de rede durante o processamento da fila, com agendamento de retry e drenagem automática completa ao restabelecer a conexão (`notifyOnline`).
+  - **Compatibilidade Rigorosa com Backups Reais v80:** Carregado e testado o arquivo real de backup `backup_gelcontrol_2026-11-05_16-03-11.json` (32 KB do OneDrive). A exportação granular e a re-hidratação comprovaram fidelidade de 100% dos dados (4 clientes, 7 freezers, 2 pedidos, 16 produtos).
+  - **Total de Testes da Etapa 8:** 36 testes automatizados aprovados (32 em Node.js e 4 em Chrome Headless). Push, deploy e ativação da v81 mantidos sob bloqueio.
+
+* **Fase 8D — Integração Segura, Concorrência e Validação em Navegador Real (COD: GELCONTROL-ETAPA8D):**
+  - **Feature Flag Desativada por Padrão:** Configurada a trava condicional `granularSync: false`. O mecanismo de sincronização monolítico oficial do GelControl v80 permanece 100% ativo e inalterado em produção, sem qualquer substituição prematura.
+  - **Atomicidade Multi-Path Update:** Implementada e validada a gravação atômica simultânea da mutação da entidade e do log de idempotência (`/_processedOps/{opId}`). Em simulações de interrupção abrupta de rede, comprovou-se que não há gravações parciais: ou ambos os nós são gravados ou nenhum é, eliminando janelas de corrupção.
+  - **Resolução de Conflitos no Mesmo Campo (Same-Field Collision):** Comprovada a resolução determinística quando dois operadores alteram o mesmo campo de um cliente simultaneamente (adotando o carimbo mais recente para o campo colidente e preservando todos os demais campos não conflitantes de ambos os dispositivos).
+  - **Exclusões Granulares Simultâneas:** Verificada a integridade de exclusões isoladas, garantindo que a remoção de um cadastro não afete atualizações concorrentes em outros registros.
+  - **Transações Concorrentes de Estoque:** Testadas 5 baixas simultâneas de gelo em concorrência real, comprovando exatidão matemática do saldo (`200 - 5*20 = 100`) via transações atômicas sem perda de contagem.
+  - **Recuperação Pós-Queda (Crash & Replay):** Comprovado que após fechamento forçado ou queda de energia no meio de um lote de operações, a fila Outbox persistida em disco retoma automaticamente o processamento das pendências sem duplicar as já enviadas.
+  - **Validação Cruzada em Navegador Real (Chrome Headless V8):** Testes executados diretamente no motor V8 do Google Chrome com DOM e `localStorage` nativos (`scratch/test_browser_integration.html`), alcançando 4 de 4 testes aprovados no navegador, que somados aos 25 testes do Node.js totalizam **29 testes automatizados com 100% de aprovação**.
+  - **Preservação Integral de Dados e Backups:** Nenhuma escrita realizada no nó de produção do Firebase. Backups locais e da nuvem permanecem 100% intactos.
+
+* **Fase 8C — Adaptador de Sincronização Granular e Idempotência Remota (COD: GELCONTROL-ETAPA8C):**
+  - **Módulo Granular (`js/granular_sync.js`):** Arquitetura de persistência por coleção (`/clients`, `/orders`, etc.), idempotência remota via `_processedOps/{opId}`, 3-Way Field Merge e hidratação compatível com arrays do GelControl v80 (`hydrateGelControlState`). 8 de 8 testes aprovados.
+
+* **Fase 8B — Motor de Fila Offline (Outbox Pattern) (COD: GELCONTROL-ETAPA8B):**
+  - **Módulo Outbox (`js/outbox.js`):** Persistência no storage, identificador único `opId` (UUID v4), `deviceId` fixo, ordenação estrita FIFO, Dead-Letter Queue para falhas permanentes e backoff exponencial (1s a 30s). 10 de 10 testes aprovados.
+
+* **Fase 8A — Backup Físico Integral do Firebase (COD: GELCONTROL-ETAPA8A):**
+  - **Snapshot Extraído (05/11/2026 16:27:53):** Arquivo `backups_firebase/firebase_backup_gelodovale_oficial_2026-11-05_16-27-53.json` (18.411 bytes) gerado exclusivamente via HTTP GET, com SHA-256 `46F49D1BB1BDFF16C2226C44F5A5745B901ACFA6BC36823E127E370C21096ADC` validado. 100% intacto fora da pasta pública.
+
 #### v80 (05/11/2026 - Antigravity) — Fase 7D: Sincronização Segura, Restauração Assistida e Blindagem Operacional (COD: REL-V80)
 * **Backup Direto na Pasta do OneDrive via Directory Picker com Proteção Ativa contra Sobrescrita (COD: BACKUP-FSAPI):**
   - **Homologação Prática em Produção (05/11/2026):** Validado com sucesso no computador do usuário o salvamento direto na pasta `OneDrive/GelodoVale-system`. O arquivo `backup_gelcontrol_2026-11-05_16-03-11.json` foi gravado com 32 KB e integridade total de dados (4 clientes, 7 freezers, 2 pedidos), mantendo todos os backups anteriores 100% intactos.

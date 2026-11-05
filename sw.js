@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v180';
+const CACHE_NAME = 'gelodovale-v181';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -22,6 +22,8 @@ const ASSETS = [
   'js/layout.js',
   'js/admin.js',
   'js/sync.js',
+  'js/outbox.js',
+  'js/granular_sync.js',
   'js/utils.js',
   'js/storage.js',
   'js/widgets.js',
