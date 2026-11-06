@@ -67,15 +67,21 @@ export async function createEmployeeFirebaseAuth(email, initialPassword, display
 
     const deviceKey = state.firebaseConfig.deviceKey || "gelodovale_oficial";
 
-    // 1. Prioridade A: Bridge Administrativa Confiável Local no PC 1 (Plano Spark - 100% Gratuito)
-    // Permite que o Root provisione contas com Firebase Admin SDK sem pagar Cloud Functions ou Blaze
+    // 1. Bridge Administrativa Confiável Local no PC 1 (Plano Spark - 100% Gratuito)
+    // Conecta exclusivamente com o Firebase Admin SDK local rodando no PC 1 do proprietário.
+    // NENHUMA CONTA É CRIADA VIA SDK PÚBLICO DE NAVEGADOR!
     if (typeof fetch !== 'undefined') {
         try {
             const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-            const timeoutId = controller ? setTimeout(() => controller.abort(), 1200) : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 2000) : null;
+            const localToken = localStorage.getItem("gelcontrol_bridge_token") || "admin_local_secret";
+
             const localRes = await fetch("http://127.0.0.1:4411/api/create-employee", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-Admin-Token": localToken
+                },
                 body: JSON.stringify({
                     deviceKey,
                     email,
@@ -90,48 +96,64 @@ export async function createEmployeeFirebaseAuth(email, initialPassword, display
             if (localRes.ok) {
                 const data = await localRes.json();
                 if (data.success) {
-                    console.log('[Security] ✅ Colaborador provisionado com autoridade máxima via Admin SDK local (PC 1):', data);
+                    console.log('[Security] ✅ Colaborador provisionado com autoridade oficial via Admin SDK local (PC 1):', data);
                     return { success: true, uid: data.uid, source: 'local_admin_service' };
                 }
+            } else if (localRes.status === 403) {
+                return { success: false, reason: "Token de autorização da Ferramenta Administrativa local do PC 1 inválido." };
             }
         } catch (_) {
-            // Bridge local não está em execução no momento; prossegue para contingência transparente
+            // Bridge local não está ativa
         }
     }
 
-    // 2. Prioridade B: Contingência de Cliente no Navegador (App Secundário em Memória - Sem deslogar Root)
-    // Permite provisionar o colaborador no Firebase Auth mesmo com o serviço local fechado ou em outro PC
-    if (window.firebase && window.firebase.auth) {
-        const cfg = state.firebaseConfig;
-        const fbConfig = {
-            apiKey: cfg.apiKey,
-            authDomain: cfg.authDomain,
-            databaseURL: cfg.databaseURL,
-            projectId: cfg.projectId,
-            storageBucket: cfg.storageBucket,
-            messagingSenderId: cfg.messagingSenderId,
-            appId: cfg.appId
-        };
-        let secondaryApp = null;
+    // Se o serviço local do PC 1 estiver fechado: BLOQUEAR OPERAÇÃO ADMINISTRATIVA!
+    // Não permitir fallback vulnerável no navegador cliente!
+    console.warn('[Security] 🛑 Ferramenta Administrativa do PC 1 indisponível. Operação administrativa bloqueada.');
+    return {
+        success: false,
+        reason: "A administração de contas no Firebase requer que a Ferramenta Administrativa do PC 1 esteja ativa no escritório. Inicie 'node tools/admin_manager.js start-service' no PC 1."
+    };
+}
+
+export async function resetEmployeePasswordAdmin(usernameOrEmail, newPassword) {
+    if (!isCurrentUserRoot()) {
+        return { success: false, reason: "Apenas o Administrador Root pode redefinir senhas de colaboradores." };
+    }
+
+    const deviceKey = state.firebaseConfig?.deviceKey || "gelodovale_oficial";
+    const localToken = localStorage.getItem("gelcontrol_bridge_token") || "admin_local_secret";
+
+    if (typeof fetch !== 'undefined') {
         try {
-            const appName = "EmployeeProvisioning_" + Date.now();
-            secondaryApp = window.firebase.initializeApp(fbConfig, appName);
-            const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, initialPassword);
-            const authUid = cred.user.uid;
-            try { await cred.user.sendEmailVerification(); } catch (_) {}
-            await secondaryApp.delete();
-            console.log(`[Security] ✅ Conta criada via App secundário para ${email} (UID: ${authUid})`);
-            return { success: true, uid: authUid, source: 'secondary_client_app' };
-        } catch (err) {
-            if (secondaryApp) {
-                try { await secondaryApp.delete(); } catch (_) {}
+            const res = await fetch("http://127.0.0.1:4411/api/reset-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Admin-Token": localToken
+                },
+                body: JSON.stringify({
+                    deviceKey,
+                    usernameOrEmail,
+                    newPassword
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    console.log('[Security] ✅ Senha de colaborador redefinida pelo Admin SDK local.');
+                    return { success: true };
+                }
             }
-            console.warn(`[Security] ⚠️ Aviso ao provisionar Firebase Auth para ${email}:`, err.message);
-            return { success: false, code: err.code, message: err.message };
+        } catch (e) {
+            console.warn('[Security] Falha ao comunicar com bridge local:', e.message);
         }
     }
 
-    return { success: false, reason: "Nenhum método de provisionamento disponível no momento." };
+    return {
+        success: false,
+        reason: "Requer Ferramenta Administrativa ativa no PC 1 (porta 4411) para redefinir senhas no Firebase Auth."
+    };
 }
 window.getOfflineAuthStore = getOfflineAuthStore;
 window.saveOfflineCredential = saveOfflineCredential;

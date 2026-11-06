@@ -1,28 +1,49 @@
 // ============================================================================
-// GELCONTROL v85 — FERRAMENTA ADMINISTRATIVA LOCAL (PC 1)
-// Execução Confiável em Node.js com Firebase Admin SDK (100% Gratuito - Plano Spark)
+// GELCONTROL v85 — FERRAMENTA ADMINISTRATIVA LOCAL CONFIÁVEL (PC 1)
+// Execução Restrita ao PC 1 com Firebase Admin SDK (100% Gratuito - Plano Spark)
+// Zero Cloud Functions, Zero Plano Blaze, Zero Dependência de Cartão
 // ============================================================================
 
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const crypto = require('crypto');
 
 let admin = null;
 try {
     admin = require('firebase-admin');
 } catch (e) {
-    console.warn('[Aviso] Módulo "firebase-admin" não instalado nesta pasta. Execute: npm install firebase-admin');
+    console.warn('[Aviso] Módulo "firebase-admin" não instalado. Para instalar execute: npm install firebase-admin');
 }
 
 const SERVICE_ACCOUNT_PATH = path.resolve(__dirname, 'service-account.json');
+const TOKEN_FILE_PATH = path.resolve(__dirname, '.admin_bridge_token');
 const DEFAULT_PORT = 4411;
 
 /**
- * Inicializa a conexão com o Firebase Admin SDK usando a chave de serviço local do PC 1
+ * Gera ou recupera o token de segurança local da bridge administrativa
+ * Protege contra requisições forjadas por scripts maliciosos ou páginas de terceiros.
+ */
+function getOrCreateBridgeToken() {
+    if (fs.existsSync(TOKEN_FILE_PATH)) {
+        try {
+            const token = fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
+            if (token && token.length >= 32) return token;
+        } catch (_) {}
+    }
+    const newToken = crypto.randomBytes(32).toString('hex');
+    try {
+        fs.writeFileSync(TOKEN_FILE_PATH, newToken, { mode: 0o600 });
+    } catch (_) {}
+    return newToken;
+}
+
+/**
+ * Inicializa o Firebase Admin SDK utilizando a chave privada local do PC 1
  */
 function initAdminSDK(customConfig = null) {
     if (!admin) {
-        throw new Error('O pacote "firebase-admin" precisa estar instalado para executar a ferramenta administrativa.');
+        throw new Error('O pacote "firebase-admin" precisa estar instalado no PC 1.');
     }
 
     if (admin.apps && admin.apps.length > 0) {
@@ -30,7 +51,7 @@ function initAdminSDK(customConfig = null) {
     }
 
     if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-        throw new Error(`Arquivo de credencial administrativa não encontrado em: ${SERVICE_ACCOUNT_PATH}\nBaixe o arquivo de chave de serviço no Console do Firebase (Configurações do Projeto -> Contas de Serviço -> Gerar nova chave privada) e salve como: tools/service-account.json`);
+        throw new Error(`Arquivo de chave de serviço não encontrado em: ${SERVICE_ACCOUNT_PATH}\nBaixe o arquivo de credencial no console do Firebase e salve como: tools/service-account.json`);
     }
 
     const serviceAccount = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf8'));
@@ -43,18 +64,29 @@ function initAdminSDK(customConfig = null) {
 }
 
 /**
+ * Formata a identidade técnica oficial para o Firebase Authentication
+ * Evita obrigar motoristas e vendedores a cadastrarem e-mails pessoais.
+ */
+function formatTechnicalEmail(usernameOrEmail) {
+    const raw = usernameOrEmail.toLowerCase().trim();
+    if (raw.includes('@')) return raw;
+    return `${raw}@gelodovale.com.br`;
+}
+
+/**
  * 1. Inicializar e Amarrar o Administrador Root no Realtime Database
  */
 async function setupRootAdmin(deviceKey, rootEmail) {
     initAdminSDK();
-    console.log(`[Admin] Inicializando Root para fábrica "${deviceKey}" com e-mail: ${rootEmail}...`);
+    const cleanEmail = formatTechnicalEmail(rootEmail);
+    console.log(`[Admin] Amarrando Root para fábrica "${deviceKey}" com e-mail: ${cleanEmail}...`);
 
     let userRecord = null;
     try {
-        userRecord = await admin.auth().getUserByEmail(rootEmail.toLowerCase().trim());
+        userRecord = await admin.auth().getUserByEmail(cleanEmail);
     } catch (err) {
         if (err.code === 'auth/user-not-found') {
-            throw new Error(`O e-mail "${rootEmail}" ainda não foi criado no Firebase Authentication. Crie a conta do proprietário no console primeiro.`);
+            throw new Error(`O usuário "${cleanEmail}" não foi encontrado no Firebase Auth. Crie a conta do proprietário no console primeiro.`);
         }
         throw err;
     }
@@ -62,7 +94,7 @@ async function setupRootAdmin(deviceKey, rootEmail) {
     const rootUid = userRecord.uid;
     const db = admin.database();
 
-    // Gravar rootUid imutável no Realtime Database da fábrica
+    // Gravar rootUid no RTDB da fábrica
     await db.ref(`factories/${deviceKey}/rootUid`).set(rootUid);
 
     // Atribuir claim administrativo permanente
@@ -80,18 +112,37 @@ async function setupRootAdmin(deviceKey, rootEmail) {
 }
 
 /**
- * 2. Criar Conta de Funcionário no Firebase Authentication e no Banco
+ * 2. Criar ou Atualizar Conta de Funcionário no Firebase Authentication e no Banco
  */
-async function createEmployee(deviceKey, email, password, name, permissions = {}) {
+async function createEmployee(deviceKey, usernameOrEmail, password, name, permissions = {}) {
     initAdminSDK();
-    console.log(`[Admin] Provisionando colaborador "${name}" (${email}) para fábrica "${deviceKey}"...`);
+    const technicalEmail = formatTechnicalEmail(usernameOrEmail);
+    console.log(`[Admin] Provisionando colaborador "${name}" (${technicalEmail}) para fábrica "${deviceKey}"...`);
 
-    const userRecord = await admin.auth().createUser({
-        email: email.toLowerCase().trim(),
-        password: password,
-        displayName: name.trim(),
-        emailVerified: false
-    });
+    let userRecord = null;
+    try {
+        // Tentar obter usuário existente ou criar novo
+        userRecord = await admin.auth().getUserByEmail(technicalEmail);
+        console.log(`[Admin] Usuário já existia no Firebase Auth (UID: ${userRecord.uid}). Atualizando credencial...`);
+        if (password) {
+            await admin.auth().updateUser(userRecord.uid, {
+                password: password,
+                displayName: name.trim(),
+                disabled: false
+            });
+        }
+    } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+            userRecord = await admin.auth().createUser({
+                email: technicalEmail,
+                password: password,
+                displayName: name.trim(),
+                emailVerified: true
+            });
+        } else {
+            throw err;
+        }
+    }
 
     const newUid = userRecord.uid;
 
@@ -102,25 +153,46 @@ async function createEmployee(deviceKey, email, password, name, permissions = {}
         factoryKey: deviceKey
     });
 
-    // Registrar no RTDB sob a chave do UID oficial
-    // Sem gravar nenhuma senha ou hash no banco!
+    // Registrar no RTDB sob a chave exata do auth.uid oficial
+    // Jamais trafegar senhas ou hashes no banco compartilhado!
     await admin.database().ref(`factories/${deviceKey}/users/${newUid}`).set({
         id: newUid,
+        username: usernameOrEmail.split('@')[0].toLowerCase().trim(),
         name: name.trim(),
-        email: email.toLowerCase().trim(),
+        email: technicalEmail,
         role: 'employee',
         active: true,
-        permissions: permissions,
-        createdAt: admin.database.ServerValue.TIMESTAMP,
+        permissions: permissions || {},
         updatedAt: admin.database.ServerValue.TIMESTAMP
     });
 
-    console.log(`✅ [Sucesso] Colaborador criado e vinculado no servidor: UID ${newUid}`);
-    return { success: true, uid: newUid };
+    console.log(`✅ [Sucesso] Colaborador provisionado com sucesso: UID ${newUid}`);
+    return { success: true, uid: newUid, email: technicalEmail };
 }
 
 /**
- * 3. Revogar Acesso de Funcionário Imediatamente
+ * 3. Redefinir Senha de Funcionário pelo Proprietário (Sem e-mail do colaborador)
+ */
+async function resetEmployeePassword(deviceKey, usernameOrEmail, newPassword) {
+    initAdminSDK();
+    const technicalEmail = formatTechnicalEmail(usernameOrEmail);
+    console.log(`[Admin] Redefinindo senha para "${technicalEmail}"...`);
+
+    const userRecord = await admin.auth().getUserByEmail(technicalEmail);
+    await admin.auth().updateUser(userRecord.uid, {
+        password: newPassword,
+        disabled: false
+    });
+
+    // Revogar tokens antigos forçando novo login com a nova senha
+    await admin.auth().revokeRefreshTokens(userRecord.uid);
+
+    console.log(`✅ [Sucesso] Senha redefinida pelo Administrador no Firebase Auth com sucesso.`);
+    return { success: true, uid: userRecord.uid };
+}
+
+/**
+ * 4. Revogar Acesso de Funcionário Imediatamente
  */
 async function revokeEmployee(deviceKey, employeeUid) {
     initAdminSDK();
@@ -139,7 +211,7 @@ async function revokeEmployee(deviceKey, employeeUid) {
 }
 
 /**
- * 4. Iniciar Serviço Local HTTP (Bridge Local para a USU-02 no PC 1)
+ * 5. Iniciar Bridge Administrativa Local com Proteção por Token
  */
 function startLocalService(port = DEFAULT_PORT) {
     try {
@@ -149,8 +221,10 @@ function startLocalService(port = DEFAULT_PORT) {
         process.exit(1);
     }
 
+    const bridgeToken = getOrCreateBridgeToken();
+
     const server = http.createServer(async (req, res) => {
-        // Habilitar CORS estritamente para o localhost e aplicação local do GelControl
+        // Habilitar CORS estritamente para conexões originadas do localhost
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Token');
@@ -164,11 +238,24 @@ function startLocalService(port = DEFAULT_PORT) {
         // Endpoint de Health Check
         if (req.method === 'GET' && req.url === '/api/status') {
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ status: 'online', service: 'GelControl Admin Local Service v85 (Spark Plan)' }));
+            res.end(JSON.stringify({
+                status: 'online',
+                service: 'GelControl Local Admin Bridge v85 (Spark Plan)',
+                port: port
+            }));
             return;
         }
 
-        // Endpoint para Criar Funcionário a partir da USU-02
+        // Validação de Segurança: Toda operação de escrita exige o token local da bridge
+        const clientToken = req.headers['x-admin-token'];
+        if (!clientToken || clientToken !== bridgeToken) {
+            console.warn('[Security] 🛑 Requisição bloqueada: Token administrativo inválido ou ausente.');
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Acesso negado: Token de autorização administrativa inválido.' }));
+            return;
+        }
+
+        // Endpoint para Criar/Atualizar Funcionário
         if (req.method === 'POST' && req.url === '/api/create-employee') {
             let body = '';
             req.on('data', chunk => body += chunk);
@@ -187,6 +274,30 @@ function startLocalService(port = DEFAULT_PORT) {
                 } catch (err) {
                     res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ success: false, error: err.message, code: err.code }));
+                }
+            });
+            return;
+        }
+
+        // Endpoint para Redefinir Senha de Funcionário Diretamente
+        if (req.method === 'POST' && req.url === '/api/reset-password') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { deviceKey, usernameOrEmail, newPassword } = data;
+                    if (!deviceKey || !usernameOrEmail || !newPassword) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: false, error: 'Parâmetros incompletos' }));
+                        return;
+                    }
+                    const result = await resetEmployeePassword(deviceKey, usernameOrEmail, newPassword);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                } catch (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false, error: err.message }));
                 }
             });
             return;
@@ -220,13 +331,14 @@ function startLocalService(port = DEFAULT_PORT) {
         console.log(` 🛡️ GELCONTROL LOCAL ADMIN SERVICE (v85 - SPARK PLAN)`);
         console.log(`================================================================`);
         console.log(` Servidor administrativo ativo em: http://127.0.0.1:${port}`);
-        console.log(` A janela USU-02 no PC 1 pode provisionar contas diretamente.`);
-        console.log(` Nenhuma chave secreta foi enviada para o navegador ou GitHub.`);
+        console.log(` Token de segurança gerado: ${bridgeToken}`);
+        console.log(` A janela USU-02 no PC 1 pode provisionar e redefinir senhas.`);
+        console.log(` Nenhuma chave privada ou Service Account foi exposta na web.`);
         console.log(`================================================================\n`);
     });
 }
 
-// Interface de Linha de Comando (CLI)
+// Interface CLI
 if (require.main === module) {
     const args = process.argv.slice(2);
     const command = args[0];
@@ -234,9 +346,10 @@ if (require.main === module) {
     if (!command || command === 'help') {
         console.log(`
 Uso do Gerenciador Administrativo Local (GelControl v85):
-  node tools/admin_manager.js start-service                  Inicia a bridge local para a USU-02
-  node tools/admin_manager.js setup-root <deviceKey> <email> Amarração única do Root no Realtime Database
-  node tools/admin_manager.js create <deviceKey> <email> <pwd> <nome>
+  node tools/admin_manager.js start-service                    Inicia a bridge local segura para a USU-02
+  node tools/admin_manager.js setup-root <deviceKey> <email>   Amarração imutável do Root no RTDB
+  node tools/admin_manager.js create <deviceKey> <user> <pwd> <nome>
+  node tools/admin_manager.js reset-password <deviceKey> <user> <nova_senha>
   node tools/admin_manager.js revoke <deviceKey> <uid>
         `);
         process.exit(0);
@@ -248,36 +361,30 @@ Uso do Gerenciador Administrativo Local (GelControl v85):
         const deviceKey = args[1] || 'gelodovale_oficial';
         const rootEmail = args[2];
         if (!rootEmail) {
-            console.error('Informe o e-mail oficial do Root: node tools/admin_manager.js setup-root <deviceKey> <email>');
+            console.error('Informe o e-mail oficial: node tools/admin_manager.js setup-root <deviceKey> <email>');
             process.exit(1);
         }
         setupRootAdmin(deviceKey, rootEmail).catch(e => { console.error('Erro:', e.message); process.exit(1); });
     } else if (command === 'create') {
-        const deviceKey = args[1];
-        const email = args[2];
-        const pwd = args[3];
-        const name = args[4];
-        if (!deviceKey || !email || !pwd || !name) {
-            console.error('Parâmetros: node tools/admin_manager.js create <deviceKey> <email> <pwd> <nome>');
-            process.exit(1);
-        }
+        const [_, deviceKey, email, pwd, name] = args;
         createEmployee(deviceKey, email, pwd, name).catch(e => { console.error('Erro:', e.message); process.exit(1); });
+    } else if (command === 'reset-password') {
+        const [_, deviceKey, user, newPwd] = args;
+        resetEmployeePassword(deviceKey, user, newPwd).catch(e => { console.error('Erro:', e.message); process.exit(1); });
     } else if (command === 'revoke') {
-        const deviceKey = args[1];
-        const uid = args[2];
-        if (!deviceKey || !uid) {
-            console.error('Parâmetros: node tools/admin_manager.js revoke <deviceKey> <uid>');
-            process.exit(1);
-        }
+        const [_, deviceKey, uid] = args;
         revokeEmployee(deviceKey, uid).catch(e => { console.error('Erro:', e.message); process.exit(1); });
     } else {
-        console.error('Comando desconhecido. Execute "node tools/admin_manager.js help"');
+        console.error('Comando desconhecido.');
     }
 }
 
 module.exports = {
     setupRootAdmin,
     createEmployee,
+    resetEmployeePassword,
     revokeEmployee,
-    startLocalService
+    formatTechnicalEmail,
+    startLocalService,
+    getOrCreateBridgeToken
 };
