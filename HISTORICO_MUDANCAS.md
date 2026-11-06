@@ -7,6 +7,17 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 ### 🚀 Últimas Alterações Realizadas
 
 #### Etapa 9 — Validação Multi-Computador e Testes Reais (05/11/2026 - Em Andamento)
+* **Passo 9.4E — Correção Crítica da Sincronização e Preparação da v83 (COD: GELCONTROL-ETAPA9.4E):**
+  - **Diagnóstico e Resolução do Incidente do PC 2:** Identificado que o Service Worker utilizava a estratégia Stale-While-Revalidate para módulos importados internamente sem query string (como `./sync.js`), servindo script obsoleto no boot inicial. Simultaneamente, rotinas assíncronas em segundo plano de clima (`utils.js`) e layout (`layout.js`) chamavam `saveState()` no boot.
+  - **Desacoplamento Completo de Rotinas de Background:** Convertidas todas as atualizações de clima e reset de layout legado para `saveStateLocalOnly()`. O clima é estritamente cache de visualização local do dispositivo e não aciona sincronização remota.
+  - **Tríplice Blindagem do Boot Push Guard (`sync.js`):**
+    1. *Purga Ativa de Timers:* Cancelamento compulsório de qualquer `pushDebounceTimer` pendente no momento da aplicação do snapshot da nuvem.
+    2. *Período de Estabilização Pós-Boot (8 segundos):* Bloqueio mecânico de gravações para garantir que todas as rotinas de interface/layout finalizem sem tocar na nuvem.
+    3. *Salvaguarda de Timestamp Soberano:* O método `pushToFirebaseImediato()` cancela silenciosamente qualquer envio se o estado local não possuir alteração real posterior ao snapshot recebido (`state.lastUpdated <= lastAppliedRemoteTimestamp`). Gravações para a nuvem só são disparadas por mutações legítimas do operador.
+  - **Atualização do Service Worker (`sw.js`):** Implementada política Network-First mandatória para todos os arquivos da pasta `js/` (`.js`), garantindo que scripts JS nunca sejam entregues desatualizados pelo cache em qualquer abertura.
+  - **Homologação Automatizada com 36 Testes Aprovados:** Suíte composta por `test_boot_push_guard.mjs` (18 testes), `test_push_routes_blocked.mjs` (8 testes) e o novo `test_incident_reproduction.mjs` (10 testes reproduzindo exatamente o boot com localStorage contaminado), todos aprovados com 100% de sucesso.
+  - **Restauração Seletiva do Firebase de Produção:** Expurgadas as 4 entregas e 4 orçamentos antigos de agosto/2026, removido o pagamento antigo de R$ 12,00, restaurados os saldos devedores legítimos para R$ 0,00 e repostos os 10 modelos oficiais de WhatsApp e configurações da fábrica.
+  - **Identificadores da Release v83:** `CODE_BUILD = "v83 (05/11/2026)"`, `CACHE_NAME = 'gelodovale-v183'`, parâmetros `?v=83` e `SYNC_ENGINE_BUILD = "v83-boot-push-guard-definitivo (05/11/2026)"`.
 * **Passo 9.3D — Preparação e Pré-Publicação Controlada da v82 (COD: GELCONTROL-ETAPA9.3D):**
   - **Versionamento Oficial da Build v82:** Rótulos atualizados em `index.html` (`#login-version` e `#app-sidebar-version`), constante `CODE_BUILD` em `js/state.js` para `"v82 (05/11/2026 - Antigravity)"`.
   - **Purga Ativa de Cache do PWA (Service Worker):** `CACHE_NAME` incrementado para `gelodovale-v182` em `sw.js`. Modernizado o tratamento `isCacheBusted` para qualquer requisição com parâmetro de versão `v=`, garantindo renovação Network-First. Todos os 38 arquivos essenciais verificados na lista `ASSETS`.

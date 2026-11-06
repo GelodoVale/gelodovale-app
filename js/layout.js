@@ -1,4 +1,4 @@
-import { state, saveState } from './state.js';
+import { state, saveState, saveStateLocalOnly } from './state.js';
 
 // ==========================================================================
 //  GELCONTROL LAYOUT MANAGER v5 — Pointer Events com setPointerCapture
@@ -8,7 +8,7 @@ export function initLayoutSystem() {
     // Se a versão do layout for anterior a 5, força o reset para evitar painéis desalinhados/sumidos devido às mudanças no cabeçalho do PDV
     if (!state.layoutSettings || state.layoutSettings.layoutVersion !== 5) {
         state.layoutSettings = { mode: "fixed", positions: {}, layoutVersion: 5 };
-        saveState();
+        saveStateLocalOnly();
     }
     injectLayoutButton();
     injectLayoutPopover();

@@ -1,4 +1,4 @@
-import { state, saveState } from './state.js';
+import { state, saveState, saveStateLocalOnly } from './state.js';
 
 // Calendar and Panel States
 export let currentCalendarYear = new Date().getFullYear();
@@ -358,7 +358,7 @@ export async function selectNeighborCity(cityName, lat, lon) {
             
             state.weatherForecast = extractDailyForecast(weatherData);
             state.weatherConfig = { city: cityName, temp, condition, lat, lon, isDay };
-            saveState();
+            saveStateLocalOnly();
             renderWeather();
 
             // Sincronizar inputs visuais se menu aberto
@@ -381,7 +381,7 @@ export async function selectNeighborCity(cityName, lat, lon) {
             lon,
             isDay: currentConfig.hasOwnProperty("isDay") ? currentConfig.isDay : fallbackIsDay
         };
-        saveState();
+        saveStateLocalOnly();
         renderWeather();
     } finally {
         if (iconSync) {
@@ -565,7 +565,7 @@ export async function saveWeatherConfig() {
                     
                     state.weatherForecast = extractDailyForecast(weatherData);
                     state.weatherConfig = { city: resolvedCityName, temp, condition, lat, lon, isDay };
-                    saveState();
+                    saveStateLocalOnly();
                     renderWeather();
                     
                     if (menu) menu.style.display = "none";
@@ -593,7 +593,7 @@ export async function saveWeatherConfig() {
         lon: preserveCoords ? oldConfig.lon : null,
         isDay: preserveCoords && oldConfig.hasOwnProperty("isDay") ? oldConfig.isDay : fallbackIsDay
     };
-    saveState();
+    saveStateLocalOnly();
     renderWeather();
 
     if (menu) menu.style.display = "none";
@@ -701,7 +701,7 @@ export async function updateWeatherFromAPI() {
             
             state.weatherForecast = extractDailyForecast(weatherData);
             state.weatherConfig = { city: resolvedCityName, temp, condition, lat, lon, isDay };
-            saveState();
+            saveStateLocalOnly();
             renderWeather();
         }
     } catch (e) {
@@ -767,7 +767,7 @@ export function detectUserLocation() {
 
                 state.weatherForecast = extractDailyForecast(weatherData);
                 state.weatherConfig = { city, temp, condition, lat, lon, isDay };
-                saveState();
+                saveStateLocalOnly();
                 renderWeather();
 
                 document.getElementById("weather-city-input").value = city;
@@ -804,7 +804,7 @@ export function detectUserLocation() {
                     const formattedCoords = `Lat/Lon: ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
                     state.weatherForecast = extractDailyForecast(weatherData);
                     state.weatherConfig = { city: formattedCoords, temp, condition, lat, lon, isDay };
-                    saveState();
+                    saveStateLocalOnly();
                     renderWeather();
 
                     document.getElementById("weather-city-input").value = formattedCoords;
@@ -857,7 +857,7 @@ export function detectUserLocation() {
 
                     state.weatherForecast = extractDailyForecast(weatherData);
                     state.weatherConfig = { city: resolvedName, temp, condition, lat: ipLat, lon: ipLon, isDay };
-                    saveState();
+                    saveStateLocalOnly();
                     renderWeather();
 
                     document.getElementById("weather-city-input").value = resolvedName;

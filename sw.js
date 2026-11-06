@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v182';
+const CACHE_NAME = 'gelodovale-v183';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -70,9 +70,10 @@ self.addEventListener('fetch', (e) => {
   const url = e.request.url;
   const isCacheBusted = url.includes('cb=') || url.includes('nocache') || url.includes('v=');
   const isNavigation = e.request.mode === 'navigate';
+  const isJsScript = url.endsWith('.js') || url.includes('.js?') || url.includes('/js/');
 
-  // Network-First para navegação e requisições com cache-buster (garante código novo ao dar F5)
-  if (isCacheBusted || isNavigation) {
+  // Network-First para navegação, scripts JS e requisições com cache-buster (garante NUNCA servir JS obsoleto)
+  if (isCacheBusted || isNavigation || isJsScript) {
     e.respondWith(
       fetch(e.request, { cache: 'no-cache' }).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
