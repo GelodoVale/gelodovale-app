@@ -2,8 +2,8 @@
   "rules": {
     "factories": {
       "$deviceKey": {
-        ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
-        ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+        ".read": false,
+        ".write": false,
 
         "rootUid": {
           ".read": "auth != null",
@@ -14,7 +14,7 @@
           ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
           ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
           "$userId": {
-            ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || auth.uid === $userId)",
+            ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (auth.uid === $userId && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true))",
             ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
           }
         },
@@ -25,7 +25,7 @@
         },
 
         "factorySettings": {
-          ".read": "auth != null",
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true)",
           ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
 
@@ -40,53 +40,53 @@
         },
 
         "products": {
-          ".read": "auth != null",
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true)",
           ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
 
         "orders": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true))"
         },
 
         "deliveries": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true))"
         },
 
         "clients": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true))"
         },
 
         "freezers": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))"
         },
 
         "comodatos": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))"
         },
 
         "rentals": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))"
         },
 
         "documents": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true))"
         },
 
         "equipments": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || (root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true && root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true))"
         },
 
         "lastUpdated": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('active').val() === true)"
         }
       }
     }

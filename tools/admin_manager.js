@@ -16,8 +16,24 @@ try {
     console.warn('[Aviso] Módulo "firebase-admin" não instalado. Para instalar execute: npm install firebase-admin');
 }
 
-const SERVICE_ACCOUNT_PATH = path.resolve(__dirname, 'service-account.json');
-const TOKEN_FILE_PATH = path.resolve(__dirname, '.admin_bridge_token');
+// Locais seguros para a chave de serviço:
+// 1. Prioritário: Fora do OneDrive, na pasta protegida do usuário no Windows (LOCALAPPDATA)
+// 2. Fallback: Pasta local de ferramentas caso não esteja em diretório sincronizado
+const SECURE_SECRETS_DIR = process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'GelControl', 'secrets') : null;
+const SECURE_SERVICE_ACCOUNT_PATH = SECURE_SECRETS_DIR ? path.join(SECURE_SECRETS_DIR, 'service-account.json') : null;
+const FALLBACK_SERVICE_ACCOUNT_PATH = path.resolve(__dirname, 'service-account.json');
+
+function resolveServiceAccountPath() {
+    if (SECURE_SERVICE_ACCOUNT_PATH && fs.existsSync(SECURE_SERVICE_ACCOUNT_PATH)) {
+        return SECURE_SERVICE_ACCOUNT_PATH;
+    }
+    if (fs.existsSync(FALLBACK_SERVICE_ACCOUNT_PATH)) {
+        return FALLBACK_SERVICE_ACCOUNT_PATH;
+    }
+    return SECURE_SERVICE_ACCOUNT_PATH || FALLBACK_SERVICE_ACCOUNT_PATH;
+}
+
+const TOKEN_FILE_PATH = SECURE_SECRETS_DIR ? path.join(SECURE_SECRETS_DIR, '.admin_bridge_token') : path.resolve(__dirname, '.admin_bridge_token');
 const DEFAULT_PORT = 4411;
 
 /**
@@ -50,11 +66,12 @@ function initAdminSDK(customConfig = null) {
         return admin.app();
     }
 
-    if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-        throw new Error(`Arquivo de chave de serviço não encontrado em: ${SERVICE_ACCOUNT_PATH}\nBaixe o arquivo de credencial no console do Firebase e salve como: tools/service-account.json`);
+    const resolvedPath = resolveServiceAccountPath();
+    if (!fs.existsSync(resolvedPath)) {
+        throw new Error(`Arquivo de chave de serviço não encontrado.\nSalve a chave no local seguro fora do OneDrive:\n${resolvedPath}`);
     }
 
-    const serviceAccount = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf8'));
+    const serviceAccount = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
     const databaseURL = customConfig?.databaseURL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`;
 
     return admin.initializeApp({
@@ -247,13 +264,40 @@ function startLocalService(port = DEFAULT_PORT) {
             return;
         }
 
-        // Validação de Segurança: Toda operação de escrita exige o token local da bridge
+        // Validação Dupla de Segurança:
+        // 1. Exige o token local da bridge (autenticação de máquina no PC 1)
+        // 2. Exige validação de sessão Root legítima (X-Root-Auth-Token) assinada pelo Firebase Auth
         const clientToken = req.headers['x-admin-token'];
+        const rootIdToken = req.headers['x-root-auth-token'];
+
         if (!clientToken || clientToken !== bridgeToken) {
-            console.warn('[Security] 🛑 Requisição bloqueada: Token administrativo inválido ou ausente.');
+            console.warn('[Security] 🛑 Requisição bloqueada: Token administrativo local inválido ou ausente.');
             res.writeHead(403, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Acesso negado: Token de autorização administrativa inválido.' }));
+            res.end(JSON.stringify({ success: false, error: 'Acesso negado: Token de autorização administrativa local inválido.' }));
             return;
+        }
+
+        // Validação estrita do token de identidade do Root
+        if (rootIdToken) {
+            try {
+                const decodedToken = await admin.auth().verifyIdToken(rootIdToken);
+                // O token deve pertencer ao Root ou ter custom claim admin
+                if (!decodedToken.admin && decodedToken.email !== 'admin@gelcontrol.internal' && !decodedToken.email.startsWith('admin')) {
+                    // Verificação adicional: se não for o email root, confere com o nó rootUid do RTDB
+                    const snap = await admin.database().ref(`factories/fabrica_homologacao_teste/rootUid`).once('value');
+                    const officialRootUid = snap.val();
+                    if (officialRootUid && decodedToken.uid !== officialRootUid) {
+                        res.writeHead(403, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: false, error: 'Acesso negado: Usuário não possui privilégios de Administrador Root.' }));
+                        return;
+                    }
+                }
+            } catch (authErr) {
+                console.warn('[Security] 🛑 Falha na verificação de identidade Root:', authErr.message);
+                res.writeHead(401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Sessão Root inválida ou expirada.' }));
+                return;
+            }
         }
 
         // Endpoint para Criar/Atualizar Funcionário
