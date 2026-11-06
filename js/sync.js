@@ -12,7 +12,7 @@ let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada t
 let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
 
 // ─── BOOT PUSH GUARD (BLINDAGEM TÉCNICA ETAPA 9.3B / v82) ───────────────────
-export const SYNC_ENGINE_BUILD = "v84-boot-push-guard-definitivo (06/11/2026)";
+export const SYNC_ENGINE_BUILD = "v85-seguranca-root-definitivo (06/11/2026)";
 if (typeof console !== 'undefined' && console.log) {
     console.log('%c[GelControl] Motor de Sincronização: ' + SYNC_ENGINE_BUILD, 'color: #00f0ff; font-weight: bold;');
 }
@@ -135,18 +135,25 @@ export function loadFirebaseSDK(callback) {
     const scriptApp = document.createElement('script');
     scriptApp.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
     scriptApp.onload = () => {
-        const scriptDB = document.createElement('script');
-        scriptDB.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
-        scriptDB.onload = () => {
-            firebaseSDKLoaded = true;
-            if (callback) callback();
+        const scriptAuth = document.createElement('script');
+        scriptAuth.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js';
+        const loadDB = () => {
+            const scriptDB = document.createElement('script');
+            scriptDB.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
+            scriptDB.onload = () => {
+                firebaseSDKLoaded = true;
+                if (callback) callback();
+            };
+            scriptDB.onerror = () => {
+                isCloudPushLocked = true;
+                bootGuardState = 'BLOCKED_ERROR';
+                updateSyncStatusUI('error', '⚠️ Falha ao carregar banco do Firebase. Gravação bloqueada.');
+            };
+            document.head.appendChild(scriptDB);
         };
-        scriptDB.onerror = () => {
-            isCloudPushLocked = true;
-            bootGuardState = 'BLOCKED_ERROR';
-            updateSyncStatusUI('error', '⚠️ Falha ao carregar banco do Firebase. Gravação bloqueada.');
-        };
-        document.head.appendChild(scriptDB);
+        scriptAuth.onload = loadDB;
+        scriptAuth.onerror = loadDB;
+        document.head.appendChild(scriptAuth);
     };
     scriptApp.onerror = () => {
         isCloudPushLocked = true;
@@ -413,6 +420,7 @@ function pushToFirebaseImediato() {
     // em múltiplos aparelhos conectados, sincronizamos o estado com as senhas preservadas.
     const pushStartedAt = Date.now();
     const safeState = JSON.parse(JSON.stringify(state));
+    delete safeState.adminPassword;
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
             const timeStr = new Date().toLocaleTimeString('pt-BR');

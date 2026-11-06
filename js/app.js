@@ -1,6 +1,6 @@
 // --- CENTRAL DE CONTROLE E BOOTSTRAPPER (GELO DO VALE) ---
 import { state, saveState, updateState, MOCK_DATA, APP_VERSION, CODE_BUILD, initializeDefaultFields } from './state.js';
-import { initLoginScreen, initUserAccessControl } from './auth.js';
+import { initLoginScreen, initUserAccessControl, changeAdminPassword, verifyPassword } from './auth.js';
 import { renderDashboard } from './dashboard.js';
 import { renderClientes, openClientModal, populateClientDropdowns, openSalesModal, renderSalesModalProducts } from './clientes.js';
 import { renderInventario, openFreezerModal, populateFreezerDropdowns, startQRScanner, stopQRScanner, openFreezerDetail } from './inventario.js';
@@ -325,11 +325,12 @@ export function loadState() {
             
             // Garantir usuário Administrador Padrão caso não exista nenhum usuário
             if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
+                const existingAdmin = (state.users || []).find(u => u.username === "admin");
                 parsed.users = [{
                     id: "user_admin_001",
                     name: "Administrador Sistema",
                     username: "admin",
-                    password: parsed.adminPassword || "1120M@z@dr1", // fallback para a senha antiga
+                    password: existingAdmin ? existingAdmin.password : (parsed.adminPassword || ""),
                     role: "Master",
                     permissions: {
                         "admin-tab-dados-fabrica": true,
@@ -2400,8 +2401,10 @@ export function initForms() {
         adminAuthForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const enteredPassword = document.getElementById("auth-password").value;
+            const adminUser = (state.users || []).find(u => u.username === "admin");
+            const isMatch = adminUser ? verifyPassword(enteredPassword, adminUser.password).match : false;
             
-            if (enteredPassword === state.adminPassword) {
+            if (isMatch) {
                 sessionStorage.setItem("admin_authenticated", "true");
                 document.getElementById("modal-admin-auth").classList.remove("active");
                 document.getElementById("auth-password").value = "";
@@ -2450,26 +2453,10 @@ export function initForms() {
             const currentPwd = document.getElementById("cfg-current-pwd").value;
             const newPwd = document.getElementById("cfg-new-pwd").value;
 
-            if (currentPwd !== state.adminPassword) {
-                showToast("Senha atual incorreta!", "error");
-                return;
+            const res = changeAdminPassword(currentPwd, newPwd);
+            if (res && res.success) {
+                adminPasswordForm.reset();
             }
-
-            if (newPwd.length < 4) {
-                showToast("A nova senha deve possuir pelo menos 4 caracteres!", "warning");
-                return;
-            }
-
-            state.adminPassword = newPwd;
-            if (state.users) {
-                const adminUser = state.users.find(u => u.username === "admin");
-                if (adminUser) {
-                    adminUser.password = newPwd;
-                }
-            }
-            saveState();
-            adminPasswordForm.reset();
-            showToast("Senha de administrador atualizada com sucesso!", "success");
         });
     }
 

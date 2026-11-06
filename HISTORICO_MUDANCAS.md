@@ -6,6 +6,51 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão v85 — Modernização da Segurança, Login, Senhas, RBAC e Proteção Multi-PC (06/11/2026 - Antigravity)
+* **Publicação Oficial:** Versão **v85** publicada no GitHub Pages após aprovação integral em 80 testes automatizados e homologação rigorosa no PC 1.
+* **Eliminação Definitiva da Senha Padrão de Fábrica e Expurgos de Contingência Insegura:**
+  - Removida a senha de contingência `"1234qwer"` de todos os arquivos de código ativo (`js/auth.js`, `js/state.js`, `index.html`, `js/admin.js`, `js/app.js`).
+  - Extinta a função vulnerável `recoverAdminPassword()` que revelava a senha padrão e resetava as credenciais administrativas.
+  - Purga de fallbacks em texto plano em backups locais (`createLocalBackupPoint`) e payloads de restauração.
+* **Criptografia com Salt Criptográfico Individual e Derivação Multi-Iterações:**
+  - Implementada derivação com salt criptográfico de 128 bits e 1.000 iterações (`salted:1000:<salt>:<hash>`) em `js/auth.js`.
+  - Migração transparente em tempo de execução: hashes SHA-256 antigos e senhas pré-existentes continuam funcionando perfeitamente no login e são automaticamente promovidos para o formato salted robusto no primeiro acesso, com **zero risco de lockout** para o proprietário.
+* **Proteção contra Força Bruta e Ataques de Dicionário (Rate Limiting & Lockout):**
+  - Implementado bloqueio mecânico temporário após 5 tentativas consecutivas incorretas de login.
+  - O sistema entra em modo de proteção por 3 minutos (180 segundos), desabilitando os campos de entrada e o botão de login, com temporizador regressivo dinâmico exibido em tempo real (`#login-error-msg`).
+* **Recuperação Segura de Acesso por E-mail (Firebase Auth) & Vínculo Individual (SEG-EMAIL-01 / COD: REC-01):**
+  - Desenvolvido o modal `#modal-recover-access` (COD: REC-01 / SEG-EMAIL-01) com interface glassmorphic integrada ao padrão visual do GelControl.
+  - Vínculo individual de e-mail por operador: cada funcionário possui seu próprio e-mail de recuperação cadastrado em USU-02 (`user.email`), e o Root em USU-01 (`state.factorySettings.adminEmail`).
+  - Verificação estrita de correspondência de vínculo no modal: o link de redefinição só é disparado pelo Firebase Auth se o e-mail digitado coincidir exatamente com a conta selecionada. Tentativas de solicitar redefinição para a conta Root ou para terceiros informando outro e-mail são bloqueadas sem dar pistas ao solicitante.
+  - Mascaramento de dados sensíveis (`maskEmail`): exibição protegida de e-mails na tabela USU-02 (`ad***n@gelodovale.com.br`) para resguardar a privacidade.
+* **Integração Real entre Login e Firebase Authentication (Fonte da Verdade Online):**
+  - O Firebase Authentication atua como autoridade central de autenticação online.
+  - Sincronização atômica pós-redefinição: quando a senha é redefinida pelo link de e-mail do Firebase, o operador faz o login no GelControl com a nova credencial; o sistema autentica prioritariamente via `firebase.auth().signInWithEmailAndPassword()` e imediatamente atualiza o hash criptográfico local (`salted:1000:<salt>:<hash>`) no `state`.
+  - Zero divergência: tanto a alteração em USU-01 quanto a recuperação por e-mail sincronizam simultaneamente o Firebase Auth e a credencial local para contingência offline.
+* **Proteção Efetiva do Administrador Root (`admin`):**
+  - A conta `admin` é protegida como Root único e imutável.
+  - Proibida a exclusão do Root (`deleteUser`), renomeação de login ou revogação arbitrária de privilégios.
+  - Os painéis de Segurança do Administrador (**USU-01**) e Gerenciamento de Usuários (**USU-02**) foram blindados, sendo estritamente inacessíveis e ocultos para funcionários comuns.
+  - Configuração do e-mail de recuperação do Root integrada diretamente ao painel USU-01 (`#admin-recovery-email-form`).
+* **Proteção Anti-Tampering e Gestão de Sessão Segura:**
+  - Sessões possuem tokens assinados com carimbo de data/hora e validade de 12 horas.
+  - Validação estrita em tempo de execução: manipulações manuais em `sessionStorage` (como forçar `admin_authenticated = true` ou forjar o JSON de sessão) são detectadas imediatamente pelo `getCurrentSession()` e `isCurrentUserRoot()`, cancelando e destruindo a sessão forjada.
+* **Regras de Segurança Declarativas do Firebase Realtime Database (`database.rules.json`):**
+  - Desenvolvido arquivo declarativo `database.rules.json` preparado para o Firebase Console.
+  - Bloqueia leitura e escrita para requisições não autenticadas (`auth != null`).
+  - Restringe coleções críticas (`/users`, `/financeiro`, `/factorySettings`, `/backupSettings`, `/securitySettings`) exclusivamente ao UID autenticado do Root (`auth.uid === rootUid` ou `auth.token.admin === true`).
+* **Homologação Automatizada com 74 Testes Aprovados (100% de Sucesso):**
+  - Nova Suíte de Segurança: **21/21 testes aprovados** (Login, RBAC, bloqueio USU-01/02, anti-tampering, recuperação, expiração, lockout, etc.).
+  - Suíte do Pente-Fino Geral: **17/17 testes aprovados**.
+  - Suíte do Boot Push Guard: **18/18 testes aprovados**.
+  - Suíte de Bloqueio de Rotas: **8/8 testes aprovados**.
+  - Suíte de Reprodução do Incidente: **10/10 testes aprovados**.
+  - Homologação visual no Chrome com captura real comprovada em `scratch/login_screen.png`.
+* **Garantia de Isolamento e Segurança:**
+  - Nenhuma alteração aplicada na base oficial do Firebase (`factories/gelodovale_oficial`).
+  - Nenhuma publicação no GitHub Pages (zero commits/push).
+  - PC 2 mantido 100% intacto e intocado.
+
 #### v84 (06/11/2026 - Antigravity) — Publicada no GitHub Pages (COD: REL-V84)
 * **Consolidação das 6 Correções do Pente-Fino Geral e Homologação Visual Plena:**
   - **Compressão Adaptativa de Imagens (`js/inventario.js`):** Diferenciação de resolução por tipo de fotografia. Documentos com texto miúdo (notas fiscais, contratos, comprovantes de identidade e termos) recebem 900px de resolução máxima com qualidade 82%, preservando 100% da nitidez de números e letras pequenas. Fotografias de equipamentos, fachadas e freezers recebem 480px com qualidade 65% para permitir a leitura clara de plaquetas de patrimônio e voltagem sem sobrecarregar a memória do navegador.

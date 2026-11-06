@@ -1,0 +1,75 @@
+{
+  "rules": {
+    "factories": {
+      "$deviceKey": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.token.admin === true || auth.uid === data.child('rootUid').val() || !data.exists())",
+        "rootUid": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || auth.token.admin === true || auth.uid === data.val())"
+        },
+        "users": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "factorySettings": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "backupSettings": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "securitySettings": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "financeiro": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "clients": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "orders": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "deliveries": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "freezers": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "comodatos": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "rentals": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "documents": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "products": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+        },
+        "equipments": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "lastUpdated": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}
+

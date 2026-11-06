@@ -12,7 +12,7 @@ import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v84 (06/11/2026)";
+export const CODE_BUILD = "v85 (06/11/2026)";
 
 export let state = {
     prices: {
@@ -31,7 +31,12 @@ export let state = {
         { id: "tina", name: "Aluguel Tina 360L", type: "Equipamento", subtype: "tina", weight: 0, defaultPrice: 50.00, active: true },
         { id: "mesa", name: "Aluguel Mesa + 4 Cad.", type: "Equipamento", subtype: "mesa_cadeiras", weight: 0, defaultPrice: 30.00, active: true }
     ],
-    adminPassword: "1234qwer",
+    securitySettings: {
+        rootActivated: true,
+        maxLoginAttempts: 5,
+        lockoutDurationMinutes: 3,
+        sessionTimeoutHours: 12
+    },
     clients: [],
     orders: [],
     deliveries: [],
@@ -52,7 +57,7 @@ export function updateState(newState, preserveConfigs = false) {
         const keysToPreserve = [
             'users', 'factorySettings', 'backupSettings', 'appearance', 
             'printSettings', 'logisticsSettings', 'firebaseConfig', 
-            'adminPassword', 'notepadText', 'calendarNotes',
+            'adminPassword', 'securitySettings', 'notepadText', 'calendarNotes',
             'localEvents', 'ignoredSpikes', 'layoutSettings', 'customIconsLibrary', 'tabIcons',
             'featureFlags'
         ];
@@ -617,9 +622,21 @@ export function initializeDefaultFields() {
     if (state.prices.tina === undefined) state.prices.tina = 50.00;
     if (state.prices.mesa === undefined) state.prices.mesa = 30.00;
 
-    // Senha padrão do admin
-    if (!state.adminPassword || state.adminPassword === "admin") {
-        state.adminPassword = "1234qwer";
+    // Configurações de segurança e Root
+    if (!state.securitySettings) {
+        state.securitySettings = {
+            rootActivated: true,
+            maxLoginAttempts: 5,
+            lockoutDurationMinutes: 3,
+            sessionTimeoutHours: 12
+        };
+    }
+    // Se ainda existir resquício de adminPassword no localStorage antigo, migrar para users
+    if (state.adminPassword && state.users) {
+        const adminUser = state.users.find(u => u.username === "admin");
+        if (adminUser && !adminUser.password) {
+            adminUser.password = state.adminPassword;
+        }
     }
     
     // Configurações de backup
@@ -649,6 +666,9 @@ export function initializeDefaultFields() {
     }
     if (!state.factorySettings.rentalTerms) {
         state.factorySettings.rentalTerms = "1. O LOCATÁRIO compromete-se a devolver o equipamento na data pactuada, em perfeito estado de conservação, limpeza e funcionamento.\n2. Em caso de atraso na devolução, será cobrada uma taxa de diária extra de atraso por cada dia de atraso, calculada pro rata die com base no valor acordado no ato do aluguel.\n3. O LOCATÁRIO assume total responsabilidade por danos, avarias, perda ou furto do equipamento ocorrido durante o período de locação, obrigando-se a ressarcir o LOCADOR pelo valor de mercado para reposição do bem.\n4. O equipamento destina-se exclusivamente ao uso convencional, sendo vedado sublocar ou ceder o uso a terceiros sem prévio consentimento por escrito do LOCADOR.";
+    }
+    if (!state.factorySettings.adminEmail) {
+        state.factorySettings.adminEmail = state.factorySettings.email || "contato@gelodovale.com.br";
     }
 
     // Configurações visuais / Aparência

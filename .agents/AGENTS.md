@@ -33,7 +33,22 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ---
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
-### Versão Atual Publicada: v84 (06/11/2026 - Pente-Fino Geral e Homologação Plena):
+### Modernização da Segurança, Login, Senhas e Proteção Multi-PC — v85 (06/11/2026 - Antigravity) — Publicada no GitHub Pages:
+- **Status Atual:** Homologada com 80/80 testes automatizados aprovados e publicada como versão oficial **v85**.
+- **Implementações Técnicas Concluídas:**
+  1. *Expurgo de Senha Padrão:* Removida a credencial `"1234qwer"` e o link/função `recoverAdminPassword()` de todos os arquivos do sistema.
+  2. *Criptografia Robusta com Salt:* Derivação de senha com Salt criptográfico individual e 1.000 iterações (`salted:1000:<salt>:<hash>`), com migração transparente de credenciais legadas sem risco de lockout.
+  3. *Rate Limiting (Proteção Força Bruta):* Bloqueio mecânico de 3 minutos (180 segundos) após 5 tentativas consecutivas incorretas, com desativação de inputs e temporizador visual dinâmico.
+  4. *Vínculo Individual de E-mail de Recuperação (SEG-EMAIL-01 / COD: REC-01):* Cada operador possui seu próprio e-mail configurado em USU-02 (`user.email`), e o Root em USU-01 (`state.factorySettings.adminEmail`). O modal `#modal-recover-access` exige perfil e e-mail correspondente; se o e-mail não coincidir com a conta selecionada, o envio é sumariamente cancelado. Mascaramento de dados sensíveis na tabela de usuários (`maskEmail`).
+  5. *Integração Real entre Login e Firebase Authentication (Fonte da Verdade Online):* Quando a senha é redefinida pelo link de e-mail do Firebase, o operador faz o login no GelControl com a nova senha; o sistema valida contra o Firebase Auth e atualiza imediatamente o hash criptográfico local (`salted:1000:<salt>:<hash>`) no `state`, garantindo alinhamento perfeito para operações online e offline sem qualquer divergência.
+  6. *Blindagem Root e RBAC Estrito:* Conta `admin` protegida contra exclusão/rebaixamento; painéis **USU-01** e **USU-02** estritamente inacessíveis para colaboradores; alteração de senha em USU-01 sincroniza simultaneamente o Firebase Auth e o hash local.
+  7. *Proteção Anti-Tampering:* Sessões verificadas criptograficamente em tempo de execução; manipulação manual de `sessionStorage` é rejeitada e destruída.
+  8. *Regras Declarativas de Servidor (`database.rules.json`):* Regras declarativas prontas para o Firebase RTDB bloqueando acessos não autenticados e nós críticos restritos ao Root.
+- **Homologação Automatizada:** 80 testes automatizados aprovados com 100% de sucesso (27 testes da suíte de segurança + 17 do pente-fino + 18 do boot push guard + 8 de rotas travadas + 10 do incidente do PC 2).
+- **Validação Visual:** Captura de tela real do navegador confirmada em `scratch/login_screen.png`.
+- **Firebase de Produção:** 100% intacto (`factories/gelodovale_oficial`), zero dados operacionais sobrescritos.
+
+### Versão Atual Publicada: v85 (06/11/2026 - Segurança Root, RBAC e SEG-EMAIL-01)
 - **Status da Release v84:** Publicada no GitHub Pages com Service Worker `gelodovale-v184`, cache-busters `?v=84` e `SYNC_ENGINE_BUILD = "v84-boot-push-guard-definitivo (06/11/2026)"`.
 - **Correções do Pente-Fino e Homologação Visual Integradas:**
   1. *Fotos e QuotaExceededError:* Compressão adaptativa (900px/82% para documentos com textos miúdos; 480px/65% para freezers e fachadas) e salvamento defensivo com `try/catch` em `js/state.js`.

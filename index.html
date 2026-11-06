@@ -42,8 +42,8 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=84">
-    <script src="js/spellcheck.js?v=84"></script>
+    <link rel="stylesheet" href="styles.css?v=85">
+    <script src="js/spellcheck.js?v=85"></script>
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -84,7 +84,7 @@
             </div>
             
             <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff; letter-spacing: -0.5px; font-size: 1.3rem;">GelControl - Acesso</h3>
-<p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v84 (06/11/2026)</p>
+<p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v85 (06/11/2026)</p>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">Selecione seu perfil e digite a senha para continuar.</p>
             
             <form id="app-login-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
@@ -104,7 +104,7 @@
                         </button>
                     </div>
                     <div style="text-align: right; margin-top: 4px;">
-                        <a href="#" onclick="recoverAdminPassword(); return false;" style="color: var(--color-primary); font-size: 0.72rem; text-decoration: underline; opacity: 0.85;">Esqueceu a senha do Admin?</a>
+                        <a href="#" onclick="openRecoverAccessModal(); return false;" style="color: var(--color-primary); font-size: 0.72rem; text-decoration: underline; opacity: 0.85;">Esqueceu a senha? Recuperar Acesso</a>
                     </div>
                 </div>
                 
@@ -128,6 +128,51 @@
                 <a href="#" onclick="clearAppCacheAndReload(); return false;" style="color: var(--color-danger); text-decoration: underline; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem;">
                     <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Limpar Cache e Forçar Recarga
                 </a>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- MODAL DE RECUPERAÇÃO SEGURA DE ACESSO (COD: REC-01 / SEG-EMAIL-01) -->
+    <div class="modal-backdrop" id="modal-recover-access" style="z-index: 10000;">
+        <div class="modal-card" style="background: rgba(17, 25, 44, 0.95); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: var(--radius-lg); padding: 2rem; width: 460px; max-width: 92vw; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2); backdrop-filter: blur(20px);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="shield-alert" style="width: 20px; height: 20px; color: var(--color-primary);"></i>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 700;">Recuperar Acesso <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px;">COD: REC-01</span></h3>
+                </div>
+                <button type="button" onclick="closeModal('modal-recover-access')" style="background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px;" title="Fechar">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--color-text-light); line-height: 1.5; margin-bottom: 1.25rem;">
+                A recuperação é protegida por vínculo de conta (<strong>SEG-EMAIL-01</strong>). Selecione o perfil que deseja recuperar e informe o e-mail previamente cadastrado para ele. O link de redefinição só será enviado se os dados coincidirem.
+            </p>
+            <form id="form-recover-access" onsubmit="event.preventDefault(); submitSecurePasswordRecovery();">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="recover-user-select" style="font-size: 0.8rem; font-weight: 600; color: #fff; margin-bottom: 6px; display: block;">Perfil a Recuperar</label>
+                    <select id="recover-user-select" class="form-control" style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--border-input); height: 42px; font-size: 0.9rem;" required>
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="recover-email-input" style="font-size: 0.8rem; font-weight: 600; color: #fff; margin-bottom: 6px; display: block;">E-mail Cadastrado na Conta</label>
+                    <div style="position: relative;">
+                        <input type="email" id="recover-email-input" class="form-control" required placeholder="Digite o e-mail cadastrado" style="padding-left: 36px; height: 42px; font-size: 0.9rem;">
+                        <i data-lucide="mail" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--color-text-muted);"></i>
+                    </div>
+                </div>
+                <div id="recover-feedback-msg" style="display: none; padding: 10px 12px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 1rem; line-height: 1.4;"></div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-recover-access')" style="font-size: 0.85rem; padding: 8px 16px;">Cancelar</button>
+                    <button type="submit" id="btn-submit-recovery" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="send" style="width: 14px; height: 14px;"></i> Enviar Link de Redefinição
+                    </button>
+                </div>
+            </form>
+            <div style="margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 6px;">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px; color: var(--color-primary); flex-shrink: 0;"></i>
+                <span>Proteção SEG-EMAIL-01: Links não podem ser redirecionados para e-mails de terceiros.</span>
             </div>
         </div>
     </div>
@@ -203,7 +248,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v84 (06/11/2026 - Antigravity)</p>
+                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v85 (06/11/2026 - Antigravity)</p>
                 <p>Painel de Distribuição</p>
                 <button type="button" onclick="openModal('modal-pwa-tutorial')" style="font-size: 0.72rem; padding: 5px 8px; margin-top: 8px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
                     <i data-lucide="help-circle" style="width: 12px; height: 12px;"></i> Como instalar no Celular
@@ -2403,6 +2448,22 @@
                                         <i data-lucide="key" style="width: 15px; height: 15px;"></i> Atualizar Senha
                                     </button>
                                 </form>
+
+                                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                                    <h4 style="font-size: 0.85rem; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="mail-check" style="width: 14px; height: 14px; color: var(--color-primary);"></i>
+                                        E-mail Oficial de Recuperação do Root
+                                    </h4>
+                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+                                        E-mail exclusivo para onde links temporários de redefinição de uso único serão enviados caso você precise recuperar seu acesso administrativo.
+                                    </p>
+                                    <form id="admin-recovery-email-form" onsubmit="event.preventDefault(); window.saveAdminRecoveryEmail();" style="display: flex; gap: 8px;">
+                                        <input type="email" id="cfg-admin-email" class="form-control" style="font-size: 0.85rem; height: 38px;" placeholder="ex: contato@gelodovale.com.br" required>
+                                        <button type="submit" class="btn btn-primary" style="font-size: 0.8rem; padding: 0 14px; height: 38px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="save" style="width: 14px; height: 14px;"></i> Salvar E-mail
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
 
                             <div class="dashboard-panel" id="admin-users-management-panel" style="width: 100%; margin-bottom: 1.5rem;">
@@ -2422,6 +2483,7 @@
                                                 <th style="padding: 10px;">Nome do Perfil</th>
                                                 <th style="padding: 10px;">Login</th>
                                                 <th style="padding: 10px;">Nível</th>
+                                                <th style="padding: 10px;">E-mail Vinculado (SEG-EMAIL-01)</th>
                                                 <th style="padding: 10px;">Permissões Ativas</th>
                                                 <th style="padding: 10px; text-align: right;">Ações</th>
                                             </tr>
@@ -5381,6 +5443,10 @@
                         <input type="text" id="user-username" class="form-control" placeholder="Ex: joao" required style="text-transform: lowercase;">
                     </div>
                     <div class="form-group">
+                        <label for="user-email">E-mail de Recuperação (SEG-EMAIL-01) *</label>
+                        <input type="email" id="user-email" class="form-control" placeholder="Ex: funcionario@gelodovale.com.br" required>
+                    </div>
+                    <div class="form-group">
                         <label for="user-password">Senha de Acesso *</label>
                         <div style="position: relative;">
                             <input type="password" id="user-password" class="form-control" placeholder="Digite a senha" required style="padding-right: 40px;">
@@ -6253,10 +6319,10 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Sistema de Ajuda Contextual -->
-    <script src="js/help_content.js?v=84"></script>
-    <script src="js/help.js?v=84"></script>
+    <script src="js/help_content.js?v=85"></script>
+    <script src="js/help.js?v=85"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=84"></script>
+    <script type="module" src="js/app.js?v=85"></script>
 </body>
 </html>
 
