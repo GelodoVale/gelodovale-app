@@ -1,6 +1,16 @@
-
 # Backups locais e arquivos temporários
 *.bak
 backups/
 backups_pre_*/
 scratch/
+backup_v85_implementada/
+
+# Credenciais administrativas e chaves privadas do Firebase Admin SDK (PC 1 Local)
+service-account*.json
+*service-account*.json
+credentials/
+*.pem
+*.key
+firebase.homologacao.json
+tools/service-account.json
+tools/config.json

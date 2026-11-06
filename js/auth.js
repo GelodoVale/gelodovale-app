@@ -61,62 +61,77 @@ export function verifyOfflineCredential(userId, password) {
 
 // ─── PROVISIONAMENTO DE FUNCIONÁRIOS NO FIREBASE AUTHENTICATION (SECUNDÁRIO) ─
 export async function createEmployeeFirebaseAuth(email, initialPassword, displayName = "", permissions = {}) {
-    if (!state.firebaseConfig?.enabled || !window.firebase) {
-        return { success: false, reason: "Firebase não configurado ou desativado" };
+    if (!state.firebaseConfig?.enabled) {
+        return { success: false, reason: "Firebase não configurado" };
     }
 
     const deviceKey = state.firebaseConfig.deviceKey || "gelodovale_oficial";
 
-    // 1. Prioridade A: Backend Confiável via Firebase Cloud Functions com Admin SDK
-    if (window.firebase.functions) {
+    // 1. Prioridade A: Bridge Administrativa Confiável Local no PC 1 (Plano Spark - 100% Gratuito)
+    // Permite que o Root provisione contas com Firebase Admin SDK sem pagar Cloud Functions ou Blaze
+    if (typeof fetch !== 'undefined') {
         try {
-            const callable = window.firebase.functions().httpsCallable('provisionEmployeeAccount');
-            const res = await callable({
-                deviceKey,
-                email,
-                initialPassword,
-                displayName: displayName || email.split('@')[0],
-                permissions: permissions || {}
+            const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 1200) : null;
+            const localRes = await fetch("http://127.0.0.1:4411/api/create-employee", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    deviceKey,
+                    email,
+                    password: initialPassword,
+                    name: displayName || email.split('@')[0],
+                    permissions: permissions || {}
+                }),
+                signal: controller ? controller.signal : undefined
             });
-            console.log('[Security] ✅ Colaborador provisionado com autoridade do servidor via Cloud Function:', res.data);
-            return { success: true, uid: res.data.uid, source: 'cloud_function' };
-        } catch (funcErr) {
-            console.warn('[Security] ⚠️ Cloud Function indisponível ou pendente de deploy:', funcErr.message);
+            if (timeoutId) clearTimeout(timeoutId);
+
+            if (localRes.ok) {
+                const data = await localRes.json();
+                if (data.success) {
+                    console.log('[Security] ✅ Colaborador provisionado com autoridade máxima via Admin SDK local (PC 1):', data);
+                    return { success: true, uid: data.uid, source: 'local_admin_service' };
+                }
+            }
+        } catch (_) {
+            // Bridge local não está em execução no momento; prossegue para contingência transparente
         }
     }
 
-    // 2. Prioridade B: Contingência Segura de Cliente (App Secundário em Memória - Sem deslogar Root)
-    // Usado em ambiente local ou antes da ativação do plano Blaze das Cloud Functions
-    const cfg = state.firebaseConfig;
-    const fbConfig = {
-        apiKey: cfg.apiKey,
-        authDomain: cfg.authDomain,
-        databaseURL: cfg.databaseURL,
-        projectId: cfg.projectId,
-        storageBucket: cfg.storageBucket,
-        messagingSenderId: cfg.messagingSenderId,
-        appId: cfg.appId
-    };
-
-    let secondaryApp = null;
-    try {
-        const appName = "EmployeeProvisioning_" + Date.now();
-        secondaryApp = window.firebase.initializeApp(fbConfig, appName);
-        const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, initialPassword);
-        const authUid = cred.user.uid;
+    // 2. Prioridade B: Contingência de Cliente no Navegador (App Secundário em Memória - Sem deslogar Root)
+    // Permite provisionar o colaborador no Firebase Auth mesmo com o serviço local fechado ou em outro PC
+    if (window.firebase && window.firebase.auth) {
+        const cfg = state.firebaseConfig;
+        const fbConfig = {
+            apiKey: cfg.apiKey,
+            authDomain: cfg.authDomain,
+            databaseURL: cfg.databaseURL,
+            projectId: cfg.projectId,
+            storageBucket: cfg.storageBucket,
+            messagingSenderId: cfg.messagingSenderId,
+            appId: cfg.appId
+        };
+        let secondaryApp = null;
         try {
-            await cred.user.sendEmailVerification();
-        } catch (_) {}
-        await secondaryApp.delete();
-        console.log(`[Security] ✅ Conta provisionada via App secundário para ${email} (UID: ${authUid})`);
-        return { success: true, uid: authUid, source: 'secondary_client_app' };
-    } catch (err) {
-        if (secondaryApp) {
-            try { await secondaryApp.delete(); } catch (_) {}
+            const appName = "EmployeeProvisioning_" + Date.now();
+            secondaryApp = window.firebase.initializeApp(fbConfig, appName);
+            const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, initialPassword);
+            const authUid = cred.user.uid;
+            try { await cred.user.sendEmailVerification(); } catch (_) {}
+            await secondaryApp.delete();
+            console.log(`[Security] ✅ Conta criada via App secundário para ${email} (UID: ${authUid})`);
+            return { success: true, uid: authUid, source: 'secondary_client_app' };
+        } catch (err) {
+            if (secondaryApp) {
+                try { await secondaryApp.delete(); } catch (_) {}
+            }
+            console.warn(`[Security] ⚠️ Aviso ao provisionar Firebase Auth para ${email}:`, err.message);
+            return { success: false, code: err.code, message: err.message };
         }
-        console.warn(`[Security] ⚠️ Aviso ao provisionar Firebase Auth para ${email}:`, err.message);
-        return { success: false, code: err.code, message: err.message };
     }
+
+    return { success: false, reason: "Nenhum método de provisionamento disponível no momento." };
 }
 window.getOfflineAuthStore = getOfflineAuthStore;
 window.saveOfflineCredential = saveOfflineCredential;
