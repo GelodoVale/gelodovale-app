@@ -1,0 +1,12 @@
+{
+  "_comentario": "MODELO DE CONFIGURAÇÃO PARA HOMOLOGAÇÃO REAL DO FIREBASE (v85)",
+  "_aviso": "Utilize EXCLUSIVAMENTE um projeto secundário de testes (ex: gelcontrol-homologacao). JAMAIS insira as credenciais de produção aqui.",
+  "apiKey": "AIzaSy...",
+  "authDomain": "gelcontrol-homologacao.firebaseapp.com",
+  "databaseURL": "https://gelcontrol-homologacao-default-rtdb.firebaseio.com",
+  "projectId": "gelcontrol-homologacao",
+  "storageBucket": "gelcontrol-homologacao.appspot.com",
+  "messagingSenderId": "000000000000",
+  "appId": "1:000000000000:web:0000000000000000000000",
+  "deviceKey": "fabrica_homologacao_teste"
+}

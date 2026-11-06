@@ -166,12 +166,70 @@ export function loadFirebaseSDK(callback) {
 // ─── LISTENER EM TEMPO REAL ────────────────────────────────────────────────
 // Fica "escutando" o Firebase 24/7. Quando qualquer dispositivo salvar algo,
 // todos os outros recebem a atualização automaticamente em 1-2 segundos.
+
+function startEmployeeGranularSyncListener(deviceKey) {
+    updateSyncStatusUI('syncing');
+    isFirstLoad = true;
+
+    const session = (typeof window !== 'undefined' && window.getCurrentSession) ? window.getCurrentSession() : null;
+    const permissions = session?.permissions || {};
+
+    const collectionsToListen = ['products', 'lastUpdated'];
+    if (permissions['tab-pedidos']) collectionsToListen.push('orders');
+    if (permissions['tab-entregas']) collectionsToListen.push('deliveries');
+    if (permissions['tab-clientes']) collectionsToListen.push('clients');
+    if (permissions['tab-inventario']) collectionsToListen.push('freezers', 'comodatos', 'rentals', 'equipments');
+    if (permissions['tab-documentos']) collectionsToListen.push('documents');
+
+    if (session?.userId) {
+        const userRef = firebase.database().ref(`factories/${deviceKey}/users/${session.userId}`);
+        userRef.on('value', snap => {
+            const userData = snap.val();
+            if (userData) {
+                if (userData.active === false) {
+                    console.warn('[Security] 🛑 Acesso do colaborador revogado pelo Root no servidor.');
+                    if (window.logoutUser) window.logoutUser();
+                } else if (userData.permissions) {
+                    session.permissions = userData.permissions;
+                    if (window.applyUserPermissions) window.applyUserPermissions(session);
+                }
+            }
+        });
+    }
+
+    collectionsToListen.forEach(col => {
+        const colRef = firebase.database().ref(`factories/${deviceKey}/${col}`);
+        colRef.on('value', snap => {
+            if (isSyncing) return;
+            const data = snap.val();
+            if (data !== null && data !== undefined) {
+                state[col] = data;
+                saveStateLocalOnly();
+                renderApp();
+            }
+        });
+    });
+
+    isCloudPushLocked = false;
+    bootGuardState = 'UNLOCKED';
+    updateSyncStatusUI('success', '☁️ Sincronizado (Colaborador)');
+}
+
 export function startSyncListener() {
     if (!state.firebaseConfig || !state.firebaseConfig.deviceKey) return;
+    if (typeof firebase === 'undefined' || !firebase.database) return;
 
     const deviceKey = state.firebaseConfig.deviceKey;
-    fbDatabaseRef = firebase.database().ref(`factories/${deviceKey}`);
+    const isRoot = (typeof window !== 'undefined' && window.isCurrentUserRoot) ? window.isCurrentUserRoot() : true;
 
+    if (!isRoot) {
+        // Colaboradores escutam apenas coleções permitidas
+        startEmployeeGranularSyncListener(deviceKey);
+        return;
+    }
+
+    // Root escuta a raiz completa
+    fbDatabaseRef = firebase.database().ref(`factories/${deviceKey}`);
     updateSyncStatusUI('syncing');
 
     // Remove listener anterior para não duplicar
@@ -289,6 +347,24 @@ function aplicarDadosRemoto(remoteData) {
     const cfgLocal = state.firebaseConfig;
 
     updateState(remoteData);
+
+    // Reconciliação de credenciais offline locais (mantidas estritamente no dispositivo local)
+    if (Array.isArray(state.users)) {
+        try {
+            const rawAuth = localStorage.getItem("gelcontrol_offline_auth");
+            const offlineStore = rawAuth ? JSON.parse(rawAuth) : {};
+            state.users.forEach(u => {
+                if (!u.password && offlineStore[u.id] && offlineStore[u.id].hash) {
+                    u.password = offlineStore[u.id].hash;
+                }
+            });
+            if (state.users.find(u => u.username === "admin" && !u.password && offlineStore["admin"])) {
+                const adminUser = state.users.find(u => u.username === "admin");
+                adminUser.password = offlineStore["admin"].hash;
+                state.adminPassword = adminUser.password;
+            }
+        } catch (_) {}
+    }
 
     // Sempre manter Firebase ativo com credenciais corretas
     state.firebaseConfig = cfgLocal;
@@ -421,6 +497,8 @@ function pushToFirebaseImediato() {
     const pushStartedAt = Date.now();
     const safeState = JSON.parse(JSON.stringify(state));
     delete safeState.adminPassword;
+    // BLINDAGEM DE PRIVACIDADE E SEGURANÇA (v85):
+    // Jamais trafegar senhas ou hashes de senhas de usuários pelo Realtime Database da nuvem!
     if (Array.isArray(safeState.users)) {
         safeState.users = safeState.users.map(u => {
             const { password, ...safeUser } = u;

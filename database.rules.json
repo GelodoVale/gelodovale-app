@@ -2,68 +2,88 @@
   "rules": {
     "factories": {
       "$deviceKey": {
-        ".read": "auth != null",
-        ".write": "auth != null && (auth.token.admin === true || auth.uid === data.child('rootUid').val() || !data.exists())",
+        ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+        ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+
         "rootUid": {
           ".read": "auth != null",
-          ".write": "auth != null && (!data.exists() || auth.token.admin === true || auth.uid === data.val())"
+          ".write": false
         },
+
         "users": {
           ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          "$userId": {
+            ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || auth.uid === $userId)",
+            ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
+          }
         },
-        "factorySettings": {
-          ".read": "auth != null",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
-        },
-        "backupSettings": {
-          ".read": "auth != null",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
-        },
-        "securitySettings": {
-          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
-          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
-        },
+
         "financeiro": {
           ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
           ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
-        "clients": {
+
+        "factorySettings": {
           ".read": "auth != null",
-          ".write": "auth != null"
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
-        "orders": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+
+        "backupSettings": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
-        "deliveries": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+
+        "securitySettings": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
-        "freezers": {
-          ".read": "auth != null",
-          ".write": "auth != null"
-        },
-        "comodatos": {
-          ".read": "auth != null",
-          ".write": "auth != null"
-        },
-        "rentals": {
-          ".read": "auth != null",
-          ".write": "auth != null"
-        },
-        "documents": {
-          ".read": "auth != null",
-          ".write": "auth != null"
-        },
+
         "products": {
           ".read": "auth != null",
           ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val())"
         },
-        "equipments": {
-          ".read": "auth != null",
-          ".write": "auth != null"
+
+        "orders": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-pedidos').val() === true)"
         },
+
+        "deliveries": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-entregas').val() === true)"
+        },
+
+        "clients": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-clientes').val() === true)"
+        },
+
+        "freezers": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+        },
+
+        "comodatos": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+        },
+
+        "rentals": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+        },
+
+        "documents": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-documentos').val() === true)"
+        },
+
+        "equipments": {
+          ".read": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)",
+          ".write": "auth != null && (auth.token.admin === true || auth.uid === root.child('factories').child($deviceKey).child('rootUid').val() || root.child('factories').child($deviceKey).child('users').child(auth.uid).child('permissions').child('tab-inventario').val() === true)"
+        },
+
         "lastUpdated": {
           ".read": "auth != null",
           ".write": "auth != null"
@@ -72,4 +92,3 @@
     }
   }
 }
-
