@@ -22,6 +22,83 @@ export const SESSION_EXPIRY_MS = 12 * 60 * 60 * 1000; // 12 horas de sessão
 let lockoutTimerInterval = null;
 
 // ─── CRIPTOGRAFIA & DERIVAÇÃO DE SENHAS ─────────────────────────────────────
+
+// ─── GERENCIAMENTO DE CREDENCIAIS OFFLINE LOCAIS (ISOLADAS DO BANCO REMOTO) ───
+export function getOfflineAuthStore() {
+    try {
+        const raw = localStorage.getItem("gelcontrol_offline_auth");
+        return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+export function saveOfflineCredential(userId, saltedHash) {
+    try {
+        const store = getOfflineAuthStore();
+        store[userId] = {
+            hash: saltedHash,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem("gelcontrol_offline_auth", JSON.stringify(store));
+    } catch (_) {}
+}
+
+export function verifyOfflineCredential(userId, password) {
+    const store = getOfflineAuthStore();
+    const cred = store[userId];
+    if (!cred || !cred.hash) return { match: false, reason: "Sem credencial offline registrada" };
+    
+    // Limite de segurança: credenciais offline têm validade de 12 horas desde o último login verificado
+    const MAX_OFFLINE_AGE = 12 * 60 * 60 * 1000;
+    if (Date.now() - cred.updatedAt > MAX_OFFLINE_AGE) {
+        console.warn("[Security] 🔒 Credencial offline expirada (limite de 12 horas). Requer validação online.");
+        return { match: false, expired: true, reason: "Sessão offline expirada. Conecte-se à internet." };
+    }
+    
+    return verifyPassword(password, cred.hash);
+}
+
+// ─── PROVISIONAMENTO DE FUNCIONÁRIOS NO FIREBASE AUTHENTICATION (SECUNDÁRIO) ─
+export async function createEmployeeFirebaseAuth(email, initialPassword) {
+    if (!window.firebase || !window.firebase.auth || !state.firebaseConfig?.enabled) {
+        return { success: false, reason: "Firebase Auth indisponível ou desativado" };
+    }
+    const cfg = state.firebaseConfig;
+    const fbConfig = {
+        apiKey: cfg.apiKey,
+        authDomain: cfg.authDomain,
+        databaseURL: cfg.databaseURL,
+        projectId: cfg.projectId,
+        storageBucket: cfg.storageBucket,
+        messagingSenderId: cfg.messagingSenderId,
+        appId: cfg.appId
+    };
+    let secondaryApp = null;
+    try {
+        const appName = "EmployeeProvisioning_" + Date.now();
+        secondaryApp = window.firebase.initializeApp(fbConfig, appName);
+        const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, initialPassword);
+        const authUid = cred.user.uid;
+        try {
+            await cred.user.sendEmailVerification();
+        } catch (_) {}
+        await secondaryApp.delete();
+        console.log(`[Security] ✅ Conta criada com sucesso no Firebase Auth para ${email} (UID: ${authUid})`);
+        return { success: true, uid: authUid };
+    } catch (err) {
+        if (secondaryApp) {
+            try { await secondaryApp.delete(); } catch (_) {}
+        }
+        console.warn(`[Security] ⚠️ Aviso ao provisionar Firebase Auth para ${email}:`, err.message);
+        return { success: false, code: err.code, message: err.message };
+    }
+}
+window.getOfflineAuthStore = getOfflineAuthStore;
+window.saveOfflineCredential = saveOfflineCredential;
+window.verifyOfflineCredential = verifyOfflineCredential;
+window.createEmployeeFirebaseAuth = createEmployeeFirebaseAuth;
+
 export function generateSecureSalt(length = 16) {
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
         const bytes = new Uint8Array(length);
@@ -401,7 +478,7 @@ export function initPasswordTogglers() {
 }
 
 export async function loginUser(userId, password) {
-    // 1. Checagem prévia de lockout
+    // 1. Checagem prévia de lockout mecânico
     const lockoutStatus = checkLoginLockout();
     if (lockoutStatus.locked) {
         updateLockoutUI(lockoutStatus.remainingSeconds);
@@ -433,6 +510,7 @@ export async function loginUser(userId, password) {
 
     let authenticated = false;
     let authSource = 'local';
+    let authFailureReason = "";
 
     const userEmail = (user.username === "admin" && state.factorySettings?.adminEmail) ? 
         state.factorySettings.adminEmail : 
@@ -449,35 +527,63 @@ export async function loginUser(userId, password) {
             authSource = 'firebase_auth';
             console.log(`[Security] ✅ Usuário '${user.username}' autenticado com sucesso via Firebase Auth.`);
             
-            // Sincronizar hash local imediatamente com a nova senha validada pelo Firebase!
-            user.password = hashPasswordWithSalt(password, generateSecureSalt());
+            // Sincronizar credencial local/offline com Salt a partir da nova senha validada pelo Firebase!
+            const newSalted = hashPasswordWithSalt(password, generateSecureSalt());
+            user.password = newSalted;
             if (user.username === "admin") {
-                state.adminPassword = user.password;
+                state.adminPassword = newSalted;
             }
+            saveOfflineCredential(user.id, newSalted);
             saveState();
         } catch (fbErr) {
-            // Se o Firebase rejeitou explicitamente por credencial errada, a senha está incorreta
-            if (fbErr.code === 'auth/wrong-password' || fbErr.code === 'auth/invalid-credential') {
+            // REJEIÇÃO ESTRITA: Se o Firebase rejeitou explicitamente por credencial errada ou conta bloqueada/inexistente,
+            // É PROIBIDO FAZER FALLBACK PARA A SENHA ANTIGA DO COMPUTADOR!
+            const isCredentialRejection = 
+                fbErr.code === 'auth/wrong-password' || 
+                fbErr.code === 'auth/invalid-credential' || 
+                fbErr.code === 'auth/user-not-found' || 
+                fbErr.code === 'auth/user-disabled';
+
+            if (isCredentialRejection) {
                 authenticated = false;
+                authFailureReason = "Credenciais inválidas no servidor de autenticação.";
+                console.warn(`[Security] 🛑 Falha de autenticação online (${fbErr.code}). Fallback offline BLOQUEADO por segurança.`);
             } else {
-                // Outros erros de rede ou conta ainda não sincronizada no Firebase Auth: fallback para validação local
-                const verification = verifyPassword(password, user.password);
-                authenticated = verification.match;
-                if (authenticated && verification.needsUpgrade) {
-                    user.password = hashPasswordWithSalt(password, generateSecureSalt());
-                    if (user.username === "admin") state.adminPassword = user.password;
-                    saveState();
+                // Erro transitório de rede (ex: auth/network-request-failed) ou servidor indisponível:
+                // Permitir contingência offline restrita
+                console.warn(`[Security] ⚠️ Falha de comunicação de rede com Firebase (${fbErr.code}). Avaliando contingência offline...`);
+                const offlineCheck = verifyOfflineCredential(user.id, password);
+                if (offlineCheck.match) {
+                    authenticated = true;
+                    authSource = 'offline_contingency';
+                } else if (offlineCheck.expired) {
+                    authFailureReason = "Sessão offline expirada. Conecte-se à internet para autenticar.";
+                } else {
+                    // Fallback para hash em state caso ainda não haja offline store individual
+                    const verification = verifyPassword(password, user.password);
+                    authenticated = verification.match;
                 }
             }
         }
     } else {
-        // 3. AUTENTICAÇÃO LOCAL (OFFLINE OU SEM FIREBASE CONFIGURADO)
-        const verification = verifyPassword(password, user.password);
-        authenticated = verification.match;
-        if (authenticated && verification.needsUpgrade) {
-            user.password = hashPasswordWithSalt(password, generateSecureSalt());
-            if (user.username === "admin") state.adminPassword = user.password;
-            saveState();
+        // 3. AUTENTICAÇÃO OFFLINE LEGÍTIMA (SEM INTERNET)
+        const offlineCheck = verifyOfflineCredential(user.id, password);
+        if (offlineCheck.match) {
+            authenticated = true;
+            authSource = 'offline_legitimate';
+        } else if (offlineCheck.expired) {
+            authenticated = false;
+            authFailureReason = "Sessão offline expirada (limite de 12 horas). Conecte-se à internet para renovar o acesso.";
+        } else {
+            // Verificação de compatibilidade com hash existente em user.password
+            const verification = verifyPassword(password, user.password);
+            authenticated = verification.match;
+            if (authenticated) {
+                const salted = hashPasswordWithSalt(password, generateSecureSalt());
+                user.password = salted;
+                saveOfflineCredential(user.id, salted);
+                saveState();
+            }
         }
     }
 
@@ -485,7 +591,7 @@ export async function loginUser(userId, password) {
         // Limpar histórico de tentativas falhas
         clearLoginLockout();
 
-        // Criar sessão segura
+        // Criar sessão segura com expiração de 12 horas
         createSession(user);
         
         const errMsgEl = document.getElementById("login-error-msg");
@@ -534,7 +640,8 @@ export async function loginUser(userId, password) {
         } else {
             const errorMsg = document.getElementById("login-error-msg");
             if (errorMsg) {
-                errorMsg.innerText = `Senha incorreta! Tentativas restantes antes do bloqueio: ${result.remainingAttempts}`;
+                const customMsg = authFailureReason ? `${authFailureReason} ` : "Senha incorreta! ";
+                errorMsg.innerText = `${customMsg}Tentativas restantes antes do bloqueio: ${result.remainingAttempts}`;
                 errorMsg.style.display = "block";
                 errorMsg.style.color = "var(--color-danger)";
             }
@@ -876,7 +983,7 @@ export function openUserModal(userId = "") {
     if (modalEl) modalEl.classList.add("active");
 }
 
-export function saveUser(event) {
+export async function saveUser(event) {
     if (event && event.preventDefault) event.preventDefault();
     
     // Verificação estrita de autorização Root
@@ -926,30 +1033,43 @@ export function saveUser(event) {
         permissions[permKey] = cb.checked;
     });
     
-    // Derivação de senha com Salt robusto
+    // Derivação de senha com Salt robusto para contingência offline
     const hashedPassword = password ? hashPasswordWithSalt(password, generateSecureSalt()) : null;
+    let authUid = null;
+
+    // Se for novo funcionário e estiver online com Firebase, provisionar conta secundária
+    if (!id && password && typeof navigator !== 'undefined' && navigator.onLine) {
+        const provisionResult = await createEmployeeFirebaseAuth(email, password);
+        if (provisionResult.success) {
+            authUid = provisionResult.uid;
+            if (window.showToast) window.showToast("Conta vinculada e provisionada no Firebase Auth com sucesso!", "success");
+        } else if (provisionResult.code === 'auth/email-already-in-use') {
+            console.log("[Security] Conta já existia no Firebase Auth. Vínculo mantido.");
+        }
+    }
     
     if (id) {
         const index = (state.users || []).findIndex(u => u.id === id);
         if (index !== -1) {
             if (state.users[index].username === "admin") {
                 state.users[index].name = name;
-                // O Root mantém login imutável 'admin'
                 state.users[index].username = "admin";
                 if (hashedPassword) {
                     state.users[index].password = hashedPassword;
                     state.adminPassword = hashedPassword;
+                    saveOfflineCredential('admin', hashedPassword);
                 }
             } else {
                 state.users[index].name = name;
-                // Previne promoção arbitrária para username 'admin'
                 if (username === "admin") {
                     if (window.showToast) window.showToast("O login 'admin' é exclusivo da conta Root.", "error");
                     return;
                 }
                 state.users[index].username = username;
+                state.users[index].email = email;
                 if (hashedPassword) {
                     state.users[index].password = hashedPassword;
+                    saveOfflineCredential(state.users[index].id, hashedPassword);
                 }
                 state.users[index].permissions = permissions;
             }
@@ -959,14 +1079,19 @@ export function saveUser(event) {
             if (window.showToast) window.showToast("A conta Root 'admin' já existe e é única.", "error");
             return;
         }
+        const newUserId = "user_" + Date.now();
         const newUser = {
-            id: "user_" + Date.now(),
+            id: newUserId,
             name: name,
             username: username,
             email: email,
+            authUid: authUid,
             password: hashedPassword,
             permissions: permissions
         };
+        if (hashedPassword) {
+            saveOfflineCredential(newUserId, hashedPassword);
+        }
         state.users.push(newUser);
     }
     

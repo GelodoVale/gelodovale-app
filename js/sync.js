@@ -421,6 +421,12 @@ function pushToFirebaseImediato() {
     const pushStartedAt = Date.now();
     const safeState = JSON.parse(JSON.stringify(state));
     delete safeState.adminPassword;
+    if (Array.isArray(safeState.users)) {
+        safeState.users = safeState.users.map(u => {
+            const { password, ...safeUser } = u;
+            return safeUser;
+        });
+    }
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
         .then(() => {
             const timeStr = new Date().toLocaleTimeString('pt-BR');
