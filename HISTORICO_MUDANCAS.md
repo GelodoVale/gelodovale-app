@@ -6,6 +6,26 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão v85 (Finalização) — Arquitetura Gratuita Spark, Admin Local e Proteção Total (06/11/2026 - Antigravity)
+* **Arquitetura Definitiva 100% Gratuita (Plano Spark — Sem Custos / Sem Cartão de Crédito):**
+  - O sistema opera 24/7 na nuvem gratuita do Firebase (Authentication e Realtime Database) sem qualquer dependência do plano Blaze ou Cloud Functions pagas.
+  - O PC 1 atua como o ambiente confiável do Administrador Root. As operações de criação, revogação e redefinição de senhas de colaboradores são executadas exclusivamente localmente no PC 1 via **Ferramenta Administrativa Local (`tools/admin_manager.js`)** utilizando o Firebase Admin SDK.
+  - Eliminação definitiva da contingência insegura de criação de usuários via SDK web no navegador.
+* **Identidades Técnicas Corporativas para Funcionários:**
+  - Funcionários utilizam credenciais técnicas corporativas sintetizadas (`{username}@gelodovale.com.br`), eliminando a necessidade de e-mails pessoais.
+  - Redefinição de senha de funcionários realizada exclusivamente pelo proprietário no escritório via Admin SDK local.
+  - Janela de Recuperação por E-mail (**REC-01**) e regra **SEG-EMAIL-01** reservadas exclusivamente ao Administrador Root.
+* **Backup Administrativo Criptografado com Padrão Militar (`tools/backup_crypto.js`):**
+  - Implementada ferramenta local para exportação e importação de cópias de segurança integrais cifradas com **AES-256-GCM** e derivação de chave **PBKDF2 (100.000 iterações de SHA-512)**.
+  - Protegido por senha mestra do proprietário independente do Windows, permitindo armazenar backups com segurança no OneDrive pessoal e restaurar o sistema em nova máquina em caso de pane do computador.
+* **Especificação do Futuro Instalador Windows (INST-01):**
+  - Separação de privilégios de sistema operacional: Conta de Administrador do Windows (exclusiva do proprietário com acesso a `tools/`, chaves de serviço e OneDrive) versus Conta de Usuário Padrão do Windows para operadores (restrita ao app empacotado, sem acesso ao código ou chaves).
+  - Configuração de dois atalhos independentes: *GelControl — Local* e *GelControl — Online*.
+* **Homologação e Testes Automatizados:**
+  - 100% de aprovação em todos os cenários críticos: Boot Push Guard (18/18), Pente-fino geral (17/17), Rotas de escrita bloqueadas (8/8) e Simulação de incidente multi-PC (10/10).
+
+---
+
 #### Versão v85 — Modernização da Segurança, Login, Senhas, RBAC e Proteção Multi-PC (06/11/2026 - Antigravity)
 * **Publicação Oficial:** Versão **v85** publicada no GitHub Pages após aprovação integral em 80 testes automatizados e homologação rigorosa no PC 1.
 * **Eliminação Definitiva da Senha Padrão de Fábrica e Expurgos de Contingência Insegura:**

@@ -145,9 +145,16 @@
                     <i data-lucide="x" style="width: 18px; height: 18px;"></i>
                 </button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--color-text-light); line-height: 1.5; margin-bottom: 1.25rem;">
-                A recuperação é protegida por vínculo de conta (<strong>SEG-EMAIL-01</strong>). Selecione o perfil que deseja recuperar e informe o e-mail previamente cadastrado para ele. O link de redefinição só será enviado se os dados coincidirem.
-            </p>
+            <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.5; color: var(--color-text-light);">
+                <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #fff; margin-bottom: 4px;">
+                    <i data-lucide="info" style="width: 15px; height: 15px; color: var(--color-primary);"></i>
+                    <span>Recuperação Exclusiva do Administrador Root</span>
+                </div>
+                A redefinição de senha por e-mail (<strong>SEG-EMAIL-01</strong>) é reservada ao Administrador Root através do e-mail oficial cadastrado.
+                <div style="margin-top: 6px; font-size: 0.78rem; color: var(--color-text-muted); padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                    💡 <em>Colaboradores e funcionários que esquecerem a senha devem solicitar a redefinição diretamente ao administrador local no escritório.</em>
+                </div>
+            </div>
             <form id="form-recover-access" onsubmit="event.preventDefault(); submitSecurePasswordRecovery();">
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="recover-user-select" style="font-size: 0.8rem; font-weight: 600; color: #fff; margin-bottom: 6px; display: block;">Perfil a Recuperar</label>
