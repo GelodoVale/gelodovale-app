@@ -10,10 +10,32 @@ const http = require('http');
 const crypto = require('crypto');
 
 let admin = null;
+let getAuth = null;
+let getDatabase = null;
+let cert = null;
+let initializeApp = null;
+
 try {
     admin = require('firebase-admin');
+    initializeApp = admin.initializeApp;
+    cert = admin.cert;
 } catch (e) {
-    console.warn('[Aviso] Módulo "firebase-admin" não instalado. Para instalar execute: npm install firebase-admin');
+    try {
+        const localModulesPath = path.join(process.env.LOCALAPPDATA, 'GelControl', 'node_modules', 'firebase-admin');
+        const adminMod = require(localModulesPath);
+        initializeApp = adminMod.initializeApp;
+        cert = adminMod.cert;
+        getAuth = require(path.join(localModulesPath, 'lib', 'auth')).getAuth;
+        getDatabase = require(path.join(localModulesPath, 'lib', 'database')).getDatabase;
+        admin = {
+            initializeApp,
+            cert,
+            auth: () => getAuth(),
+            database: () => getDatabase()
+        };
+    } catch (_) {
+        console.warn('[Aviso] Módulo "firebase-admin" não instalado. Para instalar execute: npm install firebase-admin');
+    }
 }
 
 // Locais seguros para a chave de serviço:
@@ -75,7 +97,7 @@ function initAdminSDK(customConfig = null) {
     const databaseURL = customConfig?.databaseURL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`;
 
     return admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.cert(serviceAccount),
         databaseURL: databaseURL
     });
 }
