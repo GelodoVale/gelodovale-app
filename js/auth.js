@@ -60,10 +60,33 @@ export function verifyOfflineCredential(userId, password) {
 }
 
 // ─── PROVISIONAMENTO DE FUNCIONÁRIOS NO FIREBASE AUTHENTICATION (SECUNDÁRIO) ─
-export async function createEmployeeFirebaseAuth(email, initialPassword) {
-    if (!window.firebase || !window.firebase.auth || !state.firebaseConfig?.enabled) {
-        return { success: false, reason: "Firebase Auth indisponível ou desativado" };
+export async function createEmployeeFirebaseAuth(email, initialPassword, displayName = "", permissions = {}) {
+    if (!state.firebaseConfig?.enabled || !window.firebase) {
+        return { success: false, reason: "Firebase não configurado ou desativado" };
     }
+
+    const deviceKey = state.firebaseConfig.deviceKey || "gelodovale_oficial";
+
+    // 1. Prioridade A: Backend Confiável via Firebase Cloud Functions com Admin SDK
+    if (window.firebase.functions) {
+        try {
+            const callable = window.firebase.functions().httpsCallable('provisionEmployeeAccount');
+            const res = await callable({
+                deviceKey,
+                email,
+                initialPassword,
+                displayName: displayName || email.split('@')[0],
+                permissions: permissions || {}
+            });
+            console.log('[Security] ✅ Colaborador provisionado com autoridade do servidor via Cloud Function:', res.data);
+            return { success: true, uid: res.data.uid, source: 'cloud_function' };
+        } catch (funcErr) {
+            console.warn('[Security] ⚠️ Cloud Function indisponível ou pendente de deploy:', funcErr.message);
+        }
+    }
+
+    // 2. Prioridade B: Contingência Segura de Cliente (App Secundário em Memória - Sem deslogar Root)
+    // Usado em ambiente local ou antes da ativação do plano Blaze das Cloud Functions
     const cfg = state.firebaseConfig;
     const fbConfig = {
         apiKey: cfg.apiKey,
@@ -74,6 +97,7 @@ export async function createEmployeeFirebaseAuth(email, initialPassword) {
         messagingSenderId: cfg.messagingSenderId,
         appId: cfg.appId
     };
+
     let secondaryApp = null;
     try {
         const appName = "EmployeeProvisioning_" + Date.now();
@@ -84,8 +108,8 @@ export async function createEmployeeFirebaseAuth(email, initialPassword) {
             await cred.user.sendEmailVerification();
         } catch (_) {}
         await secondaryApp.delete();
-        console.log(`[Security] ✅ Conta criada com sucesso no Firebase Auth para ${email} (UID: ${authUid})`);
-        return { success: true, uid: authUid };
+        console.log(`[Security] ✅ Conta provisionada via App secundário para ${email} (UID: ${authUid})`);
+        return { success: true, uid: authUid, source: 'secondary_client_app' };
     } catch (err) {
         if (secondaryApp) {
             try { await secondaryApp.delete(); } catch (_) {}
@@ -1503,3 +1527,34 @@ export function sha256(ascii) {
 export function isHashed(password) {
     return typeof password === 'string' && /^[0-9a-f]{64}$/.test(password);
 }
+
+
+// ─── REVALIDAÇÃO IMEDIATA NA RECONEXÃO (ONLINE HOOK) ────────────────────────
+export async function revalidateOnlineSession() {
+    if (typeof navigator === 'undefined' || !navigator.onLine) return;
+    if (!window.firebase || !window.firebase.auth) return;
+
+    const currentUser = window.firebase.auth().currentUser;
+    if (!currentUser) return;
+
+    try {
+        await currentUser.getIdToken(true);
+        console.log('[Security] ✅ Sessão online revalidada com sucesso com o Firebase Auth.');
+    } catch (err) {
+        console.warn('[Security] 🛑 Falha na revalidação com o servidor:', err.code);
+        if (err.code === 'auth/user-disabled' || err.code === 'auth/user-token-expired' || err.code === 'auth/user-not-found') {
+            if (window.showToast) {
+                window.showToast("Sua sessão foi revogada pelo servidor ou as credenciais foram alteradas.", "error");
+            }
+            logoutUser();
+        }
+    }
+}
+
+if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('online', () => {
+        console.log('[Network] 🌐 Conexão restaurada. Revalidando sessão com o servidor...');
+        revalidateOnlineSession();
+    });
+}
+window.revalidateOnlineSession = revalidateOnlineSession;
