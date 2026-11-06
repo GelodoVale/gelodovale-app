@@ -608,9 +608,16 @@ export function handleImageUpload(inputEl, previewId, hiddenInputId = null) {
         img.onload = function() {
             const canvas = document.createElement("canvas");
 
-            // Documentos de identidade precisam de mais resolução para o texto ser legível
-            const isDocPhoto = hiddenInputId === 'photo-doc-data' || previewId === 'preview-doc';
-            const maxDimension = isDocPhoto ? 900 : 320;
+            // Documentos com texto (notas fiscais, contratos, comprovantes e identidade) necessitam de maior resolução para legibilidade
+            const isDocPhoto = hiddenInputId === 'photo-doc-data' || 
+                               previewId === 'preview-doc' || 
+                               previewId === 'preview-invoice' || 
+                               hiddenInputId === 'photo-invoice-data' ||
+                               previewId === 'preview-contract' ||
+                               hiddenInputId === 'photo-contract-data';
+
+            // Documentos: 900px para nitidez de texto pequeno; Freezers/fachadas: 480px para leitura de placas patrimoniais
+            const maxDimension = isDocPhoto ? 900 : 480;
 
             let width = img.width;
             let height = img.height;
@@ -633,24 +640,27 @@ export function handleImageUpload(inputEl, previewId, hiddenInputId = null) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Qualidade maior para documentos (precisa ler texto)
-            const quality = isDocPhoto ? 0.82 : 0.6;
+            // Qualidade superior para documentos (preserva números e letras miúdas); balanceada para fotos de freezer
+            const quality = isDocPhoto ? 0.82 : 0.65;
             const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
             
-            // Se passou hiddenInputId diretamente, usa ele
+            // Se passou hiddenInputId diretamente, usa ele com verificação de existência
+            const assignHidden = (id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = compressedBase64;
+            };
             if (hiddenInputId) {
-                const hiddenEl = document.getElementById(hiddenInputId);
-                if (hiddenEl) hiddenEl.value = compressedBase64;
+                assignHidden(hiddenInputId);
             } else if (previewId === "preview-freezer") {
-                document.getElementById("photo-freezer-data").value = compressedBase64;
+                assignHidden("photo-freezer-data");
             } else if (previewId === "preview-invoice") {
-                document.getElementById("photo-invoice-data").value = compressedBase64;
+                assignHidden("photo-invoice-data");
             } else if (previewId === "preview-establishment") {
-                document.getElementById("photo-establishment-data").value = compressedBase64;
+                assignHidden("photo-establishment-data");
             } else if (previewId === "preview-rental-location") {
-                document.getElementById("photo-rental-location-data").value = compressedBase64;
+                assignHidden("photo-rental-location-data");
             } else if (previewId === "preview-facade") {
-                document.getElementById("photo-facade-data").value = compressedBase64;
+                assignHidden("photo-facade-data");
             }
             
             // Preview — documentos mostram maior para conferir legibilidade
@@ -817,26 +827,33 @@ export function populateFreezerDropdowns() {
 }
 
 export function autoPopulateFreezerDetailsInClientForm() {
-    const freezerId = document.getElementById("client-freezer-id-select").value;
-    const freezer = state.freezers.find(f => f.id === freezerId);
+    const selectEl = document.getElementById("client-freezer-id-select");
+    if (!selectEl) return;
+    const freezerId = selectEl.value;
+    const freezer = (state.freezers || []).find(f => f.id === freezerId);
+    
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     
     if (freezer) {
-        document.getElementById("freezer-code").value = freezer.code;
-        document.getElementById("freezer-brand").value = freezer.brand;
-        document.getElementById("freezer-voltage").value = freezer.voltage;
-        document.getElementById("freezer-capacity").value = freezer.capacity ? freezer.capacity + " Litros" : "Não informada";
+        setVal("freezer-code", freezer.code || "");
+        setVal("freezer-brand", freezer.brand || "");
+        setVal("freezer-voltage", freezer.voltage || "");
+        setVal("freezer-capacity", freezer.capacity ? freezer.capacity + " Litros" : "Não informada");
         
         if (freezer.maintenanceLogs && freezer.maintenanceLogs.length > 0) {
-            document.getElementById("freezer-maintenance").value = freezer.maintenanceLogs[freezer.maintenanceLogs.length - 1].note;
+            setVal("freezer-maintenance", freezer.maintenanceLogs[freezer.maintenanceLogs.length - 1].note || "");
         } else {
-            document.getElementById("freezer-maintenance").value = "";
+            setVal("freezer-maintenance", "");
         }
     } else {
-        document.getElementById("freezer-code").value = "";
-        document.getElementById("freezer-brand").value = "";
-        document.getElementById("freezer-voltage").value = "";
-        document.getElementById("freezer-capacity").value = "";
-        document.getElementById("freezer-maintenance").value = "";
+        setVal("freezer-code", "");
+        setVal("freezer-brand", "");
+        setVal("freezer-voltage", "");
+        setVal("freezer-capacity", "");
+        setVal("freezer-maintenance", "");
     }
 }
 

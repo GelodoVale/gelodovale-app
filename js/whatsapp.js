@@ -22,6 +22,7 @@ export function getWhatsappTemplates() {
     }
     return state.whatsappTemplates;
 }
+if (typeof window !== 'undefined') window.getWhatsappTemplates = getWhatsappTemplates;
 
 // Salvar um template personalizado
 export function saveWhatsappTemplate(key, text) {

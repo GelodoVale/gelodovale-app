@@ -1,5 +1,5 @@
 // --- MÓDULO: CARNÊ DIGITAL DE FIADO ---
-import { state, saveState } from './state.js';
+import { state, saveState, roundMoney } from './state.js';
 
 /**
  * Abre o modal do Carnê de Fiado de um cliente
@@ -143,7 +143,7 @@ export function addCarneEntry() {
     });
 
     // Somar ao débito total
-    client.outstandingDebt = (client.outstandingDebt || 0) + amount;
+    client.outstandingDebt = roundMoney((client.outstandingDebt || 0) + amount);
 
     saveState();
     if (window.showToast) window.showToast(`Lançamento de R$ ${amount.toFixed(2).replace('.', ',')} adicionado ao carnê.`, 'success');
@@ -212,7 +212,7 @@ export function deleteCarneEntry(clientId, entryId) {
         `Remover lançamento "${entry.description}" de R$ ${entry.amount.toFixed(2).replace('.', ',')} do carnê?`,
         () => {
             if (!entry.paid) {
-                client.outstandingDebt = Math.max(0, (client.outstandingDebt || 0) - entry.amount);
+                client.outstandingDebt = roundMoney(Math.max(0, (client.outstandingDebt || 0) - entry.amount));
             }
             client.carnet = client.carnet.filter(e => e.id !== entryId);
             saveState();

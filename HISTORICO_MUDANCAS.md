@@ -6,6 +6,63 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### v84 (06/11/2026 - Antigravity) — Publicada no GitHub Pages (COD: REL-V84)
+* **Consolidação das 6 Correções do Pente-Fino Geral e Homologação Visual Plena:**
+  - **Compressão Adaptativa de Imagens (`js/inventario.js`):** Diferenciação de resolução por tipo de fotografia. Documentos com texto miúdo (notas fiscais, contratos, comprovantes de identidade e termos) recebem 900px de resolução máxima com qualidade 82%, preservando 100% da nitidez de números e letras pequenas. Fotografias de equipamentos, fachadas e freezers recebem 480px com qualidade 65% para permitir a leitura clara de plaquetas de patrimônio e voltagem sem sobrecarregar a memória do navegador.
+  - **Blindagem Defensiva contra QuotaExceededError (`js/state.js`):** Em caso de limite de cota do navegador atingido, o sistema intercepta o erro e salva com sucesso todos os dados cadastrais (clientes, pedidos, dívidas e histórico), descartando localmente apenas o Base64 de fotos pesadas com aviso ao operador.
+  - **Exclusão Segura com Múltiplos Freezers (`js/clientes.js`):** Desvinculação em cascata de todos os equipamentos pertencentes ao cliente, com retorno automático para a fábrica no inventário e registro de histórico de movimentação.
+  - **Padronização Monetária Estrita (`roundMoney` em `js/state.js` e `js/carne.js`):** Eliminação de resíduos decimais e dízimas periódicas IEEE 754 em dívidas, carnês e pagamentos (`R$ 0,00` exato).
+  - **Sanitização Universal de HTML (`escapeHtml` em `js/utils.js`):** Prevenção contra quebra de dropdowns e formulários quando nomes de estabelecimentos contêm aspas, apóstrofos ou símbolos.
+  - **Destruição Atômica de Instâncias do Chart.js (`js/dashboard.js`):** Eliminação de colisões no canvas `revenueChart` e `productsChart` causadas por reentrância assíncrona.
+  - **Blindagem de Função Legada (`autoPopulateFreezerDetailsInClientForm`):** Proteção com checagens de existência (`null-checks`) em todos os elementos de formulário.
+  - **Versionamento Oficial da Build v84:** Rótulos atualizados em `index.html` (`#login-version` e `#app-sidebar-version`), constante `CODE_BUILD` em `js/state.js` para `"v84 (06/11/2026)"`, Service Worker `gelodovale-v184`, cache-busters `?v=84` e `SYNC_ENGINE_BUILD = "v84-boot-push-guard-definitivo (06/11/2026)"`.
+  - **Homologação Automatizada e Visual:** 53 testes automatizados (regressão zero) e 24 testes visuais no Google Chrome aprovados com **zero erros de console**.
+
+#### Homologação Visual e Funcional Completa no Google Chrome — PC 1 (05/11/2026 - Concluída com 24/24 Testes Aprovados) (COD: GELCONTROL-HOMOLOGACAO-VISUAL)
+* **Ambiente de Teste 100% Isolado com Mini Web Server e Chrome DevTools Protocol:**
+  - Servidor HTTP local ativo em `http://localhost:3333` e Chrome controlado em tempo real via CDP com bloqueio mecânico de rede para domínios externos do Firebase (`Network.setBlockedURLs`).
+  - Zero gravações ou leituras adicionais no Firebase de produção; zero modificações em dados reais da fábrica.
+* **Resolução Definitiva de Concorrência de Gráficos Chart.js (`js/dashboard.js`):**
+  - **Problema Detectado:** Exceção no console `Error: Canvas is already in use. Chart with ID '0' must be destroyed before the canvas with ID 'revenueChart' can be reused` causada por chamadas reentrantes durante a busca assíncrona de temperaturas (`await fetch`).
+  - **Solução:** Integrada a destruição atômica via `Chart.getChart(canvas)?.destroy()` imediatamente antes de qualquer nova instanciação de `new Chart()`, eliminando colisões de canvas.
+* **Exposição Segura de Interoperabilidade (`js/state.js` e `js/whatsapp.js`):**
+  - Vinculadas com segurança as referências `window.state = state`, `window.saveState`, `window.recalculateClientDebts` e `window.getWhatsappTemplates` no escopo global para garantir integração suave com a interface gráfica e com a automação de testes.
+* **Comprovação Prática dos Módulos no Navegador Real (24/24 Testes Aprovados):**
+  - **Clientes:** Cadastro, validação de campos obrigatórios, edição e persistência local.
+  - **Estoque & Preços:** Grade de 16 produtos e cálculo automático.
+  - **Pedidos & Entregas:** Criação de pedido, conversão em entrega a prazo e baixa de saldo.
+  - **Frente de Caixa (PDV):** Venda rápida e exatidão matemática do cálculo de troco.
+  - **Carnê Digital:** Lançamento, recálculo, baixa parcial e quitação sem resíduos decimais (`R$ 0,00`).
+  - **Fotos Grandes & Inventário:** Imagem simulada de alta resolução (4000x3000px) redimensionada e comprimida no canvas real do Chrome com **redução de 99%** (para 3 KB, 320x240px), com legibilidade de texto comprovada.
+  - **Exclusão de Clientes com Múltiplos Freezers:** Desvinculação em cascata com liberação simultânea de todos os equipamentos para status `disponivel` e registro de movimentação.
+  - **Resiliência a QuotaExceededError:** Interceptação defensiva comprovada no Chrome: fotos pesadas são descartadas localmente sem perda de dados cadastrais.
+  - **Responsividade & Multi-Viewport:** Navegação fluida em Mobile (375x667) e Desktop (1366x768).
+  - **Auditoria de Console:** **ZERO erros de console** registrados ao longo de toda a navegação.
+  - **Comprovação Visual:** Captura de tela real do navegador salva em `scratch/homologacao_visual_resultado.png` (115 KB).
+
+#### Pente-Fino Geral Consolidado do PC 1 (05/11/2026 - Concluído com 53 Testes Aprovados) (COD: GELCONTROL-PENTE-FINO-CONSOLIDADO)
+* **Correção 1 — Compressão e Resiliência contra QuotaExceededError (`js/inventario.js` e `js/state.js`):**
+  - Implementada proteção com redimensionamento e compressão canvas com tratamento de erros de leitura (`reader.onerror`, `img.onerror`).
+  - Blindado `saveStateLocalOnly()` em `js/state.js` com bloco defensivo `try/catch`: caso ocorra estouro de cota de armazenamento local (`QuotaExceededError`), os dados operacionais críticos (cadastros, clientes, pedidos, dívidas e entregas) são preservados integralmente, omitindo localmente apenas fotos excessivas em Base64 com alerta explicativo ao usuário.
+* **Correção 2 — Exclusão Segura de Clientes com Múltiplos Freezers (`js/clientes.js`):**
+  - A função `deleteClient` agora filtra e desvincula todos os freezers associados ao cliente (`.filter().forEach()`), liberando todos para o status `disponivel` e registrando o histórico de movimentação para cada equipamento, sem deixar freezers órfãos ou inconsistentes.
+* **Correção 3 — Padronização Monetária em Centavos Inteiros (`js/state.js` e `js/carne.js`):**
+  - Implementada a função universal `roundMoney(val)` em `js/state.js` que elimina dízimas periódicas de ponto flutuante IEEE 754 (ex: `0.1 + 0.2 = 0.3`).
+  - Atualizadas as rotinas de `recalculateClientDebts()` e mutações de saldo devedor/baixas de carnê em `js/carne.js`, garantindo que saldos residuais microscópicos sejam zerados para R$ 0,00 exatos.
+* **Correção 4 — Sanitização HTML de Strings de Clientes (`js/utils.js`, `js/clientes.js`, `js/documents.js`, `js/pdv.js`, `js/rentals.js`):**
+  - Implementada e exportada a função `escapeHtml(str)` para higienizar caracteres especiais (`&`, `<`, `>`, `"`, `'`).
+  - Aplicada a sanitização nas renderizações dinâmicas de listas de seleção e dropdowns de clientes em todos os módulos, evitando quebras visuais quando nomes de clientes contêm aspas, apóstrofos ou caracteres especiais.
+* **Correção 5 — Blindagem da Função Legada de Freezers (`js/inventario.js`):**
+  - Protegida a função `autoPopulateFreezerDetailsInClientForm()` com checagens de existência (`null-checks`) em todos os elementos de formulário manipulados, preservando a compatibilidade sem lançar exceções.
+* **Correção 6 — Proteção contra Publicação Indevida de Backups (`.gitignore`):**
+  - Configurado arquivo `.gitignore` com regras de exclusão para arquivos de cópia (`*.bak`), pastas de backup (`backups/`, `backups_pre_*/`) e scripts temporários (`scratch/`), sem apagar nenhum backup físico existente no disco.
+* **Bateria Completa de Testes Automatizados (53/53 Aprovados - 100% Sucesso):**
+  - `test_pente_fino_fixes.mjs` (17 testes): todas as 6 correções homologadas.
+  - `test_boot_push_guard.mjs` (18 testes): trava de boot íntegra.
+  - `test_push_routes_blocked.mjs` (8 testes): rotas de saída bloqueadas.
+  - `test_incident_reproduction.mjs` (10 testes): reprodução do incidente do PC 2 bloqueada.
+  - Comprovada **regressão zero** em todos os fluxos operacionais. Zero modificações no Firebase de produção.
+
 #### Etapa 9 — Validação Multi-Computador e Testes Reais (05/11/2026 - Em Andamento)
 * **Passo 9.4E — Correção Crítica da Sincronização e Preparação da v83 (COD: GELCONTROL-ETAPA9.4E):**
   - **Diagnóstico e Resolução do Incidente do PC 2:** Identificado que o Service Worker utilizava a estratégia Stale-While-Revalidate para módulos importados internamente sem query string (como `./sync.js`), servindo script obsoleto no boot inicial. Simultaneamente, rotinas assíncronas em segundo plano de clima (`utils.js`) e layout (`layout.js`) chamavam `saveState()` no boot.

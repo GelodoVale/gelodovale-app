@@ -33,6 +33,39 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ---
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
+### Versão Atual Publicada: v84 (06/11/2026 - Pente-Fino Geral e Homologação Plena):
+- **Status da Release v84:** Publicada no GitHub Pages com Service Worker `gelodovale-v184`, cache-busters `?v=84` e `SYNC_ENGINE_BUILD = "v84-boot-push-guard-definitivo (06/11/2026)"`.
+- **Correções do Pente-Fino e Homologação Visual Integradas:**
+  1. *Fotos e QuotaExceededError:* Compressão adaptativa (900px/82% para documentos com textos miúdos; 480px/65% para freezers e fachadas) e salvamento defensivo com `try/catch` em `js/state.js`.
+  2. *Múltiplos Freezers no deleteClient:* Desvinculação completa de todos os equipamentos do cliente com histórico em `js/clientes.js`.
+  3. *Padronização Monetária:* Função `roundMoney` em `js/state.js` e `js/carne.js` eliminando dízimas microscópicas residuais.
+  4. *Sanitização HTML:* Função `escapeHtml` em `js/utils.js` aplicada aos dropdowns de clientes em todos os módulos.
+  5. *Blindagem de Função Legada:* `autoPopulateFreezerDetailsInClientForm()` com `null-checks` em `js/inventario.js`.
+  6. *Proteção de Backups:* `.gitignore` configurado para impedir inclusão de `*.bak`, backups locais e scratch.
+  7. *Chart.js Atômico:* Destruição prévia atômica de instâncias em `js/dashboard.js`, eliminando colisões de canvas.
+- **Homologação Automatizada:** 53 testes automatizados (100% sucesso, regressão zero) e 24 testes visuais no Google Chrome aprovados com **zero erros de console**.
+- **Firebase de Produção:** 100% íntegro e intocado (4 clientes, 2 pedidos, 6 entregas, 2 documentos, 0 pagamentos, 7 freezers).
+
+### Homologação Visual e Funcional no Google Chrome Concluída (05/11/2026 - 24/24 Testes Aprovados):
+- **Ambiente 100% Isolado no PC 1:** Mini Web Server em `http://localhost:3333` com bloqueio mecânico de rede no Chrome CDP para domínios do Firebase. Zero risco de contaminação de produção.
+- **24 Testes Visuais e Funcionais Homologados:** Clientes, validações HTML5, edição, estoque, pedidos, conversão em entregas a prazo, PDV balcão com cálculo de troco, carnê digital sem dízimas (`R$ 0,00`), aluguel de tinas, documentos com sanitização de aspas, histórico, WhatsApp, exclusão em cascata de múltiplos freezers, resiliência contra cota cheia e alternância de viewport Mobile/Desktop.
+- **Conferência de Compressão de Fotos:** Foto simulada de alta resolução (4000x3000px) reduzida em 99% (para 3 KB, 320x240px) no canvas do Chrome mantendo nitidez.
+- **Correção Adicional:** Eliminado erro de colisão de instâncias do Chart.js em `js/dashboard.js` com destruição atômica prévia.
+- **Auditoria de Console:** ZERO erros de console durante a sessão completa.
+- **Comprovação Visual:** Captura de tela gerada em `scratch/homologacao_visual_resultado.png` (115 KB).
+
+### Pente-Fino Geral do PC 1 Concluído (05/11/2026 - 53 Testes Automatizados Aprovados):
+- **Correções Consolidadas Aplicadas:**
+  1. *Fotos e QuotaExceededError:* Compressão canvas com tratamento de erros em `js/inventario.js` e salvamento defensivo com `try/catch` em `js/state.js` (preserva cadastros e pedidos caso estoure a cota local).
+  2. *Múltiplos Freezers no deleteClient:* Desvinculação completa de todos os equipamentos do cliente com histórico em `js/clientes.js`.
+  3. *Padronização Monetária:* Função `roundMoney` em `js/state.js` e `js/carne.js` eliminando dízimas microscópicas residuais.
+  4. *Sanitização HTML:* Função `escapeHtml` em `js/utils.js` aplicada aos dropdowns de clientes em todos os módulos.
+  5. *Blindagem de Função Legada:* `autoPopulateFreezerDetailsInClientForm()` com checagens de existência (`null-checks`) em `js/inventario.js`.
+  6. *Proteção de Backups:* `.gitignore` configurado para impedir inclusão de `*.bak`, backups locais e scratch.
+- **Homologação Automatizada:** 53 de 53 cenários aprovados (17 do pente-fino + 36 de sincronização e blindagem multi-PC). Regressão zero.
+- **Firebase de Produção:** 100% íntegro e intocado nesta etapa.
+- **Status do Código:** Pronto e validado para revisão/publicação (aguardando autorização).
+
 ### Versão v83 (05/11/2026 - Correção Crítica da Sincronização Homologada):
 - **Firebase de Produção:** Totalmente recuperado e íntegro (4 clientes, 2 pedidos, 6 entregas, 2 documentos, 0 pagamentos, 7 freezers).
 - **Tríplice Blindagem Ativa:** Boot Push Guard com estabilização de 8s, purga de timers e salvaguarda de timestamp soberano.

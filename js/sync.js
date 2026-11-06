@@ -12,7 +12,7 @@ let pushDebounceTimer = null;  // Debounce para não spammar o Firebase a cada t
 let lastSeenRemoteVersion = null; // Guarda a versão do banco de dados na nuvem para evitar downgrades
 
 // ─── BOOT PUSH GUARD (BLINDAGEM TÉCNICA ETAPA 9.3B / v82) ───────────────────
-export const SYNC_ENGINE_BUILD = "v83-boot-push-guard-definitivo (05/11/2026)";
+export const SYNC_ENGINE_BUILD = "v84-boot-push-guard-definitivo (06/11/2026)";
 if (typeof console !== 'undefined' && console.log) {
     console.log('%c[GelControl] Motor de Sincronização: ' + SYNC_ENGINE_BUILD, 'color: #00f0ff; font-weight: bold;');
 }

@@ -483,8 +483,8 @@ export function deleteClient(clientId) {
     window.showConfirm(
         "Tem certeza que deseja remover este cliente? Todos os dados vinculados a ele serão mantidos no histórico financeiro, mas o freezer será liberado no inventário.",
         () => {
-            const linkedFreezer = state.freezers.find(f => f.clientId === clientId);
-            if (linkedFreezer) {
+            const linkedFreezers = (state.freezers || []).filter(f => f.clientId === clientId);
+            linkedFreezers.forEach(linkedFreezer => {
                 linkedFreezer.status = "disponivel";
                 linkedFreezer.clientId = "";
                 linkedFreezer.clientName = "";
@@ -495,7 +495,7 @@ export function deleteClient(clientId) {
                     to: "Fábrica",
                     reason: "Desvinculado devido à remoção do cliente"
                 });
-            }
+            });
             
             state.clients = state.clients.filter(c => c.id !== clientId);
             state.orders = state.orders.filter(o => o.clientId !== clientId);
@@ -731,8 +731,10 @@ export function populateClientDropdowns() {
     state.clients.forEach(c => {
         const debt = parseFloat(c.outstandingDebt) || 0;
         const debtLabel = debt > 0 ? ` ⚠️ Devedor (R$ ${debt.toFixed(2).replace('.', ',')})` : '';
-        orderClientSelect.innerHTML += `<option value="${c.id}">${c.name}${debtLabel}</option>`;
-        filterClientSelect.innerHTML += `<option value="${c.id}">${c.name}${debtLabel}</option>`;
+        const safeName = window.escapeHtml ? window.escapeHtml(c.name) : c.name;
+                orderClientSelect.innerHTML += `<option value="${c.id}">${safeName}${debtLabel}</option>`;
+        const safeName2 = window.escapeHtml ? window.escapeHtml(c.name) : c.name;
+                filterClientSelect.innerHTML += `<option value="${c.id}">${safeName2}${debtLabel}</option>`;
     });
     
     orderClientSelect.value = currentOrderVal;

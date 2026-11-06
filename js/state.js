@@ -1,10 +1,18 @@
+
+// Padronização Monetária Estrita em Centavos (Elimina Dízimas IEEE 754)
+export function roundMoney(val) {
+    const num = parseFloat(val);
+    if (isNaN(num)) return 0;
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+if (typeof window !== 'undefined') window.roundMoney = roundMoney;
 // --- ESTADO GLOBAL DA APLICAÇÃO GELO DO VALE ---
 import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
 
 // Versão centralizada — altere aqui para atualizar em todo o sistema
 export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v83 (05/11/2026)";
+export const CODE_BUILD = "v84 (06/11/2026)";
 
 export let state = {
     prices: {
@@ -797,9 +805,9 @@ export function recalculateClientDebts() {
     if (!state.clients) return;
     state.clients.forEach(c => {
         if (!c.carnet) c.carnet = [];
-        c.outstandingDebt = c.carnet
+        c.outstandingDebt = roundMoney(c.carnet
             .filter(e => !e.paid)
-            .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0));
     });
 }
 
@@ -905,7 +913,32 @@ function detectOfflineChangeType() {
 
 export function saveStateLocalOnly() {
     recalculateClientDebts();
-    localStorage.setItem("gelcontrol_state", JSON.stringify(state));
+    try {
+        localStorage.setItem("gelcontrol_state", JSON.stringify(state));
+    } catch (e) {
+        if (e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014)) {
+            console.warn('[Storage] Alerta de cota do LocalStorage excedida. Aplicando salvamento defensivo sem fotos pesadas...');
+            try {
+                // Clona estado omitindo fotos pesadas para garantir que dados essenciais (cadastros, pedidos, dívidas) não se percam
+                const safeState = JSON.parse(JSON.stringify(state));
+                if (safeState.freezers) {
+                    safeState.freezers.forEach(f => {
+                        if (f.photoFreezer && f.photoFreezer.length > 50000) f.photoFreezer = '';
+                        if (f.photoInvoice && f.photoInvoice.length > 50000) f.photoInvoice = '';
+                        if (f.photoEstablishment && f.photoEstablishment.length > 50000) f.photoEstablishment = '';
+                    });
+                }
+                localStorage.setItem("gelcontrol_state", JSON.stringify(safeState));
+                if (window.showToast) {
+                    window.showToast('Memória local cheia: dados salvos com sucesso, mas fotos pesadas foram omitidas localmente.', 'warning');
+                }
+            } catch (innerErr) {
+                console.error('[Storage] Falha crítica de armazenamento local:', innerErr);
+            }
+        } else {
+            console.error('[Storage] Erro ao gravar no localStorage:', e);
+        }
+    }
 }
 
 export function saveState() {
@@ -931,4 +964,11 @@ export function saveState() {
     
     saveStateLocalOnly();
     if (window.pushToFirebase) window.pushToFirebase();
+}
+
+if (typeof window !== 'undefined') {
+    window.state = state;
+    window.saveState = saveState;
+    window.saveStateLocalOnly = saveStateLocalOnly;
+    window.recalculateClientDebts = recalculateClientDebts;
 }

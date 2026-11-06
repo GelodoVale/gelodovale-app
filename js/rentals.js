@@ -320,7 +320,8 @@ export function openRentalModal(rentalId = null) {
     if (clientSelect) {
         clientSelect.innerHTML = '<option value="">-- Cliente Avulso (Preencher Manualmente) --</option>';
         (state.clients || []).forEach(c => {
-            clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            const safeName = window.escapeHtml ? window.escapeHtml(c.name) : c.name;
+        clientSelect.innerHTML += `<option value="${c.id}">${safeName}</option>`;
         });
     }
 

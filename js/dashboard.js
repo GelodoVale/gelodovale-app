@@ -470,10 +470,15 @@ export async function renderDashboardChart() {
     
     if (!revCanvas || !prodCanvas) return;
     
-    // Destroy existing charts (usar variáveis de módulo em vez de window.* para evitar leak)
+    // Destroy existing charts com Chart.getChart() para garantir destruição atômica
+    if (typeof Chart !== 'undefined' && Chart.getChart) {
+        const c1 = Chart.getChart(revCanvas);
+        if (c1) c1.destroy();
+        const c2 = Chart.getChart(prodCanvas);
+        if (c2) c2.destroy();
+    }
     if (_revChart) { _revChart.destroy(); _revChart = null; }
     if (_prodChart) { _prodChart.destroy(); _prodChart = null; }
-    // Compatibilidade retroativa
     if (window.myRevChart) { window.myRevChart.destroy(); window.myRevChart = null; }
     if (window.myProdChart) { window.myProdChart.destroy(); window.myProdChart = null; }
 
@@ -574,7 +579,11 @@ export async function renderDashboardChart() {
     gradientBlue.addColorStop(0, 'rgba(0, 240, 255, 0.8)');
     gradientBlue.addColorStop(1, 'rgba(0, 114, 255, 0.2)');
 
-    // Render Revenue Bar & Line Chart
+    // Render Revenue Bar & Line Chart (com destruição prévia atômica pós-await)
+    if (typeof Chart !== 'undefined' && Chart.getChart) {
+        const c1 = Chart.getChart(revCanvas);
+        if (c1) c1.destroy();
+    }
     _revChart = new Chart(revCanvas, {
         data: {
             labels: revLabels,
@@ -654,6 +663,10 @@ export async function renderDashboardChart() {
 
     // Render Products Doughnut Chart
     if (soldProducts.length > 0) {
+        if (typeof Chart !== 'undefined' && Chart.getChart) {
+            const c2 = Chart.getChart(prodCanvas);
+            if (c2) c2.destroy();
+        }
         _prodChart = new Chart(prodCanvas, {
             type: 'doughnut',
             data: {

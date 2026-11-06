@@ -1,0 +1,6 @@
+
+# Backups locais e arquivos temporários
+*.bak
+backups/
+backups_pre_*/
+scratch/

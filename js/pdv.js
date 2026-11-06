@@ -43,7 +43,8 @@ export function populatePDVClients() {
     sortedClients.forEach(c => {
         const debt = parseFloat(c.outstandingDebt) || 0;
         const debtLabel = debt > 0 ? ` ⚠️ Devedor (R$ ${debt.toFixed(2).replace('.', ',')})` : '';
-        clientSelect.innerHTML += `<option value="${c.id}">${c.name}${debtLabel}</option>`;
+        const safeName = window.escapeHtml ? window.escapeHtml(c.name) : c.name;
+        clientSelect.innerHTML += `<option value="${c.id}">${safeName}${debtLabel}</option>`;
     });
     
     // Restaurar valor se ele ainda existir
