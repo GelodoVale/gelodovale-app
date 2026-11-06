@@ -1,4 +1,17 @@
 
+/**
+ * Gera ou formata o identificador técnico interno para o Firebase Authentication.
+ * Funcionários usam apenas login e senha; o identificador sintético interno
+ * não depende de domínio corporativo real nem de e-mail pessoal.
+ */
+export function getTechnicalAuthEmail(username) {
+    if (!username) return "";
+    const clean = username.trim().toLowerCase();
+    if (clean.includes("@")) return clean;
+    return `${clean}@gelcontrol.internal`;
+}
+window.getTechnicalAuthEmail = getTechnicalAuthEmail;
+
 export function maskEmail(email) {
     if (!email || typeof email !== 'string' || !email.includes('@')) {
         return '<span style="color: var(--color-danger); font-size: 0.72rem;">Não configurado</span>';
@@ -575,7 +588,7 @@ export async function loginUser(userId, password) {
 
     const userEmail = (user.username === "admin" && state.factorySettings?.adminEmail) ? 
         state.factorySettings.adminEmail : 
-        (user.email || null);
+        (user.email || getTechnicalAuthEmail(user.username) || null);
 
     // 2. INTEGRAÇÃO REAL COM FIREBASE AUTHENTICATION (QUANDO ONLINE)
     const isOnline = typeof navigator !== 'undefined' && navigator.onLine;
@@ -1057,16 +1070,21 @@ export async function saveUser(event) {
     const name = document.getElementById("user-name").value.trim();
     const username = document.getElementById("user-username").value.trim().toLowerCase();
     const emailInput = document.getElementById("user-email");
-    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+    let email = emailInput ? emailInput.value.trim().toLowerCase() : "";
     const password = document.getElementById("user-password").value;
 
-    if (!email || !email.includes("@") || !email.includes(".")) {
-        if (window.showToast) window.showToast("Informe um e-mail de recuperação válido (SEG-EMAIL-01).", "warning");
+    // Para funcionários, caso não haja e-mail informado, utiliza o identificador técnico interno
+    if (!email && username !== "admin") {
+        email = getTechnicalAuthEmail(username);
+    }
+
+    if (username === "admin" && (!email || !email.includes("@") || !email.includes("."))) {
+        if (window.showToast) window.showToast("Informe um e-mail válido para o Root.", "warning");
         return;
     }
 
     const emailInUse = (state.users || []).find(u => (u.email === email || (u.username === "admin" && state.factorySettings?.adminEmail === email)) && u.id !== id);
-    if (emailInUse && username !== "admin") {
+    if (emailInUse && username !== "admin" && email !== getTechnicalAuthEmail(username)) {
         if (window.showToast) window.showToast("Este e-mail já está vinculado a outro perfil!", "error");
         return;
     }

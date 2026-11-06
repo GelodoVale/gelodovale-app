@@ -64,13 +64,14 @@ function initAdminSDK(customConfig = null) {
 }
 
 /**
- * Formata a identidade técnica oficial para o Firebase Authentication
- * Evita obrigar motoristas e vendedores a cadastrarem e-mails pessoais.
+ * Formata a identidade técnica interna para o Firebase Authentication.
+ * Utiliza o domínio estável interno .internal para não presumir propriedade de domínio público.
+ * Funcionários continuam usando exclusivamente usuário e senha.
  */
 function formatTechnicalEmail(usernameOrEmail) {
     const raw = usernameOrEmail.toLowerCase().trim();
     if (raw.includes('@')) return raw;
-    return `${raw}@gelodovale.com.br`;
+    return `${raw}@gelcontrol.internal`;
 }
 
 /**
