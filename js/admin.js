@@ -44,19 +44,13 @@ export function updateLocalStorageSizeUI() {
 
 // 1. Alternador de Sub-abas Administrativas
 export function switchAdminSubTab(subTabId) {
-    // USU-01 e USU-02 estritamente exclusivos do Administrador Root
-    if (subTabId === "tab-usuarios" && window.isCurrentUserRoot && !window.isCurrentUserRoot()) {
-        if (window.showToast) window.showToast("Acesso restrito ao Administrador Root.", "error");
-        return;
-    }
-
     // Verificar se o usuário logado tem permissão
     const currentUserId = sessionStorage.getItem("currentUserId");
     if (currentUserId && state.users) {
         const currentUser = state.users.find(u => u.id === currentUserId);
         if (currentUser) {
             const hasPerm = (currentUser.permissions || {})["admin-" + subTabId];
-            if (hasPerm === false && currentUser.username !== "admin") {
+            if (hasPerm === false) {
                 window.showToast("Você não possui permissão para acessar esta sub-aba administrativa.", "error");
                 return;
             }
@@ -111,14 +105,8 @@ export function switchAdminSubTab(subTabId) {
     
     // Renderizar tabela de usuários se a aba for a correspondente
     try {
-        if (subTabId === "tab-usuarios") {
-            if (typeof window.renderUsersTable === "function") {
-                window.renderUsersTable();
-            }
-            const emailInput = document.getElementById("cfg-admin-email");
-            if (emailInput) {
-                emailInput.value = (state.factorySettings && state.factorySettings.adminEmail) || "";
-            }
+        if (subTabId === "tab-usuarios" && typeof window.renderUsersTable === "function") {
+            window.renderUsersTable();
         }
     } catch(e) { console.error("[switchAdminSubTab] renderUsersTable error:", e); }
     
@@ -588,7 +576,7 @@ export async function generateBackup(isAuto = false) {
             printSettings: state.printSettings || {},
             logisticsSettings: state.logisticsSettings || {},
             firebaseConfig: state.firebaseConfig || {},
-            securitySettings: state.securitySettings || {},
+            adminPassword: state.adminPassword || "1234qwer",
             notepadText: state.notepadText || "",
             calendarNotes: state.calendarNotes || {},
             localEvents: state.localEvents || [],
