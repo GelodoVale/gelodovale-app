@@ -33,6 +33,17 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ---
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
+
+### Aplicativo Desktop Windows (Electron) e Sincronização em Tempo Real (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Sincronização em tempo real (leitura e gravação) 100% validada e homologada no executável `F:\GelControl\Programa\GelControl.exe`.
+- **Pontos Investigados e Solucionados:**
+  1. *Regras do Firebase:* Declarado acesso ao nó raiz da fábrica no Realtime Database exclusivamente para o Administrador Root autenticado (`auth.uid === rootUid`), eliminando o `Permission denied`.
+  2. *Listener Pós-Login:* Adicionada inicialização explícita de `startSyncListener()` em `js/auth.js` no sucesso do login.
+  3. *Tratamento de Exceções:* Adicionados null-checks defensivos em `js/admin.js` para registros sem data e `try/catch` nas chamadas de renderização de `js/sync.js`.
+  4. *Período de Graça Pós-Boot:* Agendado encerramento automático da flag `isBootGracePeriodActive` após 8 segundos da validação da nuvem (conforme especificado na v83), liberando mutações legítimas do operador.
+- **Validação:** Gravação descartável efetuada com sucesso, status alterado para `"☁️ Nuvem Atualizada em HH:MM:SS"` com indicador verde neon brilhante. Comprovantes arquivados em `F:\GelControl\scratch\`.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados.
+
 ### Modernização da Segurança, Login, Senhas e Proteção Multi-PC — v85 (06/11/2026 - Antigravity) — Publicada no GitHub Pages:
 - **Status Atual:** Homologada com 80/80 testes automatizados aprovados e publicada como versão oficial **v85**.
 - **Implementações Técnicas Concluídas:**

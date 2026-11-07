@@ -6,6 +6,23 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão v85 — Correção e Homologação Definitiva da Sincronização em Tempo Real no Aplicativo Desktop Windows (07/11/2026 - Antigravity)
+* **Diagnóstico da Causa Raiz do Indicador Contínuo "Sincronizando com a Nuvem...":**
+  1. *Regras de Segurança Declarativas do Firebase (`database.rules.json`):* O nó `factories/fabrica_homologacao_teste` possuía regras herdadas com `.read: false` e `.write: false` incondicionais, gerando `Permission denied` ao tentar escutar o snapshot raiz da fábrica. Corrigido para permitir leitura e escrita completas ao Root autenticado (`auth.uid === rootUid`), mantendo colaboradores bloqueados e `rootUid` imutável. Regras publicadas com sucesso no Realtime Database de homologação.
+  2. *Gatilho do Listener Pós-Login (`js/auth.js`):* O método `loginUser()` não invocava explicitamente `window.startSyncListener()` após autenticar no Firebase Auth, deixando a escuta inativa caso o listener inicial tivesse falhado antes da autenticação. Adicionada chamada explícita no login e cancelamento no logout.
+  3. *Exceção não tratada na renderização de dados remotos (`js/admin.js`):* Na função `renderPrecos()` / `calculateCargoSettlement()`, chamadas a `del.date.startsWith(...)` sem validação prévia de tipo disparavam `TypeError: Cannot read properties of undefined` caso houvesse entregas com campo de data ausente, interrompendo a cadeia de execução antes de `updateSyncStatusUI('success')`. Adicionados null-checks defensivos em `js/admin.js` e blocos `try/catch` envolventes em `js/sync.js`.
+  4. *Temporizador do Período de Estabilização Pós-Boot (`js/sync.js`):* A flag `isBootGracePeriodActive` permanecia `true` indefinidamente porque não havia agendamento para sua liberação. Corrigido com `setTimeout` de 8 segundos pós-validação da nuvem (conforme especificação da v83), liberando as operações subsequentes de escrita do operador (`pushToFirebase`).
+* **Validação Ponta a Ponta com Prova Real de Gravação e Leitura:**
+  - *Login e Autenticação:* Usuário `admin` autenticado com sucesso via Firebase Auth (`UID: 2AJ45lDHatdVKasuhUl6ToON7sm2`).
+  - *BootPushGuard:* Snapshot inicial da nuvem recebido e validado; trava de boot destravada (`UNLOCKED`) em 1 segundo.
+  - *Período de Graça:* Após 8 segundos de estabilização pós-boot, mutações foram liberadas com sucesso.
+  - *Gravação Descartável:* Disparada mutação real via `pushToFirebase()` com debounce. Gravado com sucesso no Firebase Realtime Database no nó `factories/fabrica_homologacao_teste`.
+  - *Indicador Visual:* Transicionou com precisão de "Sincronizando..." para `"☁️ Nuvem Atualizada em HH:MM:SS"` com brilho verde neon (`pulse-glow-online`) ativo.
+  - *Comprovantes:* Gravados em `F:\GelControl\scratch\screenshot_sync_green_success.png` e `F:\GelControl\scratch\screenshot_push_success.png`.
+* **Segurança e Isolamento Rígido:**
+  - Base de produção (`factories/gelodovale_oficial` e projeto oficial) 100% intocada.
+  - Sem uso de serviços pagos e sem deploy para a branch `main`.
+
 #### Versão v85 — Correção do Banner de Homologação e Validação de Login no Protótipo Desktop Windows (07/11/2026 - Antigravity)
 * **Diagnóstico da Causa Raiz do Banner e Configuração Antiga:**
   - Identificado que o banner amarelo havia sido temporariamente omitido quando os arquivos foram sincronizados a partir da cópia base sem a marcação estática, e o armazenamento persistente local (`localStorage` em `F:\GelControl\Dados\browser_storage`) continha dados pré-existentes apontando para a base de produção (`gelo-do-vale`), impedindo a autenticação do Root de testes.

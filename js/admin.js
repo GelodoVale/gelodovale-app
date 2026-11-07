@@ -1439,9 +1439,9 @@ export function calculateCargoSettlement() {
     
     const todayStr = window.getBrazilTimeISO().split('T')[0];
     let actualRegisteredRevenue = 0;
-    state.deliveries.forEach(del => {
-        if (del.date.startsWith(todayStr)) {
-            actualRegisteredRevenue += del.revenue;
+    (state.deliveries || []).forEach(del => {
+        if (del && del.date && typeof del.date === 'string' && del.date.startsWith(todayStr)) {
+            actualRegisteredRevenue += (del.revenue || 0);
         }
     });
     state.documents.forEach(doc => {
@@ -1621,9 +1621,9 @@ export function saveCargoSettlement() {
 
     const todayStr = window.getBrazilTimeISO().split('T')[0];
     let actualRegisteredRevenue = 0;
-    state.deliveries.forEach(del => {
-        if (del.date.startsWith(todayStr)) {
-            actualRegisteredRevenue += del.revenue;
+    (state.deliveries || []).forEach(del => {
+        if (del && del.date && typeof del.date === 'string' && del.date.startsWith(todayStr)) {
+            actualRegisteredRevenue += (del.revenue || 0);
         }
     });
     state.documents.forEach(doc => {
@@ -1813,7 +1813,7 @@ export function renderFinancialDashboard() {
             if (doc.date === todayStr) {
                 revToday += doc.total;
             }
-            if (doc.date.startsWith(selectedMonthStr)) {
+            if (doc.date && typeof doc.date === 'string' && doc.date.startsWith(selectedMonthStr)) {
                 revMonth += doc.total;
                 
                 const method = (doc.paymentMethod || "").toLowerCase();

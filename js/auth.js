@@ -709,6 +709,15 @@ export async function loginUser(userId, password) {
                 navigateToTab(tabId);
             }
         }
+
+        // Disparar sincronização em tempo real após autenticação
+        if (typeof window !== 'undefined') {
+            if (window.startSyncListener) {
+                window.startSyncListener();
+            } else if (window.initFirebase) {
+                window.initFirebase();
+            }
+        }
     } else {
         // Falha na autenticação: registrar e aplicar política de lockout
         const result = recordFailedLoginAttempt();
@@ -737,6 +746,9 @@ export function logoutUser() {
         sessionStorage.removeItem("currentUserId");
         sessionStorage.removeItem("admin_authenticated");
     } catch (e) {}
+    if (typeof window !== "undefined" && window.stopSyncListener) {
+        window.stopSyncListener();
+    }
     
     const pwdEl = document.getElementById("login-password");
     if (pwdEl) {

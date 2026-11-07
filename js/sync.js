@@ -212,6 +212,9 @@ function startEmployeeGranularSyncListener(deviceKey) {
 
     isCloudPushLocked = false;
     bootGuardState = 'UNLOCKED';
+    setTimeout(() => {
+        isBootGracePeriodActive = false;
+    }, 8000);
     updateSyncStatusUI('success', '☁️ Sincronizado (Colaborador)');
 }
 
@@ -306,6 +309,10 @@ export function startSyncListener() {
             isCloudPushLocked = false;
             bootGuardState = 'UNLOCKED';
             console.log('[BootPushGuard] 🔓 Trava de escrita liberada com sucesso após validação da nuvem.');
+            setTimeout(() => {
+                isBootGracePeriodActive = false;
+                console.log('[BootPushGuard] 🕊️ Período de estabilização pós-boot (8s) encerrado. Gravações liberadas.');
+            }, 8000);
             updateSyncStatusUI('success');
         } else {
             // ── Sincronização em tempo real (pós-boot): comparar versões e timestamps ──
@@ -343,6 +350,9 @@ export function startSyncListener() {
 
 // ─── APLICAR DADOS RECEBIDOS DA NUVEM ─────────────────────────────────────
 function aplicarDadosRemoto(remoteData) {
+    if (remoteData && remoteData.lastUpdated) {
+        lastAppliedRemoteTimestamp = remoteData.lastUpdated;
+    }
     // Preservar configuração Firebase local (não sobrescrever com a da nuvem)
     const cfgLocal = state.firebaseConfig;
 
@@ -370,14 +380,14 @@ function aplicarDadosRemoto(remoteData) {
     state.firebaseConfig = cfgLocal;
 
     saveStateLocalOnly();
-    renderApp();
+    try { renderApp(); } catch (errRender) { console.warn('[Sync] Aviso na renderização de renderApp:', errRender); }
 
     // Atualizar visual (Aparência) e campos de configurações se estiverem abertos
-    if (window.applyAppearanceTheme) window.applyAppearanceTheme();
-    if (window.renderPrecos) window.renderPrecos();
+    try { if (window.applyAppearanceTheme) window.applyAppearanceTheme(); } catch (_) {}
+    try { if (window.renderPrecos) window.renderPrecos(); } catch (_) {}
 
     const timeStr = new Date().toLocaleTimeString('pt-BR');
-    updateSyncStatusUI('success', `☁️ Atualização Recebida em ${timeStr}`);
+    updateSyncStatusUI('success', `☁️ Nuvem Ativa — Sincronizado (${timeStr})`);
 
     // Mostrar notificação visual discreta
     mostrarToastSync();
@@ -542,7 +552,12 @@ export function initFirebase(callback) {
         return;
     }
 
-    updateSyncStatusUI('syncing');
+    const session = (typeof window !== 'undefined' && window.getCurrentSession) ? window.getCurrentSession() : null;
+    if (!session || !session.userId) {
+        updateSyncStatusUI('disabled', 'Aguardando Login');
+    } else {
+        updateSyncStatusUI('syncing');
+    }
 
     loadFirebaseSDK(() => {
         try {
@@ -550,7 +565,9 @@ export function initFirebase(callback) {
             if (firebase.apps.length === 0) {
                 firebase.initializeApp(config);
             }
-            startSyncListener();
+            if (session && session.userId) {
+                startSyncListener();
+            }
             if (callback) callback();
         } catch (error) {
             console.error('[Sync] Erro ao inicializar Firebase:', error);
@@ -882,6 +899,16 @@ function showOneDriveToast(msg) {
 }
 
 // ─── EXPORTS GLOBAIS ───────────────────────────────────────────────────────
+window.startSyncListener = startSyncListener;
+window.isBootGracePeriodActive = () => isBootGracePeriodActive;
+window.isCloudPushLocked = isBootPushLocked;
+window.stopSyncListener = () => {
+    if (fbDatabaseRef) {
+        fbDatabaseRef.off();
+        fbDatabaseRef = null;
+    }
+    updateSyncStatusUI('disabled');
+};
 window.toggleFirebaseSync = toggleFirebaseSync;
 window.saveFirebaseSettings = saveFirebaseSettings;
 window.forceManualSync = forceManualSync;
