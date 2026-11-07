@@ -505,7 +505,7 @@ async function fetchWeatherData(lat, lon, locationName, contentDiv, saveToState 
                 state.weatherConfig.city = locationName;
                 state.weatherConfig.lat = lat;
                 state.weatherConfig.lon = lon;
-                saveState();
+                saveStateLocalOnly();
             }
 
             const activeEl = document.querySelector(".nav-item.active");

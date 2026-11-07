@@ -23,7 +23,7 @@ export function maskEmail(email) {
 window.maskEmail = maskEmail;
 // --- SISTEMA DE CONTROLE DE ACESSO POR NÍVEL (RBAC) & SEGURANÇA ROOT ---
 // GelControl v85 - Arquitetura de Autenticação Segura Multi-PC
-import { state, saveState } from './state.js';
+import { state, saveState, saveStateLocalOnly } from './state.js';
 import { stopQRScanner } from './inventario.js';
 import { updateHeaderForTab, renderTabContent } from './app.js';
 import { switchAdminSubTab } from './admin.js';
@@ -611,7 +611,7 @@ export async function loginUser(userId, password) {
                 state.adminPassword = newSalted;
             }
             saveOfflineCredential(user.id, newSalted);
-            saveState();
+            saveStateLocalOnly();
         } catch (fbErr) {
             // REJEIÇÃO ESTRITA: Se o Firebase rejeitou explicitamente por credencial errada ou conta bloqueada/inexistente,
             // É PROIBIDO FAZER FALLBACK PARA A SENHA ANTIGA DO COMPUTADOR!
@@ -659,7 +659,7 @@ export async function loginUser(userId, password) {
                 const salted = hashPasswordWithSalt(password, generateSecureSalt());
                 user.password = salted;
                 saveOfflineCredential(user.id, salted);
-                saveState();
+                saveStateLocalOnly();
             }
         }
     }

@@ -40,8 +40,9 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
   1. *Regras do Firebase:* Declarado acesso ao nó raiz da fábrica no Realtime Database exclusivamente para o Administrador Root autenticado (`auth.uid === rootUid`), eliminando o `Permission denied`.
   2. *Listener Pós-Login:* Adicionada inicialização explícita de `startSyncListener()` em `js/auth.js` no sucesso do login.
   3. *Tratamento de Exceções:* Adicionados null-checks defensivos em `js/admin.js` para registros sem data e `try/catch` nas chamadas de renderização de `js/sync.js`.
-  4. *Período de Graça Pós-Boot:* Agendado encerramento automático da flag `isBootGracePeriodActive` após 8 segundos da validação da nuvem (conforme especificado na v83), liberando mutações legítimas do operador.
-- **Validação:** Gravação descartável efetuada com sucesso, status alterado para `"☁️ Nuvem Atualizada em HH:MM:SS"` com indicador verde neon brilhante. Comprovantes arquivados em `F:\GelControl\scratch\`.
+  4. *Período de Graça Pós-Boot e Desacoplamento do Clima:* Agendado encerramento automático da flag `isBootGracePeriodActive` após 8 segundos da validação da nuvem. Corrigido vazamento de `saveState()` em `js/widgets.js:508` (clima) e `js/auth.js` (credenciais) para `saveStateLocalOnly()`.
+  5. *Blindagem Visual do Indicador de Nuvem:* Em `js/sync.js`, o indicador só vai para `syncing` durante a gravação real; cancelamentos defensivos do BootPushGuard garantem restauração imediata para `success` (verde), eliminando o giro infinito.
+- **Validação:** Monitoramento de 12 segundos pós-login comprovou indicador verde estável (`girando=false`, `pulse-glow-online=true`). Mutações do operador sincronizam normalmente. Comprovantes arquivados em `F:\GelControl\scratch\screenshot_sync_estavel_definitivo.png`.
 - **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados.
 
 ### Modernização da Segurança, Login, Senhas e Proteção Multi-PC — v85 (06/11/2026 - Antigravity) — Publicada no GitHub Pages:

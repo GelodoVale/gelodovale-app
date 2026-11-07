@@ -7,6 +7,15 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 ### 🚀 Últimas Alterações Realizadas
 
 #### Versão v85 — Correção e Homologação Definitiva da Sincronização em Tempo Real no Aplicativo Desktop Windows (07/11/2026 - Antigravity)
+* **Diagnóstico da Causa Raiz do Botão Amarelo Girando Indefinidamente:**
+  1. *Vazamento de `saveState()` Assíncrono no Clima (`js/widgets.js`):* Após o login, a função `fetchWeatherData()` atualizava a previsão do tempo da internet e chamava `saveState()` na linha 508 (em vez de `saveStateLocalOnly()`). Isso disparava `pushToFirebase()` durante os primeiros 8 segundos do boot.
+  2. *Status `syncing` Preso após Abort do Grace Period (`js/sync.js`):* O `pushToFirebase()` colocava o indicador imediatamente em `syncing` (amarelo girando) e agendava o debounce de 1.5s. Quando `pushToFirebaseImediato()` executava, o período de graça de 8 segundos do BootPushGuard ou a salvaguarda de timestamp soberano abortavam o envio, mas a função realizava `return` sem restaurar o status visual para `success`. O botão ficava girando indefinidamente.
+  3. *Credenciais Offline no Login (`js/auth.js`):* Ao gravar hashes de senha com salt no login, chamava-se `saveState()` desnecessariamente. Corrigido para `saveStateLocalOnly()`.
+  4. *Blindagem do Indicador Visual (`js/sync.js`):* O indicador `updateSyncStatusUI('syncing')` agora só é ativado no momento da gravação real na rede. Caso qualquer salvaguarda do BootPushGuard cancele o push (período de graça, dados virgens ou ausência de mutação), o indicador retorna/permanece em `success` com brilho verde neon estável.
+* **Validação Ponta a Ponta com Prova Real de Gravação e Leitura no Electron:**
+  - *Estabilidade Contínua Comprovada:* Monitoramento por 12 segundos pós-login comprovou que o indicador permanece 100% estável em `"☁️ Nuvem Ativa — Sincronizado"`, `girando=false` e `verde=true`.
+  - *Mutações do Operador:* Alterações manuais disparam a sincronização, transitam para `syncing` durante a gravação e retornam com sucesso para `"☁️ Nuvem Atualizada em HH:MM:SS"`.
+  - *Comprovantes:* Gravados em `F:\GelControl\scratch\screenshot_sync_estavel_definitivo.png`.
 * **Diagnóstico da Causa Raiz do Indicador Contínuo "Sincronizando com a Nuvem...":**
   1. *Regras de Segurança Declarativas do Firebase (`database.rules.json`):* O nó `factories/fabrica_homologacao_teste` possuía regras herdadas com `.read: false` e `.write: false` incondicionais, gerando `Permission denied` ao tentar escutar o snapshot raiz da fábrica. Corrigido para permitir leitura e escrita completas ao Root autenticado (`auth.uid === rootUid`), mantendo colaboradores bloqueados e `rootUid` imutável. Regras publicadas com sucesso no Realtime Database de homologação.
   2. *Gatilho do Listener Pós-Login (`js/auth.js`):* O método `loginUser()` não invocava explicitamente `window.startSyncListener()` após autenticar no Firebase Auth, deixando a escuta inativa caso o listener inicial tivesse falhado antes da autenticação. Adicionada chamada explícita no login e cancelamento no logout.

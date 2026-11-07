@@ -432,14 +432,12 @@ export function pushToFirebase() {
 
     if (isCloudPushLocked) {
         console.warn(`[BootPushGuard] 🛑 pushToFirebase bloqueado: Trava de boot ativa (${bootGuardState}). Gravação cancelada.`);
-        updateSyncStatusUI('syncing', '🔒 Inicialização Segura: Aguardando Validação da Nuvem...');
         return;
     }
 
     // FEATURE FLAG: Se granularSync estiver desativada (padrão v80), mantém fluxo legado exato
     if (!isGranularSyncActive()) {
         clearTimeout(pushDebounceTimer);
-        updateSyncStatusUI('syncing');
         pushDebounceTimer = setTimeout(() => {
             pushToFirebaseImediato();
         }, 1500);
@@ -464,17 +462,20 @@ function pushToFirebaseImediato() {
     const hasLocalData = !!localStorage.getItem("gelcontrol_state");
     if (!hasLocalData || !state.lastUpdated || state.lastUpdated === 0) {
         console.warn('[Sync] Abortado: estado local parece virgem ou sem dados no localStorage. Não vamos sobrescrever a nuvem com dados vazios.');
+        updateSyncStatusUI('success');
         return;
     }
 
     if (isBootGracePeriodActive) {
         console.warn('[BootPushGuard] ⏳ pushToFirebaseImediato abortado: Período de estabilização pós-boot ativo.');
+        updateSyncStatusUI('success');
         return;
     }
 
     // SAFEGUARD 2.5: Não enviar se o estado local não tiver alteração real posterior ao snapshot da nuvem
     if (lastAppliedRemoteTimestamp > 0 && state.lastUpdated && state.lastUpdated <= lastAppliedRemoteTimestamp) {
         console.warn(`[BootPushGuard] 🛑 pushToFirebaseImediato cancelado: Estado local (${state.lastUpdated}) não possui alterações posteriores à nuvem (${lastAppliedRemoteTimestamp}).`);
+        updateSyncStatusUI('success');
         return;
     }
 
