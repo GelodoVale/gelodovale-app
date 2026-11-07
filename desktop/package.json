@@ -1,0 +1,12 @@
+{
+  "name": "gelcontrol-desktop",
+  "version": "85.0.0",
+  "description": "GelControl - Sistema Oficial da Fábrica de Gelo (Desktop Client)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Gelo do Vale",
+  "license": "ISC"
+}
+
