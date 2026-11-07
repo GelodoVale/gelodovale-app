@@ -39,23 +39,49 @@ try {
 }
 
 // Locais seguros para a chave de serviço:
-// 1. Prioritário: Fora do OneDrive, na pasta protegida do usuário no Windows (LOCALAPPDATA)
-// 2. Fallback: Pasta local de ferramentas caso não esteja em diretório sincronizado
+// 1. PRIORIDADE MÁXIMA: Disco F:\GelControl\Seguranca (Persistente pós-formatação do C:)
+// 2. Fallback Seguro no C: %LOCALAPPDATA%\GelControl\secrets\service-account.json
+// 3. Fallback Local de desenvolvimento: tools/service-account.json
+const F_DRIVE_SECRETS_DIR = 'F:\\GelControl\\Seguranca';
+const F_DRIVE_HOMOLOGACAO_KEY = path.join(F_DRIVE_SECRETS_DIR, 'Homologacao', 'service-account.json');
+const F_DRIVE_PRODUCAO_KEY = path.join(F_DRIVE_SECRETS_DIR, 'Producao', 'service-account.json');
+const F_DRIVE_ROOT_KEY = path.join(F_DRIVE_SECRETS_DIR, 'service-account.json');
+
 const SECURE_SECRETS_DIR = process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'GelControl', 'secrets') : null;
 const SECURE_SERVICE_ACCOUNT_PATH = SECURE_SECRETS_DIR ? path.join(SECURE_SECRETS_DIR, 'service-account.json') : null;
 const FALLBACK_SERVICE_ACCOUNT_PATH = path.resolve(__dirname, 'service-account.json');
 
-function resolveServiceAccountPath() {
+function resolveServiceAccountPath(environment = 'auto') {
+    // 1. Verificar caminhos no disco F: (Independente do C:)
+    if (environment === 'homologacao' && fs.existsSync(F_DRIVE_HOMOLOGACAO_KEY)) {
+        return F_DRIVE_HOMOLOGACAO_KEY;
+    }
+    if (environment === 'producao' && fs.existsSync(F_DRIVE_PRODUCAO_KEY)) {
+        return F_DRIVE_PRODUCAO_KEY;
+    }
+    if (fs.existsSync(F_DRIVE_HOMOLOGACAO_KEY)) {
+        return F_DRIVE_HOMOLOGACAO_KEY;
+    }
+    if (fs.existsSync(F_DRIVE_ROOT_KEY)) {
+        return F_DRIVE_ROOT_KEY;
+    }
+    if (fs.existsSync(F_DRIVE_PRODUCAO_KEY)) {
+        return F_DRIVE_PRODUCAO_KEY;
+    }
+
+    // 2. Fallbacks secundários no disco C:
     if (SECURE_SERVICE_ACCOUNT_PATH && fs.existsSync(SECURE_SERVICE_ACCOUNT_PATH)) {
         return SECURE_SERVICE_ACCOUNT_PATH;
     }
     if (fs.existsSync(FALLBACK_SERVICE_ACCOUNT_PATH)) {
         return FALLBACK_SERVICE_ACCOUNT_PATH;
     }
-    return SECURE_SERVICE_ACCOUNT_PATH || FALLBACK_SERVICE_ACCOUNT_PATH;
+    return F_DRIVE_HOMOLOGACAO_KEY;
 }
 
-const TOKEN_FILE_PATH = SECURE_SECRETS_DIR ? path.join(SECURE_SECRETS_DIR, '.admin_bridge_token') : path.resolve(__dirname, '.admin_bridge_token');
+const TOKEN_FILE_PATH = fs.existsSync(F_DRIVE_SECRETS_DIR) ? 
+    path.join(F_DRIVE_SECRETS_DIR, '.admin_bridge_token') : 
+    (SECURE_SECRETS_DIR ? path.join(SECURE_SECRETS_DIR, '.admin_bridge_token') : path.resolve(__dirname, '.admin_bridge_token'));
 const DEFAULT_PORT = 4411;
 
 /**
