@@ -79,3 +79,4 @@ begin
     // Os diretórios marcados com uninsneveruninstall são mantidos 100% intactos no disco
   end;
 end;
+

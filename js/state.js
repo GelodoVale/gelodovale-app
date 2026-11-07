@@ -796,10 +796,10 @@ export function initializeDefaultFields() {
     if (!state.firebaseConfig || !state.firebaseConfig.apiKey) {
         state.firebaseConfig = {
             enabled: true,  // AUTO-ATIVADO: sync em tempo real ligado por padrão
-            apiKey: 'AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE',
-            projectId: 'gelo-do-vale',
-            databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
-            deviceKey: 'gelodovale_oficial'
+            apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+            projectId: 'gelcontrol-homologacao',
+            databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+            deviceKey: 'fabrica_homologacao_teste'
         };
     }
     // Migração: ativar auto-sync para dispositivos existentes que tinham enabled=false

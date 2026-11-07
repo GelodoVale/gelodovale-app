@@ -6,6 +6,20 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão v85 — Correção do Banner de Homologação e Validação de Login no Protótipo Desktop Windows (07/11/2026 - Antigravity)
+* **Diagnóstico da Causa Raiz do Banner e Configuração Antiga:**
+  - Identificado que o banner amarelo havia sido temporariamente omitido quando os arquivos foram sincronizados a partir da cópia base sem a marcação estática, e o armazenamento persistente local (`localStorage` em `F:\GelControl\Dados\browser_storage`) continha dados pré-existentes apontando para a base de produção (`gelo-do-vale`), impedindo a autenticação do Root de testes.
+* **Garantia Permanente e Injeção do Banner de Homologação:**
+  - Implementada garantia no `preload.js` do Electron e marcação estática no `index.html` com `id="homologacao-banner"`, `z-index: 9999999` e fixação no topo. O banner é injetado e protegido automaticamente em qualquer inicialização.
+* **Trava de Segurança e Isolamento de Ambiente no `state.js`:**
+  - Adicionada trava de segurança no `js/state.js` que sobrescreve qualquer configuração legada de produção no protótipo de homologação, forçando exclusivamente: `projectId: 'gelcontrol-homologacao'`, `deviceKey: 'fabrica_homologacao_teste'` e `databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com'`.
+  - Sanitizado o armazenamento local em `F:\GelControl\Dados\browser_storage`.
+* **Autenticação Real do Administrador Root Testada e Homologada no Executável:**
+  - Resolução do usuário `admin` validada para `admin_homologacao@gelcontrol.internal` com a senha oficial de homologação `RootFicticio@2026`.
+  - Executado teste completo de interface no runtime do Electron: autenticação aprovada no Firebase Auth (`UID: 2AJ45lDHatdVKasuhUl6ToON7sm2`), tela de login fechada automaticamente, banner de homologação mantido visível no topo e comprovante visual capturado em `F:\GelControl\scratch\screenshot_login_result.png`.
+* **Zero Credenciais Privadas no Pacote:**
+  - Confirmada a ausência total de chaves privadas administrativas (`service-account.json`) dentro do executável e da pasta de recursos (`F:\GelControl\Programa\resources\app\`).
+
 #### Versão v85 (Finalização) — Arquitetura Gratuita Spark, Admin Local e Proteção Total (06/11/2026 - Antigravity)
 * **Arquitetura Definitiva 100% Gratuita (Plano Spark — Sem Custos / Sem Cartão de Crédito):**
   - O sistema opera 24/7 na nuvem gratuita do Firebase (Authentication e Realtime Database) sem qualquer dependência do plano Blaze ou Cloud Functions pagas.
