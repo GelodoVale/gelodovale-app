@@ -105,6 +105,8 @@ function createWindow() {
 }
 
 // 3. COMUNICAÇÃO SEGURA VIA IPC (Bridge com Permissões Mínimas)
+const { dialog } = require('electron');
+
 ipcMain.handle('desktop:get-system-info', () => {
     return {
         isDesktop: true,
@@ -112,8 +114,52 @@ ipcMain.handle('desktop:get-system-info', () => {
         installRoot: INSTALL_ROOT,
         dataDir: DATA_DIR,
         storageDir: CHROMIUM_STORAGE_DIR,
+        backupsDir: BACKUPS_DIR,
         isPrincipalStation: fs.existsSync(path.join(SECRETS_DIR, 'Homologacao', 'service-account.json')) || fs.existsSync(path.join(SECRETS_DIR, 'service-account.json'))
     };
+});
+
+// Manipulador de Backup Automático Silencioso
+ipcMain.handle('desktop:save-auto-backup', async (event, { fileName, content }) => {
+    try {
+        if (!fs.existsSync(BACKUPS_DIR)) fs.mkdirSync(BACKUPS_DIR, { recursive: true });
+        const filePath = path.join(BACKUPS_DIR, fileName);
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`[Backup Automático Desktop] Salvo com sucesso em: ${filePath}`);
+        return { success: true, path: filePath };
+    } catch (err) {
+        console.error('[Backup Automático Desktop] Erro ao salvar:', err);
+        return { success: false, error: err.message };
+    }
+});
+
+// Manipulador de Seleção de Pasta para Backup Manual Livre
+ipcMain.handle('desktop:choose-backup-folder', async () => {
+    if (!mainWindow) return { canceled: true };
+    const res = await dialog.showOpenDialog(mainWindow, {
+        title: 'Selecione a Pasta para Salvar o Backup Manual',
+        defaultPath: BACKUPS_DIR,
+        properties: ['openDirectory', 'createDirectory']
+    });
+    if (res.canceled || !res.filePaths.length) {
+        return { canceled: true };
+    }
+    return { canceled: false, selectedPath: res.filePaths[0] };
+});
+
+// Manipulador de Gravação de Backup Manual no Local Escolhido
+ipcMain.handle('desktop:write-manual-backup', async (event, { targetPath, fileName, content }) => {
+    try {
+        const destDir = targetPath || BACKUPS_DIR;
+        if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+        const finalFile = path.join(destDir, fileName);
+        fs.writeFileSync(finalFile, content, 'utf8');
+        console.log(`[Backup Manual Desktop] Salvo com sucesso em: ${finalFile}`);
+        return { success: true, path: finalFile };
+    } catch (err) {
+        console.error('[Backup Manual Desktop] Erro ao salvar:', err);
+        return { success: false, error: err.message };
+    }
 });
 
 app.whenReady().then(createWindow);

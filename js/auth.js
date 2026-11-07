@@ -586,8 +586,11 @@ export async function loginUser(userId, password) {
     let authSource = 'local';
     let authFailureReason = "";
 
-    const userEmail = (user.username === "admin" && state.factorySettings?.adminEmail) ? 
-        state.factorySettings.adminEmail : 
+    // Resolução segura de e-mail por ambiente:
+    // Se o projeto for de homologação, o Root autentica com seu identificador de testes
+    const isHomologation = (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+    const userEmail = (user.username === "admin") ? 
+        (isHomologation ? 'admin_homologacao@gelcontrol.internal' : (state.factorySettings?.adminEmail || 'contato@gelodovale.com.br')) : 
         (user.email || getTechnicalAuthEmail(user.username) || null);
 
     // 2. INTEGRAÇÃO REAL COM FIREBASE AUTHENTICATION (QUANDO ONLINE)

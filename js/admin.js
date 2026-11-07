@@ -632,8 +632,40 @@ export async function generateBackup(isAuto = false) {
     const formattedDate = cleanDate.slice(0, 16).replace('T', '_').replace(':', '-');
     const fileName = `gelodovale_backup_v${version}_${formattedDate}.json`;
 
-    // Para backup manual: oferecer seleção de pasta (File System Access API)
-    // Para backup automático: download direto sem interrupção do usuário
+    // Para ambiente Desktop nativo (Electron):
+    if (window.gelcontrolDesktop && typeof window.gelcontrolDesktop.saveAutoBackup === 'function') {
+        if (isAuto) {
+            // Backup automático no Desktop: grava diretamente na pasta Backups da unidade de instalação
+            const autoRes = await window.gelcontrolDesktop.saveAutoBackup({ fileName, content: jsonContent });
+            if (autoRes.success) {
+                window.showToast(`[Backup Automático] Cópia segura salva em: ${autoRes.path}`, "success");
+            } else {
+                console.warn("[Backup Desktop] Falha no auto-backup:", autoRes.error);
+                _downloadBackupFallback(jsonBlob, fileName);
+            }
+            return;
+        } else {
+            // Backup manual no Desktop: permite selecionar pasta livremente (F:, D:, OneDrive, PenDrive)
+            const chooseRes = await window.gelcontrolDesktop.chooseBackupFolder();
+            if (chooseRes.canceled) {
+                window.showToast("Salvar backup manual cancelado.", "warning");
+                return;
+            }
+            const writeRes = await window.gelcontrolDesktop.writeManualBackup({
+                targetPath: chooseRes.selectedPath,
+                fileName,
+                content: jsonContent
+            });
+            if (writeRes.success) {
+                window.showToast(`✅ Backup salvo com sucesso em: ${writeRes.path}`, "success");
+            } else {
+                window.showToast(`Erro ao gravar backup: ${writeRes.error}`, "error");
+            }
+            return;
+        }
+    }
+
+    // Para ambiente navegador web tradicional:
     if (!isAuto && window.showSaveFilePicker) {
         try {
             const fileHandle = await window.showSaveFilePicker({
@@ -828,15 +860,26 @@ export function importBackupFromFile(event) {
 export function checkAutoBackupOnLoad() {
     if (!state.backupSettings) return;
 
+    // PROTEÇÃO: Jamais disparar backups automáticos se não houver usuário autenticado
+    const session = (typeof window !== 'undefined' && window.getCurrentSession) ? window.getCurrentSession() : null;
+    if (!session || !session.userId) {
+        return; // Sessão não autenticada: backup automático suspenso
+    }
+
+    // PROTEÇÃO: Não criar backup de estado vazio ou não inicializado
+    if (!state.lastUpdated || state.lastUpdated === 0 || (!state.clients?.length && !state.orders?.length)) {
+        return; // Estado sem dados comerciais carregados
+    }
+
     const freq = parseInt(state.backupSettings.frequencyDays);
     if (freq === 0) return;
 
     const lastBackup = state.backupSettings.lastBackupDate;
     if (!lastBackup || lastBackup.includes("NaN")) {
-        console.log("Nenhum backup válido registrado anteriormente. Disparando backup de primeiro uso...");
+        console.log("[Backup] Primeiro backup em sessão autenticada agendado com segurança...");
         setTimeout(() => {
             generateBackup(true);
-        }, 1500);
+        }, 5000);
         return;
     }
 
@@ -848,10 +891,10 @@ export function checkAutoBackupOnLoad() {
     }
 
     if (diffDays >= freq) {
-        console.log(`Último backup feito há ${diffDays.toFixed(1)} dias (limite: ${freq} dias). Disparando backup automático...`);
+        console.log(`[Backup] Último backup feito há ${diffDays.toFixed(1)} dias (limite: ${freq} dias). Disparando backup automático...`);
         setTimeout(() => {
             generateBackup(true);
-        }, 1500);
+        }, 5000);
     }
 }
 
