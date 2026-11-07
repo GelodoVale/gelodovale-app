@@ -31,8 +31,12 @@ try {
             initializeApp,
             cert,
             auth: () => getAuth(),
-            database: () => getDatabase()
+            database: () => {
+                const db = getDatabase();
+                return db;
+            }
         };
+        admin.database.ServerValue = { TIMESTAMP: { ".sv": "timestamp" } };
     } catch (_) {
         console.warn('[Aviso] Módulo "firebase-admin" não instalado. Para instalar execute: npm install firebase-admin');
     }
@@ -102,6 +106,8 @@ function getOrCreateBridgeToken() {
     return newToken;
 }
 
+let defaultApp = null;
+
 /**
  * Inicializa o Firebase Admin SDK utilizando a chave privada local do PC 1
  */
@@ -110,8 +116,13 @@ function initAdminSDK(customConfig = null) {
         throw new Error('O pacote "firebase-admin" precisa estar instalado no PC 1.');
     }
 
+    if (defaultApp) {
+        return defaultApp;
+    }
+
     if (admin.apps && admin.apps.length > 0) {
-        return admin.app();
+        defaultApp = admin.app();
+        return defaultApp;
     }
 
     const resolvedPath = resolveServiceAccountPath();
@@ -122,10 +133,11 @@ function initAdminSDK(customConfig = null) {
     const serviceAccount = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
     const databaseURL = customConfig?.databaseURL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`;
 
-    return admin.initializeApp({
+    defaultApp = admin.initializeApp({
         credential: admin.cert(serviceAccount),
         databaseURL: databaseURL
     });
+    return defaultApp;
 }
 
 /**
