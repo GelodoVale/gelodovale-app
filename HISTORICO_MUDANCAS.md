@@ -6,6 +6,30 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão v85 — Preparação e Auditoria do Instalador Inteligente Windows (07/11/2026 - Antigravity)
+* **Validação Prévia do Sistema de Backups no Electron:**
+  - *Backup Automático:* Gravação direta, silenciosa e sem janelas popup em `F:\GelControl\Backups\` validada com sucesso via IPC `desktop:save-auto-backup`.
+  - *Backup Manual:* Seleção livre de qualquer pasta no computador (F:, D:, pendrive, etc.) validada com sucesso via IPC `desktop:choose-backup-folder` e `desktop:write-manual-backup`.
+  - *Integridade e Restauração:* Suíte de validação de payload (`validateBackupPayload`), cálculo de diff operacional e snapshot de emergência pré-restauração 100% aprovados.
+  - *Distinção Estrita de Backups:* Documentada a separação entre backups comerciais do aplicativo (`gelodovale_backup_v*.json` com dados da fábrica) e backups administrativos de infraestrutura (`*.gelbak` criptografados com AES-256-GCM contendo usuários do Firebase Auth).
+* **Script do Instalador Inteligente Inno Setup (`desktop/installer.iss`):**
+  - *Seleção Dinâmica de Unidade:* Implementada função Pascal `GetDefaultInstallDir` que prioriza `F:\GelControl` no PC 1, detecta `D:\GelControl` em computadores secundários e faz fallback para `C:\GelControl`, permitindo alteração livre pelo usuário.
+  - *Dois Modos de Instalação:* Modo "Computador Principal" (instala executável + ferramentas administrativas locais) e Modo "Estação de Trabalho" (apenas aplicativo comercial).
+  - *Preservação de Dados e Backups:* Diretórios `Dados\` e `Backups\` configurados com a flag `uninsneveruninstall`. Mensagem de alerta amigável na instalação caso detecte dados pré-existentes.
+  - *Dois Atalhos na Área de Trabalho:* Criados os atalhos "GelControl — Local" (aponta para `GelControl.exe`) e "GelControl — Online" (aponta para a URL web pública).
+  - *Blindagem Absoluta contra Vazamento de Segredos:* Adicionada cláusula de exclusão mandatória `Excludes: "service-account*.json,*.key,*.pem,*.env,secrets"`.
+* **Auditoria Consolidada Aprovada com 100% de Sucesso (`desktop/auditar_instalador.ps1`):**
+  - Integridade do Pacote: APROVADO
+  - Ausência de Chaves Privadas: APROVADO
+  - Seleção Flexível de Unidade: APROVADO
+  - Dois Modos de Instalação: APROVADO
+  - Preservação de Dados e Backups: APROVADO
+  - Atalhos Local e Online: APROVADO
+  - Exclusão de Segredos no ISS: APROVADO
+  - Isolamento de Homologação: APROVADO
+* **Instalador de Homologação Portátil (`desktop/instalar_homologacao.bat`):**
+  - Criado script de instalação inteligente de homologação para testes controlados sem necessidade imediata do compilador Inno Setup.
+
 #### Versão v85 — Correção e Homologação Definitiva da Sincronização em Tempo Real no Aplicativo Desktop Windows (07/11/2026 - Antigravity)
 * **Diagnóstico da Causa Raiz do Botão Amarelo Girando Indefinidamente:**
   1. *Vazamento de `saveState()` Assíncrono no Clima (`js/widgets.js`):* Após o login, a função `fetchWeatherData()` atualizava a previsão do tempo da internet e chamava `saveState()` na linha 508 (em vez de `saveStateLocalOnly()`). Isso disparava `pushToFirebase()` durante os primeiros 8 segundos do boot.

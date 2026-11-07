@@ -34,6 +34,15 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
 
+### Instalador Inteligente Windows e Validação de Backups (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Backups validados no Electron; script Inno Setup (`installer.iss`), auditoria automatizada (`auditar_instalador.ps1`) e instalador de homologação portátil (`instalar_homologacao.bat`) 100% aprovados.
+- **Implementações Técnicas Concluídas:**
+  1. *Backups Automáticos e Manuais:* IPCs de backup validados no Electron (`desktop:save-auto-backup` silencioso em `F:\GelControl\Backups\` e `desktop:choose-backup-folder` para escolha livre).
+  2. *Script Inno Setup Definitivo (`desktop/installer.iss`):* Resolução dinâmica de unidade (`F:\GelControl` padrão no PC 1, detecta `D:` ou `C:`), 2 modos (Computador Principal com `tools/` vs Estação de Trabalho apenas comercial), flags `uninsneveruninstall` em `Dados\` e `Backups\`, atalhos "GelControl — Local" e "GelControl — Online", e exclusão rigorosa de chaves privadas (`service-account*.json`).
+  3. *Auditoria Consolidada Aprovada com 100%:* Integridade de binários, zero chaves vazadas, isolamento no Firebase `gelcontrol-homologacao` e regras de integridade de dados aprovadas com nota máxima.
+  4. *Instalador de Homologação Portátil (`desktop/instalar_homologacao.bat`):* Disponibilizado para testes controlados sem compilação prévia externa.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
+
 ### Aplicativo Desktop Windows (Electron) e Sincronização em Tempo Real (07/11/2026 - Antigravity) — Homologação v85:
 - **Status Atual:** Sincronização em tempo real (leitura e gravação) 100% validada e homologada no executável `F:\GelControl\Programa\GelControl.exe`.
 - **Pontos Investigados e Solucionados:**

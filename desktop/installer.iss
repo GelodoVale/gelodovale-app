@@ -1,12 +1,14 @@
 ; ============================================================================
 ; SCRIPT DO INSTALADOR WINDOWS — GELCONTROL v85 (INNO SETUP)
-; Instalação Flexível em Qualquer Unidade com Preservação de Dados
+; Instalação Inteligente, Multi-Unidade (F:, D:, G:, C:) com Preservação de Dados
+; Dois Modos: Computador Principal (Admin) e Estação de Trabalho (Comercial)
 ; ============================================================================
 
 #define MyAppName "GelControl"
 #define MyAppVersion "85.0.0"
 #define MyAppPublisher "Gelo do Vale"
 #define MyAppURL "https://gelodovale.com.br"
+#define MyAppOnlineURL "https://gelodovale.github.io/gelodovale-app/"
 #define MyAppExeName "GelControl.exe"
 
 [Setup]
@@ -18,37 +20,40 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
-; Diretório padrão sugerido (o usuário pode alterar livremente para D:, F:, G:, etc.)
-DefaultDirName={drive:F:\}\GelControl
+; Diretório padrão dinâmico: Prioriza F:\GelControl se F: existir (PC 1), senão D: ou C:
+DefaultDirName={code:GetDefaultInstallDir}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 
-; Opção de Privilégios: solicita elevação administrativa para configurar atalhos e pastas
+; Privilégios administrativos para criar atalhos globais e configurar permissões
 PrivilegesRequired=admin
 OutputDir=Output
-OutputBaseFilename=Instalador_GelControl_v85
+OutputBaseFilename=Instalador_GelControl_v85_Homologacao
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 
+; Idioma em Português do Brasil
+ShowLanguageDialog=no
+
 [Types]
-Name: "full"; Description: "Instalação Completa - Computador Principal (Fábrica / Escritório)"
-Name: "workstation"; Description: "Instalação Estação de Trabalho (Motoristas / Balcão / Operação)"
-Name: "custom"; Description: "Instalação Personalizada"; Flags: iscustom
+Name: "principal"; Description: "Computador Principal (Fábrica / Escritório — com Ferramentas Administrativas)"; Flags: iscustom
+Name: "estacao"; Description: "Estação de Trabalho (Balcão / Motoristas — apenas Aplicativo Comercial)"
 
 [Components]
-Name: "program"; Description: "Programa GelControl (Aplicativo e Componentes)"; Types: full workstation custom; Flags: fixed
-Name: "admin_tools"; Description: "Ferramentas Administrativas e Gestão de Segredos"; Types: full
+Name: "program"; Description: "Aplicativo Comercial GelControl (Executável e Recursos)"; Types: principal estacao; Flags: fixed
+Name: "admin_tools"; Description: "Ferramentas Administrativas de Escritório (tools/)"; Types: principal
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 ; 1. Arquivos do Programa Executável (sempre instalados na subpasta Programa da unidade escolhida)
-Source: "..\Programa\*"; DestDir: "{app}\Programa"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: program
+Source: "F:\GelControl\Programa\*"; DestDir: "{app}\Programa"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: program; Excludes: "*.log,*.tmp,*.bak"
 
-; 2. Ferramentas Administrativas (Instaladas SOMENTE no Computador Principal)
-Source: "..\..\..\OneDrive\GelodoVale-system\App\tools\*"; DestDir: "{app}\Seguranca\Tools"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: admin_tools
+; 2. Ferramentas Administrativas Locais (Instaladas SOMENTE no Computador Principal)
+; NUNCA inclui chaves privadas, service-account.json ou segredos
+Source: "..\tools\*"; DestDir: "{app}\Seguranca\Tools"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: admin_tools; Excludes: "service-account*.json,*.key,*.pem,*.env,secrets"
 
 [Dirs]
 ; Garante a criação estruturada das pastas na unidade e caminho escolhidos pelo usuário
@@ -56,27 +61,57 @@ Name: "{app}\Programa"
 Name: "{app}\Dados"; Flags: uninsneveruninstall
 Name: "{app}\Backups"; Flags: uninsneveruninstall
 Name: "{app}\Seguranca"; Flags: uninsneveruninstall; Components: admin_tools
+Name: "{app}\Seguranca\Tools"; Components: admin_tools
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\Programa\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\Programa\{#MyAppExeName}"; Tasks: desktopicon
+; Atalhos na Área de Trabalho
+Name: "{autodesktop}\GelControl — Local"; Filename: "{app}\Programa\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\Programa\{#MyAppExeName}"
+Name: "{autodesktop}\GelControl — Online"; Filename: "{#MyAppOnlineURL}"; Tasks: desktopicon
+
+; Atalhos no Menu Iniciar
+Name: "{autoprograms}\{#MyAppName}\GelControl — Local"; Filename: "{app}\Programa\{#MyAppExeName}"
+Name: "{autoprograms}\{#MyAppName}\GelControl — Online"; Filename: "{#MyAppOnlineURL}"
+Name: "{autoprograms}\{#MyAppName}\Desinstalar {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Run]
-Filename: "{app}\Programa\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Programa\{#MyAppExeName}"; Description: "{cm:LaunchProgram,GelControl}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// Código Pascal para validação prévia de reinstalação e preservação de dados
-function InitializeSetup(): Boolean;
+// Resolução Dinâmica da Unidade Padrão: Prioriza F:\, D:\ ou C:\
+function GetDefaultInstallDir(Param: String): String;
 begin
-  Result := True;
+  if DirExists('F:\') then
+    Result := 'F:\GelControl'
+  else if DirExists('D:\') then
+    Result := 'D:\GelControl'
+  else
+    Result := 'C:\GelControl';
 end;
 
-// Preserva integralmente Dados e Backups durante a desinstalação
+// Validação prévia de integridade e notificação de dados preservados
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  DadosDir, BackupsDir: String;
+begin
+  Result := True;
+  if CurPageID = wpSelectDir then
+  begin
+    DadosDir := ExpandConstant('{app}\Dados');
+    BackupsDir := ExpandConstant('{app}\Backups');
+    if DirExists(DadosDir) or DirExists(BackupsDir) then
+    begin
+      MsgBox('Uma instalação ou base de dados anterior foi detectada nesta pasta.' + #13#10#13#10 +
+             'Seus dados comerciais e backups históricos estão 100% seguros e serão rigorosamente preservados.', 
+             mbInformation, MB_OK);
+    end;
+  end;
+end;
+
+// Preservação de dados durante desinstalação
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    // Os diretórios marcados com uninsneveruninstall são mantidos 100% intactos no disco
+    // As pastas Dados e Backups com uninsneveruninstall permanecem intactas no disco
   end;
 end;
-
