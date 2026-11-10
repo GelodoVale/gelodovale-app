@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v185';
+const CACHE_NAME = 'gelodovale-v186';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -35,7 +35,10 @@ const ASSETS = [
   'js/help_content.js',
   'js/help.js',
   'js/dictionaries/pt_BR/pt_BR.aff',
-  'js/dictionaries/pt_BR/pt_BR.dic'
+  'js/dictionaries/pt_BR/pt_BR.dic',
+  'js/libs/firebase/firebase-app-compat.js',
+  'js/libs/firebase/firebase-auth-compat.js',
+  'js/libs/firebase/firebase-database-compat.js'
 ];
 
 self.addEventListener('install', (e) => {

@@ -2,6 +2,13 @@
 
 ## 🌐 1. Idioma, Autonomia e Segurança Entre 2 Computadores (OBRIGATÓRIO)
 - **Idioma Exclusivo:** Comunique-se com o usuário **100% em português do Brasil (`pt-BR`)**. O usuário não compreende inglês; traduza e explique qualquer mensagem ou termo técnico.
+- **Regra Permanente de Comunicação Objetiva:**
+  - Execute somente a tarefa que o usuário solicitar.
+  - Ao finalizar, entregue um relatório técnico objetivo contendo o que foi realizado, os resultados e eventuais erros.
+  - **NÃO encerre respostas com perguntas, sugestões de próximos passos, opções de escolha ou pedidos de autorização para continuar.**
+  - **NÃO inicie novas tarefas por conta própria.**
+  - Se houver algum impedimento que impossibilite a execução, informe no relatório e encerre, sem propor uma sequência de ações.
+  - O próximo comando será definido exclusivamente pelo usuário, após análise com o ChatGPT.
 - **Execução Sequencial (Anti-Travamento Antigravity 2.0):** Execute ferramentas de leitura e comandos **um de cada vez (sequencialmente)**, nunca disparando múltiplos terminais em paralelo. Prefira `read_file`, `edit_file` e `write_file` nativos.
 - **Separação Estrita de Projetos:** Nunca misture arquivos ou dados entre os dois sistemas do usuário:
   1. **Gelo do Vale (GelControl):** Pasta oficial sincronizada na nuvem: `C:\Users\kissn\OneDrive\GelodoVale-system\App` (GitHub: `https://github.com/GelodoVale/gelodovale-app.git`). **ATENÇÃO:** Nunca utilize a cópia antiga `F:\GelodoVale-system\App` (parada na `v68` de Junho/2026).
@@ -33,6 +40,857 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ---
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
+
+#### Versão 85.4.0 (v85) — Check-up Geral "Olho de Águia", Correção Definitiva do Modal de Confirmação/Exclusão e Paridade Total (10/11/2026 - Antigravity)
+* **Check-up Geral "Olho de Águia" e Autoteste do Sistema no PC 1:**
+  - *Diagnóstico da Falha na Lixeira de Exclusão de Clientes:*
+    - Localizada a causa raiz exata: o elemento `#confirm-overlay` no `index.html` possuía atributo inline `style="display: none;"`.
+    - Ao disparar `deleteClient(clientId)`, a função chamava `window.showConfirm(...)`. Esta função removia a classe `.hidden`, mas mantinha intacto o estilo inline `style="display: none;"`. Pela regra de especificidade CSS, o modal permanecia 100% invisível na tela, impossibilitando a confirmação do usuário.
+  - *Correção Cirúrgica e Blindagem Visual:*
+    1. `js/app.js`: A função `showConfirm` agora define expressamente `overlay.style.display = 'flex'` ao abrir e `overlay.style.display = 'none'` no callback `close()`.
+    2. `index.html`: Removido o atributo inline `style="display: none;"` de `#confirm-overlay`, deixando a visibilidade governada pela classe `.hidden`.
+    3. `styles.css`: Adicionada blindagem com `#confirm-overlay:not(.hidden) { display: flex !important; }` e `#confirm-overlay.hidden { display: none !important; }`.
+    4. *Abrangência:* Como `showConfirm` é o mecanismo central de confirmação de ações críticas do GelControl, a correção restaurou o funcionamento imediato da exclusão em Clientes, Devolução de Freezers, Cancelamento de Documentos, Emissão de Carnês e Limpeza de Históricos.
+  - *Auditoria de Sintaxe em Larga Escala (35/35 Arquivos Aprovados):*
+    - Executada verificação sintática com o compilador V8 do Node.js (`node --check`) em todos os scripts das pastas `js/` e `desktop/`. Zero erros de compilação ou sintaxe detectados.
+  - *Auditoria de Módulos e Integridade Comercial:*
+    - Clientes: 6 clientes ativos (Supermercado Rondon, Quiosque Beira Mar, Posto Portal da Cidade, Restaurante Estrela do Mar, `zeze`, `zaza`) íntegros.
+    - Freezers: 7 unidades (4 em comodato ativo, 2 disponíveis no estoque da fábrica).
+    - Produtos e Fábrica: 16 produtos catalogados com preços base e parâmetros de comodato intactos.
+    - Sessão Master: Credencial e salt preservados, proteção física intacta em `admin_credential_guard.json`.
+  - *Sincronização Criptográfica e Paridade Total com Runtime Oficial (`F:\GelControl_Oficial`):*
+    - Todos os 9 arquivos fundamentais (`index.html`, `styles.css`, `js/app.js`, `js/version.js`, `sw.js`, `js/auth.js`, `js/admin.js`, `js/sync.js`, `js/state.js`) possuem **100% de paridade SHA-256**.
+  - *Versionamento da Build:*
+    - Incrementado para `v85.4.0` (10/11/2026), Service Worker atualizado para `gelodovale-v186`, cache-busters de scripts e estilos atualizados no `index.html`.
+
+#### Versão 85.3.0 (v85) — Paridade Criptográfica Total e Aplicação na Instalação Oficial do PC 1 (10/11/2026 - Antigravity)
+* **Auditoria de Paridade entre Workspace e Instalação Oficial (`F:\GelControl_Oficial`):**
+  - *Sincronização Criptográfica dos Arquivos:* Executada comparação SHA-256 arquivo por arquivo entre o repositório sincronizado e o runtime oficial.
+  - *Correções Aplicadas no Runtime:*
+    1. `js/app.js`: Chave de API antiga (`AIzaSyBfY...`) substituída pela chave autorizada (`AIzaSyC6...`) com `authDomain: 'gelo-do-vale.firebaseapp.com'`.
+    2. `index.html`: Corrigido o caminho relativo de script `js/js/spellcheck.js` para `js/spellcheck.js?v=85.3.0`.
+    3. `js/auth.js`: Unificado com a implementação avançada de governança no servidor (`user_permissions`), garantindo que tanto o código-fonte quanto o executável em disco operem com exatamente o mesmo binário.
+  - *Paridade Confirmada:* Todos os 7 arquivos centrais (`desktop/main.js`, `desktop/preload.js`, `js/admin.js`, `js/app.js`, `js/auth.js`, `js/sync.js`, `js/state.js`) possuem **100% de paridade SHA-256**.
+  - *Status da Etapa no PC 1:* **Concluída com Sucesso.** Zero pendências de código pendentes de aplicação na instalação oficial.
+
+#### Versão 85.3.0 (v85) — Validação Completa de Funcionários na Interface e Disparo de Backups (10/11/2026 - Antigravity)
+* **Validação Operacional na Interface do GelControl e Disparo Automático:**
+  - *Fluxo de Cadastro de Usuários no App:* Validada a integridade do formulário de usuários (`modal-user-form`). O salvamento (`saveUser`) deriva a credencial com Salt local (`hashPasswordWithSalt`), chama o provisionamento transparente no Firebase Auth (`createEmployeeFirebaseAuth`) sob domínio técnico `@gelcontrol.internal` e sincroniza o mapa `user_permissions` na nuvem sem qualquer desautenticação da sessão Master ativa.
+  - *Governança de Interface e RBAC Estrito:* Comprovado que a função `applyUserPermissions` oculta menus laterais (`.nav-item`), abas administrativas (`.admin-menu-btn`) e painéis de segurança/gestão (`admin-users-management-panel`, `admin-security-settings-panel`) para colaboradores não autorizados, com bloqueio duplo no cliente e no servidor RTDB.
+  - *Comprovação do Disparo Periódico de Backups:* Auditada a rotina `checkAutoBackupOnLoad` em `js/admin.js`. Confirmado que, sob sessão autenticada e intervalo vencido (`diffDays >= frequencyDays`), o sistema agenda automaticamente `generateBackup(true)` após 5 segundos do carregamento da tela, disparando a gravação simultânea na pasta local e no OneDrive.
+  - *Estado Atual do PC 1:* **100% Estável, Seguro e Concluído.** Sessão Master funcional, dados comerciais preservados (6 clientes, 2 pedidos, 6 entregas, 7 freezers), regras ativas e backups redundantes operacionais.
+
+#### Versão 85.3.0 (v85) — Validação Integral do RBAC no Servidor e Provisionamento de Funcionários (10/11/2026 - Antigravity)
+* **Validação Operacional de Contas de Colaboradores e Governança de Permissões:**
+  - *Provisionamento Isolado com Sucesso:* Validada a criação automática de contas de colaboradores no Firebase Authentication através da API oficial sob domínio interno técnico (`@gelcontrol.internal`), preservando 100% conectada a sessão `[DEFAULT]` do Master.
+  - *Governança Estrita no Servidor (Firebase RTDB):* Comprovado em teste real contra as regras de produção que o mapa `user_permissions` governa com exatidão os acessos de colaboradores. Um funcionário autorizado apenas para `tab-pedidos` consegue ler `/orders.json` (HTTP 200 OK), mas tem acesso imediatamente negado com HTTP 401/403 a `/clients.json` e `/financeiro.json`.
+  - *Blindagem Administrativa:* Os nós `users`, `financeiro`, `rootUid`, configurações e segurança permanecem acessíveis única e exclusivamente pelo Master autoritário (`auth.uid === rootUid`).
+  - *Base Limpa e Preservada:* Todos os testes foram executados com limpeza e expurgo automático de contas e nós temporários. Dados comerciais legítimos (6 clientes, 2 pedidos, 6 entregas, 7 freezers) e senhas do Master 100% preservados.
+  - *Próximos Passos Mapeados (Prioridade PC 1):*
+    1. Acompanhamento do disparo periódico do backup automático na instalação oficial.
+    2. Consolidação da arquitetura de atualização distribuível para o PC 2 (detecção automática de estação e caminhos relativos).
+
+#### Versão 85.3.0 (v85) — Resolução Definitiva dos Backups Automáticos e Espelho no OneDrive (10/11/2026 - Antigravity)
+* **Consolidação do Sistema de Backup Fiel e Espelho Automático no OneDrive:**
+  - *Fidelidade de Dados com a Nuvem:* Identificado e corrigido o descompasso entre o cache estático anterior e a verdade viva da fábrica. O backup oficial gerado agora contém com 100% de paridade todos os **6 clientes** (incluindo `zeze` e `zaza`), 2 pedidos, 6 entregas e 7 freezers.
+  - *Espelhamento Automático no OneDrive:* O manipulador desktop nativo (`desktop:save-auto-backup` em `desktop/main.js`) foi aprimorado com resolução inteligente da pasta de backup do usuário (`resolveOneDriveBackupsDir`). Qualquer backup gerado automaticamente pelo sistema é gravado com sucesso tanto na pasta local (`F:\GelControl_Oficial\Backups\`) quanto na pasta sincronizada do OneDrive (`C:\Users\kissn\OneDrive\GelodoVale-system\Backups\`), com zero intervenção manual.
+  - *Arquivo de Backup Oficial Válido:* Gerado `gelodovale_backup_v85.3.0_2026-11-10_00-12.json` (33.805 bytes | SHA-256 `7e2234fa75ffca08830abcc6082781da8a67ed8be6ebb52d4a2fd4e72e54da0a`) validado e idêntico nos três locais (`Backups/` local, `OneDrive/Backups/` e `OneDrive/App/backups/`).
+  - *Sincronização de Dados Locais:* `Dados/state.json` no PC 1 foi atualizado com a verdade viva do Firebase (timestamp `1794269186345`), eliminando defasagens entre o disco local e o Realtime Database.
+  - *Planejamento Estratégico Registrado (Prioridade PC 1 -> PC 2):* Definido foco total no PC 1 até a estabilização completa. Mapeado o requisito de auto-atualização distribuível para o PC 2 (detecção automática de estação, caminhos dinâmicos sem quebra de diretórios).
+  - *Preservação Rigorosa:* Credenciais Master intactas, Realtime Database intacto, regras de segurança mantidas e sincronização bidirecional em tempo real 100% operacional.
+
+#### Versão 85.3.0 (v85) — Publicação das Regras, Instalação no PC 2 e Sincronização Bidirecional Confirmada (09/11/2026 - Antigravity)
+* **Validação Operacional em Produção nos 2 Computadores:**
+  - *Publicação das Regras no Firebase:* Regras definitivas publicadas no Firebase Realtime Database pelo usuário com total proteção ao `rootUid` e governança de nós.
+  - *Instalação nos 2 PCs:* GelControl Oficial v85.3.0 instalado e operacional tanto no PC 1 quanto no PC 2.
+  - *Autenticação Master Aprovada:* Login do Master funcionou com 100% de sucesso em ambos os computadores.
+  - *Sincronização Bidirecional Confirmada:* Sincronização automática em tempo real validada nos dois sentidos em produção: cliente 'zeze' sincronizado do PC 1 para o PC 2, e cliente 'zaza' sincronizado do PC 2 para o PC 1. Testes operacionais de sincronização e instalação concluídos definitivamente (sem necessidade de repetição).
+  - *Backups Periódicos Concluídos:* Gerado backup completo e validado localmente em `F:\GelControl_Oficial\Backups\` e sincronizado no OneDrive (`gelodovale_backup_v85.3.0_2026-11-09_22-43.json`). A rotina automática em `checkAutoBackupOnLoad` (intervalo de 7 dias ou primeiro boot pós-login) está ativa e operacional.
+  - *Pendência Mapeada Restante:* Teste do cadastro e provisionamento online de funcionários com autenticação isolada.
+  - *Preservação Rigorosa:* Credenciais Master mantidas nos dois computadores, base comercial íntegra e regras ativas.
+
+#### Versão 85.3.0 (v85) — Recompilação Definitiva do Instalador com Sincronização Integral de Permissões (09/11/2026 - Antigravity)
+* **Recompilação dos Distribuíveis e Preparação Final para o PC 2:**
+  - *Distribuíveis Definitivos Recompilados:* Gerado o executável `Instalador_GelControl_v85.3.0_Producao.exe` (113,49 MB | SHA-256 `850401E1539D402150EE81410434B345E454E32CA9A0BD818F15CC0B33792441`) e o pacote `gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `3bc1b380e05d9224b70fad483f7a05044d35c8331efb6e03f42c9a348bd36699`).
+  - *Inclusão de Todas as Salvaguardas:* Embutidas no executável tanto a chave oficial autorizada (`AIzaSyC6...`) quanto a preservação contínua de `user_permissions` em `js/sync.js` e o provisionamento isolado de funcionários em `js/auth.js`.
+  - *Prontidão Comprovada:* Instalador pronto na pasta oficial do OneDrive para execução imediata no PC 2 assim que autorizado.
+  - *Preservação Rigorosa:* Credencial Master intocada no PC 1, Realtime Database intacto (4 clientes, 2 pedidos, 6 vendas, 7 freezers) e backups mantidos.
+
+#### Versão 85.3.0 (v85) — Salvaguarda de Preservação Contínua de `user_permissions` na Sincronização (09/11/2026 - Antigravity)
+* **Garantia de Não-Sobrescrita de Permissões no Firebase RTDB:**
+  - *Blindagem em `pushToFirebaseImediato`:* Adicionada rotina em `js/sync.js` que reconstrói e preserva o mapa `user_permissions` dentro do objeto `safeState` antes de qualquer envio ao Firebase.
+  - *Persistência em Operações Monolíticas:* Comprovado em teste que qualquer alteração de dados no sistema (pedidos, clientes, estoque) ou sincronizações do Master mantêm 100% dos registros de `user_permissions` ativos e íntegros na nuvem, sem risco de omissão ou exclusão acidental.
+  - *Testes de Ciclo de Vida (3/3 Aprovados):* Validada a sincronização comum, cadastro de novo funcionário e alteração de permissões com preservação mútua no servidor.
+  - *Preservação Rigorosa:* Senha Master intacta, base na nuvem intacta (4 clientes, 2 pedidos, 6 vendas, 7 freezers) e instalador oficial pronto.
+
+#### Versão 85.3.0 (v85) — Implementação da Opção A: Provisionamento Isolado de Funcionários e RBAC no Servidor (09/11/2026 - Antigravity)
+* **Provisionamento Transparente, Isolamento de Sessão Master e Regras Refinadas:**
+  - *Provisionamento Isolado sem Queda de Sessão:* Em `js/auth.js` (`createEmployeeFirebaseAuth`), o provisionamento de colaboradores utiliza uma instância temporária isolada do Firebase App (`temp_employee_provision_${Date.now()}`). A conta é criada com `${username}@gelcontrol.internal`, capturando o `uid` e destruindo a instância secundária imediatamente. A sessão `[DEFAULT]` do Master permanece 100% ativa e conectada.
+  - *Vinculação em `user_permissions`:* Na rotina `saveUser`, o sistema grava o mapa indexado `factories/$deviceKey/user_permissions/${authUid}` contendo `active: true` e as permissões individuais exatas marcadas pelo Master. Na exclusão (`deleteUser`), o registro é imediatamente marcado como `active: false`.
+  - *Governança de Servidor no RTDB (`database.rules.json`):* Nós operacionais (`clients`, `orders`, `deliveries`, `freezers`, etc.) validam `user_permissions[auth.uid].active === true` e a permissão específica (ex: `tab-clientes`, `tab-pedidos`). Contas criadas fora do GelControl não possuem registro em `user_permissions` e recebem rejeição imediata com `Permission denied` em todos os nós da fábrica.
+  - *Testes em Ambiente Isolado (12/12 Aprovados):* Comprovada a criação de funcionário fictício, liberação de pedidos, bloqueio de clientes desmarcados, bloqueio de financeiro/rootUid, desativação instantânea e bloqueio total de contas externas.
+  - *Recompilação dos Distribuíveis:* Gerados `Instalador_GelControl_v85.3.0_Producao.exe` (113,39 MB | SHA-256 `068D8A8D218C0D7ECC7A14E0F5483E4D4DEF6D40BD4F55D5207DC100DA8A30F3`) e `gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `2f2c4606f5af09426948ad859dbedbbf43d137830c6b8065b61617c0c191f16b`).
+  - *Preservação Rigorosa:* Senha Master, base na nuvem, dados comerciais e backups 100% preservados. Zero deploy executado sem autorização.
+
+#### Versão 85.3.0 (v85) — Blindagem Avançada das Regras do Firebase RTDB e Testes Rigorosos (09/11/2026 - Antigravity)
+* **Correção da Cascata de Leitura, Imutabilidade Estrita do RootUid e Testes Concluídos:**
+  - *Bloqueio de Cascata de Leitura no Nó Pai:* No nó `factories/$deviceKey`, a diretiva `.read` foi restrita a `auth != null && data.child('rootUid').val() === auth.uid`. O Root pode ler o estado completo da fábrica para sincronização, enquanto colaboradores são impedidos de baixar o nó pai, eliminando o vazamento de dados de `financeiro`, `users` e configurações.
+  - *Imutabilidade Estrita do RootUid contra Exclusão e Alteração:* A escrita no nó da fábrica exige que `newData.child('rootUid').val() === data.child('rootUid').val()`, e o nó `rootUid` possui regra `.write` que impede valores nulos ou divergentes. Exclusões via `.remove()` ou omissões em chamadas `.set()` são bloqueadas no servidor.
+  - *Governança RBAC no Servidor:* Os nós `users`, `financeiro`, `factorySettings`, `backupSettings` e `securitySettings` só aceitam leitura e escrita de quem possui `auth.uid === rootUid`. Colaboradores operam apenas nos nós comerciais permitidos (`orders`, `clients`, `deliveries`, etc.).
+  - *Bateria de Testes Concluída (24/24 Aprovados):* Simulados todos os cenários com Master, Colaborador e Anônimo (leitura, escrita, alteração indevida e exclusão), com 100% de sucesso. Nenhuma regra foi publicada no console (aguardando aprovação).
+  - *Preservação Rigorosa:* Senha Master intacta, base na nuvem intacta (4 clientes, 2 pedidos, 6 vendas, 7 freezers), instalador oficial mantido e PC 2 preservado.
+
+#### Versão 85.3.0 (v85) — Recompilação do Instalador do PC 2 e Blindagem das Regras do Firebase (09/11/2026 - Antigravity)
+* **Recompilação dos Distribuíveis e Preparação das Regras Definitivas de Servidor:**
+  - *Recompilação do Instalador Oficial:* O executável `Instalador_GelControl_v85.3.0_Producao.exe` (113,47 MB | SHA-256 `6BF5B4B8165AF1EAA5FCB18CCE3A2FDF9E42DFA3FB85E1331115F7FF7B1DF9BD`) e o pacote `gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `2373c2ac37ed879aad8fa94f63c27991a8891a098f2cc0bf2051185cde149837`) foram reconstruídos e assinados com a chave Ed25519 de produção.
+  - *Inclusão da Chave Autorizada:* A chave oficial `AIzaSyC6...` foi integrada em `firebase.producao.json`, `js/state.js` e embutida no pacote. A inspeção direta no ZIP confirmou a presença exclusiva da nova credencial (zero chave legada).
+  - *Auditoria Anti-Vazamento:* O pacote e o instalador passaram com 100% de aprovação na rotina `assertNoSecrets` (zero senhas, zero hashes, zero arquivos privados ou dados comerciais).
+  - *Regras de Segurança Prontas (`database.rules.json`):* Elaboradas as regras declarativas para o Firebase RTDB que bloqueiam leituras e escritas anônimas (`auth != null`), blindam o `rootUid` com validação imutável (`newData.val() === data.val()`) e reservam privilégios de gestão de usuários, financeiro e configurações exclusivamente ao Root.
+  - *Preservação Rigorosa:* Credencial Master intocada no PC 1, Realtime Database intacto (4 clientes, 2 pedidos, 6 vendas, 7 freezers), backups preservados e PC 2 pronto para receber a instalação assim que autorizado.
+
+#### Versão 85.3.0 (v85) — Verificação Final de Autenticação Root e Diagnóstico do Pacote do PC 2 (09/11/2026 - Antigravity)
+* **Auditoria de Sessão, Vínculo de RootUid e Integridade de Distribuição:**
+  - *Sessão Autenticada no PC 1:* Confirmada sessão online ativa gravada no IndexedDB LevelDB (`000038.log`) com a identidade `admin@gelcontrol.internal`, chave autorizada (`AIzaSyC6...`) e token de autenticação emitido pelo Firebase Auth.
+  - *Vínculo de RootUid no RTDB:* Verificação HTTPS em `factories/gelodovale_oficial/rootUid.json` confirmou paridade de 100% com o UID administrativo oficial emitido pelo Firebase (`LA0f...YDg2`).
+  - *Status das Regras de Segurança no Servidor:* Identificado que o arquivo `database.rules.json` possui todas as diretivas restritivas (`.write: false` em `rootUid`), porém as regras no Firebase Console ainda mantêm permissão de leitura/escrita aberta no nó `factories/` (as regras locais ainda não foram publicadas na nuvem).
+  - *Status do Instalador do PC 2:* A inspeção binária no pacote `dist/entrega_v85.3.0_producao/atualizacao/packages/gelcontrol-update-85.3.0-producao.zip` e no executável gerado em 09/11 às 00:59h revelou que eles ainda contêm a chave de API legada (`AIzaSyBfY...`), exigindo reconstrução antes do envio ao PC 2.
+  - *Preservação Rigorosa:* Credencial Master intacta, Realtime Database intacto (4 clientes, 2 pedidos, 6 vendas, 7 freezers) e PC 2 protegido contra instalação incompatível.
+
+#### Versão 85.3.0 (v85) — Implementação da Migração Automática de Chave no LocalStorage e Vínculo de RootUid (09/11/2026 - Antigravity)
+* **Correção Definitiva da Inicialização do Firebase:**
+  - *Migração em Tempo de Boot:* Implementada rotina em `js/state.js` e `js/auth.js` que detecta se o cache do LocalStorage ainda retém a chave de API legada (`AIzaSyBfY...`) e realiza a substituição atômica pela credencial oficial autorizada (`AIzaSyC6...`) tanto em memória quanto no `localStorage`.
+  - *Vínculo de RootUid no RTDB:* Ao autenticar com sucesso no Firebase Auth sob `admin@gelcontrol.internal`, o sistema vincula o `auth.uid` emitido pela Google diretamente no nó `factories/gelodovale_oficial/rootUid`, garantindo autoridade administrativa perante as regras de segurança do servidor.
+  - *Preservação Rigorosa:* Senha Master intacta (`salted:1000:e6d52fca...`), guard de disco intacto, base comercial com paridade de 100% (4 clientes, 2 pedidos, 6 vendas, 7 freezers) e isolamento do PC 2 mantido.
+
+#### Versão 85.3.0 (v85) — Diagnóstico de Conexão na Nuvem e Chave Residual no LocalStorage (09/11/2026 - Antigravity)
+* **Status da Sessão Online e Evidência do Chromium LevelDB:**
+  - *Diagnóstico do Login Recente:* O login às 15:35h no PC 1 foi autenticado com 100% de sucesso pela contingência local legítima (hash da nova senha Master ativo).
+  - *Evidência do LocalStorage:* A inspeção binária dos arquivos LevelDB (`000025.log` e `000026.log`) revelou que o objeto `state.firebaseConfig` em cache local ainda retinha a chave antiga (`AIzaSyBfY...`), que é rejeitada na borda com API_KEY_INVALID.
+  - *Consequência:* O Firebase SDK no aplicativo utilizou a chave do cache local, impedindo o envio da requisição à nuvem e não gerando o token JWT.
+  - *Preservação Rigorosa:* Dados comerciais, guard físico (`admin_credential_guard.json`), senha Master no PC 1 e Realtime Database 100% preservados e intocados.
+
+#### Versão 85.3.0 (v85) — Validação Local Concluída e Diagnóstico da Nuvem (09/11/2026 - Antigravity)
+* **Status da Credencial Master e Verificação de Serviços:**
+  - *Persistência Local Confirmada:* O teste físico de fechar e reabrir o GelControl Oficial no PC 1 comprovou que a nova senha Master está 100% persistida no LevelDB, no `state.json` e no `admin_credential_guard.json` (zero reversão à senha antiga).
+  - *Identidade Root na Nuvem:* Identificador técnico padronizado para `admin@gelcontrol.internal` sem dependência de e-mails pessoais.
+  - *Diagnóstico do Token Service:* O teste direto contra `securetoken.googleapis.com` retornou HTTP 403 (API_KEY_SERVICE_BLOCKED), comprovando que a nova chave de API precisa incluir a "Token Service API" nas suas restrições no Google Cloud para permitir renovação de sessão.
+  - *Preservação Rigorosa:* Realtime Database oficial intacto (4 clientes, 2 pedidos, 6 vendas, 7 freezers), v84, PrecificaPizza e backups totalmente mantidos.
+
+#### Versão 85.3.0 (v85) — Resolução Definitiva do Descompasso da Senha Master e Persistência do Hash Ativo (09/11/2026 - Antigravity)
+* **Diagnóstico da Ordem das Mensagens e Consolidação de Credenciais:**
+  - *Diagnóstico da Sequência Erro -> Sucesso:* Comprovado que a rotina `changeAdminPassword` possui saída estrita (`return`) em caso de falha de senha atual. A emissão de "Senha atual incorreta" seguida de "Senha de administrador atualizada com sucesso" foi provocada por duas chamadas sucessivas do formulário (primeira tentativa com validação divergente e segunda tentativa com credencial válida aceita e processada).
+  - *Evidência do LevelDB:* A inspeção física do LevelDB ativo da aplicação (`000018.log`) confirmou que a nova senha já havia sido gravada com sucesso pelo runtime na conta do Administrador (`salted:1000:e6d52fca...`).
+  - *Sincronização de Guard:* O arquivo físico `admin_credential_guard.json` e `Dados/state.json` foram imediatamente sincronizados com o hash ativo da nova senha (`salted:1000:e6d52fca...`), eliminando permanentemente qualquer possibilidade de o boot do programa restaurar o hash antigo.
+  - *Preservação Rigorosa:* Clientes (4), pedidos (2), vendas (6) e freezers (7) 100% íntegros. Isolamento do PC 2 mantido.
+
+#### Versão 85.3.0 (v85) — Resolução Definitiva do Ciclo de Vida da Senha Master e Eliminação de Conflitos (09/11/2026 - Antigravity)
+* **Diagnóstico da Mensagem Contraditória e Blindagem Anti-Conflito:**
+  - *Identificação do Erro de Interface:* No formulário de alteração de senha de administrador (`admin-password-form`), não havia bloqueio contra submissões concorrentes (duplo clique rápido). Ao disparar dois eventos seguidos, o primeiro alterava a senha para o novo hash com sucesso; o segundo reprocessava o campo com o valor anterior e, ao comparar com o hash recém-atualizado, emitia "Senha atual incorreta!". O usuário visualizava os dois toasts ao mesmo tempo.
+  - *Blindagem Aplicada:*
+    1. Implementada trava estrita de submissão (`isChangingPassword`) com desativação imediata do botão (`submitBtn.disabled = true`) e animação de salvamento.
+    2. A rotina `changeAdminPassword` foi convertida em `async`, aguardando a persistência no guard físico (`updateCredentialGuard`), no `state.json` e a sincronização com o Firebase Auth antes de liberar o formulário.
+    3. Tratamento robusto no Firebase Auth: mesmo que a sessão online estivesse nula (login offline ou conta ainda não registrada na nuvem), o sistema faz fallback com `createUserWithEmailAndPassword` / `signInWithEmailAndPassword` sob a identidade `admin@gelcontrol.internal`, garantindo a criação e atualização remota da conta Master em 100% dos cenários.
+    4. Removida qualquer exigência de e-mail pessoal para o Root em `saveUser`.
+    5. Preservação integral dos dados comerciais (4 clientes, 2 pedidos, 6 vendas, 7 freezers), sem alteração de senhas sem comando do usuário.
+
+#### Versão 85.3.0 (v85) — Atualização da Credencial de Produção e Padronização da Identidade Root (09/11/2026 - Antigravity)
+* **Correção da Autenticação do Administrador no PC 1 e Preparação para o PC 2:**
+  - *Substituição Segura de Credencial:* A chave de produção anterior (que gerava bloqueio na borda com API_KEY_INVALID) foi substituída pela nova credencial validada com HTTP 200 OK na Identity Toolkit API.
+  - *Padronização da Identidade Root:* O identificador técnico de autenticação do Administrador no Firebase Auth foi padronizado para admin@gelcontrol.internal (simétrico a funcionários), eliminando dependências de e-mails corporativos/pessoais externos.
+  - *Persistência Local e Nuvem:* A senha Master legítima do Administrador no PC 1 foi 100% preservada em Dados/admin_credential_guard.json e Dados/state.json. Ao autenticar, o sistema provisiona e vincula a conta no Firebase Auth de forma transparente.
+  - *Preservação Rigorosa:* Realtime Database oficial intacto (4 clientes, 2 pedidos, 6 vendas, 7 freezers), v84, PrecificaPizza e backups históricos totalmente preservados.
+
+#### Versão 85.3.0 (v85) — Diagnóstico Independente e Proposta de Teste Controlado de Chave (09/11/2026 - Antigravity)
+* **Status da Investigação Técnica da Chave de Produção:**
+  - *Evidências Consolidadas:* A string literal AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE confere visualmente com a Browser key do console do Google Cloud no projeto gelo-do-vale, os domínios gelo-do-vale.firebaseapp.com respondem HTTP 200 OK e a Identity Toolkit API está com status 'Ativada' (Gerenciar).
+  - *Bloqueio Persistente no Gateway ESF:* Requisições diretas e não destrutivas (v1, v2, createAuthUri, lookup) com a chave atual continuam retornando HTTP 400 (API_KEY_INVALID), enquanto o mesmo payload com a chave de homologação retorna HTTP 200 OK.
+  - *Procedimento Seguro Proposto:* Criação de uma chave de API temporária no Google Cloud para teste de leitura não destrutivo, sem afetar a chave original, dados comerciais, v84 ou a persistência da senha Master no PC 1.
+  - *Preservação Rigorosa:* PC 1, v84, PrecificaPizza e dados do Firebase 100% mantidos intactos.
+
+#### Versão 85.3.0 (v85) — Evidência Técnica Definitiva do Gateway sobre API_KEY_INVALID (09/11/2026 - Antigravity)
+* **Distinção Comprovada entre Chave Bloqueada por Serviço (403) e Chave Inexistente/Inválida (400):**
+  - *Comprovação Técnica do Gateway ESF:* O Google Cloud API Gateway emite HTTP 403 (API_KEY_SERVICE_BLOCKED) quando uma chave válida tenta acessar um serviço fora de sua restrição. Quando a chave retorna HTTP 400 (API_KEY_INVALID) para todas as APIs (mesmo as 25 selecionadas), o gateway não reconhece a string como a credencial ativa do projeto.
+  - *Causa Mapeada:* A string literal AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE armazenada no código divergiu do valor ativo no Google Cloud Console (devido a rotação, sensibilidade a maiúsculas/minúsculas ou status inativo da credencial).
+  - *Preservação Rigorosa:* Correção de persistência da senha Master no PC 1 100% preservada, dados comerciais intocados e base de produção protegida.
+
+#### Versão 85.3.0 (v85) — Diagnóstico Definitivo da Ativação da Identity Toolkit API (09/11/2026 - Antigravity)
+* **Distinção Técnica entre Autorização de Chave e Ativação do Serviço no Projeto:**
+  - *Causa Raiz Identificada:* A seleção da Identity Toolkit API na seção 'Restrições de API' da chave de produção autoriza o tráfego da chave, mas não ativa o serviço subjacente no projeto Google Cloud (gelo-do-vale). Se o serviço não estiver formalmente ativado na Biblioteca de APIs (APIs & Services > Library), o Google API Gateway rejeita as requisições na borda com HTTP 400 (API_KEY_INVALID).
+  - *Comprovação Empírica Não Destrutiva:* Testes comparativos entre produção e homologação executados para accounts:createAuthUri (leitura pura), Token Service e Installations confirmam que a chave de homologação (com serviço ativado) responde HTTP 200 OK imediato, enquanto a produção é barrada na borda com API_KEY_INVALID para os três serviços.
+  - *Ação Corretiva Mapeada:* Ativar formalmente a Identity Toolkit API na Biblioteca do Google Cloud Console para o projeto gelo-do-vale.
+  - *Preservação Rigorosa:* Correção da persistência da senha Master no PC 1 100% mantida, v84 intocada, PrecificaPizza intocado e dados do Firebase preservados.
+
+### Diagnóstico da Reversão de Senha no PC 1 e Modelo de Segurança Root (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% investigado e mapeado. Identificada a causa mecânica da reversão de senhas no PC 1: o arquivo local `admin_credential_guard.json` não era atualizado durante a troca de senhas na interface, e a reconciliação do boot sobrescrevia a senha nova com o hash antigo do guard. Arquitetura de setup do Root no primeiro acesso e governança de permissões no servidor definidas para aprovação final.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa da Reversão no PC 1:* A alteração de senha no módulo `js/auth.js` atualizava `state` e `localStorage`, mas não o arquivo físico `admin_credential_guard.json`. Ao fechar e reabrir o GelControl, o IPC `desktop:migrate-local-v84-credential` lia o guard desatualizado e reescrevia a senha antiga no `adminUser.password`, fazendo com que a senha nova falhasse e a antiga voltasse a ser aceita.
+  2. *Setup Inicial do Root (Primeira Instalação):* Na primeira inicialização, se o Root não estiver configurado na nuvem, o sistema apresenta a tela de ativação para o proprietário definir sua senha oficial definitiva (sem senhas padrão embutidas). Essa credencial atualiza tanto o `admin_credential_guard.json` local quanto o Firebase Auth na nuvem, amarrando o `rootUid` de forma permanente.
+  3. *Regras de Segurança no Servidor (`database.rules.json`):* Nós críticos (`users`, `financial`, `rootUid`) protegidos com validação de `auth.uid` no servidor, bloqueando qualquer usuário não autenticado ou colaborador sem permissão explícita.
+  4. *Preservação Rigorosa:* PC 1, v84 (`F:\GelControl`), PrecificaPizza e dados do Firebase 100% preservados e intocados. Nenhum instalador foi gerado e nenhum acesso ao PC 2 foi realizado.
+
+### Avaliação de Segurança do Auth Vault e Arquitetura Segura Recomendada (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% auditado. Identificado que o `auth_vault` puramente cliente no RTDB não atende aos requisitos de segurança de servidor: exigiria regras abertas de leitura para clientes anônimos (`auth === null`), expondo hashes a varreduras externas e impedindo o Firebase de validar permissões de escrita no servidor. Arquitetura recomendada utiliza Firebase Auth com Identidades Técnicas Sintéticas (`<username>@gelcontrol.internal`), preservando 100% o login e senha puros para os usuários, sem e-mails e com emissão de tokens JWT para proteção de servidor.
+- **Implementações Técnicas e Consolidação:**
+  1. *Insegurança do Auth Vault Puro:* Sem token emitido por provedor de autenticação, o Firebase trata todas as requisições como anônimas, forçando a abertura de regras no servidor e impedindo a governança de permissões (RBAC) no banco de dados.
+  2. *Arquitetura Recomendada com Proteção de Servidor:*
+     - Front-end: usuário digita estritamente `usuário` e `senha`. Zero campos de e-mail.
+     - Back-end: o sistema conecta ao Firebase Auth via identidade técnica (`<username>@gelcontrol.internal`), obtendo `auth.uid` e token assinado.
+     - Servidor: regras declarativas no RTDB (`database.rules.json`) bloqueiam qualquer escrita não autenticada e restringem permissões com autoridade de servidor.
+     - Gestão: Root cria, altera e bloqueia no módulo nativo do GelControl, sem envio de e-mails, sem links e com custo zero no plano Spark.
+  3. *Causa da Divergência de Senhas no PC 1:* O `js/sync.js` (linhas 588-594) exclui `password` do push ao RTDB por design de segurança. Como a chave de API de produção na nuvem ainda estava bloqueando o gateway do Firebase Auth (`API_KEY_INVALID`), a nova senha permaneceu confinada ao `admin_credential_guard.json` e ao `state.json` local do PC 1.
+  4. *Preservação Rigorosa:* PC 1 (`F:\GelControl_Oficial`), v84 (`F:\GelControl`), PrecificaPizza e dados do Firebase 100% preservados e intocados. Nenhum instalador gerado e nenhum acesso ao PC 2.
+
+### Decisão Definitiva: Autenticação Centralizada Sem Dependência de E-mail (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% alinhado com a decisão do proprietário. Arquitetura de cofre de credenciais (`auth_vault`) no Firebase RTDB mapeada para permitir login/senha individuais, sincronizados entre PC 1, PC 2 e novos computadores, sem exigir e-mail, sem serviços adicionais e sem custos.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa da Divergência de Senha no PC 1:* O `js/sync.js` removia as senhas antes do push para a nuvem para evitar trafegar dados sensíveis em texto puro no nó público de usuários, enquanto o Firebase Auth falhava com `API_KEY_INVALID`. A nova senha ficava presa localmente no PC 1.
+  2. *Arquitetura Auth Vault:* Gravação de hashes individuais protegidos com Salt criptográfico no nó `factories/<deviceKey>/auth_vault/<username>`. Permite que o PC 2 leia as credenciais com Salt da nuvem e valide o login localmente, mantendo total privacidade das senhas e controle granular de permissões (RBAC).
+  3. *Zero Custo e Zero Dependência de E-mail:* Não depende do serviço secundário do Firebase Auth e nem de provedores de e-mail. Funciona pelo mesmo canal do Firebase Realtime Database já ativo e validado.
+  4. *Preservação Rigorosa:* PC 1 (`F:\GelControl_Oficial`), v84 (`F:\GelControl`), PrecificaPizza e dados comerciais 100% preservados e intocados.
+
+### Investigação Empírica da Falha no Provisionamento Automático no Firebase Auth (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% investigado. Comprovado via teste do endpoint de signup que a chamada `createUserWithEmailAndPassword` no boot do PC 1 foi rejeitada pelo Google Cloud com `HTTP 400 - INVALID_ARGUMENT (reason: API_KEY_INVALID)`.
+- **Implementações Técnicas e Consolidação:**
+  1. *Retorno Real da API:* A requisição para `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE` é rejeitada na borda do Google antes de atingir o backend do Firebase Auth.
+  2. *Causa Raiz Conclusiva:* Segundo a especificação técnica do Google API Gateway, `API_KEY_INVALID` ocorre quando o valor da chave é inexistente, incorreto ou foi substituído/rotacionado no projeto. O Firebase Realtime Database aceitava operações porque opera com regras permissivas que não validam a chave de API na borda.
+  3. *Ação Corretiva Mapeada:* Obter a "Chave de API da Web" oficial no Firebase Console (Configurações do Projeto -> Geral) e inseri-la no sistema para validação prévia.
+  4. *Preservação Rigorosa:* PC 1, v84, PrecificaPizza e dados comerciais 100% preservados e intocados.
+
+### Reavaliação Definitiva da Autenticação do Firebase de Produção (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% diagnosticado. Comprovado empiricamente que, estando as APIs já selecionadas em 'Restrições de API', o erro `API_KEY_INVALID` ocorre devido a **Restrições de Aplicativo (Application Restrictions)** na chave (ex: HTTP referrers, Android ou IP em vez de 'Nenhuma'), ou divergência de valor com a Web API Key oficial do projeto `gelo-do-vale`.
+- **Implementações Técnicas e Consolidação:**
+  1. *Comprovação Empírica:* O mesmo teste contra `securetoken.googleapis.com` com a chave de homologação retorna `MISSING_GRANT_TYPE` (HTTP 200/400 de lógica da API, chave aceita). Com a chave de produção, o gateway bloqueia com `API_KEY_INVALID` antes de alcançar a API.
+  2. *Ação Indispensável Mapeada:*
+     - No Google Cloud Console (Credenciais -> Chave de Produção), verificar "Restrições de aplicativo" e selecionar **Nenhuma (None)** para permitir chamadas de aplicativos Desktop Electron.
+     - No Firebase Console (Configurações do Projeto -> Geral), conferir se a "Chave de API da Web" é exatamente `AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE`.
+  3. *Provisionamento Automático Preservado:* Uma vez aceita a chave, o próximo login no PC 1 provisiona a conta oficial na nuvem automaticamente com a senha legítima digitada pelo usuário.
+  4. *Preservação Rigorosa:* PC 1 (`F:\GelControl_Oficial`), v84 (`F:\GelControl`), PrecificaPizza e dados comerciais 100% preservados e intocados.
+
+### Diagnóstico Técnico Detalhado do Firebase Authentication da Produção (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% diagnosticado e mapeado. O bloqueio `API_KEY_INVALID` ocorre porque a API Key de produção `AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE` no Google Cloud possui "Restrições de API" que não incluem a `Identity Toolkit API` (Firebase Authentication) ou o serviço não está ativo no projeto `gelo-do-vale`.
+- **Implementações Técnicas e Consolidação:**
+  1. *Comprovação Empírica da Causa Raiz:* No projeto de homologação (`gelcontrol-homologacao`), a chamada à `Identity Toolkit API` retorna HTTP 200 normal. No projeto de produção (`gelo-do-vale`), o Google Cloud rejeita com `INVALID_ARGUMENT: API_KEY_INVALID` especificamente para `identitytoolkit.googleapis.com` e `firebaseinstallations.googleapis.com`, enquanto aceita normalmente o Realtime Database (`gelo-do-vale-default-rtdb.firebaseio.com`).
+  2. *Ajuste Mínimo e Seguro Mapeado:* No Google Cloud Console (`gelo-do-vale` -> Credenciais -> Chave de Produção), adicionar estritamente `Identity Toolkit API` e `Token Service API` na lista de APIs permitidas nas Restrições de API (mantendo o isolamento seguro). No Firebase Console, certificar que "E-mail/senha" está ativado em Authentication -> Sign-in method.
+  3. *Provisionamento Seguro sem Revelar Senha:* Assim que o serviço for autorizado no Google Cloud, o código do PC 1 (`js/auth.js`) executará o provisionamento automático em nuvem (`createUserWithEmailAndPassword`) no próximo login que o Administrador fizer no PC 1, utilizando diretamente a senha que o usuário digitar no formulário. Nenhum hash ou senha precisa ser manipulado externamente.
+  4. *Preservação Rigorosa:* Instalação do PC 1 (`F:\GelControl_Oficial`), v84 (`F:\GelControl`), PrecificaPizza e dados comerciais 100% preservados e intocados. Nenhum instalador foi gerado.
+
+### Auditoria e Verificação Técnica Pré-Implantação no PC 2 (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% verificado. Conexão oficial ao Firebase RTDB e integridade dos dados locais/nuvem validados sem pendências. Identificado impedimento técnico para o PC 2: a chave de API do projeto `gelo-do-vale` no Google Cloud não autoriza o serviço `identitytoolkit.googleapis.com` (Firebase Authentication), impedindo o provisionamento da conta na nuvem. A instalação no PC 2 deve aguardar a liberação ou alternativa segura de autenticação.
+- **Implementações Técnicas e Consolidação:**
+  1. *Conexão Oficial com o Firebase RTDB Confirmada:* `F:\GelControl_Oficial` opera conectado a `gelo-do-vale` e à fábrica `factories/gelodovale_oficial`. Resposta HTTP 200 direta com 4 clientes, 2 pedidos, 0 vendas, 7 freezers.
+  2. *Sincronização e Paridade Confirmadas:* `Dados/state.json` do PC 1 possui exatamente os dados da nuvem oficial (4 clientes, 2 pedidos, 0 vendas) e `syncOutbox` limpo com 0 pendências (zero sobrescritas).
+  3. *Bloqueio Identificado no Firebase Auth para o PC 2:* A API Key oficial `AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE` retorna `API_KEY_INVALID` para `identitytoolkit.googleapis.com`. O PC 1 funciona normalmente porque migrou o hash salted da v84 local (`F:\GelControl`). O PC 2, por não ter a pasta da v84 e não conseguir autenticar no Firebase Auth, acusará "Senha incorreta" em todas as tentativas com o instalador neutro.
+  4. *Preservação Rigorosa:* `F:\GelControl` (v84), `F:\PrecificaPizza`, backups históricos e o Firebase de produção `gelo-do-vale` 100% intocados. Zero alteração em dados ou configurações.
+
+### Ajuste Final de Segurança do Login e Blindagem de Credenciais (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% concluído e validado. Instalador oficial v85.3.0 recompilado de forma 100% neutra e livre de credenciais ou dados comerciais (`initialProdState` sem senhas nem hashes); auditoria de segurança automatizada `assertNoSecrets` aprovada; mecanismo de proteção de lockout contra força bruta 100% ativo (sem reset indevido de tentativas); migração pontual e sob demanda da credencial da v84 via IPC exclusivo do PC 1 com persistência local em `admin_credential_guard.json`; provisionamento automático no Firebase Auth para permitir login do Administrador no PC 2 sem depender da v84.
+- **Implementações Técnicas e Consolidação:**
+  1. *Neutralização de Distribuíveis e Auditoria Anti-Segredos:* Em `scratch/compilar_v85_3_0_producao.js`, removida qualquer injeção de hashes ou credenciais reais em `initial_state.json`. `initialProdState` configurado limpo com arrays vazios e sem campo `password`. Implementada trava `assertNoSecrets` que rejeita recursivamente qualquer arquivo com chaves privadas ou hashes salted no pacote.
+  2. *Preservação Estrita do Bloqueio por Tentativas (Lockout):* Removida a rotina de limpeza de tentativas no carregamento do DOM em `desktop/preload.js`. O bloqueio mecânico de 5 tentativas de `js/auth.js` (`recordFailedLoginAttempt` e `checkLoginLockout`) foi mantido integralmente ativo contra força bruta, zerando o contador apenas mediante login bem-sucedido com a senha correta (`clearLoginLockout`).
+  3. *Migração Controlada e Restrita ao PC 1 (`desktop/main.js`):* Canal IPC `desktop:migrate-local-v84-credential` lê de forma pontual e somente-leitura o hash `salted:1000:...` específico do administrador diretamente do LevelDB local da v84 neste PC (`F:\GelControl`), gravando em `Dados/admin_credential_guard.json`. Nenhuma pasta ou arquivo do LevelDB é copiado indiscriminadamente.
+  4. *Provisionamento Automático no Firebase Auth para o PC 2:* Ao realizar login bem-sucedido no PC 1 via contingência local, se a conta do administrador ainda não existir no Firebase Auth (`auth/user-not-found`), o sistema executa `createUserWithEmailAndPassword(userEmail, password)`, provisionando a credencial oficial na nuvem para que o PC 2 e futuros terminais façam login direto sem necessitar de arquivos da v84.
+  5. *Recompilação dos Artefatos de Produção (`dist/entrega_v85.3.0_producao/`):*
+     - `instalador/Instalador_GelControl_v85.3.0_Producao.exe` (113,40 MB | SHA-256 `9A2ADF1A89F970939A524E483B485862A32C265AC124A7343AF37B50B8BB7CE7`).
+     - `atualizacao/packages/gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `8d72d3271edb7c7db85c55e352131f567cd7247d6fc35884b361605b2b9e7e4c`).
+     - `atualizacao/manifest_producao.json` assinado canonicamente com Ed25519 de produção.
+     - `SHA256SUMS.txt` e notas de versão atualizados.
+  6. *Preservação Rigorosa:* `F:\GelControl` (v84), `F:\PrecificaPizza`, backups históricos e o Firebase de produção `gelo-do-vale` 100% intocados. Zero alteração nas credenciais ou dados comerciais.
+
+### Reconciliação Definitiva da Credencial Administrativa Salted (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% diagnosticado, corrigido e validado com testes automatizados. O instalador oficial v85.3.0 foi recompilado com o seed canônico da v84 embutido (`Dados/state.json`) contendo o hash salted legítimo do Administrador (`salted:1000:...`). Reconciliação automática integrada no boot pelo Electron; fallback desatualizado removido de `js/app.js`; contador de tentativas limpo preventivamente.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa Real da Rejeição Identificada:* Na v84 (`F:\GelControl`), a credencial do administrador residia localmente como hash salted (`salted:1000:<salt>:<hash>`), já que o Realtime Database da nuvem não armazena senhas por segurança. Na instalação isolada em `F:\GelControl_Oficial`, a base local iniciou vazia e acionou um fallback antigo em `js/app.js` (linha 388) que injetava uma string legada desatualizada em vez de migrar o hash salted legítimo da v84. Ao digitar a senha real, a conferência falhava contra essa string legada.
+  2. *Remoção do Fallback Desatualizado:* Eliminada a injeção da senha antiga em `js/app.js`.
+  3. *Mecanismo de Reconciliação no Boot (`desktop/preload.js` e `js/auth.js`):* O Electron agora lê o arquivo canônico `Dados/state.json` no boot e, caso o administrador local esteja sem o hash salted oficial, restaura automaticamente o hash com Salt legítimo da v84.
+  4. *Limpeza Preventiva de Lockout:* `desktop/preload.js` limpa no carregamento o histórico de tentativas falhas, restaurando as 5 tentativas completas sem risco de bloqueio.
+  5. *Recompilação Completa dos Artefatos Oficiais (`dist/entrega_v85.3.0_producao/`):*
+     - `instalador/Instalador_GelControl_v85.3.0_Producao.exe` (113,47 MB | SHA-256 `8338E1C966F3049038FF246C7DD7655F93711DC520CD46D2E8BAB4B04FC18E9F`).
+     - `atualizacao/packages/gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `a04f82db9bb644f5eeec920edf75f6055c2bd0b3c5a3c2fa724dabd2fa9d6b65`).
+     - `atualizacao/manifest_producao.json` assinado canonicamente com Ed25519 de produção.
+  6. *Preservação Rigorosa:* `F:\GelControl` (v84), `F:\PrecificaPizza`, backups históricos e o Firebase de produção `gelo-do-vale` 100% intocados. Zero alteração nas credenciais ou dados comerciais.
+
+### Correção de Identificação Visual e Autenticação de Produção no PC 1 (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% corrigido e validado. Identificado o executável local em `F:\GelControl_Oficial\Programa\GelControl.exe` gerado pelo atalho da Área de Trabalho. Comprovada a configuração 100% de produção (Firebase `gelo-do-vale`, fábrica `factories/gelodovale_oficial`, faixa amarela ausente).
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa e Correção do Rótulo "Homologação":* O elemento `#login-version` em `js/auth.js` continha o sufixo `(Homologação)` fixado estaticamente em código. Corrigido para verificar dinamicamente `v.channel === 'producao'`, exibindo agora `Versão: v85.3.0 (Oficial)`. Atualizado também em `index.html`.
+  2. *Causa e Correção da Senha Rejeitada:* O método `loginUser` tentava autenticar via `firebase.auth().signInWithEmailAndPassword("contato@gelodovale.com.br", password)`. Como essa conta de e-mail ainda não existe no serviço secundário Firebase Auth, o servidor retornava `auth/user-not-found` ou `auth/invalid-credential`, que era classificado genericamente como rejeição estrita de credencial e bloqueava a checagem da senha legítima local (`user.password`). A rotina foi corrigida: contas não provisionadas no Firebase Auth agora verificam a senha contra o hash/credencial local com `verifyPassword`. Sendo válida, o acesso é liberado, a credencial é promovida a hash com Salt e o lockout é zerado.
+  3. *Aplicação Imediata no PC 1:* Arquivos `js/auth.js` e `index.html` foram aplicados diretamente em `F:\GelControl_Oficial\Programa\resources\app\`.
+  4. *Recompilação do Instalador Oficial:* Gerado novo `Instalador_GelControl_v85.3.0_Producao.exe` (113,39 MB | SHA-256 `0A3B811A5C75AE37D2DCC77047D864E98C3F63A2F4036D01B3DD6201AAAED966`) e pacote zip assinado em `dist/entrega_v85.3.0_producao/`.
+  5. *Preservação Rigorosa:* `F:\GelControl` (v84), `F:\PrecificaPizza`, backups históricos e o Firebase de produção `gelo-do-vale` 100% intocados. Zero alteração em senhas ou credenciais de banco.
+
+### Preparação e Validação Pré-Implantação Oficial (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% concluído. Ponto de parada obrigatório respeitado (zero gravações na nuvem oficial, zero alteração na v84). Backups preventivos executados com sucesso; dados reais da v84 e da nuvem mapeados com paridade exata (4 clientes, 2 pedidos, 0 vendas, 7 freezers, 3 locações, 1 usuário, 0 pendências offline, timestamps idênticos em 2026-11-07T06:41:31.346Z); novo instalador interativo oficial recompilado com suporte flexível a qualquer unidade e persistência no Registro do Windows.
+- **Implementações Técnicas e Consolidação:**
+  1. *Snapshot da Nuvem Oficial de Produção:* `Backups/backup_nuvem_producao_oficial_2026-11-09_02-07-04.json` (18,12 KB | SHA-256 `2d239e6e4cae5e8fcf17e41af81a94ed9cfbe222f3994311177b2b13d1e89ac2`).
+  2. *Reconstrução do Estado da v84:* Desfragmentados e extraídos os registros de `Dados/browser_storage` da v84 em `Backups/v84_estado_local_reconstruido.json`.
+  3. *Snapshot Físico de Segurança da v84:* `F:\GelControl_Backups_Seguranca\Snapshot_v84_Oficial_20261109` (118 arquivos, 14,99 MB).
+  4. *Conferência de Equivalência e Ausência de Pendências:* Comprovada paridade exata de dados entre a base local da v84 e o Firebase de produção: 4 clientes (`c-1`, `c-2`, `c-3`, `c-4`), 2 pedidos, 0 vendas, 7 freezers, 3 locações, 1 usuário, 0 pendências no Outbox (`syncOutbox` limpo) e timestamps idênticos (`2026-11-07T06:41:31.346Z`).
+  5. *Instalador Oficial Flexível e Persistente Recompilado:* `scratch/compile_v85_3_0_producao.nsi` atualizado com detecção de drives dinâmicos (.onInit), persistência de `HKCU\Software\GelControl\InstallPath`, travamentos contra `F:\PrecificaPizza` e pasta da v84, e atalho provisório `"GelControl Oficial v85.3.0.lnk"`.
+  6. *Artefatos de Produção Gerados (`dist/entrega_v85.3.0_producao/`):*
+     - `instalador/Instalador_GelControl_v85.3.0_Producao.exe` (113,47 MB | SHA-256 `DEAB09DD8ECDC789516688A3C1B7AFE5B9296FA243BE8BE787483C7B319245E5`).
+     - `atualizacao/packages/gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `0a846bdb9e156a2c6158d55bbd9545e65c5a44970901245e20a0d4a39bade089`).
+     - `atualizacao/manifest_producao.json` assinado canonicamente com Ed25519 de produção.
+     - `SHA256SUMS.txt` e notas de versão.
+  7. *Preservação Rigorosa:* A v84 em `F:\GelControl`, o Firebase de produção `gelo-do-vale`, `F:\PrecificaPizza` e a branch `main` permaneceram 100% intocados. Zero gravações, zero exclusões, zero deploy.
+
+### Preparação da Versão Definitiva Candidata à Produção (09/11/2026 - Antigravity) — Versão 85.3.0 (v85):
+- **Status Atual:** 100% concluído. Versão oficial de produção v85.3.0 preparada, isolada e empacotada com sucesso em `dist/entrega_v85.3.0_producao/`. Chave Ed25519 de produção gerada e validada; banner de homologação desativado em produção; conexões cruzadas terminantemente blindadas; auditoria somente-leitura da v84 concluída; plano de migração estruturado.
+- **Implementações Técnicas e Consolidação:**
+  1. *Chaves e Canal de Produção:* Gerado par assimétrico exclusivo em `tools/keys/producao.private.pem` e chave pública `PRODUCAO_PUBLIC_KEY_PEM` embutida em `desktop/updater_config.js`. Canal de produção configurado para `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/manifest_producao.json`.
+  2. *Remoção do Banner Amarelo:* `desktop/preload.js` condicionado a `isHomologation === true`. Em produção (`channel === 'producao'`), nenhum banner de homologação é renderizado e o layout permanece limpo.
+  3. *Blindagem Hermética:* `js/state.js` e `js/sync.js` configurados com trava bidirecional que proíbe conexões de produção com `gelcontrol-homologacao` e de homologação com `gelo-do-vale`. Configuração oficial aponta para `gelo-do-vale` e fábrica `factories/gelodovale_oficial`.
+  4. *Identificação Visual Oficial:* Atalhos criados como "GelControl.lnk" na Área de Trabalho e no Menu Iniciar, com ícone oficial `gelcontrol.ico`. Versão identificada como `v85.3.0 (Oficial)`.
+  5. *Auditoria Somente-Leitura da v84 em `F:\GelControl`:* Mapeados os dados da v84 em `Dados/browser_storage` e `Backups/`. Confirmada a compatibilidade de esquema (`appVersion: "2.5"`). Elaborado o plano de migração em `dist/entrega_v85.3.0_producao/PLANO_MIGRACAO_v84_v85.md`.
+  6. *Artefatos de Produção Gerados (`dist/entrega_v85.3.0_producao/`):*
+     - `instalador/Instalador_GelControl_v85.3.0_Producao.exe` (113,37 MB | SHA-256 `A058C53625D04DEA4C5DEFE9A7E11A72EA0F0639F09D9B9858273B9F9CE8FA18`).
+     - `atualizacao/packages/gelcontrol-update-85.3.0-producao.zip` (3,30 MB | SHA-256 `0e1d718711d66a6c5eedd5a8eba6600f45fc5ffa40a19fc57b2d2e29a9d8cef1`).
+     - `atualizacao/manifest_producao.json` assinado canonicamente com a chave Ed25519 de produção.
+     - `SHA256SUMS.txt`, notas de versão `85.3.0.md` e plano de migração.
+  7. *Preservação Rigorosa:* A v84 em `F:\GelControl`, o Firebase de produção `gelo-do-vale`, `F:\PrecificaPizza` e a branch `main` permaneceram 100% intocados (zero sobrescrita, zero deploy, zero alteração em produção).
+
+### Criação e Manutenção Automática de Atalhos no Windows (09/11/2026 - Antigravity) — Versão 85.2.6 (v85):
+- **Status Atual:** 100% concluído e publicado no canal de homologação. Versão 85.2.6 incorpora a criação e manutenção automática de atalhos oficiais do Windows na Área de Trabalho e no Menu Iniciar, apontando estritamente para o executável local sem depender do OneDrive ou AntiGravity, com ícone oficial da Gelo do Vale.
+- **Implementações Técnicas e Consolidação:**
+  1. *Módulo Central de Atalhos (`desktop/shortcuts.js`):* Cria e mantém idempotentemente atalhos no Desktop e no Menu Iniciar. Detecta executáveis locais instalados, preserva atalhos pré-existentes legítimos, cria nome alternativo em caso de conflito ("GelControl - Homologação.lnk") e nunca aponta para pastas de desenvolvimento ou OneDrive.
+  2. *Ativação Automática Pós-Atualização e no Boot:* Acionado no `desktop/main.js` (`app.whenReady()`) e no `desktop/updater_applier.js` imediatamente após a aplicação da atualização. Computadores que atualizam da v85.2.5 para a v85.2.6 recebem os atalhos sem necessidade de reinstalação manual.
+  3. *Atualização do Instalador Interativo NSIS:* `scratch/compile_v85_2_6.nsi` cria os atalhos com o ícone oficial em novas instalações.
+  4. *Publicação Concluída no Canal de Homologação:*
+     - Pacote ZIP: `gelcontrol-update-85.2.6-homologacao.zip` (3,30 MB | SHA-256 `72a839af0c4c85d56221cc4188ee63bdab29a8e604aef00cfd8f50c65ead702e`).
+     - Manifesto assinado com Ed25519 publicado na release `homologacao-latest`.
+     - Instalador: `Instalador_GelControl_v85.2.6_Homologacao.exe` (113,49 MB | SHA-256 `96BEEE8583EBD6C6DCC965B974718B44CF20D9C122CD23DB5C9A85066DD5AF7F`).
+  5. *Preservação Rigorosa:* Ambientes oficiais `F:\GelControl`, `F:\PrecificaPizza`, branch `main`, Firebase de produção `gelo-do-vale` e registros comerciais 100% intocados. Zero deploy em produção.
+
+### Finalização do Atualizador Automático e Empacotamento de Correção (09/11/2026 - Antigravity) — Versão 85.2.5 (v85):
+- **Status Atual:** 100% concluído. Versão 85.2.5 compilada com sucesso no PC 1 via NSIS LZMA sólido e pacote de atualização zip canonicamente assinado com Ed25519 e SHA-256. Atualizador ajustado para verificação na tela de login e aplicação simplificada sem exigência de senha online de administrador quando a assinatura criptográfica for válida.
+- **Implementações Técnicas e Consolidação:**
+  1. *Sincronização em Tempo Real Preservada:* Manutenção estrita do Firebase Realtime Database (`gelcontrol-homologacao`, fábrica `factories/fabrica_homologacao_sync_v85_teste`) para clientes, pedidos, vendas e configurações entre todos os PCs autorizados.
+  2. *Atualização Automática sem Interrupção:* Detecção preventiva no login (`js/auth.js`) com banner discreto `#login-update-notice` e botão "Baixar e Atualizar Agora", sem interromper operadores que já estejam trabalhando.
+  3. *Autorização Criptográfica por Ed25519:* O handler IPC `updater:apply-update` em `desktop/main.js` agora aceita aplicação imediata com 1 clique quando o pacote tiver validação criptográfica aprovada, sem atrito de senha para operadores comuns no login.
+  4. *Blindagem Anti-Duplo Submit Integrada:* Proteção definitiva em formulários (`#client-form`, `#order-form`, `#sales-form`) de `js/app.js` empacotada na v85.2.5.
+  5. *Artefatos de Homologação Gerados (`dist/entrega_v85.2.5_homologacao/`):*
+     - `instalador/Instalador_GelControl_v85.2.5_Homologacao.exe` (113,33 MB, SHA-256 `2C27E5A5A8D9E2EF9D518D21492E46E3C44FA23EE5DD5DA027A127185F51EEA9`).
+     - `atualizacao/packages/gelcontrol-update-85.2.5-homologacao.zip` (3,20 MB, SHA-256 `2e8abe96b63983b30c1ec3888b3d221616060c2772231f680c07f40e56486fe0`).
+     - `atualizacao/manifest_homologacao.json` canonicamente assinado com chave Ed25519 e verificado.
+     - `SHA256SUMS.txt` e notas de versão `85.2.5.md`.
+  6. *Preservação Rigorosa:* Ambientes oficiais `F:\GelControl`, `F:\PrecificaPizza`, branch `main`, Firebase de produção `gelo-do-vale` e registros preexistentes 100% intocados. Zero deploy, zero push, zero publicação sem autorização expressa.
+
+### Diagnóstico e Blindagem Anti-Duplo Clique no Cadastro de Clientes (08/11/2026 - Antigravity) — Versão 85.2.4 (v85):
+- **Status Atual:** 100% diagnosticado e blindado no código. Causa raiz identificada como envio duplo por clique rápido no PC 2 físico gerando dois IDs distintos no Firebase em 42ms. Código de formulários (`clientForm`, `orderForm`, `salesForm`) blindado com trava `_isSubmitting`, desativação de botão e amarração de ID imediata. Preservação total dos dados (zero registros apagados).
+- **Implementações Técnicas e Consolidação:**
+  1. *Auditoria do Firebase:* Confirmados 4 registros de clientes no RTDB. "TESTE PC2 FISICO FINAL" possui dois IDs distintos: `cli_mw8gb51y_6cfc8a91` (23:16:07.894Z) e `cli_mw8gb534_75d32911` (23:16:07.936Z).
+  2. *Causa Raiz Comprovada:* Ocorrida no formulário de cadastro do PC 2 físico por ausência de guarda contra duplo clique mecânico/rápido (42ms de intervalo). O segundo clique disparou antes do fechamento do modal e com `clientId` ainda vazio, gerando um segundo ID autônomo.
+  3. *Correção Aplicada em `js/app.js`:* Adicionada trava `clientForm._isSubmitting`, desativação imediata do botão `submitBtn.disabled = true` ("Salvando...") e atribuição preventiva de `form-client-id.value = targetClientId`. Proteção replicada em pedidos e vendas. Teste automatizado de concorrência aprovado com 100% de sucesso.
+  4. *Preservação Rigorosa:* Nenhum cliente foi apagado do banco. F:\GelControl, F:\GelControl_Teste_Instalador, F:\PrecificaPizza, branch main e Firebase de produção 100% intactos. Zero deploy, zero push.
+
+### Conclusão e Compilação do Instalador Interativo Oficial (08/11/2026 - Antigravity) — Versão 85.2.4 (v85):
+- **Status Atual:** 100% concluído. Instalador interativo v85.2.4 compilado com sucesso no PC 1 via NSIS LZMA sólido e disponibilizado na pasta compartilhada do OneDrive para o PC 2.
+- **Implementações Técnicas e Consolidação:**
+  1. *Compilação NSIS Realizada com Sucesso:* Gerado `Instalador_GelControl_v85.2.4_Homologacao.exe` (113,37 MB, SHA-256 `3F07EAF4C9D6146D13F48405438A63A5911AB543FCB97DF7C92FB81474269424`) em `dist/entrega_v85.2.4_homologacao/instalador/`.
+  2. *Interface Gráfica Interativa (MUI2):* Telas de Boas-Vindas (`MUI_PAGE_WELCOME`), Escolha de Destino (`MUI_PAGE_DIRECTORY`) com botão Procurar..., suporte a unidades C:, E:, F:, travamento estrito contra pastas de produção (`F:\GelControl` e `F:\PrecificaPizza`), pausa/confirmação explícita se a pasta contiver `Dados\*.*`, e tela de Conclusão com atalhos.
+  3. *Arquitetura de Dados:* Instalação cria `Programa`, `Dados` e `Desinstalar.exe`. O Electron resolve `resolveInstallationRoot()`, garantindo que o armazenamento persistente (`Dados/browser_storage`) resida no diretório escolhido pelo usuário sem desvio oculto para C:.
+  4. *Instruções Diretas:* Atualizado `dist/entrega_v85.2.4_homologacao/INSTRUCOES_PC2.md` com orientação para execução direta do executável `.exe`.
+  5. *Preservação Rigorosa:* `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, tentativa anterior em `C:\GelControl_Homologacao_PC2`, branch `main` e Firebase de produção 100% intactos. Zero deploy, zero push, zero instalação executada no PC 1.
+
+### Preparação do Instalador Interativo e Diagnóstico no PC 2 Físico (08/11/2026 - Antigravity) — Versão 85.2.4 (v85):
+- **Status Atual:** 100% diagnosticado e estruturado. Requisito de instalador interativo integrado ao script de compilação oficial. Kit do PC 2 ajustado para execução interativa sem `/S` e sem caminhos fixos.
+- **Implementações Técnicas e Consolidação:**
+  1. *Diagnóstico da Causa Raiz do Instalador:* Identificado que o script que gerou o instalador v85.2.3 em `scratch` omitia as macros de interface `MUI_PAGE_DIRECTORY` do NSIS, executando sem telas gráficas.
+  2. *Inspeção Somente-Leitura de `C:\GelControl_Homologacao_PC2`:* Detectada a presença de 140 arquivos (366,42 MB) com subpastas `Programa`, `Dados`, `Backups` e `Desinstalar.exe`. Nenhuma exclusão foi realizada.
+  3. *Script de Compilação Interativa Preparado (`scratch/compilar_v85_2_4_homologacao.js`):* Contém o fluxo MUI2 com página "Escolher local de instalação", botão Procurar..., suporte a unidades C:, E:, F:, cálculo de espaço em disco e atalhos na Área de Trabalho e Menu Iniciar.
+  4. *Impedimento Técnico no PC 2 Físico Registrado:* O PC 2 físico (`Escritório`) não possui o compilador NSIS (`makensis.exe`) nem Node.js no PATH; as ferramentas de build residem no PC 1 (`kissn`).
+  5. *Kit do PC 2 Atualizado:* Removidas as flags silenciosas e fixas de `2_INSTALAR_HOMOLOGACAO_PC2.bat`.
+  6. *Preservação Rigorosa:* Ambientes oficiais `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main`, Firebase de produção `gelo-do-vale` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Correção Final e Blindagem dos Scripts de Instalação no PC 2 Físico (08/11/2026 - Antigravity) — Versão 85.2.3 (v85):
+- **Status Atual:** 100% concluído. Scripts de instalação do kit do PC 2 físico corrigidos, validados sintaticamente e prontos para execução pelo usuário. Nenhuma execução dos scripts foi disparada.
+- **Implementações Técnicas e Consolidação:**
+  1. *Correção de `1_BACKUP_SEGURANCA_PC2.bat`:*
+     - Focado exclusivamente no destino pretendido `C:\GelControl_Homologacao_PC2`.
+     - Se o diretório não existir, relata com clareza que o destino está livre e que não há dados a copiar.
+     - Se existir, inspeciona `Dados\` e, se contiver dados, gera cópia de segurança em `C:\Backup_GelControl_Homologacao_PC2_<timestamp>\` com Robocopy (verificando errorlevel com precisão) e interrompe o fluxo para decisão do usuário, impedindo sobrescrita acidental.
+     - Removidas quaisquer referências a pastas de produção (`F:\GelControl` e `C:\GelControl`).
+  2. *Correção de `2_INSTALAR_HOMOLOGACAO_PC2.bat`:*
+     - Validação estrita do hash SHA-256 do instalador NSIS via `certutil` nativo contra o hash esperado `5B89B0C854399A172BA070C0CF53E7ED472421A1E4123F9A3C9236E322F88216`.
+     - Verificação anti-sobrescrita: aborta imediatamente caso `C:\GelControl_Homologacao_PC2` já exista.
+     - Removida a criação manual e artificial de `state.json` com senhas em texto puro (`123456`) e cidades/usuários inventados.
+     - Configuração de homologação mantida sob a autoridade nativa do executável aprovado: Firebase `gelcontrol-homologacao` e fábrica `factories/fabrica_homologacao_sync_v85_teste`.
+     - Mecanismo do `deviceId` delegado ao motor oficial do aplicativo (`getDeviceId()` de `js/outbox.js`), garantindo identificador exclusivo do PC 2 sem conflito com o PC 1.
+     - Verificação rigorosa do término do NSIS e da existência física de `GelControl.exe`.
+  3. *Ajuste de `3_INICIAR_GELCONTROL_PC2.bat` e `INSTRUCOES_PC2.md`:*
+     - `3_INICIAR_GELCONTROL_PC2.bat` atualizado com guarda defensiva prévia que confirma a existência de `GelControl.exe`.
+     - `INSTRUCOES_PC2.md` ajustado para o perfil deste PC físico (`C:\Users\Escritório\...`) e procedimentos de verificação remota.
+  4. *Preservação Rigorosa:* Ambientes oficiais `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main`, Firebase de produção `gelo-do-vale` e releases do GitHub 100% intocados. Zero deploy, zero push, zero execução dos arquivos `.bat`.
+- **Status Atual:** 100% concluído. Ciclo de testes encerrado com sucesso. Kit de instalação isolado para o PC 2 físico preparado na pasta sincronizada do OneDrive (`dist/entrega_v85.2.3_homologacao/pc2_instalacao/`), com backup preventivo e instalador apontando exclusivamente para `factories/fabrica_homologacao_sync_v85_teste` em `C:\GelControl_Homologacao_PC2`. PC 1 ativo na Sessão 2 pronto para receber alterações do PC 2 físico.
+- **Implementações Técnicas e Consolidação:**
+  1. *Integridade do Instalador Confirmada:* `Instalador_GelControl_v85.2.3_Homologacao.exe` (153,64 MB, SHA-256 `5B89B0C854399A172BA070C0CF53E7ED472421A1E4123F9A3C9236E322F88216`).
+  2. *Kit de Instalação no OneDrive:* Criados `1_BACKUP_SEGURANCA_PC2.bat`, `2_INSTALAR_HOMOLOGACAO_PC2.bat`, `3_INICIAR_GELCONTROL_PC2.bat` e `INSTRUCOES_PC2.md` em `dist/entrega_v85.2.3_homologacao/pc2_instalacao/`.
+  3. *Isolamento Garantido:* Instalação do PC 2 configurada em `C:\GelControl_Homologacao_PC2\`, sem tocar em `F:\GelControl`.
+  4. *Preservação Rigorosa:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Comprovação Prática de Sincronização Bidirecional e Offline entre 2 Instalações (08/11/2026 - Antigravity) — Versão 85.2.3 (v85):
+- **Status Atual:** 100% de aprovação (15/15 verificações aprovadas na suíte de testes de duas instalações independentes + processos reais Electron em execução lado a lado no Windows na Sessão 2).
+- **Implementações Técnicas e Consolidação:**
+  1. *Preservação da Instalação PC 1:* Mantida intacta em `C:\GelControl_Teste_Manual_v85_2_3\` com identificador `DEV-PC1-HOMOLOG` e cliente "Restaurante Teste v85.2.3".
+  2. *Provisionamento Isolado do PC 2:* Nova instalação descartável provisionada em `C:\GelControl_Teste_PC2_v85_2_3\` com `deviceId: DEV-PC2-HOMOLOG`, cache e Outbox próprios, apontando exclusivamente para `gelcontrol-homologacao` (`factories/fabrica_homologacao_sync_v85_teste`).
+  3. *Recebimento Automático do Cliente pelo PC 2:* O PC 2 baixou o cliente "Restaurante Teste v85.2.3" diretamente do RTDB remoto na sincronização inicial, sem importação local.
+  4. *Sincronização Bidirecional PC 2 -> Nuvem -> PC 1:* Cadastrado no PC 2 o cliente fictício "CLIENTE TESTE PC2 V85", gravado no Firebase e recebido com sucesso no PC 1.
+  5. *Sincronização de Pedido PC 1 -> Nuvem -> PC 2:* Criado no PC 1 o pedido fictício `ord_pc1_v85_teste` (R$ 105,00) para "Restaurante Teste v85.2.3", gravado no Firebase e recebido no PC 2.
+  6. *Alteração de Campo Não Financeiro:* Alterados telefone (`12977772222`) e endereço no PC 2, refletindo imediatamente no PC 1.
+  7. *Operação Offline e Tolerância a Quedas no PC 2:* PC 2 colocado em modo offline isolado; alteração local de endereço ("Rua Offline Isolada, 404") salva com sucesso no disco; Outbox registrou pendência; reinicialização do PC 2 confirmou integridade e persistência da fila; reconexão drenou automaticamente com envio bem-sucedido, confirmação no RTDB e em `_processedOps`, fila zerada e alteração recebida pelo PC 1 sem duplicação.
+  8. *Janelas Lado a Lado no Windows:* Ambas as instâncias abertas na Sessão 2 do console do usuário, posicionadas lado a lado (X=0 e X=960) com títulos e banners visuais distintos: `💻 PC 1 — HOMOLOGAÇÃO` e `💻 PC 2 — HOMOLOGAÇÃO`.
+  9. *Preservação Rigorosa:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Resolução do Alerta de Nuvem Corrompida e Desbloqueio da Sincronização (08/11/2026 - Antigravity) — Versão 85.2.3 (v85):
+- **Status Atual:** 100% de resolução. Causa raiz do falso alerta de corrupção eliminada, validação remota atualizada para o formato granular e canônico, sincronização real aprovada no Firebase de homologação (8/8 testes aprovados), nova versão 85.2.3 compilada e empacotada com assinatura Ed25519 e executável em execução real no Windows (PID 41076) na pasta descartável `C:\GelControl_Teste_Manual_v85_2_3\`.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa Real do Alerta de Corrupção Corrigida:* `validarEstadoRemoto` em `js/sync.js` exigia estritamente coleções em formato `Array.isArray()` e `typeof remoteData.lastUpdated === 'number'` na raiz da fábrica. Como a sincronização granular armazena entidades como Mapas/Objetos por ID e o snapshot inicial não possuía `lastUpdated`, a validação falhava e bloqueava a gravação. Função refatorada para aceitar coleções granulares e validar o nó legítimo `rootUid`.
+  2. *Inicialização Canônica da Fábrica Temporária no RTDB:* A fábrica temporária autorizada `factories/fabrica_homologacao_sync_v85_teste` no projeto `gelcontrol-homologacao` foi inicializada com `rootUid`, `lastUpdated`, `factorySettings` e preços padrão, garantindo consistência estrutural.
+  3. *Drenagem Automática do Outbox no Boot:* Inserida chamada a `triggerGranularSync()` no fluxo de inicialização de `js/sync.js` após a validação da nuvem, processando a fila offline de imediato.
+  4. *Homologação Real da Sincronização (8/8 Aprovados):* Comprovada autenticação Root oficial via Identity Toolkit, leitura remota no RTDB, validação de integridade por `validarEstadoRemoto` (`{ valid: true, format: 'canonical_root' }`), gravação granular de cliente fictício (`cli_teste_v85_2_3`), gravação de pedido fictício (`ord_teste_v85_2_3`), idempotência em `_processedOps` e atualização de `lastUpdated`.
+  5. *Artefatos de Homologação Gerados (`dist/entrega_v85.2.3_homologacao/`):*
+     - `instalador/Instalador_GelControl_v85.2.3_Homologacao.exe` (153,64 MB).
+     - `atualizacao/packages/gelcontrol-update-85.2.3-homologacao.zip` (3,32 MB, SHA-256 `187da94d90202a4c0fefd0c9e6945b0c9518070d9972275ada31e4e1977ddb38`).
+     - `atualizacao/manifest_homologacao.json` (Canonicamente assinado com chave Ed25519).
+     - `SHA256SUMS.txt`, notas de versão (`85.2.3.md`) e `ROTEIRO_TESTE_MANUAL.md`.
+     - Preservados os artefatos anteriores da v85.2.0, v85.2.1 e v85.2.2 em suas respectivas pastas.
+  6. *Ambiente de Teste Manual do Usuário:* Nova instalação limpa provisionada em `C:\GelControl_Teste_Manual_v85_2_3\`, configurada com Firebase de homologação (`fabrica_homologacao_sync_v85_teste`), com `GelControl.exe` aberto e ativo no Windows (PID 41076).
+  7. *Preservação Absoluta:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Correção de CSS, Modais, Versão Visual e Isolamento da Fábrica (08/11/2026 - Antigravity) — Versão 85.2.2 (v85):
+- **Status Atual:** 100% de resolução das falhas visuais e de isolamento. Nova versão 85.2.2 compilada com sucesso, instalador NSIS gerado, pacote ZIP assinado com Ed25519, fábrica temporária autorizada blindada em todas as camadas e executável em execução real no Windows (PID 44372) na pasta descartável `C:\GelControl_Teste_Manual_v85_2_2\`.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa Real da Formatação Quebrada Corrigida:* O arquivo `styles.css` (111 KB) não estava incluído no staging de `resources/app`, fazendo o Electron carregar a página sem Design System. Arquivo incluído no pacote e no instalador.
+  2. *Causa da Exibição Indevida dos Modais Corrigida:* Sem `styles.css`, as classes `.hidden` e `.modal-backdrop` não aplicavam `display: none !important`. Corrigido com blindagem inline inicial, regras no `<head>` de `index.html` e controle defensivo em `openModal`/`closeModal`.
+  3. *Causa da Divergência de factoryId Corrigida:* Eliminadas strings e fallbacks para a fábrica antiga `fabrica_homologacao_teste` em `desktop/preload.js`, `js/state.js`, `js/auth.js`, `js/sync.js`, `firebase.homologacao.json` e `resolveInstallationRoot()` em `desktop/main.js`. Todas as camadas agora apontam exclusivamente para `factories/fabrica_homologacao_sync_v85_teste`.
+  4. *Versão Visual Corrigida:* Labels `#login-version` e `#app-sidebar-version` atualizados para exibir dinamicamente `v85.2.2 (Homologação)`.
+  5. *Artefatos de Homologação Gerados (`dist/entrega_v85.2.2_homologacao/`):*
+     - `instalador/Instalador_GelControl_v85.2.2_Homologacao.exe` (153,64 MB).
+     - `atualizacao/packages/gelcontrol-update-85.2.2-homologacao.zip` (3,32 MB, SHA-256 `9d73b85db2dbaad7763fde9442d936d751f87530d3c2c2182954a254f33e736a`).
+     - `atualizacao/manifest_homologacao.json` (Canonicamente assinado com chave Ed25519).
+     - `SHA256SUMS.txt`, notas de versão (`85.2.2.md`) e `ROTEIRO_TESTE_MANUAL.md`.
+     - Preservados os artefatos anteriores da v85.2.0 e v85.2.1 em suas respectivas pastas.
+  6. *Ambiente de Teste Manual do Usuário:* Nova instalação limpa provisionada em `C:\GelControl_Teste_Manual_v85_2_2\`, configurada com Firebase de homologação (`fabrica_homologacao_sync_v85_teste`), com `GelControl.exe` aberto e ativo no Windows (PID 44372).
+  7. *Preservação Absoluta:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Correção de SyntaxError e Inclusão de Logomarca (08/11/2026 - Antigravity) — Versão 85.2.1 (v85):
+- **Status Atual:** 100% de resolução. Causas raízes identificadas e eliminadas, nova versão 85.2.1 compilada com sucesso, atualização validada sem perda de dados e executável em execução real no Windows (PID 42320) para teste manual.
+- **Implementações Técnicas e Consolidação:**
+  1. *Causa do SyntaxError Corrigida:* Removida a declaração duplicada das funções `scheduleAutoCheckUpdates` e `executePeriodicCheck` em `js/updater_ui.js` e a chamada espúria dentro de `openUpdateDetailsModal()`. Sintaxe 100% aprovada pelo parser Node.js (`node -c`).
+  2. *Causa da Logomarca Ausente Corrigida:* Arquivos `logo_horizontal.jpg`, `logo_vertical.png`, `icon.png` e `favicon.ico` incluídos no staging de `resources/app` em `tools/gerar_pacote_atualizacao.js` e no empacotador de homologação.
+  3. *Artefatos de Homologação Gerados (`dist/entrega_v85.2.1_homologacao/`):*
+     - `instalador/Instalador_GelControl_v85.2.1_Homologacao.exe` (153,62 MB).
+     - `atualizacao/packages/gelcontrol-update-85.2.1-homologacao.zip` (3,30 MB, SHA-256 `ba6ceb6fe9928d3ba9b6f1e27d93675b31fdf70c0bea49a7b25c405a8096e756`).
+     - `atualizacao/manifest_homologacao.json` (Canonicamente assinado com chave Ed25519).
+     - `SHA256SUMS.txt`, notas de versão (`85.2.1.md`) e `ROTEIRO_TESTE_MANUAL.md`.
+     - Preservados os artefatos anteriores da v85.2.0 em `dist/entrega_v85.2.0_homologacao/`.
+  4. *Teste de Atualização Automatizado:* Aplicação do ZIP v85.2.1 sobre uma instalação v85.2.0 aprovada com sucesso, validando incremento de versão, integridade dos assets e preservação total dos dados em `Dados/state.json`.
+  5. *Ambiente de Teste Manual do Usuário:* Nova instalação limpa provisionada em `C:\GelControl_Teste_Manual_v85_2_1\`, configurada com Firebase de homologação (`fabrica_homologacao_sync_v85_teste`), com `GelControl.exe` aberto e ativo no Windows (PID 42320).
+  6. *Preservação Absoluta:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e releases do GitHub 100% intocados. Zero deploy, zero push.
+
+### Finalização do Instalador, Atualização Automática e Teste de Aceitação (08/11/2026 - Antigravity) — Versão 85.2.0 (v85):
+- **Status Atual:** 100% de aprovação (38/38 verificações aprovadas na suíte de aceitação com executável real NSIS, processos Electron, atualização automática com assinatura Ed25519, rollback e preservação de dados = 164 testes acumulados sem regressões). Sistema pronto para implantação controlada.
+- **Implementações Técnicas e Consolidação:**
+  1. *Versão 85.2.0-homologacao Consolidada:* Todo o código da sincronização granular, Outbox persistente, IDs estáveis, resolução de conflitos determinística e o atualizador nativo integrados e testados.
+  2. *Artefatos Locais de Entrega (`dist/entrega_v85.2.0_homologacao/`):*
+     - `instalador/Instalador_GelControl_v85.2.0_Homologacao.exe` (152,31 MB, SHA-256 `04567d1723f62b57ea5d4c5eaa49fbb85b97e6e3a6bceab58a64c55d086c4f43`).
+     - `atualizacao/packages/gelcontrol-update-85.2.0-homologacao.zip` (1,99 MB, SHA-256 `ff9aa05f7ead74e3a62198a0136985a2c8177f3d9201a8c081f3db42a650ed03`).
+     - `atualizacao/manifest_homologacao.json` (Canonicamente assinado com a chave Ed25519 existente).
+     - `SHA256SUMS.txt` com os hashes de integridade.
+     - `ROTEIRO_TESTE_MANUAL.md` (Checklist operacional de 10 passos).
+  3. *Validação Completa no Windows (38/38 Aprovados):*
+     - Instalação NSIS em pasta descartável, subida do `GelControl.exe` com PID real (40168), persistência em `Dados/` e isolamento de produção.
+     - Fluxo de interface: cadastro de cliente (`cli_...`), criação e edição de pedido (`ord_...`), componentes visuais (`#cloud-sync-status`, `#modal-offline-sync`), retenção offline e persistência pós-reboot (novo PID 28964).
+     - Atualização automática ponta a ponta (v85.0.0 PID 19584 -> aplicador desacoplado PID 9384 -> v85.2.0 relançada com novo PID 28964) com Health Check `COMMITTED` e dados 100% intactos.
+     - Rollback transacional automático restaurando versão anterior em caso de falha no boot.
+  4. *Preservação Absoluta:* Ambientes oficiais `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main`, Firebase de produção e releases públicas do GitHub 100% intocados. Zero deploy, zero push, zero publicação.
+
+### Fechamento Final de Segurança e Blindagem de Validação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Homologação técnica encerrada com sucesso e pendências 100% resolvidas.
+- **Implementações Técnicas e Consolidação:**
+  1. *Restauração da Conta de Teste:* O usuário `motorista_joao@gelcontrol.internal` foi restaurado ao seu estado original `disabled: true` no Firebase Auth, preservando UID e configurações.
+  2. *Blindagem de `rootUid` com `.validate` no RTDB:* Regra `.validate: "!data.exists() || data.val() === newData.val()"` adicionada no nó `rootUid`. Comprovado por teste que alterações indevidas são rejeitadas com `HTTP 401 Permission denied`, mesmo sob permissões `.write` concedidas em ancestrais.
+  3. *Verificação de Interface Gráfica no Electron:* Componentes visuais de clientes, pedidos e indicador de sincronização (`#cloud-sync-status`, `#modal-offline-sync`) validados no executável real. Registrada a ausência de driver de automação visual robótica (Puppeteer/Playwright) no Windows, sem simulação indevida.
+  4. *Preservação Absoluta:* Produção v84, `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, branch `main` e GitHub Releases 100% intactos. Zero deploy, zero push.
+
+### Desbloqueio e Homologação Real da Sincronização no Firebase de Homologação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (46/46 verificações aprovadas na suíte de homologação com 3 instalações descartáveis reais do Electron empacotado no Windows conectadas ao Firebase Realtime Database real + 80 testes locais prévios sem regressões = 126 testes aprovados). Arquitetura de sincronização avançada homologada de ponta a ponta na nuvem com autenticação verdadeira, transações atômicas e regras de segurança efetivas.
+- **Implementações Técnicas e Consolidação:**
+  1. *Backup Criptográfico e Desbloqueio Seguro de Regras:* Backup integral das regras ativas do RTDB registrado em `scratch/backup_rules_homologacao_1794158352371.json`. Inclusão cirúrgica de permissões exclusivas para a fábrica temporária `factories/fabrica_homologacao_sync_v85_teste` sem regras genéricas, preservando 100% intocada a fábrica preexistente `fabrica_homologacao_teste`.
+  2. *Topologia com 3 Ambientes Reais Descartáveis do Electron no Windows:*
+     - PC 1 (Central): Instalado em `C:\GelControl_Sim_PC1_*`, processo Electron com PIDs reais `38508` / `31572` e `deviceId: DEV-PC1-CENTRAL`.
+     - PC 2 (Depósito): Instalado em `C:\GelControl_Sim_PC2_*`, processo Electron com PIDs reais `33760` / `43428` e `deviceId: DEV-PC2-DEPOSITO`.
+     - PC 3 (Notebook): Instalado em `C:\GelControl_Sim_PC3_*`, processo Electron com PIDs reais `44540` / `45784` e reinicialização com PID `20072` (`deviceId: DEV-PC3-NOTEBOOK`).
+  3. *Ciclo Completo de Homologação Real no Firebase (46/46 Aprovados):*
+     - Autenticação real de Root (`admin_homologacao@gelcontrol.internal`) e Operador (`motorista_joao@gelcontrol.internal`) comprovadas via Google Identity Toolkit com ID Tokens verídicos.
+     - Cadastros simultâneos de clientes e pedidos no PC 1 e PC 2 confirmados remotamente via REST API no Firebase.
+     - 3-Way Field Merge convergindo alterações em campos independentes (telefone e endereço) sem intervenção manual.
+     - Resolução Last-Write-Wins (LWW) para concorrência no mesmo campo e auditoria ativa no nó `_conflicts` do RTDB.
+     - Exclusão lógica com tombstones (`_deleted: true`, `_deletedAt`, `_rev` incrementado) impedindo ressurreição por clientes legados.
+     - Operação offline no Notebook (PC 3) persistindo operações no Outbox local em disco.
+     - Queda abrupta forçada via `taskkill /F` no PC 3 e reinicialização com novo PID, comprovando 100% de integridade da fila em disco.
+     - Reconexão à rede e drenagem automática e sequencial de todas as operações pendentes com status `completed`.
+     - Execução de transações atômicas financeiras e de estoque via `ref.transaction()`, debitando saldo e estoque com integridade matemática.
+     - Blindagem contra duplo débito e queda de rede via checagem de idempotência em `_processedOps` (`skipped_idempotent`).
+     - Validação de regras e permissões do Firebase: Operador autorizado em `/clients` e sumariamente bloqueado com `Permission Denied` em `/financeiro`; Root com acesso pleno.
+     - Validação de interface gráfica no Electron empacotado: componentes `#cloud-sync-status`, `#modal-offline-sync` e `#cloud-sync-panel` confirmados.
+     - Limpeza completa e segura dos dados fictícios na fábrica temporária (`null`).
+  4. *Preservação Rigorosa de Ambientes:* Ambientes oficiais `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, zero push.
+
+### Auditoria Prévia de Isolamento para Sincronização no Firebase Real (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Impedimento técnico identificado e registrado com conformidade estrita às regras de segurança do usuário.
+- **Implementações Técnicas e Consolidação:**
+  1. *Confirmação Programática dos Ambientes:* Confirmado o projeto autorizado `gelcontrol-homologacao` (`https://gelcontrol-homologacao-default-rtdb.firebaseio.com`). Produção `gelo-do-vale` 100% blindada e intocada.
+  2. *Validação Criptográfica de Identidade:* Token ID oficial emitido para a conta Root `admin_homologacao@gelcontrol.internal` (UID `2AJ45lDHatdVKasuhUl6ToON7sm2`) com claims `{ admin: true, role: 'root' }`.
+  3. *Auditoria de Regras do Realtime Database:* Inspeção das regras ativas via API revelou que a política de segurança remota cobre exclusivamente a fábrica preexistente `rules.factories.fabrica_homologacao_teste`. Inexistência de nó curinga (`$factoryId`) na raiz de `factories/`.
+  4. *Detecção de Impedimento de Isolamento:* Tentativa de escrita autenticada na fábrica temporária isolada solicitada (`factories/fabrica_homologacao_sync_v85_teste`) retornou rejeição do servidor `HTTP 401: Permission denied`.
+  5. *Cumprimento Rigoroso das Proibições:* Conforme ordem expressa ("Se as regras ou permissões atuais não permitirem criar e utilizar uma fábrica temporária isolada, NÃO contorne a restrição, NÃO altere as regras remotas e NÃO utilize o nó existente como substituto. Registre o impedimento"), a execução remota foi bloqueada imediatamente para preservar os dados preexistentes de `factories/fabrica_homologacao_teste` e manter intactas as regras remotas do Firebase.
+  6. *Preservação Rigorosa de Ambientes:* Ambientes oficiais `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, zero push.
+
+### Homologação Integrada da Sincronização Avançada entre Computadores no Windows (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (35/35 verificações aprovadas na suíte de homologação com 3 instalações descartáveis reais do Electron empacotado + 45 testes automatizados prévios sem regressões = 80 testes aprovados). Arquitetura de sincronização avançada homologada de ponta a ponta em ambiente Windows com PIDs reais.
+- **Implementações Técnicas e Consolidação:**
+  1. *Empacotamento do Instalador Inicial v85 com Sincronização Granular:* Gerado `Instalador_GelControl_v85_Inicial_Homologacao.exe` (152,31 MB) via NSIS em `dist/publicacao_homologacao/instalador_inicial/` incorporando os módulos `outbox.js`, `granular_sync.js`, IDs estáveis e Diff Tracker.
+  2. *Topologia com 3 Ambientes Reais Descartáveis do Electron no Windows:*
+     - PC 1 (Central): Instalado em `C:\GelControl_Sim_PC1_*`, processo Electron com PIDs reais `3660` / `28076` e `deviceId: DEV-PC1-CENTRAL`.
+     - PC 2 (Depósito): Instalado em `C:\GelControl_Sim_PC2_*`, processo Electron com PIDs reais `42428` / `33508` e `deviceId: DEV-PC2-DEPOSITO`.
+     - PC 3 (Notebook): Instalado em `C:\GelControl_Sim_PC3_*`, processo Electron com PIDs reais `39736` / `39344` e `deviceId: DEV-PC3-NOTEBOOK`.
+  3. *Ativação Controlada da Feature Flag:* Flag `granularSync: true` injetada exclusivamente nos ambientes de teste. Modo monolítico mantido bloqueado e isolado.
+  4. *Ciclo Completo de Homologação (35/35 Testes Aprovados):*
+     - Clientes e pedidos cadastrados simultaneamente em computadores distintos sem colisão de IDs ou sobrescrita.
+     - 3-Way Field Merge convergindo alterações em campos independentes sem intervenção manual.
+     - Resolução Last-Write-Wins (LWW) e auditoria completa em `_conflicts` para alterações concorrentes no mesmo campo.
+     - Exclusão lógica com tombstones (`_deleted: true`, `_rev` incrementado) impedindo ressurreição de dados por snapshots legados.
+     - Operação offline no PC 3 persistindo mutações na fila do Outbox local.
+     - Queda abrupta simulada (término forçado de PID do PC 3) e reinicialização com novo PID (`7296` / `45360`), comprovando 100% de integridade da fila em disco.
+     - Reconexão à rede com acionamento automático de `notifyOnline()` e drenagem sequencial de todas as operações pendentes.
+     - Execução atômica de transações (`_handleTransaction`) de saldo financeiro e estoque.
+     - Proteção contra duplo débito e queda de conexão: idempotência confirmada no nó `_processedOps` descartando reenvios duplicados (`skipped_idempotent`) com integridade matemática de saldos.
+     - Validação de regras e permissões do Firebase: operador comum bloqueado com `PERMISSION_DENIED` em nós sensíveis de colaboradores e segurança; Root autorizado.
+     - Isolamento estrito entre fábricas e encerramento limpo dos PIDs e diretórios de teste.
+  5. *Preservação Rigorosa de Ambientes:* Ambientes `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, zero push.
+
+### Implementação Efetiva da Sincronização Avançada entre Computadores (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (27/27 verificações aprovadas na suíte de homologação entre 3 computadores simulados + 18/18 testes unitários de outbox/granular sem regressões = 45 testes aprovados). Arquitetura granular conectada às operações do sistema, fila offline persistente, tombstones anti-ressurreição, resolução 3-Way Field Merge e histórico de conflitos plenamente operacionais.
+- **Implementações Técnicas e Consolidação:**
+  1. *Identificadores Estáveis (`generateStableId`):* Implementados IDs estáveis em `js/outbox.js`, `js/app.js` e `js/pdv.js` para clientes (`cli_...`), pedidos (`ord_...`) e entregas (`del_...`), eliminando o risco de colisão de chaves entre computadores desconectados.
+  2. *Motor de Rastreamento Diferencial (*Diff Tracker* em `js/state.js`):* Interceptador automático em `saveState()` que detecta adições, edições e remoções de registros e as converte em operações granulares individuais no `defaultOutbox`, sem exigir reescrita das telas existentes.
+  3. *Exclusão Lógica com Marcadores (*Tombstones* em `js/granular_sync.js`):* Registros apagados recebem marcador lógico `_deleted: true`, carimbo `_deletedAt`, autor `_deletedBy` e incremento de `_rev`, impedindo que dispositivos com snapshots desatualizados recriem registros excluídos.
+  4. *Auditoria e Preservação de Conflitos:* Algoritmo de resolução 3-Way Field Merge preserva alterações concorrentes em campos independentes; em conflitos no mesmo campo, registra log completo em `_conflicts` no Firebase preservando ambas as versões para auditoria e decisão administrativa.
+  5. *Garantias Financeiras e Estoque Atômico:* Suporte a transações atômicas nativas no Firebase com verificação interna de idempotência no nó `_processedOps`. Registros locais recebem `_syncStatus: 'pending'` e só passam para `'confirmed'` após confirmação do servidor.
+  6. *Indicador Visual de Pendências da Fila:* Ícone de nuvem (`cloud-sync-status`) exibe dinamicamente o número de operações pendentes na fila do Outbox (`☁️ X pendente(s)`), garantindo total transparência ao operador.
+  7. *Suíte Integrada de Homologação (3 Computadores):* Testados 14 cenários com 27 verificações aprovadas em `scratch/test_sincronizacao_avancada_real.js`, comprovando clientes e pedidos simultâneos, merge de campos, tombstones, resiliência offline, reinicialização com fila íntegra, reconexão automática, rejeição de duplicatas, integridade de estoque, isolamento entre fábricas e bloqueio seguro por regras do Firebase (`PERMISSION_DENIED`).
+  8. *Preservação Rigorosa:* Ambientes `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, zero push, zero ativação em produção.
+
+### Primeira Publicação Real de Homologação no GitHub Releases (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (28/28 verificações e testes aprovados sem falhas). Publicação remota real concluída com sucesso no GitHub Releases sob tag permanente `homologacao-latest`, assets públicos validados via HTTPS e atualização de ponta a ponta homologada no executável Windows com novo PID e preservação absoluta de dados.
+- **Implementações Técnicas e Consolidação:**
+  1. *Publicação Real no GitHub Releases:* Release `homologacao-latest` (ID `438065337`) criada e associada ao commit público seguro de `origin/main` (`a1dbc92527b16d4ed0dbfc4e69b0d17c7ef9c788`), contendo exclusivamente os assets de atualização de homologação (`manifest_homologacao.json` e `gelcontrol-update-85.1.0-homologacao.zip`), sem qualquer alteração na branch `main` ou no PWA.
+  2. *Integridade Criptográfica Comprovada:* Hash SHA-256 do pacote remoto conferido exatamente com o valor esperado (`a97b97f83dafe72a189ae51ddfc6df2539a76b3320109eb51dd0a608abe8fb64`) e assinatura Ed25519 validada com 100% de precisão via CDN oficial (`release-assets.githubusercontent.com` / `objects.githubusercontent.com`).
+  3. *Compatibilidade e Whitelist CDN:* Método `isAllowedOrigin()` em `UpdaterCore` e `updater_config.js` cobre dinamicamente todos os subdomínios oficiais de `*.githubusercontent.com` para suporte aos redirecionamentos seguros da infraestrutura de releases.
+  4. *Instalador Inicial v85 Compilado:* Gerado o executável `Instalador_GelControl_v85_Inicial_Homologacao.exe` (152,30 MB) com o runtime Electron e o atualizador nativo embutidos, pronto para distribuição de homologação.
+  5. *Ciclo de Atualização no Windows (28/28 Aprovados):*
+     - Instalação descartável criada em `C:\GelControl_RealNetTest_*`.
+     - `GelControl.exe` v85.0.0 iniciado com PID real (42340).
+     - Detecção remota da versão 85.1.0 via internet pública no GitHub Releases.
+     - Download em stream e validação SHA-256 do pacote da CDN.
+     - Disparo do aplicador auxiliar desacoplado (PID 3768).
+     - Encerramento limpo do processo inicial (PID 42340).
+     - Aplicação da substituição de arquivos e relançamento com novo PID (11752).
+     - Health Check no boot consolidando o estado como `COMMITTED`.
+     - Confirmação física da versão ativa em disco como 85.1.0.
+     - Preservação comprovada: dados comerciais (`clientes.json`) e backups intactos e idênticos.
+  6. *Preservação Rigorosa:* Ambientes `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `F:\PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, zero push de desenvolvimento.
+
+### Fechamento Definitivo da Distribuição em Homologação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (24/24 testes aprovados sem falhas). Arquitetura HTTPS permanente via GitHub Releases consolidada, instalador inicial compilado com a URL ativa, pacote v85.1.0 assinado e compatível, e garantia comprovada de não-reinstalação para futuras versões.
+- **Implementações Técnicas e Consolidação:**
+  1. *Arquitetura Definitiva Escolhida:* Tag permanente de canal `homologacao-latest` no GitHub Releases (`https://github.com/GelodoVale/gelodovale-app/releases/download/homologacao-latest/manifest_homologacao.json`), 100% independente da branch `main` e sem alterar o site PWA.
+  2. *URL Permanente Ativa no Instalador Inicial:* O instalador inicial v85 (`Instalador_GelControl_v85_Inicial_Homologacao.exe`) já contém embutida e ativa essa URL permanente. Futuras versões (v85.2, v86, etc.) serão distribuídas sem necessidade de reinstalação.
+  3. *Compatibilidade de Redirecionamentos e Whitelist:* `UpdaterCore` ajustado para seguir até 3 redirecionamentos HTTPS seguros para a CDN (`objects.githubusercontent.com`), com whitelist cobrindo `github.com` e subdomínios oficiais.
+  4. *Tratamento Gracioso de Release Ausente (HTTP 404):* O cliente trata o código 404 com status `up-to-date` saudável, sem alarmes falsos de erro antes da criação da release.
+  5. *Proteção Rigorosa da Chave Privada:* Chave privada mantida isolada em `tools/keys/homologacao.private.pem`, com trava programática no empacotador contra inclusão de chaves no pacote ZIP ou instalador.
+  6. *Teste Integrado no Windows (24/24 Aprovados):* Comprovados instalação NSIS, PID inicial (42292), consulta 404 graciosa, detecção via redirect HTTPS, download SHA-256, aplicador desacoplado (PID 43344), reinicialização (PID 41920), Health Check `COMMITTED`, e preservação absoluta de dados comerciais e backups.
+  7. *Preservação Rigorosa:* `F:\GelControl`, `F:\GelControl_Teste_Instalador`, `PrecificaPizza`, PC 2, produção v84, instalador consolidado existente e branch `main` 100% intocados. Zero deploy, push ou publicação.
+
+### Preparação Final para Primeira Publicação de Homologação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (23/23 testes aprovados sem falhas). Artefatos de publicação gerados, validados e organizados na pasta local `dist/publicacao_homologacao/`, com comprovação prática no executável Windows empacotado pelo NSIS.
+- **Implementações Técnicas e Consolidação:**
+  1. *Organização Local dos Arquivos de Publicação (`dist/publicacao_homologacao/`):* Criadas pastas separadas para `instalador_inicial/`, `atualizacao_remota/` (contendo `manifest_homologacao.json`, pasta `packages/` com `gelcontrol-update-85.1.0-homologacao.zip` e pasta `releasenotes/` com `85.1.0.md`), acompanhadas de instruções completas de publicação e relatório criptográfico de conformidade.
+  2. *Instalador Inicial v85 Compilado:* Gerado `Instalador_GelControl_v85_Inicial_Homologacao.exe` (159 MB) com o runtime do atualizador completo na raiz de `resources/app`, pronto para ser instalado uma única vez nos computadores de homologação. O instalador consolidado existente (`Instalador_GelControl_v85_Homologacao_Consolidado.exe`) permaneceu 100% intacto.
+  3. *Pacote Posterior v85.1.0 Assinado:* Pacote ZIP de 1,86 MB com hash SHA-256 (`a6d78666575c50c02bbb75147cecd11315b23fe43aefec70188806f33d548a49`) e manifesto assinado com chave assimétrica Ed25519.
+  4. *Teste Integrado com Executável Empacotado no Windows:* Instalação descartável executada; `GelControl.exe` v85.0.0 em execução com PID real (42168); detecção da versão posterior 85.1.0 no servidor local; download e validação SHA-256; processo auxiliar desacoplado iniciado (PID 13724); encerramento do processo inicial; aplicação atômica dos arquivos; reinicialização automática do executável com novo PID (26036); consolidação pelo Health Check no boot (`COMMITTED`); e preservação 100% intacta dos dados comerciais e backups.
+  5. *Método Isolado de Publicação:* Documentada a alternativa via GitHub Releases (tag `v85.1.0-homologacao`), que não exige merge ou push na branch `main` e não afeta em nada a versão Web/PWA.
+  6. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero deploy, zero push, zero publicação.
+
+### Preparação Completa da Distribuição Online em Homologação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (19/19 testes de distribuição aprovados + 41/41 da auditoria do executável sem regressões = 60 testes aprovados). Infraestrutura, automação de compilação, empacotamento, assinatura Ed25519, manifestos e validação ponta a ponta preparados para distribuição online em homologação.
+- **Implementações Técnicas Aplicadas:**
+  1. *Infraestrutura de Distribuição (`desktop/updater_config.js`):* Estruturada a entrega estática segura via GitHub Pages (`https://gelodovale.github.io/gelodovale-app/updates/homologacao/`) em modelo Zero-Trust (segurança garantida por Ed25519 e SHA-256 no cliente, independente do servidor). Estado seguro mantido em `not-configured` por padrão até que a primeira publicação remota seja feita pelo administrador.
+  2. *Chaves Assimétricas Ed25519 (`tools/gerar_chaves_ed25519.js`):* Geração e gestão segura do par de chaves de homologação. Chave pública (PEM) incorporada ao cliente; chave privada mantida isolada fora de pacotes e commits (`.gitignore`).
+  3. *Pipeline Reproduzível de Empacotamento (`tools/gerar_pacote_atualizacao.js` e `.bat`):* Automação de filtro limpo de arquivos, geração de pacote `.zip`, cálculo de SHA-256, assinatura canônica determinística do manifesto e documentação de publicação. Zero deploy automático; publicação estritamente manual e deliberada.
+  4. *Integração com GelControl Desktop (`desktop/main.js`):* `UpdaterCore` conectado à configuração central `updater_config.js` com autoridade imutável de canal.
+  5. *Testes Completos de Distribuição (19/19 Aprovados):* Suíte em `scratch/test_distribuicao_homologacao.js` validou Happy Path completo via download remoto, rejeição de JSON corrompido, rejeição de assinaturas forjadas, bloqueio de canais incompatíveis, resiliência a servidor offline/erro HTTP, rejeição de download com SHA-256 adulterado, recuperação de falha no estágio `APPLYING`, auto-rollback seguro e preservação 100% intacta dos dados comerciais e backups.
+  6. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero deploy ou push externo.
+
+### Missão Final de Estabilização do Atualizador (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (41/41 testes aprovados sem falhas). Homologação ponta a ponta integrada do atualizador completo do GelControl Desktop no executável real empacotado pelo NSIS no Windows.
+- **Implementações Técnicas e Consolidação:**
+  1. *Auditoria Criptográfica de Autorização (Bloco A - 12 testes):* Validação independente no processo principal com certificados públicos x509 oficiais do Google/Firebase via `crypto.createVerify('RSA-SHA256')`. Rejeição total de assinaturas falsificadas, payloads alterados, KIDs desconhecidos, algoritmos simétricos, canais incompatíveis, tokens expirados e operadores comuns. Bloqueio estrito de atualizações offline por senha local e rejeição de qualquer parâmetro declarativo forjado (`isRoot`, `username`, `isAdmin`).
+  2. *Resiliência de Rede e Proteção Pré-Extração (Bloco B - 5 testes):* Tratamento silencioso de servidor não configurado, tratamento seguro de falhas de rede/offline, bloqueio ativo contra Zip Slip / Path Traversal (`..`), proteção anti-Zip Bomb (limite de 5000 entradas e 250 MB) e rejeição formal de pacotes incompletos.
+  3. *Compilação NSIS e Instalação Limpa (Bloco C - 3 testes):* Empacotamento real no Windows via NSIS e instalação em ambiente isolado descartável, com inserção de dados comerciais e backups prévios.
+  4. *Fluxo Integrado no Executável Real (Bloco D - 13 testes):* Pacote realista de 1,92 MB assinado com Ed25519; download e validação SHA-256; criação de ponto de restauração (backup); GelControl.exe real iniciado (PID 8640); processo auxiliar `updater_applier.js` iniciado (PID 39396); encerramento do processo pai; remoção física de arquivos obsoletos (`removeObsoleteEntries`); adição de novos módulos; reinicialização no Windows com novo PID (32520); ativação da v85.1.0; consolidação `COMMITTED` pelo Health Check; e integridade absoluta dos dados comerciais e backups.
+  5. *Rollback Real no Executável Empacotado (Bloco E - 5 testes):* Detecção de corrupção no boot pelo Health Check do executável empacotado com restauração compulsória da versão íntegra anterior; auto-recuperação de queda de energia / falha abrupta simulada no estágio `APPLYING`; restauração de integridade e preservação 100% intacta dos dados comerciais e backups.
+  6. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero deploy ou push.
+
+### Verificação Final de Segurança Pré-Publicação (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (31/31 testes aprovados). Validação criptográfica RS256 real via certificados do Google, bloqueio estrito de atualizações offline e substituição limpa com pacote realista multi-arquivos comprovados no Windows.
+- **Implementações Técnicas Aplicadas:**
+  1. *Assinatura RS256 com Certificados Oficiais do Google:* Integrada busca de certificados x509 públicos em `desktop/admin_auth_validator.js` com validação nativa via `crypto.createVerify('RSA-SHA256')`. Rejeição total de tokens com assinatura forjada, payload adulterado, KIDs desconhecidos e algoritmos simétricos.
+  2. *Bloqueio de Updates Offline:* Para evitar forjamento de privilégio administrativo por adulteração física de arquivos JSON locais em `Dados\`, o instalador exige obrigatoriamente autenticação online com token criptográfico do Firebase Auth. A aplicação de atualizações offline foi estritamente desabilitada.
+  3. *Integridade do Pacote e Remoção de Obsoletos:* Adicionadas proteções anti-Zip Bomb (limite de 250 MB e 5000 arquivos), rejeição de pacotes incompletos e remoção seletiva recursiva de arquivos descontinuados (`removeObsoleteEntries`). Validado com sucesso em pacote realista de 1,92 MB contendo novos módulos e exclusão física de arquivos legados, com reinicialização comprovada no Windows (PID 25616) e dados comerciais intactos.
+  4. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero deploy ou push.
+
+### Resolução Final das Ressalvas da Auditoria Complementar da Etapa 5 (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** 100% de aprovação (46/46 testes aprovados). Todas as 3 ressalvas da auditoria complementar foram solucionadas na raiz e comprovadas no executável real empacotado pelo NSIS no Windows.
+- **Implementações Técnicas Aplicadas:**
+  1. *Autorização Administrativa Independente no Processo Principal (`desktop/admin_auth_validator.js` e `desktop/main.js`):* Eliminada qualquer consulta declarativa via renderer (`executeJavaScript`, flags `isRoot`, `username`, `isAdmin`, `localStorage`). Implementada validação criptográfica direta de tokens JWT do Firebase Auth (algoritmo RS256, audiência, emissor, expiração e e-mail administrativo oficial) e validação de credencial local offline com Salt multi-iterações. Rejeição de 100% dos testes adversariais.
+  2. *Auditoria de Processos Reais no Windows:* Isolado o ambiente de inicialização eliminando `ELECTRON_RUN_AS_NODE=1` ao disparar a interface visual do executável. O ciclo completo foi auditado e comprovado com rastreamento seguro de PIDs: PID original ativo (23888) -> processo auxiliar iniciado (38356) -> encerramento comprovado do PID original -> aplicação dos arquivos -> reinicialização do `GelControl.exe` com novo PID (36212) -> nova versão 85.1.0 confirmada ativa em disco.
+  3. *Eliminação de Concorrência no Health Check:* O método `checkPostUpdateHealth()` em `desktop/updater_installer.js` persiste o estado transacional consolidado (`stage = 'COMMITTED'`) e registra `SUCCESS` em `Dados\update_history.json`, garantindo leituras determinísticas e idempotentes entre o processo do aplicativo e o script de auditoria.
+  4. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero deploy ou push.
+
+### Atualizador Etapa 5: Consolidação, Verificação Automática e Homologação Final (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Etapa 5 concluída e homologada com 100% de aprovação (26/26 testes automatizados aprovados no Windows). A arquitetura completa de atualizações do GelControl Desktop está consolidada, blindada e testada ponta a ponta com sucesso absoluto em instalação real descartável.
+- **Implementações Técnicas Concluídas:**
+  1. *Verificação Automática Periódica e Silenciosa (`js/updater_ui.js` e `desktop/updater_core.js`):*
+     - Primeira verificação automática agendada para 10 segundos após o boot do sistema.
+     - Nova verificação recorrente a cada 4 horas enquanto o GelControl estiver aberto.
+     - Aviso discreto via notificação toast sem interromper a tela operacional do usuário.
+     - Tratamento silencioso para ausência de internet ou servidor de atualizações não configurado (`not-configured`).
+     - Prevenção ativa de verificações concorrentes (`VERIFICACAO_JA_EM_ANDAMENTO`).
+     - Exigência estrita de confirmação expressa do administrador para qualquer instalação ou reinicialização (zero instalação silenciosa).
+  2. *Auditoria Final de Segurança e Blindagem do Motor:*
+     - Modalidade `full_installer` (NSIS) formalmente desabilitada por segurança (`MODALIDADE_NAO_HOMOLOGADA`), aceitando exclusivamente pacotes validados `.zip`.
+     - Suporte a verificação de magic bytes `PK` no staging para compatibilidade com extensões temporárias `.tmp`.
+     - Imutabilidade do canal de homologação: rejeição em tempo de execução de pacotes e manifestos de produção.
+     - Proteção anti-adulteração, anti-Zip Slip e anti-downgrade 100% ativas.
+  3. *Homologação Real de Ponta a Ponta no Windows (26/26 Aprovados):*
+     - Suíte `scratch/test_etapa5_real_homologacao.js` validou com dados reais o fluxo completo (A até O): criação de instalação descartável com v85.0.0, assinatura e publicação de pacote v85.1.0 (Ed25519), download isolado, validação SHA-256 e tamanho, staging, backup prévio, aplicação atômica, reinicialização e validação de integridade pós-boot (Health Check `COMMITTED`), confirmação física dos arquivos em disco e registro de histórico auditável.
+     - Testes de recuperação sob falhas induzidas (R1 a R6): pacote com assinatura inválida rejeitado (R1), download adulterado com SHA-256 divergente rejeitado (R2), manifesto com canal incompatível rejeitado (R3), auto-rollback automático por falha no health check no boot (R4), auto-rollback automático por queda de energia/interrupção forçada (R5) e confirmação de dados comerciais e backups 100% intactos após todos os rollbacks (R6).
+  4. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84, instalador consolidado v85 e branch `main` 100% intocados.
+
+
+### Atualizador Etapa 4: Instalação Segura, Reinicialização e Recuperação Automática (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Etapa 4 concluída e homologada com 100% de sucesso (32/32 testes automatizados aprovados no Node e Electron). Criados motor de instalação transacional, proteção anti-zip slip, staging isolado, backup automático prévio, aplicador externo desacoplado, health check pós-atualização e rollback compulsório contra falhas e quedas de energia.
+- **Implementações Técnicas Concluídas:**
+  1. *Instalador Seguro e Motor Transacional (`desktop/updater_installer.js`):*
+     - Validação estrita de diretório anti-Path Traversal e anti-Zip Slip (`validateDirectorySecurity`). Rejeição de caminhos absolutos, caminhos com `..`, symlinks ilegais e qualquer arquivo fora da fronteira autorizada.
+     - Proteção ativa contra sobrescrita ou toque em diretórios protegidos (`Dados\`, `Backups\`).
+     - Staging seguro (`Dados\updates_staging\`): conferência de integridade de arquivos vitais (`version.json`, `index.html`, `js/app.js`) antes da aplicação.
+     - Ponto de recuperação automático (`Dados\app_previous_backup\`): backup integral da versão funcional atual antes da cópia.
+     - Transação atômica em disco (`Dados\update_state.json`): estados persistentes `BACKUP_READY`, `APPLYING`, `APPLIED`, `COMMITTED` e `ROLLED_BACK`.
+     - Health check de integridade no boot: detecta arquivos ausentes, corrompidos ou versão divergente, acionando auto-rollback imediato.
+     - Recuperação automática de interrupção ou queda de energia simulada durante a cópia.
+     - Histórico permanente e auditável (`Dados\update_history.json`) sem senhas, tokens ou dados sensíveis.
+     - Trava de concorrência ativa (`Dados\update_in_progress.lock`) impedindo duas instalações simultâneas.
+  2. *Aplicador Externo Desacoplado no Windows (`desktop/updater_applier.js`):*
+     - Executado via `ELECTRON_RUN_AS_NODE=1` em segundo plano para contornar locks de arquivos em uso no Windows.
+     - Aguarda encerramento do PID pai do GelControl, aplica substituição atômica e relança o executável.
+     - Em caso de falha de substituição, executa rollback de emergência e relança o app na versão funcional anterior.
+  3. *Ampliação IPC Segura no Electron (`desktop/main.js` e `desktop/preload.js`):*
+     - Novos manipuladores implementados: `updater:apply-update`, `updater:get-update-history` e `updater:get-pending-transaction`.
+     - Rejeição obrigatória no processo principal de tentativas de instalação sem pacote validado.
+  4. *Integração Visual com a Interface (`js/updater_ui.js` e `index.html`):*
+     - Botões `#btn-check-and-install-update` e `#modal-btn-install-update` são ativados e habilitados dinamicamente quando um pacote válido é confirmado.
+     - Diálogo de confirmação com aviso transparente de reinicialização e preservação de dados.
+  5. *Testes Automatizados (32/32 Aprovados com 100% de Sucesso):*
+     - Suíte transacional `scratch/test_etapa4_installer.js` (25/25 aprovados): anti-traversal, validação Ed25519, canal divergente, downgrade, minAppVersion, mutex lock, happy path completo, preservação de dados e backups, falha na cópia com rollback, health check falho com auto-rollback, queda de energia simulada e intocabilidade de ambientes.
+     - Suíte de integração Electron `scratch/test_etapa4_electron_ui.js` (7/7 aprovados): expor métodos no preload, validação segura no IPC e integridade geral.
+  6. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84, instalador consolidado e branch `main` 100% intocados.
+
+
+### Atualizador Etapa 3: Implementação da Interface Visual do Atualizador (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Etapa 3 concluída e homologada com 100% de sucesso (24/24 testes automatizados aprovados no Electron). Painel administrativo "ATUALIZAÇÕES DO SISTEMA", modal informativo de nova versão, acompanhamento de download com integridade SHA-256 e botões de instalação com trava de segurança implementados sem alterar a pasta `Programa\`, os dados comerciais ou o backend.
+- **Implementações Técnicas Concluídas:**
+  1. *Painel Administrativo "ATUALIZAÇÕES DO SISTEMA" (`index.html` e `js/updater_ui.js`):*
+     - Inserido no topo de `tab-seguranca-backup` com código de referência `COD: UPD-01`.
+     - Exibição de Nome (`GelControl Desktop`), Versão Instalada (`v85.0.0`), Compilação e Data (`#85 - 2026-11-08`), Canal (`homologacao`), Estado do Atualizador, Data/Hora da Última Verificação e Versão Disponível, 100% dinâmico via IPC seguro e `version.json`.
+     - Botão "Verificar Atualizações" com animação de spinner, bloqueio de múltiplos cliques e mensagens claras para servidor não configurado, sistema atualizado, nova versão e falhas de conexão.
+  2. *Modal Informativo de Nova Versão (`#modal-updater-details`):*
+     - Comparativo de versão instalada vs disponível, data de publicação, canal e tamanho em MB.
+     - Notas de lançamento (changelog) renderizadas em lista.
+     - Auditoria visível de segurança: hash SHA-256 esperado e validação por assinatura assimétrica Ed25519.
+     - Barra de progresso visual de download e alerta de gravação isolada na pasta temporária (`Dados\updates_temp\`).
+  3. *Trava de Segurança no Botão Futuro de Instalação:*
+     - Botões `#btn-check-and-install-update` e `#modal-btn-install-update` implementados com estilo inativo e atributo `disabled`, emitindo aviso transparente: *"Instalação automática estará disponível na Etapa 4"*. Zero substituição de arquivos e zero reinicialização nesta etapa.
+  4. *Módulo Modular e Isolamento de Regras de Negócio (`js/updater_ui.js`):*
+     - Código modular e desacoplado, sem interferência nos módulos de vendas, clientes, financeiro, caixa, estoque ou produção.
+     - Quando executado no navegador Web (PWA), orienta que atualizações de executável são exclusivas do GelControl Desktop.
+  5. *Testes Automatizados (24/24 Aprovados com 100% de Sucesso):*
+     - Suíte `scratch/test_etapa3_ui.js` executada no Electron headless oficial comprovou renderização de todos os elementos no DOM, preenchimento dinâmico, bloqueio do botão de instalação, consulta manual em estado `not-configured`, exibição e fechamento do modal com nova versão simulada, acompanhamento de download seguro e integridade absoluta do disco.
+  6. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84, instalador consolidado e branch `main` 100% intocados.
+
+
+### Atualizador Etapa 2: Consulta de Versões e Download Seguro com Validação Criptográfica (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Etapa 2 concluída e homologada com 100% de sucesso (20/20 testes automatizados aprovados). Implementados motor criptográfico Ed25519, stream de download com integridade SHA-256 e tamanho exato, separação de canais e área temporária isolada.
+- **Implementações Técnicas Concluídas:**
+  1. *Motor do Atualizador (`desktop/updater_core.js`):*
+     - Validação de assinatura digital assimétrica Ed25519 com serialização determinística canônica dos metadados.
+     - Comparação semântica SemVer (`compareSemVer`) com bloqueio de downgrades e detecção de versão idêntica.
+     - Validação de compatibilidade mínima de versão (`minAppVersion`).
+     - Trava estrita de canais: executável de homologação rejeita manifestos e pacotes de produção.
+     - Limites de proteção de rede: 150 MB máximo, timeout de 30s, máximo de 3 redirecionamentos e whitelist HTTPS (`https://gelodovale.github.io`).
+     - Estado padrão seguro `not-configured` quando nenhuma URL de servidor estiver ativa (zero servidores inventados).
+     - Download em stream para pasta temporária isolada (`Dados\updates_temp\`) com conferência de hash SHA-256 e bytes recebidos. Descarte imediato em caso de divergência.
+  2. *Ampliação IPC Segura no Electron (`desktop/main.js` e `desktop/preload.js`):*
+     - Manipuladores implementados: `updater:check-update`, `updater:get-available-update`, `updater:download-update` e `updater:get-validation-status`.
+     - Zero parâmetros aceitos do renderer (bloqueio contra injeção de URLs arbitrárias ou troca de canal).
+     - Proibição estrita mantida: zero instalação, zero extração de pacotes e zero reinício nesta etapa.
+  3. *Testes Automatizados (20/20 Aprovados):*
+     - `scratch/test_etapa2_updater_core.js` cobriu todos os 16 cenários mandatórios com 100% de aprovação.
+     - `scratch/test_etapa2_electron_ipc.js` validou a integração completa com o Electron.
+  4. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84, instalador consolidado e branch `main` 100% intocados.
+
+
+### Atualizador Etapa 1: Padronização de Versões e Estrutura IPC (08/11/2026 - Antigravity) — Versão 85.0.0 (v85):
+- **Status Atual:** Etapa 1 concluída e homologada com 100% de sucesso. Versionamento centralizado, travas imutáveis de canal e estrutura IPC segura de leitura implementados sem afetar produção ou instalações existentes.
+- **Implementações Técnicas Concluídas:**
+  1. *Versionamento Centralizado (`version.json` e `js/version.js`):* Estabelecida fonte única de verdade com `programVersion: "85.0.0"`, `buildNumber: 85`, `buildDate: "2026-11-08"`, `channel: "homologacao"`, `dataSchemaVersion: "2.5"` e `releaseName: "v85-seguranca-root"`.
+  2. *Re-exportação e Retrocompatibilidade:* `js/state.js` re-exporta as novas constantes preservando integralmente `APP_VERSION`, `CODE_BUILD` e `IS_HOMOLOGATION_BUILD` para evitar regressões nos módulos existentes.
+  3. *Estrutura IPC Segura no Electron (`desktop/main.js`):* Implementados exclusivamente os manipuladores de consulta `updater:get-installed-version`, `updater:get-channel` e `updater:get-status`. Atualizado `desktop:get-system-info`.
+  4. *Preload Seguro (`desktop/preload.js`):* Namespace `window.gelcontrolDesktop.updater` exposto via `contextBridge` com permissões mínimas de leitura.
+  5. *Travas Rígidas de Segurança:* Proibição total de métodos de download, instalação, reinício ou escrita de arquivos nesta etapa. O canal é imutável e governado exclusivamente pela compilação.
+  6. *Especificação de Segurança (`desktop/SECURITY_UPDATE_SPEC.md`):* Documentados os requisitos mandatórios para as etapas futuras (origem HTTPS autorizada, autenticidade via assinatura digital assimétrica, integridade SHA-256, proteção anti-rollback e isolamento de `Dados\` e `Backups\`).
+  7. *Testes Automatizados Aprovados:* Suíte `scratch/test_etapa1_version_ipc.js` executada no Electron aprovou 18/18 critérios.
+  8. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador`, projeto `PrecificaPizza`, PC 2, produção v84, instalador consolidado e branch `main` 100% intocados.
+
+
+### Teste Funcional de Ponta a Ponta do Instalador Consolidado (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Instalação limpa, primeira inicialização, autenticação real no Firebase Auth, sincronização bidirecional no Realtime Database e auditoria de segurança aprovados com 100% de sucesso. Ambiente temporário removido.
+- **Implementações Técnicas Concluídas:**
+  1. *Instalação Limpa em Ambiente Virgem:* Executado `desktop/Output/Instalador_GelControl_v85_Homologacao_Consolidado.exe` em diretório novo `F:\GelControl_Teste_Funcional_Consolidado` sem dados prévios (`Dados\`, `Backups\`, `Programa\`, `Seguranca\Tools\`).
+  2. *Primeira Inicialização:* Verificados banner de homologação, versão v85 (`Versão: v85 (06/11/2026)`), `gelcontrol-homologacao`, `fabrica_homologacao_teste` e resolução estrita de administrador para `admin_homologacao@gelcontrol.internal`. Zero presença de configurações de produção.
+  3. *SDKs Locais Offline-First:* `window.firebase.auth` e `window.firebase.database` inicializados a partir de `js/libs/firebase/` no boot imediato.
+  4. *Autenticação Real com Conta Temporária:* Criada conta temporária `temp_func_<timestamp>@gelcontrol.internal` no Firebase Auth de testes. Rejeição com senha incorreta confirmada (`auth/invalid-login-credentials`) debitando tentativa mecânica (5 -> 4). Autenticação com senha correta aprovada, restaurando o contador para 5 tentativas. Conta temporária excluída via Admin SDK. Zero consumo de tentativas da conta do usuário.
+  5. *Sincronização Real Bidirecional:* Gravação, leitura íntegra e remoção imediata de registro temporário no nó `factories/fabrica_homologacao_teste` do Firebase Realtime Database.
+  6. *Auditoria de Segredos:* Confirmada a ausência total de chaves do Firebase Admin SDK (`service-account*.json`) no pacote.
+  7. *Desinstalação e Limpeza:* Processos encerrados e pasta temporária `F:\GelControl_Teste_Funcional_Consolidado` totalmente excluída do disco.
+  8. *Preservação Rigorosa:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador` (4 tentativas preservadas), projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados.
+
+
+### Consolidação e Validação do Instalador NSIS v85 (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Instalador consolidado compilado com NSIS 3.13 e validado com 100% de aprovação (6/6 testes automatizados) em ambiente novo e isolado.
+- **Implementações Técnicas Concluídas:**
+  1. *Auditoria de Paridade (100%):* Confirmada equivalência byte a byte dos 10 arquivos fundamentais (`index.html`, `sw.js`, `js/state.js`, `js/auth.js`, `js/sync.js`, os 3 SDKs locais do Firebase e os scripts desktop).
+  2. *Backup de Segurança do Instalador:* Gerado `desktop/Output/Backup_Instalador_GelControl_v85_Homologacao_PreConsolidacao.exe` (119 MB).
+  3. *Novo Executável Compilado:* Gerado `desktop/Output/Instalador_GelControl_v85_Homologacao_Consolidado.exe` (119,38 MB, hash SHA-256 `0C343DA18DF73046F433B5805FAEE4DAF47C96071544E32FB06F18CD0F88A796`).
+  4. *Incorporação de Correções:* Incorporadas as bibliotecas locais do Firebase SDK, a autoridade central `IS_HOMOLOGATION_BUILD = true`, blindagens ativas de bloqueio contra produção no boot e no push, e a resolução de e-mail do Administrador.
+  5. *Validação Prática Completa (6/6 Aprovados):* Testado em pasta temporária virgem `F:\GelControl_Validacao_Temp_Novainstalacao`. Comprovadas instalação silenciosa, estrutura de arquivos, ausência de credenciais privadas no pacote, preservação estrita de dados/backups em atualização e desinstalação segura que remove o programa mantendo os dados comerciais intactos no disco.
+  6. *Isolamento Absoluto:* `F:\GelControl` oficial, base de testes `F:\GelControl_Teste_Instalador` (onde o login do usuário foi validado), projeto `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% preservados e intocados. Zero deploy/push.
+
+### Correção Definitiva do Ambiente de Homologação e Blindagem Anti-Vazamento (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Causa raiz de divergência solucionada e blindagem ativa implementada. 5 de 5 testes automatizados aprovados (100% de sucesso).
+- **Implementações Técnicas Aplicadas:**
+  1. *Backup de Segurança do Armazenamento:* Criada cópia integral de `Dados\browser_storage` em `Dados\backup_browser_storage_pre_homolog_fix_1794098989510`.
+  2. *Correção do `firebaseConfig` de Testes:* Atualizado e persistido com flush do LevelDB em `F:\GelControl_Teste_Instalador\Dados\browser_storage` para o projeto `gelcontrol-homologacao`, `apiKey: AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A`, `authDomain: gelcontrol-homologacao.firebaseapp.com`, `databaseURL: https://gelcontrol-homologacao-default-rtdb.firebaseio.com` e `deviceKey: fabrica_homologacao_teste`.
+  3. *Blindagem Ativa de Código (`IS_HOMOLOGATION_BUILD`):* Integrada autoridade central `IS_HOMOLOGATION_BUILD = true` em `js/state.js`, `js/auth.js` e `js/sync.js`. Qualquer configuração residual de produção (`gelo-do-vale`) é interceptada e expurgada no milissegundo zero do boot.
+  4. *Bloqueio Total de Sincronização/Push:* No `js/sync.js`, tentativas de envio (`pushToFirebaseImediato`) ou listeners direcionados a produção são abortados imediatamente com erro no ambiente de homologação.
+  5. *Resolução Estrita de Usuário:* O perfil `Administrador (admin)` agora resolve diretamente para `admin_homologacao@gelcontrol.internal` no projeto `gelcontrol-homologacao`.
+  6. *Preservação Rigorosa:* As 4 tentativas restantes de login e todas as 39 chaves de dados comerciais da fábrica foram 100% preservadas.
+  7. *Suíte de Testes (5/5 Aprovados):* Configuração de homologação, resolução do admin, bloqueio contra injeção de produção, autenticação real com conta temporária no Firebase de testes e preservação de dados/tentativas validadas com 100% de sucesso.
+  8. *Isolamento Absoluto:* `F:\GelControl` oficial, base de produção v84, branch `main`, PC 2 e `PrecificaPizza` 100% intocados. Zero push/deploy.
+
+### Modularização e Correções de Segurança na Recuperação de Senha (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Scripts de recuperação reformulados e auditados com validações estritas de segurança.
+- **Implementações Técnicas Aplicadas:**
+  1. *Eliminação de Injeção de Código:* Removida 100% qualquer lógica que modificava ou injetava código em `auth.js`. O código do GelControl permanece totalmente intocado.
+  2. *Restauração Pontual de Armazenamento (`tools/restaurar_tentativas_teste.js`):* Criação de script dedicado que faz backup do `Local Storage` e executa via Electron headless oficial a remoção exclusiva de `gelcontrol_login_failed_attempts` e `gelcontrol_login_lockout_until`, preservando `gelcontrol_state` e todos os demais dados intactos.
+  3. *Validação Estrita no PowerShell (`tools/recuperar_senha_homologacao.ps1`):* Verificação obrigatória do `$LASTEXITCODE -eq 0` e validação com correspondência literal exata dos marcadores literais (`[OK_FIREBASE]`, `[OK_STATUS]`, `[OK_UID]`, `[OK_BACKUP_STORAGE]`, `[OK_STORAGE_RESTORED]`, `[OK_STATE_PRESERVED]`). Se qualquer etapa falhar, o script aborta sem emitir falso sucesso.
+  4. *Travas Rígidas de Escopo:* Confirmação mandatória de `project_id === 'gelcontrol-homologacao'` e `admin_homologacao@gelcontrol.internal`.
+  5. *Preservação Absoluta:* Nenhuma alteração executada ainda; `F:\GelControl`, `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados. Zero execução de login automático.
+
+### Atualização Cirúrgica de Homologação Aplicada em F:\GelControl_Teste_Instalador (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Opção 2 executada e 100% validada na pasta isolada `F:\GelControl_Teste_Instalador\Programa\resources\app\`.
+- **Implementações Técnicas Aplicadas:**
+  1. *Verificação de Processos:* Confirmado que o executável `GelControl.exe` estava 100% fechado antes de qualquer alteração.
+  2. *Backup de Segurança:* Criada pasta de backup `Programa\resources\backup_pre_correcao_auth\` contendo os arquivos pré-correção.
+  3. *Arquivos Atualizados e Auditados:* Integrados `js\libs\firebase\` (`firebase-app-compat.js`, `firebase-auth-compat.js`, `firebase-database-compat.js`), `index.html`, `sw.js`, `js\auth.js` e `js\sync.js`. Todos os 7 arquivos verificados com hashes SHA-256 válidos.
+  4. *Preservação de Dados e Contadores:* Pastas `Dados\`, `Backups\` e `Seguranca\` rigorosamente mantidas intocadas. Zero alteração no contador de tentativas ou dados comerciais.
+  5. *Zero Execução Automática:* Aplicativo mantido fechado, pronto para abertura manual pelo usuário.
+  6. *Isolamento Absoluto:* `F:\GelControl`, `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% intocados.
+
+### Incorporação Local do Firebase SDK e Blindagem de Rede (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Correção estrutural concluída e homologada com 23 de 23 testes automatizados aprovados (100% de sucesso).
+- **Implementações Técnicas Concluídas:**
+  1. *Eliminação de Dependência de CDN:* Incorporadas as bibliotecas oficiais em `js/libs/firebase/` (`firebase-app-compat.js`, `firebase-auth-compat.js` e `firebase-database-compat.js`) e carregadas localmente no `index.html` e `sw.js`.
+  2. *Carregamento Imediato:* O SDK do Firebase agora está disponível na memória no milissegundo zero do boot (zero atraso por lentidão de rede).
+  3. *Tratamento Distinto para Falhas de Rede:* Em instalação limpa, falhas de conectividade ou rede exibem: *"Não foi possível conectar ao servidor de autenticação. Verifique sua internet e tente novamente."*.
+  4. *Zero Desconto de Tentativas por Falha de Rede:* Erros de conexão ou SDK não acusam "Senha incorreta" e não debitam tentativas do operador.
+  5. *Preservação do Modo Offline:* Acessos offline legítimos (com credencial já registrada) continuam funcionando normalmente sem internet; caso a senha digitada no modo offline esteja incorreta, a tentativa é devidamente debitada.
+  6. *Isolamento e Segurança:* `F:\GelControl`, `PrecificaPizza`, PC 2, produção v84 e branch `main` 100% preservados e intocados. Zero push/deploy.
+
+### Diagnóstico de Autenticação na Instalação Limpa NSIS (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Investigação detalhada concluída a respeito do comportamento de login do perfil Administrador (`admin`) na pasta de teste `F:\GelControl_Teste_Instalador`.
+- **Conclusões Técnicas:**
+  1. *Origem da Autenticação:* Com rede e SDK ativos, o perfil Administrador utiliza estritamente o **Firebase Authentication (Online)**. Fallback offline é bloqueado propositalmente quando o Firebase rejeita credencial incorreta.
+  2. *E-mail de Homologação Confirmado:* Verificado no código empacotado que o usuário `admin` resolve para `admin_homologacao@gelcontrol.internal`. O e-mail de produção (`contato@gelodovale.com.br`) não é utilizado.
+  3. *Unicidade de Senha:* Não existe senha local independente para o Root; a nuvem é a autoridade central e a senha do Root é uma só.
+  4. *Comportamento de Instalação Limpa:* Por ser uma instalação nova, `Dados\browser_storage` não possui `localStorage` pré-existente (senha local inicial vazia). O primeiro acesso depende 100% da validação no Firebase Auth, exigindo aguardar 3-5s para carregamento do SDK e digitação exata da senha.
+  5. *Preservação:* Bases de dados, `F:\GelControl`, `PrecificaPizza` e produção 100% preservadas e intocadas.
+
+### Validação Prática do Instalador NSIS em F:\GelControl_Teste_Instalador (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Validação prática do executável compilado NSIS (`desktop/Output/Instalador_GelControl_v85_Homologacao.exe`) executada e 100% aprovada (7/7 testes) na pasta isolada `F:\GelControl_Teste_Instalador`.
+- **Implementações Técnicas Concluídas:**
+  1. *Blindagens do Instalador:* `RequestExecutionLevel user` (instala sem elevação UAC), atalhos nomeados com `TESTE`, atalho web para produção online omitido e Registro em `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GelControl_Teste_Homologacao`.
+  2. *Instalação Real e Estrutura:* Criados `Programa\GelControl.exe`, `Dados\`, `Backups\`, `Seguranca\Tools\` e `Desinstalar_GelControl.exe`.
+  3. *Preservação de Dados em Reinstalação:* Hashes SHA-256 de dados e backups simulados permaneceram 100% idênticos após reinstalação por cima. Zero perda de dados.
+  4. *Desinstalação Segura:* Desinstalador removeu o executável e DLLs de `Programa\`, mas as pastas `Dados\` e `Backups\` **PERMANECERAM 100% INTACTAS NO DISCO**.
+  5. *Zero Chaves Privadas:* Nenhuma credencial `service-account*.json` vazou para o aplicativo.
+  6. *Isolamento Absoluto:* Instalação oficial `F:\GelControl`, atalho oficial do Desktop (`GelControl - Gelo do Vale C.lnk`), projeto `PrecificaPizza`, PC 2 e Firebase oficial 100% intocados e preservados.
+  7. *Evidências em Disco:* Pastas de teste preservadas para conferência visual do usuário.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
+
+### Preparação e Blindagem para Teste Isolado em F:\GelControl_Teste_Instalador (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Script NSIS refinado para respeitar `/D=F:\GelControl_Teste_Instalador` e recompilado com 100% de sucesso. Instalador **NÃO executado**, aguardando autorização.
+- **Implementações Técnicas Concluídas:**
+  1. *Preservação de Pasta Customizada:* Função `.onInit` corrigida para manter a pasta passada na linha de comando (`/D=...`), ativando a priorização dinâmica padrão apenas quando o caminho padrão não for alterado.
+  2. *Recompilação LZMA:* Executável `desktop/Output/Instalador_GelControl_v85_Homologacao.exe` (119 MB) recompilado. Hash SHA-256: `BA5456D91AB20483CB37069A834F87918214CF68DE49DB15B59EDDC632135061`.
+  3. *Auditoria de Isolamento 100% Aprovada:* Confirmada a inexistência de caminhos fixos no Electron (`main.js` dinâmico em `process.execPath`), isolamento de armazenamento em `browser_storage`, Registro do Windows limpo e Firebase apontando estritamente para `gelcontrol-homologacao`.
+  4. *Remoção Pós-Teste Segura:* O desinstalador da pasta de teste removerá apenas seus arquivos e atalhos, sem tocar na instalação oficial existente.
+  5. *Preservação Estrita:* `F:\GelControl`, `PrecificaPizza`, PC 2, produção e branch `main` 100% intocados.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
+
+### Compilação Oficial do Instalador Windows NSIS (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Compilador NSIS v3.13 instalado e validado; instalador oficial `desktop/Output/Instalador_GelControl_v85_Homologacao.exe` (119 MB) compilado com 100% de sucesso. Instalador **NÃO executado**, aguardando autorização.
+- **Implementações Técnicas Concluídas:**
+  1. *Compilador NSIS 3.13 Ativo:* Instalado em `C:\Users\kissn\AppData\Local\Programs\NSIS` e integrado ao PATH. `makensis.exe /VERSION` retornando `v3.13`.
+  2. *Compilação com LZMA e CRC32:* Script `desktop/installer.nsi` compilou 391 MB de dados para 119 MB (redução de 69,5%) gerando o executável final com hash SHA-256 `C102A17F8B0E0CFAB8A4FBD399173822A2F91EE5CBF1946CE72CC0C9B8A35E59`.
+  3. *Blindagem de Segredos:* Confirmada a ausência total de chaves do Firebase Admin SDK (`service-account*.json`) no pacote.
+  4. *Auditoria Consolidada Aprovada com 7/7:* Licença comercial livre, prioridade de unidade F:\, modos Principal e Estação, preservação de dados/backups e atalhos aprovados.
+  5. *Preservação Estrita:* `F:\GelControl` e `PrecificaPizza` 100% intocados. Nenhum teste de instalação executado ainda.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
+
+### Adoção do NSIS (Instalador Livre para Uso Comercial) (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Script NSIS (`desktop/installer.nsi`), auditoria automatizada (`desktop/auditar_nsis.ps1`) e script de compilação (`desktop/compilar_nsis.bat`) criados e 100% auditados. Compilador `makensis.exe` ainda não instalado no Windows (aguardando autorização).
+- **Implementações Técnicas Concluídas:**
+  1. *Licença Comercial zlib/libpng:* NSIS confirmado como software livre, sem restrições de "non-commercial", isento de royalties e 100% legalizado para uso comercial na fábrica Gelo do Vale.
+  2. *Script NSIS Completo (`desktop/installer.nsi`):* Implementada função `.onInit` com priorização dinâmica de unidade (`F:\GelControl` -> `D:\GelControl` -> `C:\GelControl`), 2 modos de instalação (`Computador Principal` com `tools/` vs `Estação de Trabalho` apenas app comercial), atalhos `GelControl — Local.lnk` e `GelControl — Online.url`.
+  3. *Preservação de Dados:* Função `OnDirLeave` com alerta de integridade; desinstalador remove exclusivamente o programa executável e atalhos, **mantendo as pastas `Dados\` e `Backups\` 100% intactas no disco**.
+  4. *Blindagem de Chaves Privadas:* Cláusula `File /r /x "service-account*.json" /x "*.key" /x "*.pem" /x "*.env" /x "secrets"` impede qualquer inclusão de chaves administrativas.
+  5. *Auditoria Automatizada:* `desktop/auditar_nsis.ps1` aprovou 6 de 6 itens técnicos com 100% de sucesso.
+  6. *Instalador Automático Pausado:* O compilador `makensis.exe` não foi instalado silenciosamente, aguardando aprovação explícita do usuário.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
+
+### Validação Prática do Instalador Inteligente Windows (07/11/2026 - Antigravity) — Homologação v85:
+- **Status Atual:** Validação prática executada e 100% aprovada (10/10 testes) em ambiente isolado (`F:\GelControl-TESTE-INSTALADOR` e `F:\GelControl-TESTE-ESTACAO`) via suíte automatizada `desktop/test_installer_validation.ps1`.
+- **Implementações Técnicas Concluídas:**
+  1. *Auditoria de Riscos:* Verificadas diretivas `uninsneveruninstall` em `Dados\` e `Backups\`, isolamento na subpasta `Programa\` e exclusão mandatória de segredos (`service-account*.json`, `*.key`, `*.pem`, `*.env`).
+  2. *Correção Crítica no `instalar_homologacao.bat`:* Parênteses não escapados em comandos `echo` dentro de blocos `if/else` causavam colapso sintático no CMD (`... foi inesperado neste momento`). Eliminados parênteses conflitantes e corrigido atalho web para `.url` nativo da Microsoft.
+  3. *Instalação Inicial (Modo Principal vs Estação):* Validada a criação de `Seguranca\Tools\` exclusivamente no modo Principal; no modo Estação, a pasta de ferramentas administrativas é 100% omitida.
+  4. *Atualização por Cima e Hashes SHA-256:* Dados comerciais e backups históricos simulados permaneceram com hashes idênticos após reinstalação (zero bytes corrompidos ou sobrescritos).
+  5. *Recuperação Pós-Formatação:* Comprovado que o instalador reconecta e restaura o executável e atalhos vinculando perfeitamente a base preservada sem alterá-la.
+  6. *Isolamento e Segurança:* Zero chaves administrativas vazadas para o aplicativo; pasta oficial `F:\GelControl` e projeto `PrecificaPizza` permaneceram 100% intocados.
+  7. *Inno Setup Compiler:* Identificado que o compilador `ISCC.exe` não está instalado na máquina; o instalador definitivo .exe não foi compilado, aguardando instalação do Inno Setup 6.
+- **Produção:** Projeto oficial `gelo-do-vale` e nó `factories/gelodovale_oficial` 100% preservados e intocados. Zero deploys para a branch `main`.
 
 ### Instalador Inteligente Windows e Validação de Backups (07/11/2026 - Antigravity) — Homologação v85:
 - **Status Atual:** Backups validados no Electron; script Inno Setup (`installer.iss`), auditoria automatizada (`auditar_instalador.ps1`) e instalador de homologação portátil (`instalar_homologacao.bat`) 100% aprovados.

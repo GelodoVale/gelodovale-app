@@ -237,7 +237,8 @@
     animation: fadeIn 0.2s ease;
 }
 
-#confirm-overlay.hidden { display: none; }
+#confirm-overlay.hidden { display: none !important; }
+#confirm-overlay:not(.hidden) { display: flex !important; }
 
 .confirm-dialog {
     background: rgba(17, 25, 44, 0.95);

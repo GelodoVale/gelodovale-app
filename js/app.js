@@ -27,6 +27,7 @@ import { initPDV, populatePDVClients, renderPDVCatalog, renderPDVCart } from './
 import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, payCarneEntry, deleteCarneEntry, syncDeliveryCarnetEntry, syncDocumentCarnetEntry } from './carne.js';
 import { initLayoutSystem, applyCurrentLayout } from './layout.js';
 import { initNotificationsSystem, updateNotifications } from './notifications.js';
+import { initUpdaterUI } from './updater_ui.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -141,6 +142,7 @@ export function showConfirm(message, onConfirm, onCancel = null, title = 'Confir
     document.getElementById('confirm-ok-btn').textContent = confirmText;
 
     overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
 
     const okBtn = document.getElementById('confirm-ok-btn');
     const cancelBtn = document.getElementById('confirm-cancel-btn');
@@ -151,7 +153,10 @@ export function showConfirm(message, onConfirm, onCancel = null, title = 'Confir
     okBtn.parentNode.replaceChild(newOk, okBtn);
     cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
 
-    const close = () => overlay.classList.add('hidden');
+    const close = () => {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    };
 
     newOk.addEventListener('click', () => { close(); if (onConfirm) onConfirm(); });
     newCancel.addEventListener('click', () => { close(); if (onCancel) onCancel(); });
@@ -235,6 +240,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 6.5. Verificar necessidade de backup automático
     if (window.checkAutoBackupOnLoad) window.checkAutoBackupOnLoad();
+
+    // 6.6. Inicializar Interface do Atualizador do Sistema (Etapa 3)
+    try {
+        initUpdaterUI();
+    } catch (eUpd) {
+        console.warn("[App Boot] Falha ao inicializar updater UI:", eUpd);
+    }
     
     // 7. Botão Mock Data
     const btnMock = document.getElementById("btn-mock-data");
@@ -278,7 +290,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // Credenciais oficiais da Gelo do Vale (sempre usadas)
 const FIREBASE_CONFIG_OFICIAL = {
     enabled: true,
-    apiKey: 'AIzaSyBfY-uWaXBHNSheNeCsTyMnc6L_yRtcLtE',
+    apiKey: 'AIzaSyC6RTVPTDkngo-WnSEcBGD1wxQwzwtVZfw',
+    authDomain: 'gelo-do-vale.firebaseapp.com',
     projectId: 'gelo-do-vale',
     databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
     deviceKey: 'gelodovale_oficial'
@@ -373,26 +386,31 @@ export function loadState() {
     } else {
         // Primeiro acesso (localStorage vazio): ativar Firebase para baixar dados da nuvem
         state.firebaseConfig = { ...FIREBASE_CONFIG_OFICIAL };
-        state.users = [{
-            id: "user_admin_001",
-            name: "Administrador Sistema",
-            username: "admin",
-            password: "1120M@z@dr1",
-            role: "Master",
-            permissions: {
-                "admin-tab-dados-fabrica": true,
-                "admin-tab-usuarios": true,
-                "admin-tab-produtos": true,
-                "admin-tab-clientes": true,
-                "admin-tab-pedidos": true,
-                "admin-tab-entregas": true,
-                "admin-tab-financeiro": true,
-                "admin-tab-relatorios": true,
-                "admin-tab-integracoes": true,
-                "admin-tab-seguranca-backup": true,
-                "admin-tab-icones-emojis": true
-            }
-        }];
+        const seed = (typeof window !== 'undefined' && window.gelcontrolDesktop?.localStateSeed) ? window.gelcontrolDesktop.localStateSeed : null;
+        if (seed && Array.isArray(seed.users) && seed.users.length > 0) {
+            state.users = JSON.parse(JSON.stringify(seed.users));
+        } else {
+            state.users = [{
+                id: "admin",
+                name: "Administrador",
+                username: "admin",
+                role: "Master",
+                password: "",
+                permissions: {
+                    "admin-tab-dados-fabrica": true,
+                    "admin-tab-usuarios": true,
+                    "admin-tab-produtos": true,
+                    "admin-tab-clientes": true,
+                    "admin-tab-pedidos": true,
+                    "admin-tab-entregas": true,
+                    "admin-tab-financeiro": true,
+                    "admin-tab-relatorios": true,
+                    "admin-tab-integracoes": true,
+                    "admin-tab-seguranca-backup": true,
+                    "admin-tab-icones-emojis": true
+                }
+            }];
+        }
         state.lastUpdated = 0; // Marca como estado inicial/virgem para puxar da nuvem no primeiro sync
         initializeDefaultFields();
         console.log("Primeiro acesso detectado — Firebase ativado para sincronizar dados da nuvem.");
@@ -1203,7 +1221,7 @@ export function deliverOrderWithDetails(orderId, paymentMethod, gps, photoBase64
         }
     });
     
-    const deliveryId = "d-" + Date.now();
+    const deliveryId = (window.generateStableId ? window.generateStableId('del') : "d-" + Date.now());
     
     const newDelivery = {
         id: deliveryId,
@@ -1412,6 +1430,24 @@ export function initForms() {
         clientForm.addEventListener("submit", (e) => {
             e.preventDefault();
             
+            // Blindagem anti-duplo clique e submissão concorrente
+            if (clientForm._isSubmitting) return;
+            clientForm._isSubmitting = true;
+            const submitBtn = clientForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
+                submitBtn.innerHTML = 'Salvando...';
+            }
+            const cleanupSubmit = () => {
+                clientForm._isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    const orig = submitBtn.getAttribute('data-original-text');
+                    if (orig) submitBtn.innerHTML = orig;
+                }
+            };
+
             const clientId = document.getElementById("form-client-id").value;
             const name = document.getElementById("client-name").value;
             const fantasyName = document.getElementById("client-fantasy-name") ? document.getElementById("client-fantasy-name").value.trim() : "";
@@ -1444,7 +1480,9 @@ export function initForms() {
                 stock[prodId] = parseInt(input.value) || 0;
             });
             
-            const targetClientId = clientId || "c-" + Date.now();
+            const targetClientId = clientId || (window.generateStableId ? window.generateStableId('cli') : 'cli_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8));
+            const idInput = document.getElementById("form-client-id");
+            if (idInput && !idInput.value) idInput.value = targetClientId;
             const visitDays = Array.from(document.querySelectorAll('input[name="visit-days"]:checked')).map(cb => cb.value);
             
             if (clientId) {
@@ -1511,6 +1549,7 @@ export function initForms() {
             
             closeModal("modal-client");
             renderApp();
+            setTimeout(cleanupSubmit, 800);
         });
     }
 
@@ -1519,9 +1558,27 @@ export function initForms() {
         orderForm.addEventListener("submit", (e) => {
             e.preventDefault();
             
+            if (orderForm._isSubmitting) return;
+            orderForm._isSubmitting = true;
+            const submitBtn = orderForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
+                submitBtn.innerHTML = 'Salvando...';
+            }
+            const cleanupOrderSubmit = () => {
+                orderForm._isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    const orig = submitBtn.getAttribute('data-original-text');
+                    if (orig) submitBtn.innerHTML = orig;
+                }
+            };
+            
             const clientId = document.getElementById("order-client-id").value;
             if (!clientId) {
                 showToast("Selecione um cliente.", "warning");
+                cleanupOrderSubmit();
                 return;
             }
 
@@ -1550,6 +1607,7 @@ export function initForms() {
             
             if (totalItemsCount === 0) {
                 showToast("O pedido deve conter pelo menos 1 item.", "warning");
+                cleanupOrderSubmit();
                 return;
             }
             
@@ -1559,7 +1617,7 @@ export function initForms() {
             const scheduledNote = document.getElementById("order-scheduled-note") ? document.getElementById("order-scheduled-note").value.trim() : "";
             
             const newOrder = {
-                id: "o-" + Date.now(),
+                id: (window.generateStableId ? window.generateStableId('ord') : 'ord_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8)),
                 clientId: clientId,
                 date: getBrazilTimeISO(),
                 status: "pending",
@@ -1574,6 +1632,7 @@ export function initForms() {
             saveState();
             closeModal("modal-order");
             renderApp();
+            setTimeout(cleanupOrderSubmit, 800);
             if (scheduledDate) {
                 showToast(`Pré-pedido agendado para ${new Date(scheduledDate + 'T00:00:00').toLocaleDateString('pt-BR')}! Vai aparecer destacado no dia certo.`, "success");
             }
@@ -2448,14 +2507,39 @@ export function initForms() {
 
     const adminPasswordForm = document.getElementById("admin-password-form");
     if (adminPasswordForm) {
-        adminPasswordForm.addEventListener("submit", (e) => {
+        let isChangingPassword = false;
+        adminPasswordForm.addEventListener("submit", async (e) => {
             e.preventDefault();
+            if (isChangingPassword) return;
+
+            const submitBtn = adminPasswordForm.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "";
+
             const currentPwd = document.getElementById("cfg-current-pwd").value;
             const newPwd = document.getElementById("cfg-new-pwd").value;
 
-            const res = changeAdminPassword(currentPwd, newPwd);
-            if (res && res.success) {
-                adminPasswordForm.reset();
+            try {
+                isChangingPassword = true;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i data-lucide="loader" class="spin-anim" style="width: 15px; height: 15px;"></i> Salvando...';
+                    if (window.lucide) window.lucide.createIcons();
+                }
+
+                const res = await changeAdminPassword(currentPwd, newPwd);
+                if (res && res.success) {
+                    adminPasswordForm.reset();
+                }
+            } catch (err) {
+                console.error('[Security] Erro ao alterar senha:', err);
+                if (window.showToast) window.showToast("Erro inesperado ao alterar senha.", "error");
+            } finally {
+                isChangingPassword = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml || '<i data-lucide="key" style="width: 15px; height: 15px;"></i> Atualizar Senha';
+                    if (window.lucide) window.lucide.createIcons();
+                }
             }
         });
     }
@@ -2851,6 +2935,7 @@ export function initForms() {
 export function openModal(modalId) {
     const el = document.getElementById(modalId);
     if (el) {
+        el.style.display = 'flex';
         el.classList.add("active");
         if (window.attachHelpIconToSingleModal) {
             window.attachHelpIconToSingleModal(modalId);
@@ -2860,7 +2945,10 @@ export function openModal(modalId) {
 
 export function closeModal(modalId) {
     const el = document.getElementById(modalId);
-    if (el) el.classList.remove("active");
+    if (el) {
+        el.classList.remove("active");
+        el.style.display = 'none';
+    }
 }
 
 export function toggleHighContrastTheme() {

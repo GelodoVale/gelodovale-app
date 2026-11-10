@@ -42,8 +42,15 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=85">
-    <script src="js/spellcheck.js?v=85"></script>
+    <link rel="stylesheet" href="styles.css?v=85.4.0">
+    <script src="js/spellcheck.js?v=85.4.0"></script>
+    <style>
+        /* Blindagem visual defensiva: impede vazamento de modais antes da renderização */
+        .hidden, [hidden] { display: none !important; }
+        .modal-backdrop:not(.active) { display: none !important; }
+        #confirm-overlay.hidden { display: none !important; }
+        html, body { margin: 0; padding: 0; background-color: #060913; color: #fff; overflow-x: hidden; }
+    </style>
     <!-- Scripts de Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Bibliotecas de QR Code (Offline JS QR e HTML5 Camera Scanner) -->
@@ -84,7 +91,7 @@
             </div>
             
             <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff; letter-spacing: -0.5px; font-size: 1.3rem;">GelControl - Acesso</h3>
-<p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v85 (06/11/2026)</p>
+            <p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v85.4.0 (Oficial)</p>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">Selecione seu perfil e digite a senha para continuar.</p>
             
             <form id="app-login-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
@@ -134,7 +141,7 @@
 
     
     <!-- MODAL DE RECUPERAÇÃO SEGURA DE ACESSO (COD: REC-01 / SEG-EMAIL-01) -->
-    <div class="modal-backdrop" id="modal-recover-access" style="z-index: 10000;">
+    <div class="modal-backdrop" id="modal-recover-access" style="display: none; z-index: 10000;">
         <div class="modal-card" style="background: rgba(17, 25, 44, 0.95); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: var(--radius-lg); padding: 2rem; width: 460px; max-width: 92vw; box-shadow: 0 0 50px rgba(0, 240, 255, 0.2); backdrop-filter: blur(20px);">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem; margin-bottom: 1.25rem;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -255,7 +262,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v85 (06/11/2026 - Antigravity)</p>
+                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v85.4.0 (10/11/2026 - Oficial)</p>
                 <p>Painel de Distribuição</p>
                 <button type="button" onclick="openModal('modal-pwa-tutorial')" style="font-size: 0.72rem; padding: 5px 8px; margin-top: 8px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
                     <i data-lucide="help-circle" style="width: 12px; height: 12px;"></i> Como instalar no Celular
@@ -2131,6 +2138,73 @@
 
                         <!-- sub-aba: Segurança & Backup -->
                         <div id="tab-seguranca-backup" class="admin-subtab-content">
+                            <!-- PAINEL: ATUALIZAÇÕES DO SISTEMA (ETAPA 3) -->
+                            <div class="dashboard-row" style="margin-bottom: 1.5rem;">
+                                <div class="dashboard-panel" id="admin-system-updater-panel" style="width: 100%;">
+                                    <div class="panel-header" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                                        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+                                            <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Atualizações do Sistema
+                                            <span style="font-size: 0.65rem; font-family: monospace; background: rgba(0,240,255,0.08); color: var(--color-primary); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px;">COD: UPD-01</span>
+                                        </h3>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Canal:</span>
+                                            <span id="updater-channel-label"><span class="badge" style="background: rgba(234, 179, 8, 0.2); color: #eab308; padding: 2px 8px; border-radius: 4px; font-weight: 700;">HOMOLOGACAO</span></span>
+                                        </div>
+                                    </div>
+
+                                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">
+                                        Consulte com segurança a disponibilidade de novas versões do GelControl, acompanhe notas de lançamento e baixe pacotes validados por assinatura digital Ed25519 e integridade SHA-256.
+                                    </p>
+
+                                    <!-- Grade de Metadados do Atualizador -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1rem;">
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Sistema</span>
+                                            <strong id="updater-system-name" style="font-size: 0.88rem; color: #fff;">GelControl Desktop</strong>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Versão Instalada</span>
+                                            <strong id="updater-installed-version" style="font-size: 0.88rem; color: var(--color-primary);">-</strong>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Compilação / Data</span>
+                                            <span id="updater-build-info" style="font-size: 0.85rem; color: #fff;">-</span>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Estado do Atualizador</span>
+                                            <div id="updater-status-badge">
+                                                <span style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem;">Pronto para consulta</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Última Verificação</span>
+                                            <span id="updater-last-check" style="font-size: 0.85rem; color: var(--color-text-muted);">-</span>
+                                        </div>
+                                        <div>
+                                            <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Versão Disponível</span>
+                                            <span id="updater-available-version-label" style="font-size: 0.85rem; color: #fff;">Nenhuma (sistema atualizado)</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Caixa de Mensagens Informativas -->
+                                    <div id="updater-status-message-box" style="margin-bottom: 1.25rem; display: none;"></div>
+
+                                    <!-- Linha de Botões de Ação -->
+                                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                        <button type="button" class="btn btn-primary" id="btn-check-updates" onclick="checkAppUpdates()" style="font-size: 0.82rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                                            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verificar Atualizações
+                                        </button>
+
+                                        <button type="button" class="btn btn-secondary" id="btn-check-and-install-update" onclick="handleInstallButtonClick()" disabled style="font-size: 0.82rem; padding: 7px 16px; opacity: 0.55; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px;" title="Disponível após validação do pacote">
+                                            <i data-lucide="download" style="width: 14px; height: 14px;"></i> Verificar e Instalar Atualização
+                                        </button>
+                                        <span id="updater-install-lock-notice" style="font-size: 0.72rem; color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                                            <i data-lucide="shield-check" style="width: 12px; height: 12px; color: var(--color-primary);"></i> Instalação com ponto de restauração automático e rollback
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="dashboard-row" style="gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
 
                                 <!-- Painel de Sincronização Firebase -->
@@ -6321,15 +6395,114 @@
         </div>
     </div>
 
+    <!-- MODAL DE DETALHES DE NOVA VERSÃO DISPONÍVEL (ETAPA 3) -->
+    <div class="modal-backdrop" id="modal-updater-details">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i data-lucide="sparkles" style="color: var(--color-primary); width: 18px; height: 18px;"></i>
+                    Nova Versão do GelControl Disponível
+                </h3>
+                <button class="close-btn" onclick="closeUpdaterModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div style="padding: 1.25rem 0 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Comparativo de Versões -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px;">
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Versão Instalada</span>
+                        <strong id="modal-updater-current-ver" style="font-size: 1.1rem; color: #cbd5e1;">-</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Nova Versão Disponível</span>
+                        <strong id="modal-updater-target-ver" style="font-size: 1.1rem; color: var(--color-primary);">-</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Canal de Distribuição</span>
+                        <span id="modal-updater-channel" style="font-size: 0.85rem; font-weight: 600; color: #fff;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Data de Lançamento</span>
+                        <span id="modal-updater-release-date" style="font-size: 0.85rem; color: #fff;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Tamanho do Arquivo</span>
+                        <span id="modal-updater-package-size" style="font-size: 0.85rem; color: #fff;">-</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--color-text-muted); display: block; margin-bottom: 2px;">Autenticidade do Pacote</span>
+                        <div id="modal-updater-security-status" style="font-size: 0.8rem; color: #22c55e;">Assinatura Ed25519 Válida</div>
+                    </div>
+                </div>
+
+                <!-- Hash Criptográfico SHA-256 -->
+                <div style="background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 8px; padding: 10px 12px;">
+                    <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Hash de Integridade SHA-256</span>
+                    <code id="modal-updater-sha256" style="font-size: 0.72rem; color: var(--color-primary); word-break: break-all; font-family: monospace;">-</code>
+                </div>
+
+                <!-- Novidades da Versão (Release Notes) -->
+                <div>
+                    <h4 style="font-size: 0.85rem; color: #fff; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--color-primary);"></i> Novidades e Melhorias desta Versão
+                    </h4>
+                    <div style="max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem;">
+                        <ul id="modal-updater-release-notes" style="margin: 0; padding-left: 1.2rem; color: var(--color-text-muted);">
+                            <li>Nenhuma nota registrada.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Barra e Status do Download -->
+                <div id="updater-download-progress-container" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.75rem;">
+                        <span id="updater-download-progress-text" style="color: var(--color-text-muted);">Baixando pacote...</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.06); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="updater-download-progress-bar" style="height: 100%; width: 0%; background: var(--color-primary); transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Resultado do Download -->
+                <div id="updater-download-result-box" style="display: none;"></div>
+
+                <!-- Ações do Modal -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <button type="button" class="btn btn-secondary" onclick="closeUpdaterModal()" style="font-size: 0.82rem; padding: 6px 14px;">
+                        Fechar
+                    </button>
+                    
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button type="button" class="btn btn-primary" id="btn-download-update" onclick="downloadAppUpdate()" style="font-size: 0.82rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i data-lucide="download" style="width: 14px; height: 14px;"></i> Baixar Atualização Segura
+                        </button>
+
+                        <button type="button" class="btn btn-secondary" id="modal-btn-install-update" onclick="handleInstallButtonClick()" disabled style="font-size: 0.82rem; padding: 6px 14px; opacity: 0.55; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px;" title="Disponível após validação do pacote">
+                            <i data-lucide="check" style="width: 14px; height: 14px;"></i> Instalar Atualização
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Biblioteca Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Sistema de Ajuda Contextual -->
-    <script src="js/help_content.js?v=85"></script>
-    <script src="js/help.js?v=85"></script>
+    <script src="js/help_content.js?v=85.4.0"></script>
+    <script src="js/help.js?v=85.4.0"></script>
+    <!-- Bibliotecas Oficiais do Firebase (Carregamento Local Offline-First) -->
+    <script src="js/libs/firebase/firebase-app-compat.js?v=85.4.0"></script>
+    <script src="js/libs/firebase/firebase-auth-compat.js?v=85.4.0"></script>
+    <script src="js/libs/firebase/firebase-database-compat.js?v=85.4.0"></script>
+    <!-- Atualizador Automático (Interface Visual) -->
+    <script type="module" src="js/updater_ui.js?v=85.4.0"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=85"></script>
+    <script type="module" src="js/app.js?v=85.4.0"></script>
 </body>
 </html>
 
