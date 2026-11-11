@@ -2,15 +2,15 @@
 // GELCONTROL — IDENTIFICAÇÃO CENTRAL DE VERSÃO E CANAL (PRODUÇÃO OFICIAL)
 // ============================================================================
 
-export const PROGRAM_VERSION = "85.4.0";
-export const BUILD_NUMBER = 85;
-export const BUILD_DATE = "2026-11-10";
+export const PROGRAM_VERSION = "85.4.1";
+export const BUILD_NUMBER = 187;
+export const BUILD_DATE = "2026-11-11";
 export const DISTRIBUTION_CHANNEL = "producao";
 export const DATA_SCHEMA_VERSION = "2.5";
-export const RELEASE_NAME = "v85.4.0-producao";
+export const RELEASE_NAME = "v85.4.1-producao";
 
 export const APP_VERSION = DATA_SCHEMA_VERSION;
-export const CODE_BUILD = "v85.4.0 (10/11/2026)";
+export const CODE_BUILD = "v85.4.1 (11/11/2026)";
 export const IS_HOMOLOGATION_BUILD = false;
 
 export const VERSION_INFO = Object.freeze({

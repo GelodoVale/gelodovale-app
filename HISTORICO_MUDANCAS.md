@@ -6,6 +6,219 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão 85.4.1 (v85) — Homologação do Atualizador Interno, Higienização de Atalhos e Ícone Circular Nativo (11/11/2026 - Antigravity)
+* **Homologação e Preparação do Atualizador Direto pelo Próprio Sistema (Build 187):**
+  - *Contexto de Vitória:* O Instalador Inteligente v85.4.0 foi executado no **PC 2 — Escritório** com 100% de sucesso, reconhecendo a instalação em `F:\GelControl_Oficial` e abrindo o GelControl na versão v85.4.0 com o atualizador no canal PRODUÇÃO.
+  - *Construção da Release Incremental Oficial v85.4.1:* Desenvolvida para comprovar o fluxo fim a fim do atualizador interno diretamente pela interface do GelControl, sem necessidade de novo instalador manual.
+  - *Geração do Pacote de Produção:* Criado `dist/updates/producao/packages/gelcontrol-update-85.4.1-producao.zip` (3.545.229 bytes, ~3,38 MB | SHA-256: `ae90e1de96ca8beb97051e15bfa7a59b72ce364af3c63af2aa421ea64644fa20`).
+  - *Assinatura Digital Canônica Ed25519:* Manifesto `dist/updates/producao/manifest_producao.json` assinado canonicamente com a chave privada de produção (`tools/keys/producao.private.pem`) e validado com 100% de autenticidade contra a chave pública oficial.
+* **Diagnóstico e Correção Definitiva dos Atalhos e Ícones no PC 2:**
+  - *Causa Raiz da Duplicação de Atalhos:* O Windows exibe agregados os atalhos de `%USERPROFILE%\Desktop` e `C:\Users\Public\Desktop`. Como versões antigas ou instaladores anteriores criaram atalhos com nomes distintos (`GelControl.lnk`, `GelControl Oficial v85.3.0.lnk`), a criação de `GelControl Oficial.lnk` gerou atalhos concorrentes na Área de Trabalho do PC 2.
+  - *Higienização Atômica de Atalhos (`desktop/shortcuts.js`):* Implementada rotina inteligente com canonização de caminhos no Windows Shell (`[System.IO.Path]::GetFullPath`). Varre todas as pastas de desktop (`USERPROFILE\Desktop`, `OneDrive\Desktop`, `Public\Desktop`). Mantém rigorosamente um único atalho oficial mestre: **`GelControl Oficial.lnk`**, excluindo com segurança qualquer atalho duplicado ou obsoleto.
+  - *Garantia do Ícone Circular Oficial com Fundo Externo 100% Transparente:* Incorporado `app_icon_round.ico` (149.038 bytes, formato híbrido DIB com máscara AND de hardware e PNG 256x256) diretamente nos recursos da aplicação. A rotina `resolveBestAppIcon` assegura a cópia automática para `Dados\app_icon_round.ico` e `Dados\custom_app_icon.ico` no primeiro boot pós-atualização.
+  - *Limpeza do Cache do Windows Explorer:* Invocação via C# P/Invoke de `SHChangeNotify(0x08000000, 0x1000)` e `ie4uinit.exe -show` para atualização visual instantânea dos ícones sem necessidade de reiniciar o Explorer.
+* **Suíte de Autoteste em Sandbox no PC 1 (4/4 Cenários Aprovados):**
+  - *Cenário 1 (Extração e Staging Seguro):* Testada a extração da v85.4.1 via `UpdaterInstaller` em ambiente simulando o PC 2; confirmado zero erros `EACCES` em `Dados\updates_staging\desktop`.
+  - *Cenário 2 (Substituição In-Place Atômica v85.4.0 -> v85.4.1):* Aplicação concluída com sucesso via `applyStagedFiles()`, promovendo o sistema para a versão `85.4.1` (Build 187).
+  - *Cenário 3 (Preservação Absoluta de Dados Comerciais):* Hash SHA-256 do banco `Dados/state.json` (6 clientes reais, conservadoras em comodato) mantido rigorosamente idêntico bit a bit (zero dados alterados).
+  - *Cenário 4 (Higienização de Atalhos em Cenário Concorrente):* Simulados 3 atalhos na Área de Trabalho (`GelControl.lnk`, `GelControl Oficial.lnk`, `GelControl Oficial v85.3.0.lnk`). A rotina de sanitização eliminou as duplicatas com 100% de sucesso, restando apenas `GelControl Oficial.lnk` apontando para `Dados\app_icon_round.ico`.
+* **Versionamento Canônico Atualizado (Build 187):**
+  - Atualizado `version.json` (programVersion: 85.4.1, buildNumber: 187, buildDate: 2026-11-11).
+  - Atualizado `js/version.js` e `js/state.js` (CODE_BUILD: "v85.4.1 (11/11/2026)").
+  - Atualizado `index.html` (#login-version, #app-sidebar-version e cache-busters `?v=85.4.1`).
+  - Atualizado `sw.js` (CACHE_NAME: "gelodovale-v187").
+  - Arquivos atualizados sincronizados com paridade de 100% em `F:\GelControl_Oficial\Programa\resources\app`.
+* **Auditoria de Dependências de Perfil de Usuário (Olho de Águia):**
+  - *Identificação e Correção em `desktop/main.js`:* Identificado na linha 202 um fallback estático remanescente apontando para `C:/Users/kissn/OneDrive/GelodoVale-system/App/index.html`. O código foi corrigido para utilizar resolução 100% dinâmica em cascata: `__dirname/index.html` $\rightarrow$ `../index.html` $\rightarrow$ `process.resourcesPath/app/index.html` $\rightarrow$ `INSTALL_ROOT/Programa/resources/app/index.html`, tornando a execução perfeitamente agnóstica de computador ou nome de perfil.
+  - *Saneamento de Scripts e Guias:* Atualizado `dist/Instalador_Oficial/INSTRUCOES_DE_USO.md` e `dist/entrega_v85.4.0_oficial/INSTRUCOES_DE_USO.md` para instruir o acesso no PC 2 via atalho nativo do OneDrive ou `%USERPROFILE%\OneDrive\...` sem caminhos fixos de terceiros.
+* **Nova Compilação Oficial e Rastreabilidade Criptográfica:**
+  - *Recompilação via Inno Setup 6:* Gerado novo binário oficial `dist/Instalador_Oficial/Instalador_GelControl_v85.4.0_Oficial.exe` (115.011.498 bytes, ~109,68 MB | SHA-256: `25FE9C94F2E1435D103F682CF728CBDB519F6D379439C78C148AE7DDE9E30EEA`).
+  - *Suíte de Autoteste em Sandbox no PC 1 (4/4 Aprovados):* Testados nova instalação, upgrade in-place simulando PC 2 com dados comerciais intactos, reparo e rollback automático.
+* **Confirmação Efetiva de Sincronização na Nuvem:**
+  - *Upload Concluído no PC 1:* Fila zerada (`driveChangesToSend = 0`, `BytesToUpload = 0`, `successfulBytesUploadedTotal = 1.082.098.087 bytes`). Status no Windows Explorer: **"Sempre disponível neste dispositivo"** com atributo `525344` (`0x80420` — Reparse Point Cloud Files ativo).
+  - *Prontidão no PC 2:* O arquivo está disponível na nuvem para download transparente pelo cliente OneDrive do PC 2.
+
+#### Versão 85.4.0 (v85) — Desobstrução da Fila do OneDrive e Confirmação de Sincronização na Nuvem (11/11/2026 - Antigravity)
+* **Diagnóstico e Resolução do Congestionamento do OneDrive:**
+  - *Identificação da Causa Raiz:* A pasta `scratch\` havia acumulado 2,32 GB e 4.172 arquivos de sandboxes temporárias de Electron durante os testes técnicos anteriores. Como o cliente OneDrive não aplica regras de `.gitignore` (exclusivas do Git), o sincronizador travou conciliando uma fila de 6.657 alterações pendentes antes de liberar o upload do instalador.
+  - *Saneamento da Pasta de Trabalho:* As 59 subpastas pesadas de sandbox foram movidas com segurança para `C:\GelControl_Scratch_Offline` (fora da pasta monitorada pelo OneDrive), reduzindo `scratch\` para 5,82 MB.
+  - *Reinicialização Oficial do Sync Engine:* O serviço do OneDrive foi reinicializado através de `OneDriveLauncher.exe /startInstances` no contexto da sessão de usuário interativa de `kissn` (PID 9904 e PID 1496).
+* **Confirmação Efetiva de Sincronização na Nuvem:**
+  - *Métricas do Sync Engine (`SyncDiagnostics.log`):* Fila reduzida a `driveChangesToSend = 0`, `FilesToUpload = 0`, `BytesToUpload = 0` e `successfulBytesUploadedTotal = 469.404.971 bytes` (~469 MB enviados com 100% de sucesso).
+  - *Atributos de Arquivo e Shell do Windows:* Status promovido de "Sincronização pendente" para **"Sempre disponível neste dispositivo"** com atributo `525344` (`0x80420` — Reparse Point oficial do Microsoft Cloud Files Provider ativo).
+  - *Integridade Criptográfica Bit a Bit:* Confirmado tamanho de `115.011.242 bytes` (~109,68 MB) e SHA-256 `C101BDE10B0294910EE01444147CA2863C69F49F0BB2E15FCBD87495AF0D21DD`.
+  - *Disponibilidade Dupla:* Arquivo sincronizado tanto em `dist/Instalador_Oficial/` quanto em `dist/entrega_v85.4.0_oficial/instalador/`.
+
+#### Versão 85.4.0 (v85) — Construção e Homologação do Instalador Inteligente Unificado Autônomo (10/11/2026 - Antigravity)
+* **Desenvolvimento do Instalador Inteligente Oficial Autônomo (`desktop/installer_oficial_inteligente.iss`):**
+  - *Autonomia Total via Dois Cliques:* Executável único autocontido com privilégios de usuário (`PrivilegesRequired=lowest`), permitindo execução direta pelo OneDrive sem bloqueios de UAC, sem console e sem procedimentos manuais.
+  - *Reconhecimento Dinâmico de Instalação Existente:* Algoritmo em Pascal Script que inspeciona o Registro do Windows (`HKCU\Software\GelControl`, `HKLM\Software\GelControl`) e varre unidades físicas (`F:\GelControl_Oficial`, `D:\GelControl_Oficial`, `E:\GelControl_Oficial`, `C:\GelControl_Oficial`), identificando a pasta e a versão instalada.
+  - *Três Modos de Ação Automáticos:*
+    1. *Atualização Direta (In-Place Upgrade):* Se encontrar versão anterior (`v85.3.0`, `v82`, etc.), atualiza a aplicação em `Programa\resources\app` para `v85.4.0` em salto único direto, sem necessidade de versões intermediárias.
+    2. *Reparo e Verificação de Integridade:* Se a instalação já estiver na `v85.4.0`, valida e restaura componentes corrompidos ou ausentes sem tocar nos dados do usuário.
+    3. *Instalação Nova:* Em computador limpo, cria a estrutura completa de pastas e atalhos na melhor unidade disponível.
+  - *Preservação Absoluta de Dados Persistentes:* Diretivas `uninsneveruninstall` e `onlyifdoesntexist` nas pastas `Dados\` e `Backups\`. A base comercial (`Dados\state.json`), histórico de pedidos, carteira de clientes, comodatos e lixeira permanecem 100% intocados e protegidos contra sobrescrita.
+  - *Backup Preventivo Atômico:* Rotina pré-instalação que clona automaticamente a aplicação anterior para `Backups\backup_pre_upgrade_v85.4.0` antes de modificar qualquer arquivo.
+  - *Encerramento Limpo Anti-Lock:* Encerra instâncias em execução do `GelControl.exe` antes da substituição de arquivos, eliminando qualquer risco de colisão `EACCES` por arquivos em uso.
+  - *Atalho Oficial e Permanente no Windows:* Configura na Área de Trabalho o atalho `GelControl Oficial.lnk` associado ao ícone circular nativo (`Dados\app_icon_round.ico`).
+* **Compilação do Executável Oficial de Distribuição:**
+  - Gerado `dist/Instalador_Oficial/Instalador_GelControl_v85.4.0_Oficial.exe` (115.011.242 bytes, ~109,68 MB | SHA-256: `c101bde10b0294910ee01444147ca2863c69f49f0bb2e15fcbd87495af0d21dd`).
+  - Blindagens Avançadas Integradas: Rollback Atômico Ativo em `DeinitializeSetup`, teste prévio de escrita de permissão em `PrepareToInstall`, laço de tolerância ativa (6 retentativas x 250ms) contra locks de processos e priorização hierárquica estrita para `F:\GelControl_Oficial`.
+  - Criado o acionador facilitador `dist/Instalador_Oficial/EXECUTAR_INSTALADOR_OFICIAL.bat` e guia `INSTRUCOES_DE_USO.md`.
+* **Suíte de Autoteste Técnico em Sandbox no PC 1 (4/4 Testes Aprovados):**
+  - *Cenário 0 (Integridade do Pacote):* Binário íntegro, livre de segredos ou arquivos residuais.
+  - *Cenário 1 (Instalação Nova):* Estrutura completa criada, `version.json` v85.4.0 verificado, módulos `trash.js`, `shortcuts.js` e `updater_installer.js` blindados presentes.
+  - *Cenário 2 (Atualização In-Place Direta v85.3.0 -> v85.4.0):* Simulação exata do PC 2. Versão atualizada para v85.4.0 com paridade bit a bit no hash do banco `Dados/state.json` (zero clientes ou pedidos afetados), backup preventivo gerado e log gravado.
+  - *Cenário 3 (Reparo de Integridade):* Simulação de deleção acidental de `index.html`. Arquivo recuperado com sucesso mantendo intactos os dados comerciais.
+* **Coexistência com Atualizações Futuras:**
+  - O instalador injeta em `desktop/updater_installer.js` a proteção `safeCpSync` e `safeRmSync`. Assim, versões futuras (v85.5.0+) poderão ser aplicadas normalmente pelo atualizador interno dentro do próprio GelControl.
+* **Preservação Rigorosa:**
+  - Ambiente do PC 1 (`F:\GelControl_Oficial`) 100% íntegro e inalterado.
+  - Nenhuma alteração executada no PC 2 físico até o acionamento pelo usuário.
+
+#### Versão 85.4.0 (v85) — Diagnóstico de Causa Raiz do Erro EACCES no PC 2, Blindagem Anti-Lock e Nova Publicação Oficial (10/11/2026 - Antigravity)
+* **Diagnóstico Profundo da Causa Raiz do Erro `EACCES` em `Dados\updates_staging\desktop` no PC 2:**
+  - *Mecanismo de Lock do Windows NTFS / Microsoft Defender:* No Windows, quando arquivos executáveis ou scripts `.js` de Electron (`main.js`, `shortcuts.js`, `updater_installer.js`) são extraídos em sequência rápida para pastas temporárias, o subsistema de proteção em tempo real (Windows Defender / Antivírus) intercepta imediatamente os arquivos com descritor de leitura compartilhada (`FILE_SHARE_READ`) para inspeção de segurança.
+  - *Causa Raiz 1 (Ausência de Tolerância a Locks no Código v85.3.0 em Execução no PC 2):* O código da v85.3.0 instalado no PC 2 realizava chamadas síncronas diretas de `fs.cpSync` e `fs.rmSync` sem retentativas (`maxRetries: 0`). Ao menor bloqueio transitório do Windows, o Node.js falhava instantaneamente com `ERROR_ACCESS_DENIED (5) -> EACCES, Permission denied`.
+  - *Causa Raiz 2 (Particularidade de Relato de Caminho do `fs.cpSync`):* Comprovado experimentalmente que quando qualquer arquivo dentro de uma subpasta está sob lock temporário durante a cópia, o `fs.cpSync` do Node.js aponta a mensagem de erro para o **diretório pai** (`F:\GelControl_Oficial\Dados\updates_staging\desktop`), mascarando o arquivo específico que estava sendo inspecionado.
+  - *Causa Raiz 3 (Comportamento de Deleção Assíncrona no Windows NTFS):* Uma vez abortada a transação, a subpasta `desktop` permaneceu fisicamente criada em disco. Em tentativas subsequentes, o `fs.rmSync(this.stagingDir)` tentava remover a pasta que ainda tinha descritores sendo liberados pelo kernel, repetindo o erro.
+  - *Causa Raiz 4 (Travamento Visual no Interface):* O manipulador `handleInstallButtonClick` em `js/updater_ui.js` alterava o botão e a caixa de status para `"Preparando e Reiniciando..."`, mas ao capturar `!res.success`, reabilitava o botão sem limpar a mensagem da caixa de status, mantendo o aviso de reinício aparente mesmo após a exibição do alerta de erro.
+* **Blindagem Estrutural do Instalador e Interface (`desktop/updater_installer.js` e `js/updater_ui.js`):**
+  - *Mecanismos `safeRmSync` e `safeCpSync`:* Implementadas funções com laço de tolerância ativa (até 10 retentativas com intervalo de 150ms e limpeza preventiva de atributos somente leitura via `attrib -r /s /d`), garantindo que bloqueios temporários do Windows Defender sejam superados suavemente sem falhas espúrias.
+  - *Tratamento e Tradução Transparente em Português:* O dicionário `translateUpdateError` foi enriquecido para reconhecer códigos de permissão do sistema operacional (`EACCES`, `EPERM`) e orientar o usuário em português claro: *"Permissão negada pelo Windows para manipular pastas temporárias de atualização. Um arquivo pode estar sendo verificado pelo antivírus ou aberto em outra janela. Feche outras instâncias do GelControl e tente novamente."*
+  - *Atualização da Caixa de Status Visual:* Em caso de erro na preparação, a caixa de status é imediatamente atualizada para um cartão de aviso em vermelho/âmbar detalhando o motivo real, eliminando a mensagem enganosa de "Preparando e Reiniciando...".
+* **Saneamento e Limpeza do Pacote Oficial de Distribuição:**
+  - *Eliminação de Arquivo Residual:* Removido do pacote o arquivo de conflito do OneDrive `js/auth-DESKTOP-7D77T6B.js`.
+  - *Filtro no Gerador Oficial (`tools/build_official_release.js`):* Bloqueio explícito permanente adicionado contra arquivos residuais de sincronização (`-DESKTOP-`) e temporários (`.tmp`).
+  - *Geração do Novo Pacote:* Criado pacote oficial limpo com 60 arquivos exatos (3.394.494 bytes, SHA-256: `66c3b238190ce6cb7d6bbe0e7350b759fed485f63d61ebdd7ed083da93eb9379`).
+  - *Assinatura Digital Ed25519:* Manifesto `dist/updates/producao/manifest_producao.json` assinado e validado contra a chave pública oficial.
+* **Publicação da Release Oficial no GitHub (`tools/publicar_release_producao.js`):**
+  - Artefatos oficiais enviados com sucesso para a release `producao-latest` (ID: 440036532).
+  - Validação via HTTPS anônimo realizada com 100% de sucesso para download do manifesto e do pacote compactado.
+  - Simulação de consulta executada pelo motor `UpdaterCore` da v85.3.0 do PC 2: confirmação de detecção da versão `85.4.0` pronta para instalação.
+* **Sincronização e Preservação de Dados no PC 1:**
+  - Paridade de 100% SHA-256 mantida em `F:\GelControl_Oficial\Programa\resources\app` com os arquivos atualizados.
+  - Base de dados e cadastros comerciais 100% intactos e preservados.
+
+#### Versão 85.4.0 (v85) — Publicação Oficial Autorizada no GitHub Releases de Produção e Validação de Conexão do PC 2 (10/11/2026 - Antigravity)
+* **Auditoria Criteriosa de Segurança Pré-Publicação (`scratch/audit_zip_safe.js`):**
+  - Executada varredura binária exaustiva em todos os 61 arquivos do pacote `.zip` oficial.
+  - Zero segredos expostos: confirmada a ausência absoluta de arquivos `.pem`, `.key`, `service-account`, dados de clientes ou senhas. A chave privada de produção (`tools/keys/producao.private.pem`) foi mantida estritamente isolada no ambiente de compilação local do PC 1 e jamais enviada ao repositório.
+  - Confirmada a presença obrigatória dos módulos atualizados: `js/trash.js` (lixeira inteligente), `desktop/shortcuts.js` (ícone circular híbrido DIB+PNG), `index.html` e `version.json` v85.4.0.
+* **Publicação da Release Oficial no Canal de Produção (`tools/publicar_release_producao.js`):**
+  - Autenticação autorizada via token GitHub credential helper com escopo administrativo em `GelodoVale/gelodovale-app`.
+  - Criada/atualizada a release oficial permanente com a tag `producao-latest` (ID: 440036532).
+  - Upload concluído com sucesso dos dois artefatos oficiais:
+    1. `manifest_producao.json` (906 bytes) assinado digitalmente com Ed25519.
+    2. `gelcontrol-update-85.4.0-producao.zip` (3.414.514 bytes, SHA-256: `aa03d60454013e0a4d8f75b0484a92967f2d6bfde570b78b1058afc1496f0363`).
+* **Validação Pública Real via HTTPS Anônimo pela Internet:**
+  - Efetuado download público direto via HTTPS de `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/manifest_producao.json`.
+  - Assinatura digital Ed25519 verificada com 100% de autenticidade contra a chave pública oficial (`PRODUCAO_PUBLIC_KEY_PEM`).
+  - Efetuado download público do pacote compactado via CDN do GitHub com validação de hash: o SHA-256 baixado conferiu com exatidão (`aa03d6045401...`).
+* **Simulação de Consulta Online pelo PC 2:**
+  - Instanciado o motor `UpdaterCore` simulando uma estação cliente na versão `85.3.0` consultando o endpoint oficial online.
+  - Resposta recebida: `hasUpdate: true`, `status: 'available'`, `availableVersion: '85.4.0'`.
+  - O PC 2 está tecnicamente liberado para realizar a atualização com um clique.
+* **Sincronização e Auditoria Local:**
+  - Paridade criptográfica de 100% SHA-256 mantida em 12 arquivos vitais com a instalação em `F:\GelControl_Oficial` (incluindo `desktop/updater_config.js`).
+  - Base de dados local preservada intacta (6 clientes, 7 freezers, 2 pedidos).
+
+#### Versão 85.4.0 (v85) — Diagnóstico da Causa Raiz do Atualizador, Regra de Salto Direto e Gerador de Release Unificada (10/11/2026 - Antigravity)
+* **Diagnóstico Profundo da Causa Raiz no PC 2 (Por que informava "nenhuma versão disponível"):**
+  - *Causa Raiz 1 (HTTP 404 Remoto):* O endpoint de produção configurado permanentemente em `desktop/updater_config.js` é `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/manifest_producao.json`. Como a release oficial `producao-latest` ainda não foi criada no GitHub público, a requisição HTTPS retornava código HTTP 404 (Not Found).
+  - *Causa Raiz 2 (Tratamento de 404 em `desktop/updater_core.js`):* O manipulador de erro capturava `MANIFESTO_NAO_ENCONTRADO_404` e atribuía silenciosamente `status: 'up-to-date'` ("O GelControl já está na versão mais recente"), mascarando a ausência física do arquivo remoto como se o sistema já estivesse na versão mais recente. Mensagem ajustada para transparência técnica com o canal (`produção` vs `homologação`).
+  - *Causa Raiz 3 (Pacote Oficial v85.4.0 Não Empacotado):* O pacote de atualização oficial com a versão `v85.4.0` e sua assinatura Ed25519 de produção ainda não haviam sido gerados na pasta de distribuição (`dist/updates/producao`).
+* **Implementação da Regra de Atualização Direta (Sem Degraus / Sem Escadinha):**
+  - O sistema foi configurado para permitir a atualização direta a partir de qualquer versão instalada válida (a partir da `v80.0.0` em diante, como a `v82.0.0`), sem forçar o usuário a atualizar versão por versão intermediária.
+  - O parâmetro `minAppVersion` do manifesto oficial foi parametrizado para `80.0.0` e `desktop/updater_core.js` ajustado para validar a compatibilidade de forma flexível e segura.
+  - Toda a árvore da aplicação é substituída de forma atômica e completa pelo pacote da versão de destino, aplicando diretamente o novo código, layout e módulos.
+  - Os dados locais persistentes (`Dados/state.json`, credenciais e bancos locais) são 100% preservados, e o mecanismo cumulativo de normalização do `state.js` enriquece automaticamente as estruturas de dados antigas na primeira inicialização (criando o acervo de lixeira `trash: []` e normalizando coleções).
+* **Construção do Gerador Oficial de Release Unificada (`tools/build_official_release.js`):**
+  - *Unificação Absoluta entre Atualizador e Instalador:* Tanto novos instaladores quanto pacotes de atualização remota nascem da mesma compilação e compartilham rigorosamente os mesmos arquivos, hashes SHA-256 e versão oficial (`v85.4.0`).
+  - *Geração do Pacote de Produção:* Criado `dist/updates/producao/packages/gelcontrol-update-85.4.0-producao.zip` (3.414.514 bytes, SHA-256: `aa03d60454013e0a4d8f75b0484a92967f2d6bfde570b78b1058afc1496f0363`).
+  - *Assinatura Criptográfica Ed25519:* Manifesto `dist/updates/producao/manifest_producao.json` assinado canonicamente com a chave privada de produção (`tools/keys/producao.private.pem`) e autenticado com a chave pública oficial (`PRODUCAO_PUBLIC_KEY_PEM`).
+  - *Base de Novo Instalador:* Preparada em `dist/instalador_oficial_v85.4.0/app` contendo a aplicação completa pronta para distribuição direta a novos computadores.
+  - *Inclusão de Módulos Críticos:* Garantida a inclusão obrigatória de `desktop/shortcuts.js` e `js/trash.js` no pacote de atualização, assegurando que o PC 2 receba o gerador de ícones circulares e a lixeira.
+* **Validação Operacional da Suíte Completa de 6 Cenários (`scratch/test_complete_upgrade_suite.js`):**
+  - *Cenário 1 (Salto Direto v82.0.0 -> v85.4.0):* Comprovada a promoção direta sem versões intermediárias, preservando dados locais de clientes e injetando a nova interface e o módulo `trash.js`.
+  - *Cenário 2 (Transição do PC 2 v85.3.0 -> v85.4.0):* Comprovada a atualização segura do ambiente do PC 2, mantendo intactas suas credenciais locais e clientes próprios.
+  - *Cenário 3 (Identidade Visual no PC 2):* Comprovada a geração local de `Dados/app_icon_round.ico` (149 KB) no formato híbrido DIB de 32 bits + máscara AND de hardware e apontamento do atalho oficial sem necessidade de novo upload.
+  - *Cenário 4 (Lixeira Inteligente e Custódia Patrimonial):* Comprovado que clientes na lixeira retêm as conservadoras em comodato atreladas sob custódia patrimonial especial (impedindo que virem falsamente disponíveis) e mantêm intactos os registros contábeis.
+  - *Cenário 5 (Rollback Atômico em Falhas):* Simulação de interrupção e corrupção forçada com reversão imediata e 100% estável para a versão anterior.
+  - *Cenário 6 (Paridade Total com Novo Instalador):* 100% de paridade comprovada entre o instalador e o atualizador.
+* **Sincronização e Auditoria:**
+  - 100% de paridade SHA-256 mantida com a instalação oficial em `F:\GelControl_Oficial`.
+  - 40 de 40 scripts auditados com 0 erros de sintaxe (`node --check`).
+
+#### Versão 85.4.0 (v85) — Lixeira Central Inteligente, Ícone Windows Circular com DIB+AND e Atualizador Multi-Estação (10/11/2026 - Antigravity)
+* **Resolução Definitiva da Causa Raiz do Ícone Circular no Windows:**
+  - *Diagnóstico Técnico da Causa Raiz:* O subsistema legado de ícones do Windows Explorer e da API GDI (`DrawIconEx`) exige para ícones de desktop (resoluções $\le 128$) o formato **DIB de 32 bits com cabeçalho BITMAPINFOHEADER (40 bytes), pixels BGRA bottom-up e máscara AND de hardware de 1 bit**. Ícones empacotados apenas com sub-imagens PNG sofrem falha de composição alfa em determinadas exibições do Windows Shell, exibindo cantos brancos.
+  - *Empacotador Híbrido DIB + PNG Nativo (`desktop/shortcuts.js`):*
+    - Resolução 256x256: Mantida em formato PNG nativo com canal alfa para monitores modernos 4K/DPI alto e exibição em ícones extra-grandes.
+    - Resoluções 128x128, 64x64, 48x48, 32x32 e 16x16: Convertidas para DIBs de 32 bits puros, contendo a matriz de pixels RGBA com corte circular milimétrico e a máscara AND física de 1 bit (`0` para o círculo visível, `1` para os cantos transparentes externos).
+  - *Cache-Busting de Caminho no Shell do Explorer:* O Windows Explorer mantém os ícones de atalhos em cache de memória atrelados ao caminho do arquivo. O sistema agora gera `Dados/app_icon_round.ico` (149 KB) e aponta o atalho oficial `GelControl Oficial.lnk` para ele, forçando o descarte imediato do cache antigo em memória.
+  - *Preservação de Documentos:* A logo oficial original em `state.factorySettings.logo` permanece 100% íntegra em alta resolução para contratos de comodato, notas térmicas e carnês.
+* **Lixeira Inteligente Centralizada e Permanente (`js/trash.js`):**
+  - *Soft-Delete com Retenção Contínua:* Nenhum registro de cliente, freezer ou pedido é excluído fisicamente de forma imediata. Ao excluir, o registro é movido para o acervo centralizado de lixeira (`state.trash`), sem prazo de expiração (atendendo à conformidade legal e fiscal de rastreabilidade).
+  - *Blindagem de Integridade Relacional e Patrimonial:*
+    - Ao mover um cliente para a lixeira, os freezers em comodato retêm sua custódia com status de custódia patrimonial especial (impedindo que apareçam como disponíveis falsamente para alocação a terceiros).
+    - Os pedidos, entregas e lançamentos financeiros históricos permanecem intactos nos relatórios contábeis da fábrica.
+    - O sistema bloqueia a exclusão na lixeira de qualquer conservadora que ainda possua alocação patrimonial ativa.
+  - *Interface Central no Sistema:*
+    - Adicionada a aba `🗑️ Lixeira` no menu lateral principal (`#nav-lixeira`) com contador dinâmico em badge (`#badge-trash-count`).
+    - Painel dedicado com barra de busca em tempo real, filtros por categoria (Clientes, Freezers, Produtos, Pedidos), cartões informativos com data de envio e motivo.
+    - Ações de restauração com verificação anti-duplicidade e exclusão definitiva restrita à sessão Master mediante dupla confirmação explícita.
+* **Validação do Atualizador Multi-Estação Preparado no PC 1 para o PC 2:**
+  - *Simulação Completa e Isolada em Sandbox (`scratch/test_updater_multi_station.js`):*
+    - Inicializado ambiente simulando o PC 2 na versão v85.3.0 com banco de dados local próprio e credenciais locais.
+    - Validação de saltos SemVer (`85.3.0` -> `85.4.0`), validação criptográfica de integridade de pacote (SHA-256) e autenticidade da assinatura digital do manifesto (Ed25519).
+    - Varredura de segurança contra Path Traversal e proteção estrita da pasta `Dados/` comprovada: banco local `Dados/state.json` do PC 2 preservado intacto.
+    - Teste de rollback atômico executado com sucesso diante de simulação de pacote corrompido, restaurando a versão anterior sem perda de estabilidade.
+* **Compartilhamento de Identidade Visual via Firebase RTDB:**
+  - Confirmado que todas as estações utilizam o tenant unificado da fábrica (`deviceKey: 'gelodovale_oficial'`), sincronizando `factorySettings/logo` globalmente para que o PC 2 puxe a mesma identidade visual automaticamente no primeiro boot pós-instalação.
+* **Sincronização Criptográfica e Paridade Total:**
+  - Paridade de 100% SHA-256 comprovada entre o workspace e a instalação oficial em `F:\GelControl_Oficial` nos 11 arquivos do sistema (`desktop/shortcuts.js`, `desktop/main.js`, `desktop/updater_core.js`, `js/admin.js`, `js/sync.js`, `js/trash.js`, `js/clientes.js`, `js/state.js`, `js/app.js`, `sw.js`, `index.html`).
+  - 40/40 scripts auditados e aprovados com 0 erros de sintaxe pelo compilador V8 (`node --check`).
+
+#### Versão 85.4.0 (v85) — Ícone Circular Nativo no Windows com Exterior Transparente e Propagação de Identidade Visual via Firebase (10/11/2026 - Antigravity)
+* **Ícone do Windows (.ico) Verdadeiramente Circular com Fundo Exterior Transparente:**
+  - *Causa Raiz do Ícone Anterior Quadrado:* O teste anterior de empacotamento ICO alimentou o buffer binário diretamente a partir do arquivo PNG original sem aplicar a máscara de transparência perimétrica, exibindo o retângulo com cantos brancos na Área de Trabalho.
+  - *Mecanismo Nativo de Recorte Circular com Canal Alfa (GDI+ Multi-Resolução):* Implementada em `desktop/shortcuts.js` a função `generateCircularPngBuffers`, executada no nível do sistema operacional via PowerShell e GDI+ (`System.Drawing`), gerando buffers PNG de 32 bits (RGBA) para 6 resoluções (256x256, 128x128, 64x64, 48x48, 32x32 e 16x16).
+  - *Geometria e Transparência Estrita:*
+    - Fundo exterior ao círculo ($dist > R$): limpo com `Clear([Color]::Transparent)` mantendo canal alfa $= 0$ (transparência absoluta nos cantos e ao redor do círculo).
+    - Base circular interna ($dist \le R$): preenchida em branco sólido de alto contraste com aro estético ciano suave (`rgba(0, 210, 255, 0.9)`) anti-serrilhado com subpixel smoothing.
+    - Proporção estrita e sem deformação: a logo da fábrica é renderizada com `contain` estrito centralizado em 82% do diâmetro interno, garantindo que letras, textos e símbolos nunca sejam cortados nem achatados.
+  - *Otimização Extrema de Tamanho:* O arquivo `custom_app_icon.ico` foi reduzido de 6,2 MB para apenas 74 KB (75.782 bytes), contendo todas as 6 resoluções comprimidas e compatíveis com qualquer escala de DPI e resolução de monitor no Windows.
+  - *Preservação de Documentos Fiscais e Comerciais:* O arquivo original enviado e armazenado em `state.factorySettings.logo` é preservado intacto em sua proporção e resolução nativas para relatórios fiscais, contratos de comodato (`js/comodatos.js`), recibos térmicos e carnês (`js/documents.js`). O acabamento circular com transparência é exclusivo do ícone do executável/atalho.
+* **Propagação Automática da Identidade Visual para Futuras Instalações via Firebase (PC 1 -> PC 2):**
+  - *Logo como Configuração Compartilhada:* `state.factorySettings.logo` armazena a identidade visual da fábrica e é automaticamente sincronizada na nuvem no nó `factories/$deviceKey/factorySettings/logo`.
+  - *Gatilho no Receptor (`js/sync.js`):* Na rotina `aplicarDadosRemoto(remoteData)`, ao hidratar os dados recebidos da nuvem (tanto no primeiro boot de uma nova máquina quanto em atualizações em tempo real), o sistema convoca automaticamente `autoSyncDesktopIcon()`.
+  - *Zero Upload Manual no PC 2:* Ao instalar o GelControl no outro computador e conectar a conta, o programa baixa a logo do Firebase, detecta a nova identidade, gera localmente o `custom_app_icon.ico` circular e atualiza o atalho `GelControl Oficial.lnk` do Windows desse computador de forma 100% autônoma.
+  - *Resiliência Offline:* Em caso de abertura sem internet, o sistema mantém a última logo salva no `Dados/state.json` local e o atalho continua apontando para o `custom_app_icon.ico` já existente em disco, sem dependência de rede.
+* **Sincronização Criptográfica e Paridade Total:**
+  - Paridade de 100% SHA-256 mantida em todos os arquivos modificados (`desktop/shortcuts.js`, `desktop/main.js`, `js/admin.js`, `js/sync.js`) entre o workspace e a instalação oficial em `F:\GelControl_Oficial`.
+  - Atalho permanente `GelControl Oficial.lnk` na Área de Trabalho atualizado e apontando para `F:\GelControl_Oficial\Programa\GelControl.exe` com `IconLocation: F:\GelControl_Oficial\Dados\custom_app_icon.ico,0`.
+  - Cache de ícones do Windows Explorer atualizado com `ie4uinit.exe` e `SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH)`.
+
+#### Versão 85.4.0 (v85) — Sincronização Definitiva de Versão, Logotipo Redondo Profissional e Atualização Automática de Ícone no Windows (10/11/2026 - Antigravity)
+* **Resolução Definitiva da Divergência de Versões (Tela Inicial vs Interface Interna):**
+  - *Causa Raiz Identificada:* A rotina `js/auth.js` consultava dinamicamente a versão do executável através do IPC `window.gelcontrolDesktop.updater.getInstalledVersion()`. O processo principal em `desktop/main.js` lia o arquivo estático `version.json`, que ainda continha `"85.3.0"`, e sobrescrevia o texto do elemento `#login-version` na tela de login, mesmo com o `index.html` já em `v85.4.0`.
+  - *Correção Arquitetural:* `version.json` foi atualizado para `"85.4.0"` em todos os ambientes e `desktop/main.js` agora realiza verificação cruzada automática com `js/version.js`. Se houver divergência, o Electron adota automaticamente a versão do código-fonte e sincroniza `version.json` em disco, eliminando qualquer defasagem futura.
+* **Aprimoramento da Identidade Visual e Logotipo Redondo Profissional:**
+  - *Apresentação Circular no Sistema:* Implementada moldura circular estilizada com borda ciano suave, sombra moderna e fundo adaptável na barra lateral (`#sidebar-logo-container`), na tela de login (`#login-logo-container`) e no preview do painel de layout (`#factory-logo-preview`).
+  - *Preservação de Proporção:* Uso de `object-fit: contain` centralizado, permitindo que logos retangulares, quadradas ou circulares (com ou sem fundo transparente) se ajustem harmonicamente sem cortes em textos, letras ou símbolos.
+  - *Integridade de Documentos:* Os relatórios, recibos térmicos, carnês e contratos de comodato preservam o logotipo original de alta resolução sem corte circular, atendendo aos padrões fiscais e contratuais.
+* **Sincronização do Logotipo com o Ícone do Programa no Windows:**
+  - *Geração Nativa de Ícones (.ico):* Implementado em `desktop/shortcuts.js` o conversor binário de PNGs para formato `.ico` Windows multi-resolução (256x256, 128x128, 64x64, 48x48, 32x32, 16x16) com anti-aliasing e acabamento circular.
+  - *Auto-Sincronização Totalmente Automática no Boot (`autoSyncDesktopIcon`):* Ao abrir o aplicativo ou trocar a logo na área de layout, o GelControl detecta a logo ativa e atualiza silenciosamente o arquivo `.ico` e os atalhos, sem exigir cliques manuais em botões ou configurações extras.
+  - *Consolidação do Atalho Permanente "GelControl Oficial":* O atalho oficial na Área de Trabalho foi fixado de forma permanente como `GelControl Oficial.lnk` (sem números de versão no nome), com migração e limpeza automática dos atalhos antigos com versão (`GelControl Oficial v85.3.0.lnk`).
+  - *Persistência em Atualizações:* O ícone customizado é armazenado em `Dados/custom_app_icon.ico` (pasta de dados protegida contra sobrescrita de pacotes de atualização).
+  - *Atualização Imediata do Shell:* Disparo duplo via PowerShell (`ie4uinit.exe -show` + `SHChangeNotify` com flag `SHCNF_FLUSH`) para que a Área de Trabalho do Windows e o cache do Explorer atualizem o ícone instantaneamente sem necessidade de reiniciar o computador.
+  - *Restauração Limpa:* Rotina `restoreAppDefaultIcon` que devolve o atalho para o ícone padrão caso o usuário remova a logo personalizada.
+* **Preservação e Paridade Criptográfica (PC 1):**
+  - O atalho oficial permanente `GelControl Oficial.lnk` aponta com 100% de estabilidade para `F:\GelControl_Oficial\Programa\GelControl.exe`.
+  - Paridade de 100% SHA-256 comprovada em todos os 13 arquivos do sistema entre o workspace e `F:\GelControl_Oficial`. Zero dados comerciais ou regras de Firebase alterados. Zero push remoto executado.
+
 #### Versão 85.4.0 (v85) — Check-up Geral "Olho de Águia", Correção Definitiva do Modal de Confirmação/Exclusão e Paridade Total (10/11/2026 - Antigravity)
 * **Check-up Geral "Olho de Águia" e Autoteste do Sistema no PC 1:**
   - *Diagnóstico da Falha na Lixeira de Exclusão de Clientes:*

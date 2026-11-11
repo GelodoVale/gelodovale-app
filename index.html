@@ -42,8 +42,8 @@
             }
         } catch(e) { /* ignora erros de parse */ }
     </script>
-    <link rel="stylesheet" href="styles.css?v=85.4.0">
-    <script src="js/spellcheck.js?v=85.4.0"></script>
+    <link rel="stylesheet" href="styles.css?v=85.4.1">
+    <script src="js/spellcheck.js?v=85.4.1"></script>
     <style>
         /* Blindagem visual defensiva: impede vazamento de modais antes da renderização */
         .hidden, [hidden] { display: none !important; }
@@ -91,7 +91,7 @@
             </div>
             
             <h3 style="font-weight: 700; margin-bottom: 0.5rem; color: #fff; letter-spacing: -0.5px; font-size: 1.3rem;">GelControl - Acesso</h3>
-            <p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v85.4.0 (Oficial)</p>
+            <p id="login-version" style="font-size:0.75rem; color: var(--color-text-muted); margin-top:0.4rem;">Versão: v85.4.1 (Oficial)</p>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">Selecione seu perfil e digite a senha para continuar.</p>
             
             <form id="app-login-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
@@ -244,6 +244,11 @@
                     <i data-lucide="help-circle"></i>
                     <span>💡 Dúvidas & Soluções</span>
                 </a>
+                <a class="nav-item" data-tab="lixeira" id="nav-lixeira" title="Lixeira Central Inteligente">
+                    <i data-lucide="trash-2"></i>
+                    <span>🗑️ Lixeira</span>
+                    <span id="badge-trash-count" style="display: none; background: var(--color-danger); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 6px;">0</span>
+                </a>
             </nav>
             
             <div class="sidebar-user-status" id="sidebar-user-status" style="padding: 10px 12px; margin-bottom: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255,255,255,0.01); border-radius: var(--radius-md); margin-top: 1rem;">
@@ -262,7 +267,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v85.4.0 (10/11/2026 - Oficial)</p>
+                <p id="app-sidebar-version">Dados: v2.5 | Sistema: v85.4.1 (11/11/2026 - Oficial)</p>
                 <p>Painel de Distribuição</p>
                 <button type="button" onclick="openModal('modal-pwa-tutorial')" style="font-size: 0.72rem; padding: 5px 8px; margin-top: 8px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.05); color: var(--color-primary); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
                     <i data-lucide="help-circle" style="width: 12px; height: 12px;"></i> Como instalar no Celular
@@ -1713,18 +1718,25 @@
                                             <div class="form-group" style="grid-column: span 2;">
                                                 <label>Logotipo da Empresa (Aparece na lateral e nos recibos)</label>
                                                 <div style="display: flex; gap: 1rem; align-items: center; margin-top: 5px;">
-                                                    <div id="factory-logo-preview" style="width: 80px; height: 80px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px;">
-                                                        <img id="img-logo-preview" src="logo_horizontal.jpg" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                                    <div id="factory-logo-preview" style="width: 84px; height: 84px; border-radius: 50%; border: 2px solid rgba(0,240,255,0.4); background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                                                        <img id="img-logo-preview" src="logo_horizontal.jpg" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 50%;">
                                                     </div>
                                                     <div style="flex: 1;">
                                                         <input type="file" id="factory-logo-input" accept="image/*" style="display: none;" onchange="handleFactoryLogoUpload(event)">
-                                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('factory-logo-input').click()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
-                                                            <i data-lucide="image" style="width: 14px; height: 14px;"></i> Escolher Imagem
-                                                        </button>
-                                                        <button type="button" class="btn btn-danger" onclick="removeFactoryLogo()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;">
-                                                            Remover
-                                                        </button>
-                                                        <small style="display: block; margin-top: 4px; font-size: 0.65rem; color: var(--color-text-muted);">Formatos aceitos: JPG, PNG. Compactado automaticamente.</small>
+                                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('factory-logo-input').click()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                                                                <i data-lucide="image" style="width: 14px; height: 14px;"></i> Escolher Nova Logo
+                                                            </button>
+                                                            <button type="button" class="btn btn-secondary" onclick="window.syncDesktopIconNow && window.syncDesktopIconNow()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;" title="Atualizar atalho da Área de Trabalho com este logotipo">
+                                                                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Sincronizar Ícone no Windows
+                                                            </button>
+                                                            <button type="button" class="btn btn-danger" onclick="removeFactoryLogo()" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                                                                Remover
+                                                            </button>
+                                                        </div>
+                                                        <small style="display: block; margin-top: 6px; font-size: 0.72rem; color: var(--color-primary); font-weight: 500;">
+                                                            <i data-lucide="sparkles" style="width: 12px; height: 12px; vertical-align: middle;"></i> Padrão redondo profissional: a imagem é adaptada circularmente e sincronizada automaticamente com o ícone do atalho na Área de Trabalho do Windows.
+                                                        </small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3057,6 +3069,49 @@
                             </div>
                         </details>
                     </div>
+                </div>
+            </section>
+
+            <!-- ================= TELA: LIXEIRA INTELIGENTE E PERMANENTE ================= -->
+            <section id="lixeira" class="tab-content">
+                <div class="panel-header" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 style="display: flex; align-items: center; gap: 8px;">
+                            <span>🗑️ Lixeira Inteligente & Recuperação</span>
+                            <span id="lixeira-total-count" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: rgba(0, 240, 255, 0.1); color: var(--color-primary); border: 1px solid rgba(0, 240, 255, 0.3); font-weight: 600;">0 itens</span>
+                        </h2>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">Área de retenção contínua e segura. Registros excluídos podem ser consultados e restaurados a qualquer momento.</p>
+                    </div>
+                </div>
+
+                <!-- Barra de Ferramentas da Lixeira: Filtro por Tipo + Busca -->
+                <div class="dashboard-panel" style="margin-bottom: 1.25rem; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 220px;">
+                        <i data-lucide="search" style="width: 16px; height: 16px; color: var(--color-text-muted);"></i>
+                        <input type="text" id="lixeira-search-input" placeholder="Buscar por nome, documento ou detalhes..." oninput="window.renderLixeira()" style="width: 100%; max-width: 380px; padding: 8px 12px; font-size: 0.85rem; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="lixeira-filter-type" style="font-size: 0.8rem; color: var(--color-text-muted);">Filtrar por Tipo:</label>
+                        <select id="lixeira-filter-type" onchange="window.renderLixeira()" style="padding: 8px 12px; font-size: 0.82rem; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.1); background: #161b22; color: #fff; cursor: pointer;">
+                            <option value="all">Todos os Registros</option>
+                            <option value="client">👥 Clientes</option>
+                            <option value="freezer">🧊 Freezers / Equipamentos</option>
+                            <option value="product">📦 Produtos</option>
+                            <option value="order">⏳ Pedidos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Lista de Itens da Lixeira -->
+                <div id="lixeira-items-container"></div>
+
+                <!-- Estado Vazio -->
+                <div id="lixeira-empty-state" class="empty-state" style="display: none; text-align: center; padding: 48px 16px; background: rgba(255,255,255,0.01); border: 1px dashed rgba(255,255,255,0.08); border-radius: var(--radius-md);">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <i data-lucide="check-circle-2" style="width: 26px; height: 26px; color: #10b981;"></i>
+                    </div>
+                    <h3 style="font-size: 1rem; color: #fff; margin: 0 0 4px;">A Lixeira está Vazia</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); max-width: 420px; margin: 0 auto;">Nenhum registro foi movido para a lixeira. Quando clientes ou registros forem excluídos, eles permanecerão guardados aqui para restauração segura.</p>
                 </div>
             </section>
 
@@ -6493,16 +6548,18 @@
     <!-- Biblioteca PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Sistema de Ajuda Contextual -->
-    <script src="js/help_content.js?v=85.4.0"></script>
-    <script src="js/help.js?v=85.4.0"></script>
+    <script src="js/help_content.js?v=85.4.1"></script>
+    <script src="js/help.js?v=85.4.1"></script>
     <!-- Bibliotecas Oficiais do Firebase (Carregamento Local Offline-First) -->
-    <script src="js/libs/firebase/firebase-app-compat.js?v=85.4.0"></script>
-    <script src="js/libs/firebase/firebase-auth-compat.js?v=85.4.0"></script>
-    <script src="js/libs/firebase/firebase-database-compat.js?v=85.4.0"></script>
+    <script src="js/libs/firebase/firebase-app-compat.js?v=85.4.1"></script>
+    <script src="js/libs/firebase/firebase-auth-compat.js?v=85.4.1"></script>
+    <script src="js/libs/firebase/firebase-database-compat.js?v=85.4.1"></script>
     <!-- Atualizador Automático (Interface Visual) -->
-    <script type="module" src="js/updater_ui.js?v=85.4.0"></script>
+    <script type="module" src="js/updater_ui.js?v=85.4.1"></script>
+    <!-- Lixeira Central Inteligente -->
+    <script type="module" src="js/trash.js?v=85.4.1"></script>
     <!-- Script Principal -->
-    <script type="module" src="js/app.js?v=85.4.0"></script>
+    <script type="module" src="js/app.js?v=85.4.1"></script>
 </body>
 </html>
 

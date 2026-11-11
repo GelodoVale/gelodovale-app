@@ -1,10 +1,11 @@
-const CACHE_NAME = 'gelodovale-v186';
+const CACHE_NAME = 'gelodovale-v187';
 const ASSETS = [
   'index.html',
   'form.html',
   'styles.css',
   'manifest.json',
   'gelcontrol.ico',
+  'app_icon_round.ico',
   'logo_vertical.png',
   'logo_horizontal.jpg',
   'js/app.js',
@@ -32,6 +33,8 @@ const ASSETS = [
   'js/carne.js',
   'js/spellcheck.js',
   'js/typo.js',
+  'js/trash.js',
+  'js/updater_ui.js',
   'js/help_content.js',
   'js/help.js',
   'js/dictionaries/pt_BR/pt_BR.aff',

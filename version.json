@@ -1,0 +1,10 @@
+{
+  "programVersion": "85.4.1",
+  "buildNumber": 187,
+  "buildDate": "2026-11-11",
+  "channel": "producao",
+  "dataSchemaVersion": "2.5",
+  "releaseName": "v85.4.1-producao",
+  "minCompatibleVersion": "85.0.0",
+  "description": "GelControl - Sistema Oficial da Fábrica de Gelo"
+}
