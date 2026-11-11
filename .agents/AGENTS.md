@@ -42,27 +42,34 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
 
 #### Versão 85.4.1 (v85) — Homologação do Atualizador Interno, Higienização de Atalhos e Ícone Circular Nativo (11/11/2026 - Antigravity)
+* **Auditoria de Segurança de Atalhos e Quarentena Reversível (Olho de Águia):**
+  - *Confinamento Estrito de TargetPath:* A rotina de sanitização em `desktop/shortcuts.js` foi aperfeiçoada com checagem rigorosa de destino canônico (`[System.IO.Path]::GetFullPath($candidate.TargetPath)`). Somente atalhos que apontem comprovadamente para o executável `GelControl.exe` oficial são classificados como duplicatas concorrentes.
+  - *Preservação Absoluta de Atalhos Externos:* Qualquer atalho apontando para outro destino (documentos, planilhas, pastas, sites ou outros sistemas), mesmo que contenha "GelControl" ou "Gelo do Vale" no nome, é rigorosamente PRESERVADO e intocado. Atalhos sem destino ou corrompidos também são preservados.
+  - *Quarentena Reversível:* Nenhum atalho é excluído permanentemente. Atalhos concorrentes identificados são movidos para `Dados\Backups\atalhos_quarentena\<NomeOriginal>_<timestamp>.lnk`.
+  - *Auditoria e Reversão Instantânea com 1 Clique:* Gerado automaticamente o registro de auditoria `audit_atalhos.log` e o script de reversão `Dados\Backups\atalhos_quarentena\restaurar_atalhos.bat`. Se o usuário executar o arquivo batch, todos os atalhos movidos são restaurados de imediato para seus locais originais.
+* **Alinhamento e Prontidão de Teste Fim a Fim no PC 1:**
+  - *Diagnóstico do PC 1:* A pasta `F:\GelControl_Oficial\Programa\resources\app` havia recebido previamente os arquivos da v85.4.1. Para permitir a homologação autêntica do atualizador automático (v85.4.0 -> v85.4.1) em ambos os computadores, a pasta da aplicação foi suavemente restaurada para a `v85.4.0 (Build 186)` oficial a partir de `dist\instalador_oficial_v85.4.0\app`.
+  - *Preservação de Dados:* O banco comercial `Dados\state.json` do PC 1 manteve seu hash SHA-256 (`7AB1A396...`) 100% inalterado (zero clientes ou vendas afetados).
+  - *Paridade Operacional Completa:* O PC 1 encontra-se agora exatamente no mesmo estado da estação do PC 2 (rodando a v85.4.0 oficial com motor blindado). Ao ser disponibilizada a v85.4.1, ambos exibirão a notificação e permitirão a atualização transparente com um clique na interface.
 * **Homologação e Preparação do Atualizador Direto pelo Próprio Sistema (Build 187):**
   - *Contexto de Vitória:* O Instalador Inteligente v85.4.0 foi executado no **PC 2 — Escritório** com 100% de sucesso, reconhecendo a instalação em `F:\GelControl_Oficial` e abrindo o GelControl na versão v85.4.0 com o atualizador no canal PRODUÇÃO.
   - *Construção da Release Incremental Oficial v85.4.1:* Desenvolvida para comprovar o fluxo fim a fim do atualizador interno diretamente pela interface do GelControl, sem necessidade de novo instalador manual.
-  - *Geração do Pacote de Produção:* Criado `dist/updates/producao/packages/gelcontrol-update-85.4.1-producao.zip` (3.545.229 bytes, ~3,38 MB | SHA-256: `ae90e1de96ca8beb97051e15bfa7a59b72ce364af3c63af2aa421ea64644fa20`).
+  - *Geração do Pacote de Produção:* Criado `dist/updates/producao/packages/gelcontrol-update-85.4.1-producao.zip` (3.546.550 bytes, ~3,38 MB | SHA-256: `77544fdc33ff0d5fc29ffd9c4380177fda9482d665c6fad00afc28e79135d60b`).
   - *Assinatura Digital Canônica Ed25519:* Manifesto `dist/updates/producao/manifest_producao.json` assinado canonicamente com a chave privada de produção (`tools/keys/producao.private.pem`) e validado com 100% de autenticidade contra a chave pública oficial.
 * **Diagnóstico e Correção Definitiva dos Atalhos e Ícones no PC 2:**
   - *Causa Raiz da Duplicação de Atalhos:* O Windows exibe agregados os atalhos de `%USERPROFILE%\Desktop` e `C:\Users\Public\Desktop`. Como versões antigas ou instaladores anteriores criaram atalhos com nomes distintos (`GelControl.lnk`, `GelControl Oficial v85.3.0.lnk`), a criação de `GelControl Oficial.lnk` gerou atalhos concorrentes na Área de Trabalho do PC 2.
-  - *Higienização Atômica de Atalhos (`desktop/shortcuts.js`):* Implementada rotina inteligente com canonização de caminhos no Windows Shell (`[System.IO.Path]::GetFullPath`). Varre todas as pastas de desktop (`USERPROFILE\Desktop`, `OneDrive\Desktop`, `Public\Desktop`). Mantém rigorosamente um único atalho oficial mestre: **`GelControl Oficial.lnk`**, excluindo com segurança qualquer atalho duplicado ou obsoleto.
   - *Garantia do Ícone Circular Oficial com Fundo Externo 100% Transparente:* Incorporado `app_icon_round.ico` (149.038 bytes, formato híbrido DIB com máscara AND de hardware e PNG 256x256) diretamente nos recursos da aplicação. A rotina `resolveBestAppIcon` assegura a cópia automática para `Dados\app_icon_round.ico` e `Dados\custom_app_icon.ico` no primeiro boot pós-atualização.
   - *Limpeza do Cache do Windows Explorer:* Invocação via C# P/Invoke de `SHChangeNotify(0x08000000, 0x1000)` e `ie4uinit.exe -show` para atualização visual instantânea dos ícones sem necessidade de reiniciar o Explorer.
-* **Suíte de Autoteste em Sandbox no PC 1 (4/4 Cenários Aprovados):**
+* **Suíte de Autoteste em Sandbox no PC 1 (Aprovada com Louvor):**
   - *Cenário 1 (Extração e Staging Seguro):* Testada a extração da v85.4.1 via `UpdaterInstaller` em ambiente simulando o PC 2; confirmado zero erros `EACCES` em `Dados\updates_staging\desktop`.
   - *Cenário 2 (Substituição In-Place Atômica v85.4.0 -> v85.4.1):* Aplicação concluída com sucesso via `applyStagedFiles()`, promovendo o sistema para a versão `85.4.1` (Build 187).
-  - *Cenário 3 (Preservação Absoluta de Dados Comerciais):* Hash SHA-256 do banco `Dados/state.json` (6 clientes reais, conservadoras em comodato) mantido rigorosamente idêntico bit a bit (zero dados alterados).
-  - *Cenário 4 (Higienização de Atalhos em Cenário Concorrente):* Simulados 3 atalhos na Área de Trabalho (`GelControl.lnk`, `GelControl Oficial.lnk`, `GelControl Oficial v85.3.0.lnk`). A rotina de sanitização eliminou as duplicatas com 100% de sucesso, restando apenas `GelControl Oficial.lnk` apontando para `Dados\app_icon_round.ico`.
+  - *Cenário 3 (Preservação Absoluta de Dados Comerciais):* Hash SHA-256 do banco `Dados/state.json` mantido rigorosamente idêntico bit a bit (zero dados alterados).
+  - *Cenário 4 (Higienização Seletiva e Quarentena de Atalhos):* Testados 5 tipos de atalhos. Apenas o atalho concorrente que apontava para o executável oficial foi movido para a quarentena. Atalhos com "Gelo" e "GelControl" apontando para relatórios ou documentos foram 100% preservados. A reversão via `restaurar_atalhos.bat` restaurou o atalho imediatamente.
 * **Versionamento Canônico Atualizado (Build 187):**
   - Atualizado `version.json` (programVersion: 85.4.1, buildNumber: 187, buildDate: 2026-11-11).
   - Atualizado `js/version.js` e `js/state.js` (CODE_BUILD: "v85.4.1 (11/11/2026)").
   - Atualizado `index.html` (#login-version, #app-sidebar-version e cache-busters `?v=85.4.1`).
   - Atualizado `sw.js` (CACHE_NAME: "gelodovale-v187").
-  - Arquivos atualizados sincronizados com paridade de 100% em `F:\GelControl_Oficial\Programa\resources\app`.
 
 #### Versão 85.4.0 (v85) — Eliminação de Dependências de Perfil, Nova Compilação e Sincronização Concluída (11/11/2026 - Antigravity)
 * **Auditoria de Dependências de Perfil de Usuário (Olho de Águia):**

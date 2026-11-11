@@ -473,6 +473,11 @@ function updateAppCustomIcon(options = {}) {
         const baseShortcutName = isHomologation ? 'GelControl (Homologação)' : 'GelControl Oficial';
         const masterShortcutPath = path.join(primaryDesktop, `${baseShortcutName}.lnk`);
 
+        const quarantineDir = path.join(targetDataDir, 'Backups', 'atalhos_quarentena');
+        if (!fs.existsSync(quarantineDir)) {
+            try { fs.mkdirSync(quarantineDir, { recursive: true }); } catch (_) { }
+        }
+
         const psScript = `
             $ws = New-Object -ComObject WScript.Shell
             $roundIco = "${roundIcoPath.replace(/\\/g, '\\\\')}"
@@ -481,6 +486,17 @@ function updateAppCustomIcon(options = {}) {
             $masterLnk = "${masterShortcutPath.replace(/\\/g, '\\\\')}"
             $baseName = "${baseShortcutName}"
             $desktopDirs = @(${desktopDirs.map(d => `"${d.replace(/\\/g, '\\\\')}"`).join(',')})
+            $quarantine = "${quarantineDir.replace(/\\/g, '\\\\')}"
+            $officialTargetCanon = [System.IO.Path]::GetFullPath($targetExec).TrimEnd('\\').ToLower()
+            $auditLog = Join-Path $quarantine "audit_atalhos.log"
+            $restoreBat = Join-Path $quarantine "restaurar_atalhos.bat"
+
+            if (-not (Test-Path $quarantine)) {
+                New-Item -ItemType Directory -Path $quarantine -Force | Out-Null
+            }
+            if (-not (Test-Path $restoreBat)) {
+                Set-Content -Path $restoreBat -Value "@echo off", "echo Restaurando atalhos substituidos para seus locais originais..." -Encoding utf8
+            }
 
             # 1. Garantir o atalho mestre permanente na Área de Trabalho primária com ícone circular
             $mainLnk = $ws.CreateShortcut($masterLnk)
@@ -492,7 +508,7 @@ function updateAppCustomIcon(options = {}) {
             (Get-Item $masterLnk).LastWriteTime = Get-Date
             Write-Output "MASTER_DESKTOP_SAVED: $masterLnk"
 
-            # 2. Higienização profunda: remover qualquer atalho duplicado ou obsoleto em TODAS as áreas de trabalho
+            # 2. Higienização seletiva estrita com quarentena (SOMENTE atalhos comprovadamente apontando para este GelControl.exe)
             $canonMaster = [System.IO.Path]::GetFullPath($masterLnk).TrimEnd('\\').ToLower()
             foreach ($dir in $desktopDirs) {
                 if (Test-Path $dir) {
@@ -501,13 +517,29 @@ function updateAppCustomIcon(options = {}) {
                         if ($itemCanon -ne $canonMaster) {
                             try {
                                 $candidate = $ws.CreateShortcut($_.FullName)
-                                $targetMatch = ($candidate.TargetPath -and $candidate.TargetPath.ToLower().Contains("gelcontrol"))
-                                $nameMatch = ($_.Name.ToLower().Contains("gelcontrol") -or $_.Name.ToLower().Contains("gelo do vale") -or $_.Name.ToLower().Contains("gelo"))
-                                if ($targetMatch -or $nameMatch) {
-                                    Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
-                                    Write-Output "DUPLICATE_REMOVED: $($_.FullName)"
+                                if ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
+                                    $candTargetCanon = [System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower()
+                                    # AUDITORIA ESTREITA: Apenas move para quarentena se o destino for EXATAMENTE este executável oficial
+                                    if ($candTargetCanon -eq $officialTargetCanon) {
+                                        $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                                        $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                                        $backupName = $safeBase + '_' + $ts + '.lnk'
+                                        $backupPath = Join-Path $quarantine $backupName
+
+                                        Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                                        $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
+                                        Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
+                                        Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                                        Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
+                                    } else {
+                                        Write-Output "PRESERVED_EXTERNAL_SHORTCUT: $($_.FullName) -> $($candidate.TargetPath)"
+                                    }
+                                } else {
+                                    Write-Output "PRESERVED_NO_TARGET: $($_.FullName)"
                                 }
-                            } catch {}
+                            } catch {
+                                Write-Output "PRESERVED_ON_ERROR: $($_.FullName)"
+                            }
                         }
                     }
                 }
@@ -530,13 +562,22 @@ function updateAppCustomIcon(options = {}) {
                 (Get-Item $startLnkPath).LastWriteTime = Get-Date
                 Write-Output "STARTMENU_SAVED: $startLnkPath"
 
-                # Limpar atalhos soltos de GelControl na raiz de Programs
-                Get-ChildItem -Path $startMenuDir -Filter "*Gel*.lnk" | ForEach-Object {
+                # Quarentena para atalhos soltos de GelControl na raiz de Programs apontando para este executável
+                Get-ChildItem -Path $startMenuDir -Filter "*.lnk" | ForEach-Object {
                     try {
                         $cand = $ws.CreateShortcut($_.FullName)
-                        if ($cand.TargetPath -and $cand.TargetPath.ToLower().Contains("gelcontrol")) {
-                            Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
-                            Write-Output "STARTMENU_ROOT_CLEANED: $($_.FullName)"
+                        if ($cand.TargetPath) {
+                            $candT = [System.IO.Path]::GetFullPath($cand.TargetPath).TrimEnd('\\').ToLower()
+                            if ($candT -eq $officialTargetCanon) {
+                                $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                                $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                                $backupName = 'StartMenu_' + $safeBase + '_' + $ts + '.lnk'
+                                $backupPath = Join-Path $quarantine $backupName
+                                Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                                Add-Content -Path $auditLog -Value "[$ts] STARTMENU_QUARENTENA: '$($_.FullName)' -> '$backupPath'" -Encoding utf8
+                                Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                                Write-Output "STARTMENU_QUARANTINED: $($_.FullName)"
+                            }
                         }
                     } catch {}
                 }
@@ -763,6 +804,11 @@ function ensureAppShortcuts(options = {}) {
         console.log(`  Ícone configurado: ${iconPath}`);
         console.log(`  Área de Trabalho primária: ${desktopShortcutPath}`);
 
+        const quarantineDir = path.join(dataDir, 'Backups', 'atalhos_quarentena');
+        if (!fs.existsSync(quarantineDir)) {
+            try { fs.mkdirSync(quarantineDir, { recursive: true }); } catch (_) { }
+        }
+
         const psScript = `
             $ws = New-Object -ComObject WScript.Shell
             $target = "${execNormalized.replace(/\\/g, '\\\\')}"
@@ -772,6 +818,17 @@ function ensureAppShortcuts(options = {}) {
             $desktopDirs = @(${desktopDirs.map(d => `"${d.replace(/\\/g, '\\\\')}"`).join(',')})
             $scPath = "${desktopShortcutPath.replace(/\\/g, '\\\\')}"
             $baseName = "${baseShortcutName}"
+            $quarantine = "${quarantineDir.replace(/\\/g, '\\\\')}"
+            $officialTargetCanon = [System.IO.Path]::GetFullPath($target).TrimEnd('\\').ToLower()
+            $auditLog = Join-Path $quarantine "audit_atalhos.log"
+            $restoreBat = Join-Path $quarantine "restaurar_atalhos.bat"
+
+            if (-not (Test-Path $quarantine)) {
+                New-Item -ItemType Directory -Path $quarantine -Force | Out-Null
+            }
+            if (-not (Test-Path $restoreBat)) {
+                Set-Content -Path $restoreBat -Value "@echo off", "echo Restaurando atalhos substituidos para seus locais originais..." -Encoding utf8
+            }
 
             # 1. Garantir o atalho permanente oficial na Área de Trabalho primária com ícone circular
             $s = $ws.CreateShortcut($scPath)
@@ -783,7 +840,7 @@ function ensureAppShortcuts(options = {}) {
             (Get-Item $scPath).LastWriteTime = Get-Date
             Write-Output "ENSURED_MAIN: $scPath"
 
-            # 2. Higienização: remover qualquer atalho duplicado em TODAS as áreas de trabalho conhecidas
+            # 2. Higienização seletiva estrita com quarentena (SOMENTE atalhos comprovadamente apontando para este GelControl.exe)
             $canonMaster = [System.IO.Path]::GetFullPath($scPath).TrimEnd('\\').ToLower()
             foreach ($dir in $desktopDirs) {
                 if (Test-Path $dir) {
@@ -792,13 +849,29 @@ function ensureAppShortcuts(options = {}) {
                         if ($itemCanon -ne $canonMaster) {
                             try {
                                 $candidate = $ws.CreateShortcut($_.FullName)
-                                $targetMatch = ($candidate.TargetPath -and $candidate.TargetPath.ToLower().Contains("gelcontrol"))
-                                $nameMatch = ($_.Name.ToLower().Contains("gelcontrol") -or $_.Name.ToLower().Contains("gelo do vale") -or $_.Name.ToLower().Contains("gelo"))
-                                if ($targetMatch -or $nameMatch) {
-                                    Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue
-                                    Write-Output "DUPLICATE_REMOVED: $($_.FullName)"
+                                if ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
+                                    $candTargetCanon = [System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower()
+                                    # AUDITORIA ESTREITA: Apenas move para quarentena se o destino for EXATAMENTE este executável oficial
+                                    if ($candTargetCanon -eq $officialTargetCanon) {
+                                        $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                                        $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                                        $backupName = $safeBase + '_' + $ts + '.lnk'
+                                        $backupPath = Join-Path $quarantine $backupName
+
+                                        Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                                        $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
+                                        Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
+                                        Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                                        Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
+                                    } else {
+                                        Write-Output "PRESERVED_EXTERNAL_SHORTCUT: $($_.FullName) -> $($candidate.TargetPath)"
+                                    }
+                                } else {
+                                    Write-Output "PRESERVED_NO_TARGET: $($_.FullName)"
                                 }
-                            } catch {}
+                            } catch {
+                                Write-Output "PRESERVED_ON_ERROR: $($_.FullName)"
+                            }
                         }
                     }
                 }
@@ -814,6 +887,26 @@ function ensureAppShortcuts(options = {}) {
             $s2.Save()
             (Get-Item $smPath).LastWriteTime = Get-Date
             Write-Output "ENSURED_STARTMENU: $smPath"
+
+            # Quarentena para atalhos soltos de GelControl na raiz de Programs apontando para este executável
+            Get-ChildItem -Path $startMenuDir -Filter "*.lnk" | ForEach-Object {
+                try {
+                    $cand = $ws.CreateShortcut($_.FullName)
+                    if ($cand.TargetPath) {
+                        $candT = [System.IO.Path]::GetFullPath($cand.TargetPath).TrimEnd('\\').ToLower()
+                        if ($candT -eq $officialTargetCanon) {
+                            $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                            $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                            $backupName = 'StartMenu_' + $safeBase + '_' + $ts + '.lnk'
+                            $backupPath = Join-Path $quarantine $backupName
+                            Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                            Add-Content -Path $auditLog -Value "[$ts] STARTMENU_QUARENTENA: '$($_.FullName)' -> '$backupPath'" -Encoding utf8
+                            Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                            Write-Output "STARTMENU_QUARANTINED: $($_.FullName)"
+                        }
+                    }
+                } catch {}
+            }
 
             # 4. Forçar limpeza do cache do Windows Explorer
             if (Test-Path "$env:SystemRoot\\System32\\ie4uinit.exe") {
