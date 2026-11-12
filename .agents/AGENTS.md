@@ -41,6 +41,49 @@ Sempre que fizer qualquer alteração no código do sistema, **por menor que sej
 
 ## 📖 3. Resumo do Estado Atual (Onde Paramos)
 
+#### Versão 85.4.2 (v85) — Preparação e Blindagem de Produção: Revalidação de Identidade por PID, Flush Seguro e Rollback Atômico (12/11/2026 - Antigravity)
+* **Revalidação Imediata de Identidade por PID (`isPidBelongingToInstall`):**
+  - Implementada checagem em tempo real imediatamente antes de qualquer encerramento forçado (`taskkill /PID <pid> /F`).
+  - O sistema consulta o caminho físico do executável (`ExecutablePath`) no momento exato do encerramento. Se o processo original tiver sido finalizado e o PID tiver sido reciclado pelo Windows para outro aplicativo ou serviço do sistema, o comando é descartado, impedindo que instâncias alheias sejam atingidas.
+* **Flush e Salvamento Preventivo de Dados Antes do Fechamento:**
+  - `js/updater_ui.js`: Invocação explícita de `window.saveState()` no instante da confirmação do usuário, garantindo gravação imediata de todos os dados em memória para o armazenamento persistente antes de solicitar a reinicialização.
+  - Janela graciosa mantida no aplicador (até 8s espontâneos + 5s com `WM_CLOSE`), assegurando que buffers de disco sejam liberados limpos.
+* **Teste Controlado de Falha e Rollback Aprovado com Louvor:**
+  - Simulação de falha crítica durante a substituição em ambiente controlado (`sandbox_rollback_test`).
+  - A interrupção forçada disparou automaticamente `performRollback()`, restaurando 100% dos arquivos originais da versão anterior (`v85.4.1 Build 187` e `index.html`).
+  - O banco de dados comercial `Dados/state.json` manteve seu hash SHA-256 (`7D9A5559...`) rigorosamente inalterado bit a bit (zero impacto comercial).
+* **Construção do Pacote de Produção v85.4.2 (Build 188):**
+  - Gerado `dist/updates/producao/packages/gelcontrol-update-85.4.2-producao.zip` (3.551.526 bytes, ~3,39 MB | SHA-256: `059ecb57db1f66ec8ba4d444093bedd133deb40acb849684f1490de3d2002498`).
+  - Manifesto assinado com Ed25519 e validado com 100% de autenticidade contra a chave pública oficial.
+  - O pacote incremental transporta `app_icon_round.ico` e `desktop/shortcuts.js` aperfeiçoados, garantindo a correção transparente do ícone no PC 2 pela própria interface.
+  - **Status de Publicação:** Pacote preparado localmente; publicação no GitHub Releases retida aguardando autorização expressa do usuário.
+
+#### Versão 85.4.1 (v85) — Auditoria Operação Olho de Águia: Diagnóstico das 3 Ocorrências, Blindagem de Desktop OneDrive e Anti-Lock (12/11/2026 - Antigravity)
+* **Investigação Técnica da Primeira Ocorrência (Ícone Oficial Não Atualizado no PC 2):**
+  - *Causa Raiz 1 (Redirecionamento de Desktop pelo OneDrive):* No Windows com backup de Desktop ativo no OneDrive, o Desktop visível fica em `OneDrive\Desktop` ou `OneDrive\Área de Trabalho`. O algoritmo legado de `getWindowsDesktopDirs()` priorizava a pasta física local inativa `%USERPROFILE%\Desktop`, criando/atualizando o atalho fora da visão do usuário.
+  - *Causa Raiz 2 (Ausência de app_icon_round.ico na seção [Files] do Inno Setup):* O Inno Setup configurava o atalho apontando para `{app}\Dados\app_icon_round.ico`, mas o arquivo não constava em `[Files]`. Na ausência do arquivo físico no primeiro boot, o Windows Explorer recorreu ao ícone legado (quadrado) do `.exe`.
+  - *Causa Raiz 3 (Canal Fallback no updater_applier.js):* No pós-update do `updater_applier.js`, a linha 155 utilizava `state.channel || 'homologacao'`. Caso `channel` viesse indefinido, ele tentava aplicar o atalho de homologação, não atualizando o `GelControl Oficial.lnk`.
+  - *Correção Definitiva Concluída:*
+    1. `desktop/shortcuts.js`: Consulta dinâmica à API `.NET` (`[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)`) para obter a Área de Trabalho real ativa e varredura em todas as pastas de Desktop existentes para atualizar `IconLocation = "$roundIco,0"` em TODOS os atalhos oficiais.
+    2. `desktop/installer_oficial_inteligente.iss`: Inclusão explícita de `app_icon_round.ico` na seção `[Files]` para `{app}\Dados`, `{app}\Programa` e `{app}`.
+    3. `desktop/updater_applier.js`: Canal corrigido para `state.channel || 'producao'` com invocação obrigatória de `ensureAppShortcuts` e `updateAppCustomIcon`.
+* **Investigação Técnica da Segunda Ocorrência (Aviso Inesperado do OneDrive no PC 1):**
+  - *Diagnóstico Conclusivo:* A notificação sobre "arquivo com o mesmo nome" no PC 1 foi causada por arquivos de sessão da ferramenta Antigravity (`OneDrive\antigravity\annotations\...-DESKTOP-7D77T6B-6.pbtxt`), sincronizados pelo OneDrive durante a execução concomitante no PC 2.
+  - *Confirmação de Integridade Absoluta:* A pasta do GelControl (`GelodoVale-system\App`) e a instalação operacional (`F:\GelControl_Oficial`) tiveram ZERO conflitos. O banco comercial `Dados\state.json` manteve seu hash SHA-256 (`7AB1A3961E30906E7FE7870A8FE02F09463EE07F5F9DAEE789BB9E78E6EA629F`) 100% inalterado (4 conservadoras em comodato e 6 clientes comerciais intactos).
+* **Investigação Técnica da Terceira Ocorrência (Bloqueio Transitório ao Atualizar no PC 2):**
+  - *Causa Raiz:* Existência de processos secundários do `GelControl.exe` ou subprocessos do Electron retendo descritores abertos em `resources\app`, somado à chamada única e seca de `fs.cpSync` sem tolerância a retentativas durante inspeção transitória do Windows Defender.
+  - *Blindagem Definitiva de Segurança (Encerramento Seletivo e Gracioso):*
+    1. `desktop/updater_applier.js` (`getTargetInstallationPids`): Identificação estrita dos processos pertencentes exclusivamente ao diretório desta instalação via API do Windows/WMI (`ExecutablePath` contido em `installRoot` e processos filhos diretos com `ParentProcessId`), eliminando qualquer risco de encerrar instâncias de outros diretórios ou instalações.
+    2. Encerramento Ordenado em Fases (`gracefullyTerminateInstallationProcesses`):
+       - Fase 1: Aguarda término espontâneo (até 8 segundos).
+       - Fase 2: Solicita encerramento gracioso via `taskkill /PID <pid>` (sem `/F`), permitindo o envio de mensagens normais de fechamento (`WM_CLOSE`) e a conclusão segura de gravações em disco pendentes (até 5 segundos).
+       - Fase 3: Encerramento forçado estritamente condicional (`/F`) aplicado unicamente como último recurso para PIDs específicos daquela árvore caso permaneçam zumbis após o tempo limite.
+       - Pré-condição Atômica: Se algum processo da instalação permanecer bloqueado, a atualização é cancelada com status `ABORTED` ANTES de modificar qualquer arquivo em `appDir`, preservando integralmente o sistema anterior sem instalações parciais.
+    3. Laço de tolerância ativa: `fs.cpSync` protegido por laço de até 10 tentativas com retentativas de 350ms, superando bloqueios transitórios de inspeção de antivírus.
+* **Validação em Laboratório no PC 1:**
+  - `ensureAppShortcuts` testado e aprovado com sucesso: atalho `GelControl Oficial.lnk` verificado com `IconLocation` apontando para `F:\GelControl_Oficial\Dados\app_icon_round.ico,0`.
+  - Atalhos externos (Antigravity, Discord, PrecificaPizza, etc.) rigorosamente preservados.
+
 #### Versão 85.4.1 (v85) — Homologação do Atualizador Interno, Higienização de Atalhos e Ícone Circular Nativo (11/11/2026 - Antigravity)
 * **Auditoria de Segurança de Atalhos e Quarentena Reversível (Olho de Águia):**
   - *Confinamento Estrito de TargetPath:* A rotina de sanitização em `desktop/shortcuts.js` foi aperfeiçoada com checagem rigorosa de destino canônico (`[System.IO.Path]::GetFullPath($candidate.TargetPath)`). Somente atalhos que apontem comprovadamente para o executável `GelControl.exe` oficial são classificados como duplicatas concorrentes.

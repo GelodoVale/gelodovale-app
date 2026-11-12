@@ -65,8 +65,11 @@ Source: "F:\GelControl_Oficial\Programa\*"; DestDir: "{app}\Programa"; Flags: ig
 ; 2. Aplicação Oficial Completa v85.4.0 (index.html, trash.js, shortcuts.js, updater_installer.js, etc.)
 Source: "F:\GelControl_Oficial\Programa\resources\app\*"; DestDir: "{app}\Programa\resources\app"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.log,*.tmp,*.bak,*-DESKTOP-*"
 
-; 3. Ícone Oficial do Programa
+; 3. Ícones Oficiais do Programa (Quadrado clássico e Circular nativo para Dados e raiz)
 Source: "..\gelcontrol.ico"; DestDir: "{app}\Programa"; Flags: ignoreversion
+Source: "..\app_icon_round.ico"; DestDir: "{app}\Dados"; Flags: ignoreversion
+Source: "..\app_icon_round.ico"; DestDir: "{app}\Programa"; Flags: ignoreversion
+Source: "..\app_icon_round.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 ; 4. Ferramentas Administrativas de Escritório (sem credenciais de serviço)
 Source: "..\tools\*"; DestDir: "{app}\Seguranca\Tools"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "service-account*.json,*.key,*.pem,*.env,secrets"

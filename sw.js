@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gelodovale-v187';
+const CACHE_NAME = 'gelodovale-v188';
 const ASSETS = [
   'index.html',
   'form.html',
@@ -103,7 +103,7 @@ self.addEventListener('fetch', (e) => {
             if (networkResponse && networkResponse.status === 200) {
               cache.put(e.request, networkResponse);
             }
-          }).catch(() => {});
+          }).catch(() => { });
           return cachedResponse;
         }
         return fetch(e.request);

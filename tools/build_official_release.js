@@ -12,7 +12,7 @@ const { getCanonicalManifestBuffer, verifyEd25519Signature, compareSemVer } = re
 const { PRODUCAO_PUBLIC_KEY_PEM } = require('../desktop/updater_config');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
-const TARGET_VERSION = '85.4.1';
+const TARGET_VERSION = '85.4.2';
 const MIN_APP_VERSION = '80.0.0'; // Permite atualização direta de qualquer versão a partir da v80
 const CANAL = 'producao';
 
@@ -119,7 +119,7 @@ fs.mkdirSync(desktopStaging, { recursive: true });
 // Metadados Canônicos de Versão
 const versionInfo = {
     programVersion: TARGET_VERSION,
-    buildNumber: 187,
+    buildNumber: 188,
     buildDate: new Date().toISOString().split('T')[0],
     channel: CANAL,
     dataSchemaVersion: "2.5",
@@ -178,10 +178,11 @@ const manifestDraft = {
     minAppVersion: MIN_APP_VERSION,
     releaseNotes: [
         `GelControl Oficial v${TARGET_VERSION} (Produção)`,
-        `Homologação e Atualização Automática Transparente via Atualizador Interno`,
-        `Higienização Atômica de Atalhos Duplicados e Obsoletos na Área de Trabalho e Menu Iniciar`,
+        `Encerramento Cirúrgico de Processos com Revalidação Estrita de Identidade por PID e Flush Seguro`,
+        `Resolução Dinâmica da Área de Trabalho no OneDrive e Sincronização Multi-Desktop`,
         `Garantia do Ícone Circular Oficial com Fundo Externo 100% Transparente`,
-        `Preservação Absoluta dos Dados Comerciais e Paridade Criptográfica Ed25519`
+        `Tolerância Ativa Anti-Lock a Inspeções Transitórias do Antivírus/Defender`,
+        `Preservação Absoluta dos Dados Comerciais com Rollback Atômico Comprovado`
     ],
     packageUrl: `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/${zipFileName}`,
     packageSize: packageSize,

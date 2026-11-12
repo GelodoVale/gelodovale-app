@@ -639,6 +639,17 @@ export async function handleInstallButtonClick() {
         }
         if (!proceed) return;
 
+        // Proteção e persistência preventiva imediata: garante que qualquer gravação pendente seja finalizada antes do reinício
+        try {
+            if (typeof window.saveState === 'function') {
+                window.saveState();
+            } else if (typeof window.saveStateLocalOnly === 'function') {
+                window.saveStateLocalOnly();
+            }
+        } catch (eSave) {
+            console.warn('[UpdaterUI] Aviso ao realizar salvamento preventivo de estado:', eSave);
+        }
+
         isInstalling = true;
 
         const btnMainInstall = document.getElementById('btn-check-and-install-update');

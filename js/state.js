@@ -9,10 +9,34 @@ if (typeof window !== 'undefined') window.roundMoney = roundMoney;
 // --- ESTADO GLOBAL DA APLICAÇÃO GELO DO VALE ---
 import { migrateLegacyComodatos } from './comodatos.js';
 import { initUserAccessControl } from './auth.js';
+import { defaultOutbox, generateStableId, generateUUID } from './outbox.js';
 
-// Versão centralizada — altere aqui para atualizar em todo o sistema
-export const APP_VERSION = "2.5";
-export const CODE_BUILD = "v85 (06/11/2026)";
+// --- VERSÃO E CANAL CENTRALIZADOS (FONTE ÚNICA DE VERDADE) ---
+import {
+    PROGRAM_VERSION,
+    BUILD_NUMBER,
+    BUILD_DATE,
+    DISTRIBUTION_CHANNEL,
+    DATA_SCHEMA_VERSION,
+    RELEASE_NAME,
+    APP_VERSION,
+    CODE_BUILD,
+    IS_HOMOLOGATION_BUILD,
+    VERSION_INFO
+} from './version.js';
+
+export {
+    PROGRAM_VERSION,
+    BUILD_NUMBER,
+    BUILD_DATE,
+    DISTRIBUTION_CHANNEL,
+    DATA_SCHEMA_VERSION,
+    RELEASE_NAME,
+    APP_VERSION,
+    CODE_BUILD,
+    IS_HOMOLOGATION_BUILD,
+    VERSION_INFO
+};
 
 export let state = {
     prices: {
@@ -46,7 +70,8 @@ export let state = {
     equipments: [],
     comodatos: [],
     localEvents: [],
-    ignoredSpikes: []
+    ignoredSpikes: [],
+    trash: []
 };
 
 export function updateState(newState, preserveConfigs = false) {
@@ -83,7 +108,9 @@ export function updateState(newState, preserveConfigs = false) {
 
     normalizeStateArrays();
     initializeDefaultFields();
+    ensureStableIds();
     initUserAccessControl();
+    setLastKnownStateSnapshot(state);
 }
 
 export function normalizeStateArrays() {
@@ -91,7 +118,7 @@ export function normalizeStateArrays() {
         'clients', 'products', 'orders', 'deliveries', 'freezers', 
         'rentals', 'documents', 'payments', 'suppliers', 'packaging', 
         'packagingTransactions', 'cargoSettlements', 'users', 'equipments',
-        'comodatos', 'localEvents', 'ignoredSpikes', 'pendingForms'
+        'comodatos', 'localEvents', 'ignoredSpikes', 'pendingForms', 'trash'
     ];
     collections.forEach(col => {
         if (state[col]) {
@@ -793,14 +820,44 @@ export function initializeDefaultFields() {
             if (!c.visitDays) c.visitDays = [];
         });
     }
-    if (!state.firebaseConfig || !state.firebaseConfig.apiKey) {
-        state.firebaseConfig = {
-            enabled: true,  // AUTO-ATIVADO: sync em tempo real ligado por padrão
-            apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
-            projectId: 'gelcontrol-homologacao',
-            databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
-            deviceKey: 'fabrica_homologacao_teste'
-        };
+    // ─── BLINDAGEM DE HOMOLOGAÇÃO (ANTI-VAZAMENTO DE PRODUÇÃO) ──────────────
+    // Se estiver em ambiente desktop de homologação (banner ou flag ativa),
+    // NUNCA permitir que configurações persistidas de produção ('gelo-do-vale') prevaleçam!
+    const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+    const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+    const isHomologationBuild = IS_HOMOLOGATION_BUILD || isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+
+    if (isHomologationBuild) {
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelcontrol-homologacao') {
+            console.warn('[Security Guard] 🛑 Configuração divergente interceptada no ambiente de homologação. Forçando gelcontrol-homologacao isolado.');
+            state.firebaseConfig = {
+                enabled: true,
+                apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                projectId: 'gelcontrol-homologacao',
+                databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+                deviceKey: 'fabrica_homologacao_sync_v85_teste'
+            };
+            saveStateLocalOnly();
+        } else if (state.firebaseConfig.deviceKey === 'fabrica_homologacao_teste') {
+            console.log('[Security Guard] 🔄 Migrando fábrica legada de testes para fábrica isolada autorizada: fabrica_homologacao_sync_v85_teste');
+            state.firebaseConfig.deviceKey = 'fabrica_homologacao_sync_v85_teste';
+            saveStateLocalOnly();
+        }
+    } else {
+        // AMBIENTE OFICIAL DE PRODUÇÃO (CHAVE ATIVA VALIDADA NO GOOGLE CLOUD)
+        const OFFICIAL_PROD_KEY = 'AIzaSyC6RTVPTDkngo-WnSEcBGD1wxQwzwtVZfw';
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelo-do-vale' || state.firebaseConfig.apiKey !== OFFICIAL_PROD_KEY) {
+            console.log('[Security Guard] 🛡️ Sincronizando Firebase oficial de produção com chave validada...');
+            if (!state.firebaseConfig) state.firebaseConfig = {};
+            state.firebaseConfig.enabled = true;
+            state.firebaseConfig.apiKey = OFFICIAL_PROD_KEY;
+            state.firebaseConfig.authDomain = 'gelo-do-vale.firebaseapp.com';
+            state.firebaseConfig.projectId = 'gelo-do-vale';
+            state.firebaseConfig.databaseURL = 'https://gelo-do-vale-default-rtdb.firebaseio.com';
+            state.firebaseConfig.deviceKey = 'gelodovale_oficial';
+            saveStateLocalOnly();
+        }
     }
     // Migração: ativar auto-sync para dispositivos existentes que tinham enabled=false
     // mas já possuem as credenciais preenchidas (não vai afetar quem desativou manualmente pós v34)
@@ -931,6 +988,135 @@ function detectOfflineChangeType() {
     }
 }
 
+// ─── MOTOR DE RASTREAMENTO DIFERENCIAL GRANULAR (FASE 8F) ───────────────────
+let lastKnownStateSnapshot = null;
+
+export function setLastKnownStateSnapshot(snap) {
+    if (snap) {
+        lastKnownStateSnapshot = JSON.parse(JSON.stringify(snap));
+    } else {
+        lastKnownStateSnapshot = null;
+    }
+}
+
+export function getLastKnownStateSnapshot() {
+    return lastKnownStateSnapshot;
+}
+
+export function isGranularModeEnabled() {
+    return !!(state && state.featureFlags && state.featureFlags.granularSync);
+}
+
+export const GRANULAR_TRACKED_COLLECTIONS = [
+    'clients', 'orders', 'deliveries', 'freezers', 'products',
+    'rentals', 'documents', 'payments', 'suppliers', 'packaging',
+    'packagingTransactions', 'cargoSettlements', 'users', 'equipments',
+    'comodatos', 'localEvents', 'ignoredSpikes'
+];
+
+/**
+ * Garante identificadores únicos estáveis e imutáveis em todas as coleções,
+ * preservando referências cruzadas sem quebrar relacionamentos entre registros.
+ */
+export function ensureStableIds() {
+    if (!state) return;
+    const collectionsToMigrate = [
+        { col: 'clients', prefix: 'cli' },
+        { col: 'orders', prefix: 'ord' },
+        { col: 'deliveries', prefix: 'del' },
+        { col: 'freezers', prefix: 'frz' },
+        { col: 'rentals', prefix: 'rnt' },
+        { col: 'documents', prefix: 'doc' },
+        { col: 'payments', prefix: 'pay' },
+        { col: 'comodatos', prefix: 'com' }
+    ];
+
+    collectionsToMigrate.forEach(({ col, prefix }) => {
+        if (!Array.isArray(state[col])) return;
+        state[col].forEach(item => {
+            if (!item) return;
+            if (!item.id || String(item.id).trim() === '') {
+                item.id = generateStableId(prefix);
+            }
+        });
+    });
+}
+
+/**
+ * Compara o estado atual com o snapshot anterior e gera operações granulares
+ * (CREATE, UPDATE, DELETE) individuais persistidas no outbox.
+ */
+export function diffAndEnqueueGranularOperations() {
+    if (!isGranularModeEnabled()) return;
+    if (!defaultOutbox) return;
+
+    if (!lastKnownStateSnapshot) {
+        lastKnownStateSnapshot = JSON.parse(JSON.stringify(state));
+        return;
+    }
+
+    const prev = lastKnownStateSnapshot;
+    const curr = state;
+
+    GRANULAR_TRACKED_COLLECTIONS.forEach(col => {
+        const prevList = Array.isArray(prev[col]) ? prev[col] : [];
+        const currList = Array.isArray(curr[col]) ? curr[col] : [];
+
+        const prevMap = new Map();
+        prevList.forEach(item => { if (item && item.id) prevMap.set(String(item.id), item); });
+
+        const currMap = new Map();
+        currList.forEach(item => { if (item && item.id) currMap.set(String(item.id), item); });
+
+        // 1. Itens novos (CREATE) e modificados (UPDATE)
+        currList.forEach(item => {
+            if (!item || !item.id) return;
+            const strId = String(item.id);
+            const prevItem = prevMap.get(strId);
+
+            if (!prevItem) {
+                // Item novo
+                defaultOutbox.enqueue(col, 'CREATE', strId, item, { coalesce: true });
+            } else {
+                // Item existente: verificar se houve alteração no payload
+                const prevStr = JSON.stringify(prevItem);
+                const currStr = JSON.stringify(item);
+                if (prevStr !== currStr) {
+                    defaultOutbox.enqueue(col, 'UPDATE', strId, item, { coalesce: true });
+                }
+            }
+        });
+
+        // 2. Itens removidos (DELETE)
+        prevList.forEach(prevItem => {
+            if (!prevItem || !prevItem.id) return;
+            const strId = String(prevItem.id);
+            if (!currMap.has(strId)) {
+                defaultOutbox.enqueue(col, 'DELETE', strId, null);
+            }
+        });
+    });
+
+    // Atualiza o snapshot de referência
+    lastKnownStateSnapshot = JSON.parse(JSON.stringify(state));
+}
+
+/**
+ * Operação granular explícita para registrar mutações diretamente.
+ */
+export function trackGranularChange(entity, action, entityId, payload, options = {}) {
+    if (!defaultOutbox) return null;
+    return defaultOutbox.enqueue(entity, action, entityId, payload, options);
+}
+
+/**
+ * Operação atômica para saldos e estoque com garantias transacionais no servidor.
+ */
+export function trackGranularTransaction(entity, entityId, txOptions) {
+    if (!defaultOutbox) return null;
+    return defaultOutbox.enqueue(entity, 'TRANSACTION', entityId, txOptions);
+}
+
 export function saveStateLocalOnly() {
     recalculateClientDebts();
     try {
@@ -964,8 +1150,11 @@ export function saveStateLocalOnly() {
 export function saveState() {
     state.lastUpdated = Date.now();
     
-    // Se estiver offline, registrar alteração na fila offline
-    if (!navigator.onLine) {
+    // Se a sincronização granular estiver ativa, executa rastreamento diferencial
+    if (isGranularModeEnabled()) {
+        diffAndEnqueueGranularOperations();
+    } else if (!navigator.onLine) {
+        // Se estiver offline no modo legado, registrar alteração na fila de texto
         if (!state.offlineChangesQueue) state.offlineChangesQueue = [];
         const changeDesc = detectOfflineChangeType();
         const timestamp = Date.now();
@@ -991,4 +1180,9 @@ if (typeof window !== 'undefined') {
     window.saveState = saveState;
     window.saveStateLocalOnly = saveStateLocalOnly;
     window.recalculateClientDebts = recalculateClientDebts;
+    window.generateStableId = generateStableId;
+    window.ensureStableIds = ensureStableIds;
+    window.trackGranularChange = trackGranularChange;
+    window.trackGranularTransaction = trackGranularTransaction;
+    window.isGranularModeEnabled = isGranularModeEnabled;
 }

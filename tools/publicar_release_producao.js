@@ -226,7 +226,7 @@ async function publicarReleaseProducao() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             name: `GelControl Oficial v${manifest.latestVersion} (Produção)`,
-            body: `## GelControl Oficial — Versão ${manifest.latestVersion} (Produção Oficial)\n\n**Data:** ${manifest.buildDate}\n**SHA-256:** \`${calculatedHash}\`\n\n### Destaques desta Versão:\n- **Lixeira Inteligente Centralizada:** Soft-delete com retenção contínua e custódia patrimonial protegida de conservadoras em comodato.\n- **Identidade Visual Circular no Windows:** Ícone nativo (.ico) híbrido DIB de 32 bits + máscara AND de hardware de 1 bit com fundo transparente e proporção estrita.\n- **Atualizador Multi-Estação:** Atualização direta de versões anteriores sem escadinha, preservando integralmente dados locais, bancos e senhas locais.\n- **Sincronização em Tempo Real:** Tenant oficial unificado da fábrica no Firebase RTDB.`
+            body: `## GelControl Oficial — Versão ${manifest.latestVersion} (Produção Oficial)\n\n**Data:** ${manifest.buildDate}\n**SHA-256:** \`${calculatedHash}\`\n\n### Destaques desta Versão:\n- **Revalidação de Identidade por PID:** Inspeção de segurança em tempo real imediatamente antes de qualquer encerramento forçado, impedindo atingir PIDs reciclados pelo Windows.\n- **Encerramento Ordenado e Gracioso:** Flushing seguro de buffers e fechamento em três fases com preservação dos dados.\n- **Resolução Dinâmica do Desktop do OneDrive:** Suporte transparente ao redirecionamento de Área de Trabalho e sincronização multi-desktop.\n- **Ícone Circular Oficial com Fundo Transparente:** Ícone nativo (.ico) híbrido DIB 32bpp com máscara AND de 1 bit e PNG 256x256 com proporção 1:1.\n- **Tolerância Ativa Anti-Lock:** Laço de até 10 tentativas para superar inspeções em tempo real do Microsoft Defender / Antivírus sem interrupção.\n- **Preservação Absoluta de Dados:** Banco de dados comercial e comodatos 100% protegidos com rollback atômico comprovado.`
         })
     });
     console.log('   Metadados atualizados com sucesso.');
@@ -259,10 +259,10 @@ async function publicarReleaseProducao() {
     }
     console.log('   ✅ Integridade SHA-256 do pacote baixado pela internet comprovada!');
 
-    // 7. Simulação Real de Consulta via UpdaterCore (PC 2 com v85.3.0)
-    console.log('\n7. Simulando consulta de atualização do PC 2 contra o endpoint online real:');
+    // 7. Simulação Real de Consulta via UpdaterCore (Estação v85.4.0 detectando v85.4.1)
+    console.log('\n7. Simulando consulta de atualização da estação v85.4.0 contra o endpoint online real:');
     const updaterSimulado = new UpdaterCore({
-        installedVersion: '85.3.0',
+        installedVersion: '85.4.0',
         channel: 'producao',
         producaoPublicKey: PRODUCAO_PUBLIC_KEY_PEM,
         producaoManifestUrl: PERMANENT_PRODUCAO_MANIFEST_URL
@@ -271,10 +271,10 @@ async function publicarReleaseProducao() {
     const checkResult = await updaterSimulado.checkUpdate();
     console.log('   Resultado da verificação:', checkResult);
 
-    if (!checkResult.hasUpdate || checkResult.availableVersion !== '85.4.0') {
-        throw new Error(`Falha na detecção da versão: esperado hasUpdate=true com v85.4.0, obtido: ${JSON.stringify(checkResult)}`);
+    if (!checkResult.hasUpdate || checkResult.availableVersion !== manifest.latestVersion) {
+        throw new Error(`Falha na detecção da versão: esperado hasUpdate=true com v${manifest.latestVersion}, obtido: ${JSON.stringify(checkResult)}`);
     }
-    console.log('   ✅ ATUALIZADOR DO PC 2 RECONHECE A v85.4.0 ONLINE COM 100% DE SUCESSO!');
+    console.log(`   ✅ ATUALIZADOR DA ESTAÇÃO RECONHECE A v${manifest.latestVersion} ONLINE COM 100% DE SUCESSO!`);
 
     console.log('\n================================================================');
     console.log('🎉 PUBLICAÇÃO OFICIAL DE PRODUÇÃO CONCLUÍDA E VALIDADA COM ÊXITO!');
