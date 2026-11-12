@@ -47,8 +47,11 @@ function removeObsoleteEntries(targetDir, sourceDir) {
 function getTargetInstallationPids(installRoot, targetPid) {
     if (process.platform !== 'win32') return targetPid ? [targetPid] : [];
     const rootNorm = path.resolve(installRoot).toLowerCase();
+    const currentPid = process.pid;
     const matchedPids = new Set();
-    if (targetPid && targetPid > 0) matchedPids.add(targetPid);
+    if (targetPid && targetPid > 0 && targetPid !== currentPid) {
+        matchedPids.add(targetPid);
+    }
 
     try {
         const psCmd = `
@@ -80,6 +83,9 @@ function getTargetInstallationPids(installRoot, targetPid) {
                 const parentId = parseInt(item.ParentId, 10);
                 const exePath = item.Path ? path.resolve(item.Path).toLowerCase() : null;
 
+                // REGRA DE SOBREVIVÊNCIA: Nunca incluir o próprio processo do aplicador
+                if (pid === currentPid) continue;
+
                 if (exePath && exePath.startsWith(rootNorm)) {
                     matchedPids.add(pid);
                 } else if (parentId && matchedPids.has(parentId)) {
@@ -100,6 +106,7 @@ function getTargetInstallationPids(installRoot, targetPid) {
                 const list2 = Array.isArray(parsed2) ? parsed2 : [parsed2];
                 for (const item of list2) {
                     const pid = parseInt(item.Id, 10);
+                    if (pid === currentPid) continue;
                     const exePath = item.Path ? path.resolve(item.Path).toLowerCase() : null;
                     if (exePath && exePath.startsWith(rootNorm)) {
                         matchedPids.add(pid);
@@ -109,6 +116,8 @@ function getTargetInstallationPids(installRoot, targetPid) {
         } catch (_) {}
     }
 
+    // Blindagem final: garante que o próprio processo aplicador nunca esteja na lista
+    matchedPids.delete(currentPid);
     return Array.from(matchedPids);
 }
 
@@ -117,7 +126,7 @@ function getTargetInstallationPids(installRoot, targetPid) {
  * à instalação alvo, evitando atingir PIDs reutilizados pelo Windows ou outras instâncias.
  */
 function isPidBelongingToInstall(pid, installRoot) {
-    if (!pid || pid <= 0 || !isProcessAlive(pid)) return false;
+    if (!pid || pid <= 0 || pid === process.pid || !isProcessAlive(pid)) return false;
     if (process.platform !== 'win32') return true;
     const rootNorm = path.resolve(installRoot).toLowerCase();
     try {
@@ -142,12 +151,14 @@ function isPidBelongingToInstall(pid, installRoot) {
  * permitindo o flush de dados e respeitando gravações em andamento.
  */
 async function gracefullyTerminateInstallationProcesses(pids, installRoot) {
-    if (!pids || !pids.length) return true;
+    // Blindagem de segurança: exclui explicitamente o próprio PID do aplicador
+    const targetPids = (pids || []).filter(pid => pid !== process.pid && isProcessAlive(pid));
+    if (!targetPids.length) return true;
 
-    console.log(`[UpdaterApplier] Gerenciando encerramento ordenado de ${pids.length} processo(s) da instalação: ${pids.join(', ')}...`);
+    console.log(`[UpdaterApplier] Gerenciando encerramento ordenado de ${targetPids.length} processo(s) da instalação: ${targetPids.join(', ')}...`);
 
     // Fase 1: Aguarda término espontâneo (ex: janelas já fechando normalmente)
-    let pendingPids = pids.filter(pid => isProcessAlive(pid));
+    let pendingPids = targetPids.filter(pid => isProcessAlive(pid));
     let waitGraceMs = 0;
     while (pendingPids.length > 0 && waitGraceMs < 8000) {
         await sleep(500);
@@ -159,6 +170,7 @@ async function gracefullyTerminateInstallationProcesses(pids, installRoot) {
     if (pendingPids.length > 0) {
         console.log(`[UpdaterApplier] Solicitando fechamento gracioso para processos pendentes: ${pendingPids.join(', ')}...`);
         for (const pid of pendingPids) {
+            if (pid === process.pid) continue;
             try {
                 // Sem /F: envia comando de fechamento normal do Windows, permitindo salvar dados
                 execSync(`taskkill /PID ${pid}`, { stdio: 'ignore' });
@@ -178,6 +190,7 @@ async function gracefullyTerminateInstallationProcesses(pids, installRoot) {
     // com REVALIDAÇÃO IMEDIATA de identidade por PID para evitar atingir PIDs reutilizados
     if (pendingPids.length > 0) {
         for (const pid of pendingPids) {
+            if (pid === process.pid) continue;
             if (isPidBelongingToInstall(pid, installRoot)) {
                 console.warn(`[UpdaterApplier] Identidade confirmada. Forçando término estrito do PID validado da instalação: ${pid}...`);
                 try {
@@ -188,7 +201,7 @@ async function gracefullyTerminateInstallationProcesses(pids, installRoot) {
             }
         }
         await sleep(1000);
-        pendingPids = pendingPids.filter(pid => isProcessAlive(pid) && isPidBelongingToInstall(pid, installRoot));
+        pendingPids = pendingPids.filter(pid => pid !== process.pid && isProcessAlive(pid) && isPidBelongingToInstall(pid, installRoot));
     }
 
     // Pré-condição atômica: se algum processo da instalação ainda estiver ativo, não prossegue com a substituição
@@ -236,6 +249,11 @@ async function main() {
 
     const { stagingDir, appDir, backupDir, targetVersion } = state;
     const installRoot = execPathToRelaunch ? path.resolve(path.dirname(execPathToRelaunch), '..') : path.resolve(appDir, '..', '..');
+
+    const executionLog = path.join(path.dirname(stateFilePath), 'applier_execution.log');
+    try {
+        fs.appendFileSync(executionLog, `[${new Date().toISOString()}] INICIADO: PID=${process.pid} | targetPid=${targetPid} | targetVer=${targetVersion}\n`, 'utf8');
+    } catch (_) {}
 
     // 1. Identificação cirúrgica e encerramento ordenado e seguro apenas dos processos desta instalação
     const targetPids = getTargetInstallationPids(installRoot, targetPid);
@@ -299,12 +317,14 @@ async function main() {
 
         applySucceeded = true;
         console.log('[UpdaterApplier] Substituição limpa de arquivos concluída com 100% de integridade.');
+        try { fs.appendFileSync(executionLog, `[${new Date().toISOString()}] ARQUIVOS_APLICADOS_SUCESSO\n`, 'utf8'); } catch (_) {}
 
     } catch (err) {
         applyError = err.message;
         console.error('[UpdaterApplier] Falha ao substituir arquivos:', err);
         try {
             fs.appendFileSync(path.join(path.dirname(stateFilePath), 'applier_debug.log'), `APPLY_ERROR: ${err.stack || err.message}\n`, 'utf8');
+            fs.appendFileSync(executionLog, `[${new Date().toISOString()}] ERRO_OU_ROLLBACK: ${err.message}\n`, 'utf8');
         } catch (_) {}
     }
 
@@ -313,21 +333,43 @@ async function main() {
         state.appliedAt = new Date().toISOString();
         fs.writeFileSync(stateFilePath, JSON.stringify(state, null, 2), 'utf8');
 
-        // Criação e manutenção preventiva de atalhos pós-atualização
+        // Criação e manutenção preventiva de atalhos e ícones pós-atualização
         try {
-            const shortcutsModule = path.join(appDir, 'desktop', 'shortcuts.js');
+            const dataDir = path.dirname(stateFilePath);
+            const roundSrcCandidates = [
+                path.join(appDir, 'app_icon_round.ico'),
+                path.join(appDir, 'desktop', 'app_icon_round.ico')
+            ];
+            for (const srcIco of roundSrcCandidates) {
+                if (fs.existsSync(srcIco)) {
+                    const destRound = path.join(dataDir, 'app_icon_round.ico');
+                    const destCustom = path.join(dataDir, 'custom_app_icon.ico');
+                    try { fs.copyFileSync(srcIco, destRound); } catch (_) {}
+                    try {
+                        if (!fs.existsSync(destCustom) || fs.statSync(destCustom).size < 140000) {
+                            fs.copyFileSync(srcIco, destCustom);
+                        }
+                    } catch (_) {}
+                    break;
+                }
+            }
+
+            let shortcutsModule = path.join(appDir, 'desktop', 'shortcuts.js');
+            if (!fs.existsSync(shortcutsModule)) {
+                shortcutsModule = path.join(appDir, 'shortcuts.js');
+            }
             if (fs.existsSync(shortcutsModule)) {
                 const { ensureAppShortcuts, updateAppCustomIcon } = require(shortcutsModule);
-                const installRoot = path.resolve(path.dirname(execPathToRelaunch), '..');
+                const resolvedExecPath = execPathToRelaunch || path.join(installRoot, 'Programa', 'GelControl.exe');
                 ensureAppShortcuts({
-                    execPath: execPathToRelaunch,
+                    execPath: resolvedExecPath,
                     installRoot: installRoot,
                     channel: state.channel || 'producao',
                     force: true
                 });
                 updateAppCustomIcon({
                     installRoot: installRoot,
-                    dataDir: path.join(installRoot, 'Dados'),
+                    dataDir: dataDir,
                     channel: state.channel || 'producao'
                 });
             }
@@ -370,6 +412,9 @@ async function main() {
             child.unref();
 
             console.log(`[UpdaterApplier] GelControl relançado com novo PID: ${relaunchedPid}`);
+            try {
+                fs.appendFileSync(executionLog, `[${new Date().toISOString()}] RELANCADO_COM_SUCESSO: PID=${relaunchedPid}\n`, 'utf8');
+            } catch (_) {}
             try {
                 const dataDir = path.dirname(stateFilePath);
                 fs.writeFileSync(path.join(dataDir, 'relaunched_pid.txt'), String(relaunchedPid), 'utf8');

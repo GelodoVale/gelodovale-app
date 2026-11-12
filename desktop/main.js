@@ -518,9 +518,19 @@ ipcMain.handle('updater:apply-update', async (event, authPayload) => {
         });
 
         // 2. Dispara o aplicador desacoplado em processo separado
-        // AUDITORIA ETAPA 5: O script é copiado para fora de resources\\app (para Dados\\updater_applier_runner.js)
-        // Isso garante que ele continue acessível e sem file lock enquanto resources\\app estiver sendo substituído
-        const sourceApplier = path.join(__dirname, 'updater_applier.js');
+        // AUDITORIA DE COMPATIBILIDADE: Prioriza o aplicador recém-extraído no staging (que já contém
+        // as correções e blindagens da nova versão), com fallback para o aplicador local da versão atual.
+        let sourceApplier = path.join(updaterInstaller.stagingDir, 'updater_applier.js');
+        if (!fs.existsSync(sourceApplier)) {
+            sourceApplier = path.join(updaterInstaller.stagingDir, 'desktop', 'updater_applier.js');
+        }
+        if (!fs.existsSync(sourceApplier)) {
+            sourceApplier = path.join(__dirname, 'updater_applier.js');
+        }
+        if (!fs.existsSync(sourceApplier)) {
+            sourceApplier = path.join(__dirname, 'desktop', 'updater_applier.js');
+        }
+
         const runnerScript = path.join(updaterInstaller.dataDir, 'updater_applier_runner.js');
         fs.copyFileSync(sourceApplier, runnerScript);
 
@@ -716,7 +726,8 @@ app.whenReady().then(() => {
         });
         updateAppCustomIcon({
             installRoot: INSTALL_ROOT,
-            dataDir: DATA_DIR
+            dataDir: DATA_DIR,
+            channel: getDistributionChannel()
         });
     } catch (eSc) {
         console.warn('[Main] Aviso ao verificar atalhos do Windows:', eSc.message);

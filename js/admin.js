@@ -181,6 +181,14 @@ export function switchAdminSubTab(subTabId) {
             renderProductsCatalog();
         }
     } catch(e) { console.error("[switchAdminSubTab] renderProductsCatalog error:", e); }
+
+    try {
+        if (subTabId === "tab-seguranca-backup") {
+            if (typeof window.initUpdaterUI === "function") {
+                window.initUpdaterUI();
+            }
+        }
+    } catch(e) { console.error("[switchAdminSubTab] initUpdaterUI error:", e); }
     
     // Força a renderização dos ícones Lucide recém-exibidos
     try {
@@ -984,43 +992,113 @@ export function applyAppearanceTheme(customTheme = null) {
         }
     `;
     
-    // Aplicar configurações do logotipo (se existirem)
+    // Aplicar configurações do logotipo (suporte oficial ao padrão redondo profissional)
     const logoSettings = theme.logoSettings || {
+        shape: "round", // "round" | "original"
         bgTransparent: false,
         bgColor: "#ffffff",
         maxWidth: 100,
         maxHeight: 42,
-        padding: 12,
-        borderRadius: 8
+        padding: 8,
+        borderRadius: 50
     };
 
+    const isRound = (logoSettings.shape !== 'original');
     const sidebarContainer = document.getElementById("sidebar-logo-container");
     const sidebarImg = document.getElementById("sidebar-logo-img");
     const loginContainer = document.getElementById("login-logo-container");
     const loginImg = document.getElementById("login-logo-img");
+    const previewContainer = document.getElementById("factory-logo-preview");
+    const previewImg = document.getElementById("img-logo-preview");
 
     const bgValue = logoSettings.bgTransparent ? "transparent" : (logoSettings.bgColor || "#ffffff");
-    const borderValue = logoSettings.bgTransparent ? "none" : "1px solid rgba(255,255,255,0.05)";
 
-    [sidebarContainer, loginContainer].forEach(container => {
-        if (container) {
-            container.style.background = bgValue;
-            container.style.padding = `${logoSettings.padding}px`;
-            container.style.borderRadius = `${logoSettings.borderRadius}px`;
-            container.style.border = borderValue;
+    if (sidebarContainer) {
+        if (isRound) {
+            sidebarContainer.style.width = "76px";
+            sidebarContainer.style.height = "76px";
+            sidebarContainer.style.borderRadius = "50%";
+            sidebarContainer.style.margin = "10px auto";
+            sidebarContainer.style.padding = "6px";
+            sidebarContainer.style.display = "flex";
+            sidebarContainer.style.alignItems = "center";
+            sidebarContainer.style.justifyContent = "center";
+            sidebarContainer.style.overflow = "hidden";
+            sidebarContainer.style.background = bgValue;
+            sidebarContainer.style.border = logoSettings.bgTransparent ? "2px solid rgba(0, 240, 255, 0.4)" : "2px solid rgba(0, 240, 255, 0.5)";
+            sidebarContainer.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35), 0 0 10px rgba(0,240,255,0.15)";
+        } else {
+            sidebarContainer.style.width = "auto";
+            sidebarContainer.style.height = "auto";
+            sidebarContainer.style.borderRadius = `${logoSettings.borderRadius || 8}px`;
+            sidebarContainer.style.margin = "0.75rem";
+            sidebarContainer.style.padding = `${logoSettings.padding || 12}px`;
+            sidebarContainer.style.background = bgValue;
+            sidebarContainer.style.border = logoSettings.bgTransparent ? "none" : "1px solid rgba(255,255,255,0.05)";
+            sidebarContainer.style.boxShadow = "none";
         }
-    });
+    }
 
-    [sidebarImg, loginImg].forEach(img => {
+    if (loginContainer) {
+        if (isRound) {
+            loginContainer.style.width = "90px";
+            loginContainer.style.height = "90px";
+            loginContainer.style.borderRadius = "50%";
+            loginContainer.style.margin = "0 auto 1.5rem auto";
+            loginContainer.style.padding = "8px";
+            loginContainer.style.display = "flex";
+            loginContainer.style.alignItems = "center";
+            loginContainer.style.justifyContent = "center";
+            loginContainer.style.overflow = "hidden";
+            loginContainer.style.background = bgValue;
+            loginContainer.style.border = "2px solid rgba(0, 240, 255, 0.5)";
+            loginContainer.style.boxShadow = "0 6px 20px rgba(0,0,0,0.4), 0 0 15px rgba(0,240,255,0.2)";
+        } else {
+            loginContainer.style.width = "auto";
+            loginContainer.style.height = "auto";
+            loginContainer.style.borderRadius = `${logoSettings.borderRadius || 8}px`;
+            loginContainer.style.margin = "0 0 1.5rem 0";
+            loginContainer.style.padding = `${logoSettings.padding || 12}px`;
+            loginContainer.style.background = bgValue;
+            loginContainer.style.border = logoSettings.bgTransparent ? "none" : "1px solid rgba(255,255,255,0.05)";
+            loginContainer.style.boxShadow = "none";
+        }
+    }
+
+    if (previewContainer) {
+        if (isRound) {
+            previewContainer.style.borderRadius = "50%";
+            previewContainer.style.width = "84px";
+            previewContainer.style.height = "84px";
+            previewContainer.style.border = "2px solid rgba(0, 240, 255, 0.4)";
+            previewContainer.style.background = bgValue;
+            previewContainer.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
+        } else {
+            previewContainer.style.borderRadius = "6px";
+            previewContainer.style.width = "80px";
+            previewContainer.style.height = "80px";
+            previewContainer.style.border = "1px solid rgba(255,255,255,0.1)";
+            previewContainer.style.background = bgValue;
+            previewContainer.style.boxShadow = "none";
+        }
+    }
+
+    const logoSrc = (state && state.factorySettings && state.factorySettings.logo) ? state.factorySettings.logo : "logo_horizontal.jpg";
+
+    [sidebarImg, loginImg, previewImg].forEach(img => {
         if (img) {
-            img.style.maxWidth = `${logoSettings.maxWidth}%`;
-            img.style.maxHeight = `${logoSettings.maxHeight}px`;
             img.style.objectFit = "contain";
-            if (state && state.factorySettings && state.factorySettings.logo) {
-                img.src = state.factorySettings.logo;
+            if (isRound) {
+                img.style.maxWidth = "88%";
+                img.style.maxHeight = "88%";
+                img.style.borderRadius = "50%";
+                img.style.display = "block";
             } else {
-                img.src = "logo_horizontal.jpg";
+                img.style.maxWidth = `${logoSettings.maxWidth || 100}%`;
+                img.style.maxHeight = `${logoSettings.maxHeight || 42}px`;
+                img.style.borderRadius = "0px";
             }
+            img.src = logoSrc;
         }
     });
 
@@ -1030,6 +1108,11 @@ export function applyAppearanceTheme(customTheme = null) {
     }
     if (window.renderWeather) {
         window.renderWeather();
+    }
+
+    // Auto-sincronização transparente do ícone da Área de Trabalho com o logotipo ativo
+    if (typeof autoSyncDesktopIcon === 'function') {
+        setTimeout(() => autoSyncDesktopIcon(), 800);
     }
 }
 
@@ -1167,6 +1250,142 @@ export function handleCustomColorTextInput(val) {
     }
 }
 
+/**
+ * Gera o ícone circular (.ico multi-resolução com exterior 100% transparente) e atualiza os atalhos
+ * @param {string} imageSrc DataURL (base64) ou caminho da logo ativa
+ */
+export async function generateDesktopIconFromImage(imageSrc) {
+    if (!imageSrc) return false;
+    if (typeof window === 'undefined' || !window.gelcontrolDesktop?.shortcuts?.updateCustomIcon) {
+        console.log('[Logo] Ambiente web puro. Sincronização de atalho Windows ignorada.');
+        return false;
+    }
+
+    try {
+        console.log('[Logo] Sincronizando ícone circular da logo com os atalhos do Windows...');
+        // Tentativa primária: Geração nativa direta via processo desktop (GDI+ com transparência alfa perfeita)
+        const resDesktop = await window.gelcontrolDesktop.shortcuts.updateCustomIcon({ imageSource: imageSrc });
+        if (resDesktop?.success) {
+            console.log('[Logo] Ícone da Área de Trabalho atualizado com sucesso:', resDesktop.customIcoPath);
+            return true;
+        }
+    } catch (eNative) {
+        console.warn('[Logo] Tentativa nativa direta reportou aviso, tentando via Canvas:', eNative.message);
+    }
+
+    // Fallback secundário: Geração via HTML5 Canvas
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = async () => {
+            try {
+                const sizes = [256, 128, 64, 48, 32, 16];
+                const pngBuffers = [];
+
+                for (const sz of sizes) {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = sz;
+                    canvas.height = sz;
+                    const ctx = canvas.getContext("2d");
+
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+
+                    // 1. Iniciar estritamente transparente
+                    ctx.clearRect(0, 0, sz, sz);
+
+                    // 2. Recorte circular com anti-aliasing e acabamento profissional
+                    ctx.save();
+                    ctx.beginPath();
+                    const margin = sz >= 128 ? 4 : (sz >= 48 ? 2 : 1);
+                    const radius = (sz / 2) - margin;
+                    ctx.arc(sz / 2, sz / 2, radius, 0, Math.PI * 2, true);
+                    ctx.closePath();
+
+                    // Fundo branco sólido com leve borda ciano para contraste e nitidez
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+
+                    const borderWidth = sz >= 128 ? 4 : (sz >= 48 ? 2 : 1);
+                    ctx.lineWidth = borderWidth;
+                    ctx.strokeStyle = "rgba(0, 210, 255, 0.9)";
+                    ctx.stroke();
+
+                    ctx.clip();
+
+                    // 3. Proporção estrita sem corte nem deformação (contain em 82% do diâmetro)
+                    const innerDiameter = radius * 2 * 0.82;
+                    let drawW, drawH;
+                    if (img.width >= img.height) {
+                        drawW = innerDiameter;
+                        drawH = (img.height * innerDiameter) / img.width;
+                    } else {
+                        drawH = innerDiameter;
+                        drawW = (img.width * innerDiameter) / img.height;
+                    }
+                    const drawX = (sz - drawW) / 2;
+                    const drawY = (sz - drawH) / 2;
+
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                    ctx.restore();
+
+                    pngBuffers.push({
+                        width: sz,
+                        height: sz,
+                        base64: canvas.toDataURL("image/png")
+                    });
+                }
+
+                console.log('[Logo] Enviando buffers de imagem para atualização de atalhos...');
+                const result = await window.gelcontrolDesktop.shortcuts.updateCustomIcon({ pngBuffers });
+                if (result?.success) {
+                    console.log('[Logo] Ícone da Área de Trabalho atualizado com sucesso:', result.customIcoPath);
+                }
+                resolve(result?.success || false);
+            } catch (err) {
+                console.error('[Logo] Erro ao sincronizar ícone do Windows:', err);
+                resolve(false);
+            }
+        };
+        img.onerror = () => resolve(false);
+        img.src = imageSrc;
+    });
+}
+
+/**
+ * Auto-sincronização automática do ícone na Área de Trabalho com a logo ativa no boot
+ * @param {boolean} force Forçar atualização mesmo com mesmo fingerprint
+ */
+export async function autoSyncDesktopIcon(force = false) {
+    if (typeof window === 'undefined' || !window.gelcontrolDesktop?.shortcuts?.updateCustomIcon) {
+        return;
+    }
+
+    const logoSrc = (state && state.factorySettings && state.factorySettings.logo) 
+        ? state.factorySettings.logo 
+        : "logo_vertical.png";
+
+    const logoFingerprint = (typeof logoSrc === 'string') 
+        ? (logoSrc.startsWith('data:') ? `${logoSrc.length}_${logoSrc.slice(-32)}` : logoSrc)
+        : 'default_vertical';
+
+    const lastSynced = localStorage.getItem('gelcontrol_last_synced_icon_fp');
+    if (!force && lastSynced === logoFingerprint) {
+        return;
+    }
+
+    try {
+        console.log('[AutoSyncIcon] Identificada logo ativa. Sincronizando ícone do Windows...');
+        const ok = await generateDesktopIconFromImage(logoSrc);
+        if (ok) {
+            localStorage.setItem('gelcontrol_last_synced_icon_fp', logoFingerprint);
+            console.log('[AutoSyncIcon] Ícone da Área de Trabalho sincronizado automaticamente com sucesso!');
+        }
+    } catch (e) {
+        console.warn('[AutoSyncIcon] Aviso na auto-sincronização do ícone:', e.message);
+    }
+}
+
 export function handleFactoryLogoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1174,35 +1393,70 @@ export function handleFactoryLogoUpload(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
-        img.onload = function() {
+        img.onload = async function() {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             
-            const MAX_WIDTH = 300;
+            // Preservar alta resolução (até 512px) mantendo fidelidade visual e proporção
+            const MAX_DIM = 512;
             let width = img.width;
             let height = img.height;
             
-            if (width > MAX_WIDTH) {
-                height = Math.round((height * MAX_WIDTH) / width);
-                width = MAX_WIDTH;
+            if (width > MAX_DIM || height > MAX_DIM) {
+                if (width >= height) {
+                    height = Math.round((height * MAX_DIM) / width);
+                    width = MAX_DIM;
+                } else {
+                    width = Math.round((width * MAX_DIM) / height);
+                    height = MAX_DIM;
+                }
             }
             
             canvas.width = width;
             canvas.height = height;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
             ctx.drawImage(img, 0, 0, width, height);
             
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+            // Usar PNG para preservar fundos transparentes e evitar fundo preto indesejado
+            const isPng = (file.type === "image/png");
+            const processedBase64 = isPng ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.9);
             
             if (!state.factorySettings) state.factorySettings = {};
-            state.factorySettings.logo = compressedBase64;
+            state.factorySettings.logo = processedBase64;
             
+            // Atualizar previews e imagens no sistema
             const previewImg = document.getElementById("img-logo-preview");
-            if (previewImg) previewImg.src = compressedBase64;
+            if (previewImg) previewImg.src = processedBase64;
             
-            const logoImg = document.querySelector("aside.sidebar .logo-container img");
-            if (logoImg) logoImg.src = compressedBase64;
+            const logoImg = document.getElementById("sidebar-logo-img");
+            if (logoImg) logoImg.src = processedBase64;
+            
+            const loginImg = document.getElementById("login-logo-img");
+            if (loginImg) loginImg.src = processedBase64;
             
             saveState();
+
+            // Atualizar fingerprint e sincronizar ícone da Área de Trabalho do Windows com a nova logo
+            try {
+                localStorage.removeItem('gelcontrol_last_synced_icon_fp');
+            } catch (_) {}
+
+            const iconUpdated = await generateDesktopIconFromImage(processedBase64);
+            if (iconUpdated) {
+                try {
+                    const fp = (typeof processedBase64 === 'string') ? `${processedBase64.length}_${processedBase64.slice(-32)}` : 'custom';
+                    localStorage.setItem('gelcontrol_last_synced_icon_fp', fp);
+                } catch (_) {}
+            }
+
+            if (window.showToast) {
+                if (iconUpdated) {
+                    window.showToast("Logotipo atualizado e ícone da Área de Trabalho sincronizado automaticamente!", "success");
+                } else {
+                    window.showToast("Logotipo atualizado com sucesso!", "success");
+                }
+            }
         };
         img.src = e.target.result;
     };
@@ -1211,23 +1465,57 @@ export function handleFactoryLogoUpload(event) {
 
 export function removeFactoryLogo() {
     window.showConfirm(
-        "Deseja realmente remover o logotipo atual?",
-        () => {
+        "Deseja realmente remover o logotipo personalizado e restaurar a identidade padrão?",
+        async () => {
             if (!state.factorySettings) state.factorySettings = {};
             state.factorySettings.logo = "";
             
             const previewImg = document.getElementById("img-logo-preview");
             if (previewImg) previewImg.src = "logo_horizontal.jpg";
             
-            const logoImg = document.querySelector("aside.sidebar .logo-container img");
+            const logoImg = document.getElementById("sidebar-logo-img");
             if (logoImg) logoImg.src = "logo_horizontal.jpg";
             
+            const loginImg = document.getElementById("login-logo-img");
+            if (loginImg) loginImg.src = "logo_horizontal.jpg";
+            
             saveState();
+
+            try {
+                localStorage.removeItem('gelcontrol_last_synced_icon_fp');
+            } catch (_) {}
+
+            // Restaurar ícone oficial padrão no Windows
+            if (typeof window !== 'undefined' && window.gelcontrolDesktop?.shortcuts?.restoreDefaultIcon) {
+                try {
+                    await window.gelcontrolDesktop.shortcuts.restoreDefaultIcon();
+                    console.log("[Logo] Ícone oficial padrão restaurado nos atalhos do Windows.");
+                } catch (e) {
+                    console.warn("[Logo] Aviso ao restaurar ícone do Windows:", e);
+                }
+            }
+
+            if (window.showToast) {
+                window.showToast("Logotipo padrão restaurado e ícone da Área de Trabalho sincronizado!", "info");
+            }
         },
         null,
         "Remover Logotipo",
         "Remover"
     );
+}
+
+export async function syncDesktopIconNow() {
+    const logoSrc = (state && state.factorySettings && state.factorySettings.logo) ? state.factorySettings.logo : "logo_vertical.png";
+    if (window.showToast) window.showToast("Sincronizando ícone com a Área de Trabalho do Windows...", "info");
+    const ok = await generateDesktopIconFromImage(logoSrc);
+    if (window.showToast) {
+        if (ok) {
+            window.showToast("Ícone da Área de Trabalho atualizado com sucesso!", "success");
+        } else {
+            window.showToast("Aviso: Sincronização direta de atalhos só é aplicada no aplicativo instalado.", "warning");
+        }
+    }
 }
 
 export function selectThemeCard(themeName) {
@@ -2942,6 +3230,9 @@ window.handleCustomColorInput = handleCustomColorInput;
 window.handleCustomColorTextInput = handleCustomColorTextInput;
 window.handleFactoryLogoUpload = handleFactoryLogoUpload;
 window.removeFactoryLogo = removeFactoryLogo;
+window.generateDesktopIconFromImage = generateDesktopIconFromImage;
+window.syncDesktopIconNow = syncDesktopIconNow;
+window.autoSyncDesktopIcon = autoSyncDesktopIcon;
 window.selectThemeCard = selectThemeCard;
 window.renderCargoStockInputs = renderCargoStockInputs;
 window.loadTodaySalesData = loadTodaySalesData;

@@ -23,7 +23,7 @@ export function maskEmail(email) {
 window.maskEmail = maskEmail;
 // --- SISTEMA DE CONTROLE DE ACESSO POR NÍVEL (RBAC) & SEGURANÇA ROOT ---
 // GelControl v85 - Arquitetura de Autenticação Segura Multi-PC
-import { state, saveState, saveStateLocalOnly } from './state.js';
+import { state, saveState, saveStateLocalOnly, IS_HOMOLOGATION_BUILD } from './state.js';
 import { stopQRScanner } from './inventario.js';
 import { updateHeaderForTab, renderTabContent } from './app.js';
 import { switchAdminSubTab } from './admin.js';
@@ -72,61 +72,46 @@ export function verifyOfflineCredential(userId, password) {
     return verifyPassword(password, cred.hash);
 }
 
-// ─── PROVISIONAMENTO DE FUNCIONÁRIOS NO FIREBASE AUTHENTICATION (SECUNDÁRIO) ─
+// ─── PROVISIONAMENTO DE FUNCIONÁRIOS NO FIREBASE AUTHENTICATION (OPÇÃO A) ──
 export async function createEmployeeFirebaseAuth(email, initialPassword, displayName = "", permissions = {}) {
-    if (!state.firebaseConfig?.enabled) {
+    if (!state.firebaseConfig?.enabled || typeof window === 'undefined' || !window.firebase) {
         return { success: false, reason: "Firebase não configurado" };
     }
 
     const deviceKey = state.firebaseConfig.deviceKey || "gelodovale_oficial";
 
-    // 1. Bridge Administrativa Confiável Local no PC 1 (Plano Spark - 100% Gratuito)
-    // Conecta exclusivamente com o Firebase Admin SDK local rodando no PC 1 do proprietário.
-    // NENHUMA CONTA É CRIADA VIA SDK PÚBLICO DE NAVEGADOR!
-    if (typeof fetch !== 'undefined') {
-        try {
-            const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-            const timeoutId = controller ? setTimeout(() => controller.abort(), 2000) : null;
-            const localToken = localStorage.getItem("gelcontrol_bridge_token") || "admin_local_secret";
+    // 1. Instância Secundária Isolada: Não substitui nem desconecta a sessão ativa do Master
+    const tempAppName = 'temp_employee_provision_' + Date.now();
+    let tempApp = null;
+    try {
+        tempApp = window.firebase.initializeApp({
+            apiKey: state.firebaseConfig.apiKey,
+            authDomain: state.firebaseConfig.authDomain || 'gelo-do-vale.firebaseapp.com',
+            projectId: state.firebaseConfig.projectId || 'gelo-do-vale',
+            databaseURL: state.firebaseConfig.databaseURL
+        }, tempAppName);
 
-            const localRes = await fetch("http://127.0.0.1:4411/api/create-employee", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "X-Admin-Token": localToken
-                },
-                body: JSON.stringify({
-                    deviceKey,
-                    email,
-                    password: initialPassword,
-                    name: displayName || email.split('@')[0],
-                    permissions: permissions || {}
-                }),
-                signal: controller ? controller.signal : undefined
-            });
-            if (timeoutId) clearTimeout(timeoutId);
+        const tempAuth = tempApp.auth();
+        const cred = await tempAuth.createUserWithEmailAndPassword(email, initialPassword);
+        const uid = cred.user.uid;
 
-            if (localRes.ok) {
-                const data = await localRes.json();
-                if (data.success) {
-                    console.log('[Security] ✅ Colaborador provisionado com autoridade oficial via Admin SDK local (PC 1):', data);
-                    return { success: true, uid: data.uid, source: 'local_admin_service' };
-                }
-            } else if (localRes.status === 403) {
-                return { success: false, reason: "Token de autorização da Ferramenta Administrativa local do PC 1 inválido." };
-            }
-        } catch (_) {
-            // Bridge local não está ativa
+        // Destruição imediata da instância secundária
+        await tempApp.delete();
+        tempApp = null;
+
+        console.log(`[Security] ✅ Funcionário '${email}' provisionado com sucesso no Firebase Auth. UID: ${uid}`);
+        return { success: true, uid: uid, source: 'isolated_client_auth' };
+    } catch (err) {
+        if (tempApp) {
+            try { await tempApp.delete(); } catch (_) {}
         }
+        if (err.code === 'auth/email-already-in-use') {
+            console.log(`[Security] Conta '${email}' já existe no Firebase Auth. Vínculo mantido.`);
+            return { success: false, code: 'auth/email-already-in-use', reason: 'Conta já existente no Firebase Auth.' };
+        }
+        console.warn('[Security] Falha no provisionamento do funcionário:', err.code, err.message);
+        return { success: false, code: err.code, reason: err.message };
     }
-
-    // Se o serviço local do PC 1 estiver fechado: BLOQUEAR OPERAÇÃO ADMINISTRATIVA!
-    // Não permitir fallback vulnerável no navegador cliente!
-    console.warn('[Security] 🛑 Ferramenta Administrativa do PC 1 indisponível. Operação administrativa bloqueada.');
-    return {
-        success: false,
-        reason: "A administração de contas no Firebase requer que a Ferramenta Administrativa do PC 1 esteja ativa no escritório. Inicie 'node tools/admin_manager.js start-service' no PC 1."
-    };
 }
 
 export async function resetEmployeePasswordAdmin(usernameOrEmail, newPassword) {
@@ -444,12 +429,23 @@ export function initUserAccessControl() {
     adminUser.id = "admin";
     adminUser.username = "admin";
     adminUser.name = "Administrador";
+    adminUser.role = "Master";
     
-    // Preservar senha existente sem jamais reinicializar para senha de fábrica insegura
-    if (!adminUser.password) {
-        if (state.adminPassword) {
-            adminUser.password = state.adminPassword;
+    // Migração local, única e controlada da credencial legítima da v84 (específica de PC 1)
+    if (typeof window !== 'undefined' && window.gelcontrolDesktop?.migrateLocalV84Credential) {
+        if (!adminUser.password || !adminUser.password.startsWith('salted:1000:') || adminUser.password === "1120M@z@dr1") {
+            window.gelcontrolDesktop.migrateLocalV84Credential().then(res => {
+                if (res && res.success && res.saltedHash) {
+                    adminUser.password = res.saltedHash;
+                    state.adminPassword = res.saltedHash;
+                    saveOfflineCredential('admin', res.saltedHash);
+                    saveStateLocalOnly();
+                    console.log('[Security] ✅ Credencial legítima da v84 migrada localmente com sucesso no PC 1.');
+                }
+            }).catch(() => {});
         }
+    } else if (!adminUser.password && state.adminPassword) {
+        adminUser.password = state.adminPassword;
     }
     
     // O Administrador Root SEMPRE possui todas as permissões ativas
@@ -491,6 +487,116 @@ export function initUserAccessControl() {
 
 // ─── TELA DE LOGIN & PROCESSAMENTO ──────────────────────────────────────────
 export function initLoginScreen() {
+    // ─── BLINDAGEM DE HOMOLOGAÇÃO NA INICIALIZAÇÃO DA TELA DE LOGIN ───
+    const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+    const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+    const isHomologationBuild = isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+
+    if (isHomologationBuild || IS_HOMOLOGATION_BUILD) {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const raw = localStorage.getItem('gelcontrol_state');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.firebaseConfig && parsed.firebaseConfig.projectId !== 'gelcontrol-homologacao') {
+                        parsed.firebaseConfig = {
+                            enabled: true,
+                            apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                            authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                            projectId: 'gelcontrol-homologacao',
+                            databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+                            deviceKey: 'fabrica_homologacao_sync_v85_teste'
+                        };
+                        localStorage.setItem('gelcontrol_state', JSON.stringify(parsed));
+                    } else if (parsed.firebaseConfig && parsed.firebaseConfig.deviceKey === 'fabrica_homologacao_teste') {
+                        parsed.firebaseConfig.deviceKey = 'fabrica_homologacao_sync_v85_teste';
+                        localStorage.setItem('gelcontrol_state', JSON.stringify(parsed));
+                    }
+                }
+            } catch (_) {}
+        }
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelcontrol-homologacao') {
+            console.warn('[Security Guard] 🛑 Interceptada configuração divergente no boot de login. Redirecionando para gelcontrol-homologacao.');
+            state.firebaseConfig = {
+                enabled: true,
+                apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                projectId: 'gelcontrol-homologacao',
+                databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+                deviceKey: 'fabrica_homologacao_sync_v85_teste'
+            };
+            saveStateLocalOnly();
+        } else if (state.firebaseConfig.deviceKey === 'fabrica_homologacao_teste') {
+            state.firebaseConfig.deviceKey = 'fabrica_homologacao_sync_v85_teste';
+            saveStateLocalOnly();
+        }
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            const curApp = window.firebase.apps[0];
+            if (curApp.options && curApp.options.projectId !== 'gelcontrol-homologacao') {
+                console.warn('[Security Guard] 🛑 Destruindo instância indevida do Firebase com projeto de produção.');
+                curApp.delete().catch(() => {});
+            }
+        }
+    } else {
+        // AMBIENTE OFICIAL DE PRODUÇÃO (MIGRAÇÃO DE LOCALSTORAGE RESIDUAL)
+        const OFFICIAL_PROD_KEY = 'AIzaSyC6RTVPTDkngo-WnSEcBGD1wxQwzwtVZfw';
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const raw = localStorage.getItem('gelcontrol_state');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.firebaseConfig && (parsed.firebaseConfig.projectId !== 'gelo-do-vale' || parsed.firebaseConfig.apiKey !== OFFICIAL_PROD_KEY)) {
+                        parsed.firebaseConfig.enabled = true;
+                        parsed.firebaseConfig.apiKey = OFFICIAL_PROD_KEY;
+                        parsed.firebaseConfig.authDomain = 'gelo-do-vale.firebaseapp.com';
+                        parsed.firebaseConfig.projectId = 'gelo-do-vale';
+                        parsed.firebaseConfig.databaseURL = 'https://gelo-do-vale-default-rtdb.firebaseio.com';
+                        parsed.firebaseConfig.deviceKey = 'gelodovale_oficial';
+                        localStorage.setItem('gelcontrol_state', JSON.stringify(parsed));
+                    }
+                }
+            } catch (_) {}
+        }
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelo-do-vale' || state.firebaseConfig.apiKey !== OFFICIAL_PROD_KEY) {
+            if (!state.firebaseConfig) state.firebaseConfig = {};
+            state.firebaseConfig.enabled = true;
+            state.firebaseConfig.apiKey = OFFICIAL_PROD_KEY;
+            state.firebaseConfig.authDomain = 'gelo-do-vale.firebaseapp.com';
+            state.firebaseConfig.projectId = 'gelo-do-vale';
+            state.firebaseConfig.databaseURL = 'https://gelo-do-vale-default-rtdb.firebaseio.com';
+            state.firebaseConfig.deviceKey = 'gelodovale_oficial';
+            saveStateLocalOnly();
+        }
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            const curApp = window.firebase.apps[0];
+            if (curApp.options && (curApp.options.apiKey !== OFFICIAL_PROD_KEY || curApp.options.projectId !== 'gelo-do-vale')) {
+                console.warn('[Security Guard] 🔄 Reinicializando Firebase com a nova chave oficial validada.');
+                curApp.delete().catch(() => {});
+                try {
+                    window.firebase.initializeApp({
+                        apiKey: OFFICIAL_PROD_KEY,
+                        authDomain: 'gelo-do-vale.firebaseapp.com',
+                        projectId: 'gelo-do-vale',
+                        databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com'
+                    });
+                } catch (_) {}
+            }
+        }
+    }
+
+    // Garantir inicialização do Firebase para login online imediato
+    if (window.firebase && state.firebaseConfig && state.firebaseConfig.apiKey) {
+        if (!window.firebase.apps || window.firebase.apps.length === 0) {
+            try {
+                window.firebase.initializeApp({
+                    apiKey: state.firebaseConfig.apiKey,
+                    authDomain: state.firebaseConfig.authDomain || 'gelcontrol-homologacao.firebaseapp.com',
+                    projectId: state.firebaseConfig.projectId,
+                    databaseURL: state.firebaseConfig.databaseURL
+                });
+            } catch (_) {}
+        }
+    }
     const select = document.getElementById("login-user-select");
     if (select && state.users) {
         const currentSelectedId = select.value;
@@ -516,6 +622,81 @@ export function initLoginScreen() {
         form.addEventListener("submit", (e) => {
             e.preventDefault();
             loginUser();
+        });
+    }
+
+    // Atualização dinâmica da versão exibida na tela de login
+    const loginVerEl = document.getElementById("login-version");
+    if (loginVerEl) {
+        if (typeof window !== 'undefined' && window.gelcontrolDesktop?.updater?.getInstalledVersion) {
+            window.gelcontrolDesktop.updater.getInstalledVersion().then(v => {
+                if (v && v.programVersion) {
+                    const isHomolog = (v.channel === 'homologacao' || window.gelcontrolDesktop?.isHomologation);
+                    const channelSuffix = isHomolog ? ' (Homologação)' : ' (Oficial)';
+                    loginVerEl.textContent = `Versão: v${v.programVersion}${channelSuffix}`;
+                }
+            }).catch(() => {});
+        } else {
+            const isHomolog = (typeof window !== 'undefined' && (window.gelcontrolDesktop?.isHomologation || window.gelcontrolDesktop?.channel === 'homologacao'));
+            const channelSuffix = isHomolog ? ' (Homologação)' : ' (Oficial)';
+            loginVerEl.textContent = `Versão: ${CODE_BUILD}${channelSuffix}`;
+        }
+    }
+
+    // ─── VERIFICAÇÃO AUTOMÁTICA DE ATUALIZAÇÃO NO PRÓXIMO LOGIN ───
+    if (typeof window !== 'undefined' && window.gelcontrolDesktop?.updater?.checkUpdate) {
+        window.gelcontrolDesktop.updater.checkUpdate().then(async (upResult) => {
+            if (upResult && (upResult.status === 'available' || upResult.hasUpdate === true)) {
+                console.log(`[LoginUpdater] 🚀 Nova versão detectada para o próximo login: v${upResult.availableVersion}`);
+                let updateBanner = document.getElementById('login-update-notice');
+                if (!updateBanner && loginVerEl) {
+                    updateBanner = document.createElement('div');
+                    updateBanner.id = 'login-update-notice';
+                    updateBanner.style.cssText = 'background: rgba(0, 240, 255, 0.12); border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 8px; padding: 10px; margin-top: 10px; margin-bottom: 10px; font-size: 0.8rem; color: #e0f2fe; text-align: center; animation: fadeIn 0.3s ease-out;';
+                    updateBanner.innerHTML = `
+                        <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px; font-weight:700; color:var(--color-primary);">
+                            <i data-lucide="sparkles" style="width:14px; height:14px;"></i> Nova Versão v${upResult.availableVersion} Disponível!
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--color-text-muted); margin-bottom:8px;">
+                            Atualização oficial pronta para instalação.
+                        </div>
+                        <button type="button" id="btn-login-apply-update" class="btn btn-primary" style="font-size:0.75rem; padding:6px 14px; width:100%; font-weight:bold; height:auto; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                            <i data-lucide="download" style="width:14px; height:14px;"></i> Baixar e Atualizar Agora
+                        </button>
+                    `;
+                    loginVerEl.parentNode.insertBefore(updateBanner, loginVerEl.nextSibling);
+                    if (window.lucide) window.lucide.createIcons();
+
+                    const btnApply = document.getElementById('btn-login-apply-update');
+                    if (btnApply) {
+                        btnApply.addEventListener('click', async () => {
+                            btnApply.disabled = true;
+                            btnApply.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid #000; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px;"></span> Baixando e Validando...';
+                            try {
+                                const dlRes = await window.gelcontrolDesktop.updater.downloadUpdate();
+                                if (!dlRes.success) {
+                                    alert('Falha ao baixar atualização: ' + dlRes.error);
+                                    btnApply.disabled = false;
+                                    btnApply.innerHTML = '<i data-lucide="download" style="width:14px; height:14px;"></i> Tentar Novamente';
+                                    return;
+                                }
+                                btnApply.innerHTML = '<span class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid #000; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px;"></span> Aplicando e Reiniciando...';
+                                const appRes = await window.gelcontrolDesktop.updater.applyUpdate({});
+                                if (!appRes.success) {
+                                    alert('Falha ao aplicar atualização: ' + appRes.error);
+                                    btnApply.disabled = false;
+                                    btnApply.innerHTML = '<i data-lucide="refresh-cw" style="width:14px; height:14px;"></i> Tentar Novamente';
+                                }
+                            } catch (eUp) {
+                                alert('Erro durante atualização: ' + eUp.message);
+                                btnApply.disabled = false;
+                            }
+                        });
+                    }
+                }
+            }
+        }).catch(err => {
+            console.log('[LoginUpdater] Verificação silenciosa de atualização no login:', err.message);
         });
     }
 
@@ -585,82 +766,225 @@ export async function loginUser(userId, password) {
     let authenticated = false;
     let authSource = 'local';
     let authFailureReason = "";
+    let isNetworkFailure = false;
+
+    // 1.1 Garantir inicialização do Firebase se o SDK estiver presente e configurado
+    if (window.firebase && state.firebaseConfig && state.firebaseConfig.apiKey) {
+        if (!window.firebase.apps || window.firebase.apps.length === 0) {
+            try {
+                window.firebase.initializeApp({
+                    apiKey: state.firebaseConfig.apiKey,
+                    projectId: state.firebaseConfig.projectId,
+                    databaseURL: state.firebaseConfig.databaseURL
+                });
+            } catch (eInit) {
+                console.warn('[Security] Inicialização defensiva do Firebase no login:', eInit.message);
+            }
+        }
+    }
+
+    // Garantir migração sob demanda da credencial legítima da v84 no PC 1 caso ainda não tenha sido carregada
+    if (user.username === "admin" && (!user.password || !user.password.startsWith('salted:1000:')) && typeof window !== 'undefined' && window.gelcontrolDesktop?.migrateLocalV84Credential) {
+        try {
+            const migRes = await window.gelcontrolDesktop.migrateLocalV84Credential();
+            if (migRes && migRes.success && migRes.saltedHash) {
+                user.password = migRes.saltedHash;
+                state.adminPassword = migRes.saltedHash;
+                saveOfflineCredential('admin', migRes.saltedHash);
+                saveStateLocalOnly();
+            }
+        } catch (_) {}
+    }
+
+    // Identificar se o usuário já possui credencial local/offline prévia registrada nesta máquina
+    const hasExistingLocalCredential = !!(
+        (user.password && typeof user.password === 'string' && user.password.length > 0) ||
+        (typeof getOfflineCredential === 'function' && getOfflineCredential(user.id))
+    );
 
     // Resolução segura de e-mail por ambiente:
     // Se o projeto for de homologação, o Root autentica com seu identificador de testes
-    const isHomologation = (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+    const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+    const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+    const isHomologation = isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+
+    if (isHomologation) {
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelcontrol-homologacao' || state.firebaseConfig.projectId === 'gelo-do-vale') {
+            console.warn('[Security Guard] 🛑 Interceptada tentativa de login contra produção em ambiente de homologação.');
+            state.firebaseConfig = {
+                enabled: true,
+                apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                projectId: 'gelcontrol-homologacao',
+                databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+                deviceKey: 'fabrica_homologacao_sync_v85_teste'
+            };
+            saveStateLocalOnly();
+        } else if (state.firebaseConfig.deviceKey === 'fabrica_homologacao_teste') {
+            state.firebaseConfig.deviceKey = 'fabrica_homologacao_sync_v85_teste';
+            saveStateLocalOnly();
+        }
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            const curApp = window.firebase.apps[0];
+            if (curApp.options && (curApp.options.projectId === 'gelo-do-vale' || curApp.options.projectId !== 'gelcontrol-homologacao')) {
+                try {
+                    curApp.delete().catch(() => {});
+                    window.firebase.initializeApp({
+                        apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                        authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                        projectId: 'gelcontrol-homologacao',
+                        databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com'
+                    });
+                } catch (_) {}
+            }
+        }
+    }
+
     const userEmail = (user.username === "admin") ? 
-        (isHomologation ? 'admin_homologacao@gelcontrol.internal' : (state.factorySettings?.adminEmail || 'contato@gelodovale.com.br')) : 
+        (isHomologation ? 'admin_homologacao@gelcontrol.internal' : ('admin@gelcontrol.internal')) : 
         (user.email || getTechnicalAuthEmail(user.username) || null);
 
     // 2. INTEGRAÇÃO REAL COM FIREBASE AUTHENTICATION (QUANDO ONLINE)
     const isOnline = typeof navigator !== 'undefined' && navigator.onLine;
-    const hasFirebaseAuth = window.firebase && window.firebase.auth;
+    const hasFirebaseAuth = !!(window.firebase && window.firebase.auth);
 
-    if (isOnline && hasFirebaseAuth && userEmail) {
-        try {
-            await window.firebase.auth().signInWithEmailAndPassword(userEmail, password);
-            authenticated = true;
-            authSource = 'firebase_auth';
-            console.log(`[Security] ✅ Usuário '${user.username}' autenticado com sucesso via Firebase Auth.`);
-            
-            // Sincronizar credencial local/offline com Salt a partir da nova senha validada pelo Firebase!
-            const newSalted = hashPasswordWithSalt(password, generateSecureSalt());
-            user.password = newSalted;
-            if (user.username === "admin") {
-                state.adminPassword = newSalted;
-            }
-            saveOfflineCredential(user.id, newSalted);
-            saveStateLocalOnly();
-        } catch (fbErr) {
-            // REJEIÇÃO ESTRITA: Se o Firebase rejeitou explicitamente por credencial errada ou conta bloqueada/inexistente,
-            // É PROIBIDO FAZER FALLBACK PARA A SENHA ANTIGA DO COMPUTADOR!
-            const isCredentialRejection = 
-                fbErr.code === 'auth/wrong-password' || 
-                fbErr.code === 'auth/invalid-credential' || 
-                fbErr.code === 'auth/user-not-found' || 
-                fbErr.code === 'auth/user-disabled';
+    if (hasFirebaseAuth && userEmail) {
+        let attemptedOnline = false;
+        if (isOnline) {
+            attemptedOnline = true;
+            try {
+                await window.firebase.auth().signInWithEmailAndPassword(userEmail, password);
+                authenticated = true;
+                authSource = 'firebase_auth';
+                console.log(`[Security] ✅ Usuário '${user.username}' autenticado com sucesso via Firebase Auth.`);
+                if (window.firebase?.auth()?.currentUser && user.username === 'admin') {
+                    const curUid = window.firebase.auth().currentUser.uid;
+                    user.authUid = curUid;
+                    if (window.firebase.database && state.firebaseConfig?.deviceKey) {
+                        window.firebase.database().ref(`factories/${state.firebaseConfig.deviceKey}/rootUid`).set(curUid)
+                            .then(() => console.log('[Security] ✅ rootUid vinculado com sucesso no Realtime Database:', curUid))
+                            .catch(err => console.warn('[Security] Erro ao gravar rootUid no RTDB:', err.message));
+                    }
+                }
+                
+                // Sincronizar credencial local/offline com Salt a partir da nova senha validada pelo Firebase!
+                const newSalted = hashPasswordWithSalt(password, generateSecureSalt());
+                user.password = newSalted;
+                if (user.username === "admin") {
+                    state.adminPassword = newSalted;
+                }
+                saveOfflineCredential(user.id, newSalted);
+                saveStateLocalOnly();
+            } catch (fbErr) {
+                // Erro explícito de credencial para conta comprovadamente existente no Firebase Auth:
+                const isExplicitPasswordError = (fbErr.code === 'auth/wrong-password' || fbErr.code === 'auth/user-disabled');
 
-            if (isCredentialRejection) {
-                authenticated = false;
-                authFailureReason = "Credenciais inválidas no servidor de autenticação.";
-                console.warn(`[Security] 🛑 Falha de autenticação online (${fbErr.code}). Fallback offline BLOQUEADO por segurança.`);
-            } else {
-                // Erro transitório de rede (ex: auth/network-request-failed) ou servidor indisponível:
-                // Permitir contingência offline restrita
-                console.warn(`[Security] ⚠️ Falha de comunicação de rede com Firebase (${fbErr.code}). Avaliando contingência offline...`);
-                const offlineCheck = verifyOfflineCredential(user.id, password);
-                if (offlineCheck.match) {
-                    authenticated = true;
-                    authSource = 'offline_contingency';
-                } else if (offlineCheck.expired) {
-                    authFailureReason = "Sessão offline expirada. Conecte-se à internet para autenticar.";
+                if (isExplicitPasswordError) {
+                    authenticated = false;
+                    isNetworkFailure = false;
+                    authFailureReason = "Senha incorreta!";
+                    console.warn(`[Security] 🛑 Falha de autenticação online (${fbErr.code}). Fallback offline BLOQUEADO por segurança.`);
                 } else {
-                    // Fallback para hash em state caso ainda não haja offline store individual
-                    const verification = verifyPassword(password, user.password);
-                    authenticated = verification.match;
+                    // auth/user-not-found, auth/invalid-credential (quando conta não existe no Firebase Auth) ou erro de rede/timeout:
+                    console.warn(`[Security] ⚠️ Conta não encontrada ou serviço indisponível no Firebase Auth (${fbErr.code || fbErr.message}). Verificando credencial legítima local...`);
+                    
+                    const offlineCheck = verifyOfflineCredential(user.id, password);
+                    if (offlineCheck.match) {
+                        authenticated = true;
+                        authSource = 'offline_contingency';
+                    } else if (offlineCheck.expired) {
+                        authenticated = false;
+                        isNetworkFailure = true;
+                        authFailureReason = "Sessão offline expirada. Conecte-se à internet para autenticar.";
+                    } else {
+                        const verification = verifyPassword(password, user.password);
+                        if (verification.match) {
+                            authenticated = true;
+                            authSource = 'offline_contingency';
+                            // Salva credencial no offlineStore para consistência
+                            const salted = (user.password && typeof user.password === 'string' && user.password.startsWith('salted:')) ? user.password : hashPasswordWithSalt(password, generateSecureSalt());
+                            user.password = salted;
+                            saveOfflineCredential(user.id, salted);
+                            saveStateLocalOnly();
+                        } else if (hasExistingLocalCredential) {
+                            authenticated = false;
+                            isNetworkFailure = false;
+                            authFailureReason = "Senha incorreta!";
+                        } else {
+                            authenticated = false;
+                            isNetworkFailure = false;
+                            authFailureReason = "Senha incorreta!";
+                        }
+                    }
+
+                    // Se autenticado com sucesso localmente e a conta ainda não estava provisionada no Firebase Auth,
+                    // cria a credencial no Firebase Auth para permitir o login direto nos outros computadores (PC 2).
+                    const isUserNotFoundOnFirebase = (fbErr.code === 'auth/user-not-found' || fbErr.code === 'auth/invalid-credential' || fbErr.code === 'auth/invalid-login-credentials');
+                    if (authenticated && isUserNotFoundOnFirebase) {
+                        try {
+                            await window.firebase.auth().createUserWithEmailAndPassword(userEmail, password);
+                            console.log(`[Security] ✅ Conta '${userEmail}' provisionada com sucesso no Firebase Auth para acesso em outros computadores (PC 2).`);
+                        } catch (createErr) {
+                            console.warn(`[Security] Tentativa de provisionamento no Firebase Auth:`, createErr.message);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!attemptedOnline && !authenticated) {
+            // Dispositivo detectado offline pelo navegador
+            const offlineCheck = verifyOfflineCredential(user.id, password);
+            if (offlineCheck.match) {
+                authenticated = true;
+                authSource = 'offline_legitimate';
+            } else if (offlineCheck.expired) {
+                authenticated = false;
+                isNetworkFailure = true;
+                authFailureReason = "Sessão offline expirada (limite de 12 horas). Conecte-se à internet para renovar o acesso.";
+            } else {
+                const verification = verifyPassword(password, user.password);
+                if (verification.match) {
+                    authenticated = true;
+                    authSource = 'offline_legitimate';
+                    const salted = hashPasswordWithSalt(password, generateSecureSalt());
+                    user.password = salted;
+                    saveOfflineCredential(user.id, salted);
+                    saveStateLocalOnly();
+                } else if (hasExistingLocalCredential) {
+                    authenticated = false;
+                    isNetworkFailure = false;
+                    authFailureReason = "Senha incorreta!";
+                } else {
+                    authenticated = false;
+                    isNetworkFailure = true;
+                    authFailureReason = "Não foi possível conectar ao servidor de autenticação. Verifique sua internet e tente novamente.";
                 }
             }
         }
     } else {
-        // 3. AUTENTICAÇÃO OFFLINE LEGÍTIMA (SEM INTERNET)
-        const offlineCheck = verifyOfflineCredential(user.id, password);
-        if (offlineCheck.match) {
-            authenticated = true;
-            authSource = 'offline_legitimate';
-        } else if (offlineCheck.expired) {
-            authenticated = false;
-            authFailureReason = "Sessão offline expirada (limite de 12 horas). Conecte-se à internet para renovar o acesso.";
-        } else {
-            // Verificação de compatibilidade com hash existente em user.password
-            const verification = verifyPassword(password, user.password);
-            authenticated = verification.match;
-            if (authenticated) {
-                const salted = hashPasswordWithSalt(password, generateSecureSalt());
-                user.password = salted;
-                saveOfflineCredential(user.id, salted);
-                saveStateLocalOnly();
+        // SDK do Firebase Auth ainda indisponível ou e-mail não configurado
+        if (hasExistingLocalCredential) {
+            const offlineCheck = verifyOfflineCredential(user.id, password);
+            if (offlineCheck.match) {
+                authenticated = true;
+                authSource = 'offline_legitimate';
+            } else {
+                const verification = verifyPassword(password, user.password);
+                if (verification.match) {
+                    authenticated = true;
+                    authSource = 'offline_legitimate';
+                } else {
+                    authenticated = false;
+                    isNetworkFailure = false;
+                    authFailureReason = "Senha incorreta!";
+                }
             }
+        } else {
+            // Instalação limpa sem credencial prévia e SDK não pronto
+            authenticated = false;
+            isNetworkFailure = true;
+            authFailureReason = "Não foi possível conectar ao servidor de autenticação. Verifique sua internet e tente novamente.";
         }
     }
 
@@ -719,7 +1043,23 @@ export async function loginUser(userId, password) {
             }
         }
     } else {
-        // Falha na autenticação: registrar e aplicar política de lockout
+        // TRATAMENTO DE FALHA DE AUTENTICAÇÃO
+        if (isNetworkFailure) {
+            // REGRAS 3, 4 e 5: Falha de conexão ou inicialização de SDK em instalação nova
+            // NÃO apresentar "Senha incorreta"!
+            // NÃO descontar tentativas de senha!
+            // NÃO acionar lockout mecânico!
+            const errorMsg = document.getElementById("login-error-msg");
+            if (errorMsg) {
+                errorMsg.innerText = authFailureReason || "Não foi possível conectar ao servidor de autenticação. Verifique sua internet e tente novamente.";
+                errorMsg.style.display = "block";
+                errorMsg.style.color = "var(--color-warning, #f59e0b)";
+            }
+            console.warn(`[Security] ⚠️ Login pausado: ${authFailureReason}. Nenhuma tentativa de senha foi descontada.`);
+            return;
+        }
+
+        // Falha genuína de credencial incorreta: registrar e aplicar política de lockout
         const result = recordFailedLoginAttempt();
         if (result.locked) {
             updateLockoutUI(result.remainingSeconds);
@@ -1093,9 +1433,8 @@ export async function saveUser(event) {
         email = getTechnicalAuthEmail(username);
     }
 
-    if (username === "admin" && (!email || !email.includes("@") || !email.includes("."))) {
-        if (window.showToast) window.showToast("Informe um e-mail válido para o Root.", "warning");
-        return;
+    if (username === "admin" && (!email || !email.includes("@"))) {
+        email = getTechnicalAuthEmail("admin");
     }
 
     const emailInUse = (state.users || []).find(u => (u.email === email || (u.username === "admin" && state.factorySettings?.adminEmail === email)) && u.id !== id);
@@ -1152,6 +1491,9 @@ export async function saveUser(event) {
                     state.users[index].password = hashedPassword;
                     state.adminPassword = hashedPassword;
                     saveOfflineCredential('admin', hashedPassword);
+                    if (typeof window !== 'undefined' && window.gelcontrolDesktop?.updateCredentialGuard) {
+                        window.gelcontrolDesktop.updateCredentialGuard(hashedPassword);
+                    }
                 }
             } else {
                 state.users[index].name = name;
@@ -1190,6 +1532,21 @@ export async function saveUser(event) {
     }
     
     saveUserPostProcess(id, username);
+
+    // Sincronização automática do mapa user_permissions para governança no servidor (Opção A)
+    const targetUser = (state.users || []).find(u => u.username === username);
+    if (targetUser && targetUser.authUid && targetUser.username !== "admin" && typeof window !== 'undefined' && window.firebase?.database && state.firebaseConfig?.deviceKey) {
+        const permPayload = {
+            active: true,
+            username: targetUser.username,
+            name: targetUser.name,
+            permissions: targetUser.permissions || {},
+            updatedAt: Date.now()
+        };
+        window.firebase.database().ref(`factories/${state.firebaseConfig.deviceKey}/user_permissions/${targetUser.authUid}`).set(permPayload)
+            .then(() => console.log(`[Security] ✅ Permissões do colaborador '${username}' vinculadas no servidor (user_permissions).`))
+            .catch(err => console.warn('[Security] Erro ao vincular user_permissions no servidor:', err.message));
+    }
 }
 
 function saveUserPostProcess(id, username) {
@@ -1233,6 +1590,14 @@ export function deleteUser(userId) {
     }
     
     const confirmDelete = () => {
+        // Desativar permissões no servidor do Firebase
+        if (user.authUid && typeof window !== 'undefined' && window.firebase?.database && state.firebaseConfig?.deviceKey) {
+            window.firebase.database().ref(`factories/${state.firebaseConfig.deviceKey}/user_permissions/${user.authUid}`).set({
+                active: false,
+                deletedAt: Date.now()
+            }).catch(() => {});
+        }
+
         state.users = (state.users || []).filter(u => u.id !== userId);
         saveState();
         
@@ -1277,7 +1642,7 @@ export function toggleSelectAllPermissions(checked) {
 }
 
 // ─── ALTERAÇÃO SEGURA DE SENHA DO ROOT (USU-01) ────────────────────────────
-export function changeAdminPassword(currentPwd, newPwd) {
+export async function changeAdminPassword(currentPwd, newPwd) {
     if (!isCurrentUserRoot()) {
         if (window.showToast) window.showToast("Acesso restrito ao Administrador Root.", "error");
         return { success: false, reason: "Apenas o Root pode alterar a senha administrativa." };
@@ -1288,7 +1653,7 @@ export function changeAdminPassword(currentPwd, newPwd) {
         return { success: false, reason: "Usuário Root não localizado." };
     }
 
-    // Validar senha atual
+    // Validar senha atual contra a credencial ativa
     const verification = verifyPassword(currentPwd, adminUser.password);
     if (!verification.match) {
         if (window.showToast) window.showToast("Senha atual incorreta!", "error");
@@ -1300,18 +1665,57 @@ export function changeAdminPassword(currentPwd, newPwd) {
         return { success: false, reason: "Senha muito curta." };
     }
 
-    // Gerar novo salt e hash
+    // Gerar novo salt e hash criptográfico
     const newSalt = generateSecureSalt();
     const newHashedPassword = hashPasswordWithSalt(newPwd, newSalt);
     adminUser.password = newHashedPassword;
     state.adminPassword = newHashedPassword;
+    saveOfflineCredential('admin', newHashedPassword);
+
+    // Persistência imediata e prioritária no disco físico (admin_credential_guard.json)
+    if (typeof window !== 'undefined' && window.gelcontrolDesktop?.updateCredentialGuard) {
+        try {
+            await window.gelcontrolDesktop.updateCredentialGuard(newHashedPassword);
+            console.log('[Security] ✅ Credential guard físico atualizado com a nova senha.');
+        } catch (guardErr) {
+            console.warn('[Security] Falha ao atualizar credential guard:', guardErr);
+        }
+    }
     saveState();
 
-    // Se conectado com Firebase Auth, sincronizar credencial remota
-    if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
-        window.firebase.auth().currentUser.updatePassword(newPwd)
-            .then(() => console.log('[Security] Senha sincronizada com Firebase Auth com sucesso.'))
-            .catch(err => console.warn('[Security] Não foi possível atualizar no Firebase Auth imediatamente:', err));
+    // Sincronização segura com Firebase Auth (identidade técnica interna)
+    if (window.firebase && window.firebase.auth && typeof navigator !== 'undefined' && navigator.onLine) {
+        const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+        const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+        const isHomologation = isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+        const userEmail = isHomologation ? 'admin_homologacao@gelcontrol.internal' : 'admin@gelcontrol.internal';
+
+        try {
+            if (window.firebase.auth().currentUser) {
+                await window.firebase.auth().currentUser.updatePassword(newPwd);
+                console.log('[Security] ✅ Senha sincronizada com Firebase Auth com sucesso (sessão ativa).');
+            } else {
+                try {
+                    await window.firebase.auth().signInWithEmailAndPassword(userEmail, currentPwd);
+                    if (window.firebase.auth().currentUser) {
+                        await window.firebase.auth().currentUser.updatePassword(newPwd);
+                        console.log('[Security] ✅ Senha sincronizada com Firebase Auth via reautenticação.');
+                    }
+                } catch (signInErr) {
+                    const isNotFound = signInErr.code === 'auth/user-not-found' || 
+                                       signInErr.code === 'auth/invalid-credential' || 
+                                       signInErr.code === 'auth/invalid-login-credentials';
+                    if (isNotFound) {
+                        await window.firebase.auth().createUserWithEmailAndPassword(userEmail, newPwd);
+                        console.log('[Security] ✅ Conta Root provisionada no Firebase Auth com a nova senha.');
+                    } else {
+                        console.warn('[Security] Tentativa de reautenticação no Firebase Auth:', signInErr.message);
+                    }
+                }
+            }
+        } catch (authSyncErr) {
+            console.warn('[Security] Erro na sincronização remota de senha com Firebase Auth:', authSyncErr.message);
+        }
     }
 
     if (window.showToast) window.showToast("Senha de administrador atualizada com sucesso!", "success");
@@ -1343,6 +1747,7 @@ let lastRecoveryAttemptTimestamp = 0;
 export function openRecoverAccessModal() {
     const modal = document.getElementById("modal-recover-access");
     if (modal) {
+        modal.style.display = 'flex';
         modal.classList.add("active");
         const select = document.getElementById("recover-user-select");
         if (select && state.users) {

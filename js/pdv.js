@@ -433,7 +433,7 @@ export function checkoutPDVSale() {
     });
     
     // Gerar registro de entrega (venda concluída)
-    const deliveryId = "d-" + Date.now();
+    const deliveryId = (typeof window !== 'undefined' && window.generateStableId) ? window.generateStableId('del') : "d-" + Date.now();
     const newDelivery = {
         id: deliveryId,
         clientId: clientId || "c-balcao",

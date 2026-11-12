@@ -2,6 +2,7 @@
 import { state, saveState } from './state.js';
 import { openComodato } from './comodatos.js';
 import { openReceivePaymentModal } from './admin.js';
+import { moveToTrash, validateDeletionIntegrity } from './trash.js';
 
 export function getClientDocStatus(c) {
     const hasDoc = c.document && c.document.trim().length > 0;
@@ -480,32 +481,28 @@ export function openClientModal(clientId = null) {
 }
 
 export function deleteClient(clientId) {
+    const client = (state.clients || []).find(c => c && c.id === clientId);
+    if (!client) {
+        if (window.showToast) window.showToast("Cliente não encontrado.", "warning");
+        return;
+    }
+
+    const val = validateDeletionIntegrity('client', client);
+    const clientName = client.name || client.razaoSocial || `Cliente #${clientId}`;
+    let confirmMsg = `Deseja mover o cliente '${clientName}' para a Lixeira Central?\n\nO cliente deixará de aparecer na lista de ativos, mas todos os seus documentos, histórico financeiro e vendas serão integralmente preservados.`;
+
+    if (val.warning) {
+        confirmMsg += `\n\n⚠️ ${val.warning}`;
+    }
+
     window.showConfirm(
-        "Tem certeza que deseja remover este cliente? Todos os dados vinculados a ele serão mantidos no histórico financeiro, mas o freezer será liberado no inventário.",
+        confirmMsg,
         () => {
-            const linkedFreezers = (state.freezers || []).filter(f => f.clientId === clientId);
-            linkedFreezers.forEach(linkedFreezer => {
-                linkedFreezer.status = "disponivel";
-                linkedFreezer.clientId = "";
-                linkedFreezer.clientName = "";
-                if (!linkedFreezer.movementHistory) linkedFreezer.movementHistory = [];
-                linkedFreezer.movementHistory.push({
-                    date: window.formatDateBrazil(window.getBrazilTimeISO()),
-                    from: "Cliente Removido",
-                    to: "Fábrica",
-                    reason: "Desvinculado devido à remoção do cliente"
-                });
-            });
-            
-            state.clients = state.clients.filter(c => c.id !== clientId);
-            state.orders = state.orders.filter(o => o.clientId !== clientId);
-            saveState();
-            if (window.renderApp) window.renderApp();
-            window.showToast("Cliente removido com sucesso!", "success");
+            moveToTrash('client', clientId, 'Mover para lixeira solicitado pelo usuário');
         },
         null,
-        "Remover Cliente",
-        "Remover"
+        "Mover Cliente para Lixeira",
+        "Mover para Lixeira"
     );
 }
 

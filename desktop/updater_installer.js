@@ -13,8 +13,9 @@ function sleepSync(ms) {
     while (Date.now() - start < ms) { /* espera síncrona segura */ }
 }
 
-function safeRmSync(targetPath, maxRetries = 10, delayMs = 150) {
+function safeRmSync(targetPath, maxRetries = 25, initialDelayMs = 100) {
     if (!fs.existsSync(targetPath)) return;
+    let delay = initialDelayMs;
     for (let i = 0; i < maxRetries; i++) {
         try {
             fs.rmSync(targetPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
@@ -23,19 +24,30 @@ function safeRmSync(targetPath, maxRetries = 10, delayMs = 150) {
             if (i === maxRetries - 1) {
                 try {
                     if (process.platform === 'win32') {
-                        execSync(`attrib -r /s /d "${targetPath}\\*"`, { stdio: 'ignore', timeout: 5000 });
+                        execSync(`attrib -r -s -h /s /d "${targetPath}\\*"`, { stdio: 'ignore', timeout: 5000 });
+                        fs.rmSync(targetPath, { recursive: true, force: true });
+                        return;
                     }
-                    fs.rmSync(targetPath, { recursive: true, force: true });
-                    return;
+                } catch (_) {}
+                // Fallback de contingência no Windows: renomeia o diretório bloqueado para reciclagem
+                try {
+                    if (process.platform === 'win32') {
+                        const recyclePath = `${targetPath}_recycle_${Date.now()}`;
+                        fs.renameSync(targetPath, recyclePath);
+                        console.warn(`[UpdaterInstaller] Diretório com arquivo em uso renomeado para reciclagem: ${recyclePath}`);
+                        return;
+                    }
                 } catch (_) {}
                 throw err;
             }
-            sleepSync(delayMs);
+            sleepSync(delay);
+            delay = Math.min(delay + 50, 400); // Backoff progressivo até 400ms
         }
     }
 }
 
-function safeCpSync(srcDir, destDir, maxRetries = 10, delayMs = 150) {
+function safeCpSync(srcDir, destDir, maxRetries = 25, initialDelayMs = 100) {
+    let delay = initialDelayMs;
     for (let i = 0; i < maxRetries; i++) {
         try {
             fs.cpSync(srcDir, destDir, { recursive: true, force: true });
@@ -43,15 +55,18 @@ function safeCpSync(srcDir, destDir, maxRetries = 10, delayMs = 150) {
         } catch (err) {
             if (i === maxRetries - 1) {
                 try {
-                    if (process.platform === 'win32' && fs.existsSync(destDir)) {
-                        execSync(`attrib -r /s /d "${destDir}\\*"`, { stdio: 'ignore', timeout: 5000 });
+                    if (process.platform === 'win32') {
+                        if (fs.existsSync(destDir)) {
+                            execSync(`attrib -r -s -h /s /d "${destDir}\\*"`, { stdio: 'ignore', timeout: 5000 });
+                        }
+                        fs.cpSync(srcDir, destDir, { recursive: true, force: true });
+                        return;
                     }
-                    fs.cpSync(srcDir, destDir, { recursive: true, force: true });
-                    return;
                 } catch (_) {}
                 throw err;
             }
-            sleepSync(delayMs);
+            sleepSync(delay);
+            delay = Math.min(delay + 50, 400);
         }
     }
 }

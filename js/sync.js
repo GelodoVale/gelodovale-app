@@ -1,5 +1,5 @@
 // --- SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE) ---
-import { state, updateState, saveStateLocalOnly, APP_VERSION } from './state.js';
+import { state, updateState, saveStateLocalOnly, APP_VERSION, IS_HOMOLOGATION_BUILD } from './state.js';
 import { renderApp } from './app.js';
 import { defaultOutbox } from './outbox.js';
 import { GranularSyncAdapter } from './granular_sync.js';
@@ -83,21 +83,43 @@ export function salvarBackupEmergenciaDivergencia(motivo, dadosLocais, dadosRemo
 
 /**
  * Validação rigorosa da integridade estrutural do snapshot recebido do Firebase.
+ * Suporta formatos monolíticos (Arrays) e granulares (Objetos/Mapas indexados por ID).
  */
 export function validarEstadoRemoto(remoteData) {
     if (!remoteData || typeof remoteData !== 'object') {
         return { valid: false, reason: 'Dados remotos nulos ou com formato inválido.' };
     }
-    // Para ser considerado um banco GelControl íntegro, deve possuir ao menos lastUpdated
-    // ou uma das coleções fundamentais (clients, orders, products, etc.)
-    const hasCoreFields = typeof remoteData.lastUpdated === 'number' ||
-        Array.isArray(remoteData.clients) ||
-        Array.isArray(remoteData.orders) ||
-        Array.isArray(remoteData.products);
+
+    // 1. Marca canônica de integridade estrutural do GelControl
+    if (typeof remoteData.rootUid === 'string' && remoteData.rootUid.length > 0) {
+        return { valid: true, format: 'canonical_root' };
+    }
+
+    // 2. Timestamp de atualização na raiz do nó
+    if (typeof remoteData.lastUpdated === 'number') {
+        return { valid: true, format: 'timestamped' };
+    }
+
+    // 3. Suporte a coleções fundamentais tanto em Array quanto em Objeto indexado
+    const isPopulatedCollection = (col) => {
+        const val = remoteData[col];
+        if (Array.isArray(val)) return true;
+        if (val && typeof val === 'object' && Object.keys(val).length > 0) return true;
+        return false;
+    };
+
+    const hasCoreFields = isPopulatedCollection('clients') ||
+        isPopulatedCollection('orders') ||
+        isPopulatedCollection('products') ||
+        isPopulatedCollection('users') ||
+        isPopulatedCollection('financeiro') ||
+        isPopulatedCollection('factorySettings') ||
+        isPopulatedCollection('equipments');
+
     if (!hasCoreFields) {
         return { valid: false, reason: 'Objeto remoto não contém os campos essenciais do GelControl.' };
     }
-    return { valid: true };
+    return { valid: true, format: 'collections' };
 }
 
 let granularAdapterInstance = null;
@@ -110,9 +132,11 @@ export function isGranularSyncActive() {
 }
 
 export function getGranularAdapter() {
-    if (!granularAdapterInstance) {
+    const isHomologation = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true) || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+    const targetKey = (state.firebaseConfig && state.firebaseConfig.deviceKey) || (isHomologation ? 'fabrica_homologacao_sync_v85_teste' : 'gelodovale_oficial');
+    if (!granularAdapterInstance || granularAdapterInstance.deviceKey !== targetKey) {
         granularAdapterInstance = new GranularSyncAdapter({
-            deviceKey: (state.firebaseConfig && state.firebaseConfig.deviceKey) || 'gelodovale_oficial'
+            deviceKey: targetKey
         });
     }
     return granularAdapterInstance;
@@ -126,20 +150,21 @@ function normalizeVersion(ver) {
 
 // ─── CARREGAR SDK DO FIREBASE ──────────────────────────────────────────────
 export function loadFirebaseSDK(callback) {
-    if (firebaseSDKLoaded || (window.firebase && window.firebase.database)) {
+    if (firebaseSDKLoaded || (window.firebase && window.firebase.database && window.firebase.auth)) {
         firebaseSDKLoaded = true;
         if (callback) callback();
         return;
     }
 
+    // Carregamento local offline-first incorporado
     const scriptApp = document.createElement('script');
-    scriptApp.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+    scriptApp.src = 'js/libs/firebase/firebase-app-compat.js?v=85';
     scriptApp.onload = () => {
         const scriptAuth = document.createElement('script');
-        scriptAuth.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js';
+        scriptAuth.src = 'js/libs/firebase/firebase-auth-compat.js?v=85';
         const loadDB = () => {
             const scriptDB = document.createElement('script');
-            scriptDB.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
+            scriptDB.src = 'js/libs/firebase/firebase-database-compat.js?v=85';
             scriptDB.onload = () => {
                 firebaseSDKLoaded = true;
                 if (callback) callback();
@@ -156,9 +181,33 @@ export function loadFirebaseSDK(callback) {
         document.head.appendChild(scriptAuth);
     };
     scriptApp.onerror = () => {
-        isCloudPushLocked = true;
-        bootGuardState = 'BLOCKED_ERROR';
-        updateSyncStatusUI('error', '⚠️ Falha ao carregar SDK do Firebase. Gravação bloqueada.');
+        // Fallback para CDN caso os arquivos locais não sejam encontrados
+        const fallbackScriptApp = document.createElement('script');
+        fallbackScriptApp.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+        fallbackScriptApp.onload = () => {
+            const fbAuth = document.createElement('script');
+            fbAuth.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js';
+            const fbDB = () => {
+                const db = document.createElement('script');
+                db.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js';
+                db.onload = () => { firebaseSDKLoaded = true; if (callback) callback(); };
+                db.onerror = () => {
+                    isCloudPushLocked = true;
+                    bootGuardState = 'BLOCKED_ERROR';
+                    updateSyncStatusUI('error', '⚠️ Falha ao carregar banco do Firebase.');
+                };
+                document.head.appendChild(db);
+            };
+            fbAuth.onload = fbDB;
+            fbAuth.onerror = fbDB;
+            document.head.appendChild(fbAuth);
+        };
+        fallbackScriptApp.onerror = () => {
+            isCloudPushLocked = true;
+            bootGuardState = 'BLOCKED_ERROR';
+            updateSyncStatusUI('error', '⚠️ Falha ao carregar SDK do Firebase.');
+        };
+        document.head.appendChild(fallbackScriptApp);
     };
     document.head.appendChild(scriptApp);
 }
@@ -314,6 +363,10 @@ export function startSyncListener() {
                 console.log('[BootPushGuard] 🕊️ Período de estabilização pós-boot (8s) encerrado. Gravações liberadas.');
             }, 8000);
             updateSyncStatusUI('success');
+
+            if (isGranularSyncActive()) {
+                setTimeout(() => { triggerGranularSync(); }, 500);
+            }
         } else {
             // ── Sincronização em tempo real (pós-boot): comparar versões e timestamps ──
             let localVer = normalizeVersion(state.backupSettings?.currentVersion);
@@ -356,22 +409,44 @@ function aplicarDadosRemoto(remoteData) {
     // Preservar configuração Firebase local (não sobrescrever com a da nuvem)
     const cfgLocal = state.firebaseConfig;
 
-    updateState(remoteData);
+    // No modo granular ou se a nuvem contiver estrutura de nós granulares indexados por ID,
+    // hidrata e normaliza para arrays filtrando soft-deletes (tombstones)
+    let processedData = remoteData;
+    if (isGranularSyncActive() || (remoteData && remoteData.clients && !Array.isArray(remoteData.clients) && typeof remoteData.clients === 'object')) {
+        const adapter = getGranularAdapter();
+        processedData = adapter.hydrateGelControlState(remoteData);
+    }
 
-    // Reconciliação de credenciais offline locais (mantidas estritamente no dispositivo local)
+    // Preservar senhas locais existentes na memória antes de hidratar dados da nuvem
+    const localPasswords = {};
+    if (Array.isArray(state.users)) {
+        state.users.forEach(u => {
+            if (u && u.id && u.password) localPasswords[u.id] = u.password;
+            if (u && u.username === 'admin' && u.password) localPasswords['admin'] = u.password;
+        });
+    }
+    if (state.adminPassword) localPasswords['admin'] = state.adminPassword;
+
+    updateState(processedData);
+
+    // Reconciliação e preservação estrita de credenciais locais
     if (Array.isArray(state.users)) {
         try {
             const rawAuth = localStorage.getItem("gelcontrol_offline_auth");
             const offlineStore = rawAuth ? JSON.parse(rawAuth) : {};
             state.users.forEach(u => {
-                if (!u.password && offlineStore[u.id] && offlineStore[u.id].hash) {
-                    u.password = offlineStore[u.id].hash;
+                if (!u.password) {
+                    if (localPasswords[u.id]) u.password = localPasswords[u.id];
+                    else if (u.username === 'admin' && localPasswords['admin']) u.password = localPasswords['admin'];
+                    else if (offlineStore[u.id] && offlineStore[u.id].hash) u.password = offlineStore[u.id].hash;
                 }
             });
-            if (state.users.find(u => u.username === "admin" && !u.password && offlineStore["admin"])) {
-                const adminUser = state.users.find(u => u.username === "admin");
-                adminUser.password = offlineStore["admin"].hash;
-                state.adminPassword = adminUser.password;
+            const adminUser = state.users.find(u => u.username === "admin");
+            if (adminUser) {
+                if (!adminUser.password) {
+                    adminUser.password = localPasswords['admin'] || (offlineStore["admin"] ? offlineStore["admin"].hash : undefined);
+                }
+                if (adminUser.password) state.adminPassword = adminUser.password;
             }
         } catch (_) {}
     }
@@ -385,6 +460,13 @@ function aplicarDadosRemoto(remoteData) {
     // Atualizar visual (Aparência) e campos de configurações se estiverem abertos
     try { if (window.applyAppearanceTheme) window.applyAppearanceTheme(); } catch (_) {}
     try { if (window.renderPrecos) window.renderPrecos(); } catch (_) {}
+
+    // Sincronizar automaticamente a identidade visual e o ícone do Windows se a logo foi atualizada da nuvem
+    try {
+        if (typeof window.autoSyncDesktopIcon === 'function') {
+            setTimeout(() => window.autoSyncDesktopIcon(), 500);
+        }
+    } catch (_) {}
 
     const timeStr = new Date().toLocaleTimeString('pt-BR');
     updateSyncStatusUI('success', `☁️ Nuvem Ativa — Sincronizado (${timeStr})`);
@@ -500,6 +582,22 @@ function pushToFirebaseImediato() {
     const deviceKey = state.firebaseConfig.deviceKey;
     if (!deviceKey) return;
 
+    // BLINDAGEM DE GRAVAÇÃO (ANTI-VAZAMENTO DE PRODUÇÃO)
+    const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+    const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+    const isHomologation = isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+
+    if (isHomologation && (state.firebaseConfig?.projectId === 'gelo-do-vale' || deviceKey === 'gelodovale_oficial')) {
+        console.error('[Security Guard] 🛑 BLOQUEIO TOTAL: Tentativa de gravação no Firebase de produção bloqueada no ambiente de homologação!');
+        isSyncing = false;
+        return;
+    }
+    if (!isHomologation && (state.firebaseConfig?.projectId === 'gelcontrol-homologacao' || (deviceKey && deviceKey.includes('homologacao')))) {
+        console.error('[Security Guard] 🛑 BLOQUEIO TOTAL: Tentativa de gravação no Firebase de homologação bloqueada no ambiente de produção!');
+        isSyncing = false;
+        return;
+    }
+
     isSyncing = true;
     updateSyncStatusUI('syncing');
 
@@ -514,6 +612,26 @@ function pushToFirebaseImediato() {
         safeState.users = safeState.users.map(u => {
             const { password, ...safeUser } = u;
             return safeUser;
+        });
+    }
+
+    // PRESERVAÇÃO INTEGRAL DE user_permissions NO SERVIDOR
+    if (!safeState.user_permissions) {
+        safeState.user_permissions = state.user_permissions || {};
+    }
+    if (Array.isArray(state.users)) {
+        state.users.forEach(u => {
+            if (u && u.authUid && u.username !== "admin") {
+                if (!safeState.user_permissions[u.authUid] || safeState.user_permissions[u.authUid].active !== false) {
+                    safeState.user_permissions[u.authUid] = {
+                        active: u.active !== false,
+                        username: u.username,
+                        name: u.name,
+                        permissions: u.permissions || {},
+                        updatedAt: u.updatedAt || Date.now()
+                    };
+                }
+            }
         });
     }
     firebase.database().ref(`factories/${deviceKey}`).set(safeState)
@@ -540,6 +658,57 @@ function pushToFirebaseImediato() {
 
 // ─── INICIALIZAR FIREBASE ──────────────────────────────────────────────────
 export function initFirebase(callback) {
+    // BLINDAGEM DE SEGURANÇA DE HOMOLOGAÇÃO (ANTI-VAZAMENTO DE PRODUÇÃO)
+    const isDesktopHomolog = (typeof window !== 'undefined' && window.gelcontrolDesktop?.isHomologation === true);
+    const hasHomologBanner = (typeof document !== 'undefined' && document.getElementById('homologacao-banner') !== null);
+    const isHomologation = isDesktopHomolog || hasHomologBanner || (state.firebaseConfig?.projectId === 'gelcontrol-homologacao');
+
+    if (isHomologation) {
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelcontrol-homologacao' || state.firebaseConfig.projectId === 'gelo-do-vale') {
+            console.warn('[Security Guard] 🛑 Interceptada tentativa de inicializar com Firebase de produção em ambiente de homologação. Redirecionando para gelcontrol-homologacao.');
+            state.firebaseConfig = {
+                enabled: true,
+                apiKey: 'AIzaSyA2u-TLkL2K2EYGU2yI7oKtcFA6tEbfp1A',
+                authDomain: 'gelcontrol-homologacao.firebaseapp.com',
+                projectId: 'gelcontrol-homologacao',
+                databaseURL: 'https://gelcontrol-homologacao-default-rtdb.firebaseio.com',
+                deviceKey: 'fabrica_homologacao_sync_v85_teste'
+            };
+            saveStateLocalOnly();
+        } else if (state.firebaseConfig.deviceKey === 'fabrica_homologacao_teste') {
+            state.firebaseConfig.deviceKey = 'fabrica_homologacao_sync_v85_teste';
+            saveStateLocalOnly();
+        }
+        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            const currentApp = firebase.apps[0];
+            if (currentApp.options && (currentApp.options.projectId === 'gelo-do-vale' || currentApp.options.projectId !== 'gelcontrol-homologacao')) {
+                console.warn('[Security Guard] 🛑 Destruindo instância indevida do Firebase com projeto de produção.');
+                currentApp.delete().catch(() => {});
+            }
+        }
+    } else {
+        // AMBIENTE OFICIAL DE PRODUÇÃO
+        if (!state.firebaseConfig || state.firebaseConfig.projectId !== 'gelo-do-vale' || state.firebaseConfig.deviceKey !== 'gelodovale_oficial') {
+            console.log('[Security Guard] 🛡️ Configurando Firebase oficial de produção (gelo-do-vale / gelodovale_oficial)...');
+            state.firebaseConfig = {
+                enabled: true,
+                apiKey: 'AIzaSyC6RTVPTDkngo-WnSEcBGD1wxQwzwtVZfw',
+                authDomain: 'gelo-do-vale.firebaseapp.com',
+                projectId: 'gelo-do-vale',
+                databaseURL: 'https://gelo-do-vale-default-rtdb.firebaseio.com',
+                deviceKey: 'gelodovale_oficial'
+            };
+            saveStateLocalOnly();
+        }
+        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            const currentApp = firebase.apps[0];
+            if (currentApp.options && currentApp.options.projectId !== 'gelo-do-vale') {
+                console.warn('[Security Guard] 🛑 Destruindo instância indevida do Firebase que não seja de produção.');
+                currentApp.delete().catch(() => {});
+            }
+        }
+    }
+
     if (!state.firebaseConfig || !state.firebaseConfig.enabled) {
         updateSyncStatusUI('disabled');
         if (callback) callback();
@@ -652,15 +821,42 @@ export function updateSyncStatusUI(status, customMsg = "") {
     const indicator = document.getElementById('cloud-sync-status');
     if (!indicator) return;
 
+    const pendingCount = (defaultOutbox && typeof defaultOutbox.getPendingCount === 'function')
+        ? defaultOutbox.getPendingCount()
+        : 0;
+
     if (customMsg) {
         lastSyncMessage = customMsg;
+    } else if (pendingCount > 0 && status === 'success') {
+        status = 'syncing';
+        lastSyncMessage = `☁️ Fila Offline: ${pendingCount} alteração(ões) aguardando sincronização`;
     }
 
     const MAP = {
-        success: { icon: 'cloud', color: '#00ff64', title: lastSyncMessage || '☁️ Nuvem Ativa — Sincronizado em Tempo Real', spin: false },
-        syncing: { icon: 'refresh-cw', color: '#ffaa00', title: '🔄 Sincronizando com a Nuvem...', spin: true },
-        error: { icon: 'alert-triangle', color: '#ff4d4d', title: lastSyncMessage || '⚠️ Erro de Conexão com a Nuvem', spin: false },
-        disabled: { icon: 'cloud-off', color: 'var(--color-text-muted)', title: 'Sincronização Desativada', spin: false }
+        success: { 
+            icon: 'cloud', 
+            color: '#00ff64', 
+            title: lastSyncMessage || '☁️ Nuvem Ativa — Sincronizado em Tempo Real', 
+            spin: false 
+        },
+        syncing: { 
+            icon: 'refresh-cw', 
+            color: '#ffaa00', 
+            title: lastSyncMessage || (pendingCount > 0 ? `🔄 Sincronizando (${pendingCount} pendente(s))...` : '🔄 Sincronizando com a Nuvem...'), 
+            spin: true 
+        },
+        error: { 
+            icon: 'alert-triangle', 
+            color: '#ff4d4d', 
+            title: lastSyncMessage || '⚠️ Erro de Conexão com a Nuvem', 
+            spin: false 
+        },
+        disabled: { 
+            icon: 'cloud-off', 
+            color: 'var(--color-text-muted)', 
+            title: 'Sincronização Desativada', 
+            spin: false 
+        }
     };
 
     const cfg = MAP[status] || MAP.disabled;
@@ -689,6 +885,20 @@ export function updateSyncStatusUI(status, customMsg = "") {
     }
 
     if (window.lucide) window.lucide.createIcons();
+}
+
+// Auto-conectar listener de atualização da fila do Outbox na interface
+if (defaultOutbox && typeof defaultOutbox.subscribe === 'function') {
+    defaultOutbox.subscribe((event, data) => {
+        try {
+            const pending = defaultOutbox.getPendingCount();
+            if (pending > 0) {
+                updateSyncStatusUI('syncing', `☁️ Fila Offline: ${pending} alteração(ões) pendente(s)`);
+            } else if (event === 'processing-end' && (!data || data.failedCount === 0)) {
+                updateSyncStatusUI('success', '☁️ Todas as operações sincronizadas com a nuvem');
+            }
+        } catch (_) {}
+    });
 }
 
 // ─── TOAST DE NOTIFICAÇÃO QUANDO RECEBE ATUALIZAÇÃO ──────────────────────

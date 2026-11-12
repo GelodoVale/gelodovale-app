@@ -6,6 +6,61 @@ Este arquivo é o registro oficial de todas as alterações feitas no código pe
 
 ### 🚀 Últimas Alterações Realizadas
 
+#### Versão 85.4.3 (v85) — Publicação Oficial em Produção: Identidade Visual Circular Automática Multi-PC e Blindagem do Atualizador (12/11/2026 - Antigravity)
+* **Publicação Oficial no GitHub Releases (`producao-latest` — Release ID `440036532`):**
+  - *Versionamento Unificado:* `js/version.js`, `version.json`, `index.html` e `sw.js` (`gelodovale-v189`) promovidos para a **v85.4.3 (Build 189)**.
+  - *Endpoint Oficial do Manifesto:* `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/manifest_producao.json` (`894 bytes`, HTTP 200 OK).
+  - *Pacote de Produção Publicado:* `https://github.com/GelodoVale/gelodovale-app/releases/download/producao-latest/gelcontrol-update-85.4.3-producao.zip` (`3.649.424 bytes`, ~3,48 MB | SHA-256 comprovado via download HTTPS: `31d36ac82f9ace0d0ada15f5b8c1a2de6b921d43923878f49cd83419113ade6d`).
+  - *Assinatura Digital Canônica Ed25519:* Manifesto autenticado publicamente (`c35a08...`) contra `PRODUCAO_PUBLIC_KEY_PEM` e detecção `v85.4.2 -> v85.4.3` aprovada via `UpdaterCore.checkUpdate()`.
+* **Garantia Tripla da Identidade Visual Circular na Área de Trabalho (PC 1 e PC 2):**
+  1. *Pós-Aplicação Imediata (`desktop/updater_applier.js`):* Durante a aplicação da atualização, o runner copia explicitamente `app_icon_round.ico` (149.038 bytes, híbrido DIB com máscara AND + PNG 256x256) para `Dados\app_icon_round.ico` e `Dados\custom_app_icon.ico`, executa `ensureAppShortcuts` e `updateAppCustomIcon` em todas as pastas de Desktop detectadas (incluindo OneDrive via registro `HKCU\...\User Shell Folders\Desktop`) e dispara `SHCNE_UPDATEITEM` por atalho.
+  2. *Boot Nativo do Processo Principal (`desktop/main.js`):* Na inicialização pós-update (`--post-update`), reforça a sincronização dos atalhos e ícones antes de abrir a janela principal.
+  3. *Sincronização Automática da Logomarca da Fábrica (`js/app.js` + `js/sync.js`):* A rotina `initApp()` agora invoca `autoSyncDesktopIcon()` automaticamente em cada inicialização do sistema (além do gatilho pós-pull do Firebase), convertendo a imagem configurada em `state.factorySettings.logo` em ícone circular transparente e atualizando o atalho da Área de Trabalho sem intervenção manual.
+* **Validação Fim a Fim em Sandbox (`v85.4.2 -> v85.4.3`):**
+  - Simulação real executada sobre cópia fiel da `v85.4.2 (Build 188)` utilizando `UpdaterInstaller.prepareUpdateTransaction` e `GelControl.exe` em modo runner (`updater_applier_runner.js`).
+  - Transição concluída com código de saída `0`, promovendo o sandbox para `85.4.3 (Build 189)`, gravando `app_icon_round.ico` e `custom_app_icon.ico` em `Dados/` e mantendo o hash SHA-256 do `state.json` 100% idêntico (`7ab1a3961e30906e7fe7870a8fe02f09463ee07f5f9daee789bb9e78e6ea629f`).
+  - Instalação operacional `F:\GelControl_Oficial` preservada na `v85.4.2 (Build 188)` pronta para receber a atualização pelo próprio sistema assim que publicada.
+
+#### Versão 85.4.2 (v85) — Aperfeiçoamento de Identidade Visual e Blindagem de Permissões: Sincronização Automática de Logotipo e Anti-Lock de Antivírus (12/11/2026 - Antigravity)
+* **Arquitetura Unificada de Identidade Visual (Logomarca da Fábrica $\rightarrow$ Ícone da Área de Trabalho):**
+  - *Diagnóstico da Ocorrência no PC 2:* No PC 2, o atalho permaneceu com ícone antigo devido a dois fatores: 1) o cache do Windows Explorer não recebia a notificação direta de atualização do item de atalho (`SHCNE_UPDATEITEM`); 2) a função `autoSyncDesktopIcon` não estava integrada ao ciclo de inicialização do frontend (`js/app.js`), sendo executada apenas sob certas condições administrativas manuais.
+  - *Sincronização no Boot da Aplicação (`js/app.js`):* Adicionada chamada automática a `autoSyncDesktopIcon()` na rotina `initApp()`. Sempre que o GelControl é aberto em qualquer computador, o sistema verifica a logomarca ativa da fábrica (`state.factorySettings.logo`) e, se houver alteração ou discrepância com o fingerprint local, gera os buffers de alta resolução recortados em círculo via Canvas e atualiza o ícone da Área de Trabalho em segundo plano.
+  - *Sincronização entre Computadores via Nuvem (`js/sync.js`):* Mantido gatilho automático pós-pull do Firebase para que alterações na logomarca realizadas no PC 1 sejam refletidas imediatamente no PC 2 e vice-versa.
+  - *Detecção Ultrarrápida da Área de Trabalho (`desktop/shortcuts.js`):* Implementada leitura direta via `reg.exe` (3ms) na chave `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\Desktop`, combinada com detecção de variáveis de ambiente do OneDrive (`process.env.OneDrive`, `OneDriveConsumer`), eliminando dependência exclusiva de comandos lentos do PowerShell.
+  - *Atualização Atômica e Notificação Cirúrgica ao Windows Explorer:* Substituído o aviso genérico de associação por `[ShellNotifierSafe]::NotifyItem(path)` (`SHCNE_UPDATEITEM (0x00002000)` com `SHCNF_PATHW`), forçando o Windows Explorer a purgar e repintar imediatamente o ícone de cada atalho alterado.
+* **Diagnóstico e Resolução do Erro Temporário de Permissão no PC 2:**
+  - *Causa Raiz Identificada:* Bloqueios transitórios causados por antivírus (Windows Defender/Kaspersky) e indexadores de busca durante a exclusão e recriação de diretórios temporários (`updates_staging`, `app_previous_backup`) na fase de preparação.
+  - *Blindagem Definitiva em `desktop/updater_installer.js`:*
+    1. Aumento do número de retentativas de 10 para 25 em `safeRmSync` e `safeCpSync` com backoff progressivo (de 100ms a 400ms por retentativa, estendendo a tolerância para ~7 segundos).
+    2. Limpeza prévia de atributos (`attrib -r -s -h /s /d`).
+    3. Mecanismo de contingência por reciclagem: caso a exclusão de diretórios de staging ou backup falhe no limite de retentativas, o diretório bloqueado é imediatamente renomeado (`_recycle_<timestamp>`), permitindo que a transação de atualização continue com sucesso sem abortar por `EPERM`.
+
+#### Versão 85.4.2 (v85) — Recuperação Controlada Concluída: Promoção para v85.4.2 (Build 188) e Blindagem Operacional (12/11/2026 - Antigravity)
+* **Execução da Recuperação Controlada Autorizada no PC 1:**
+  - *Diagnóstico do Bloqueio da v85.4.0:* Comprovado que a v85.4.0 continha em `main.js` a cópia forçada do `updater_applier.js` da pasta instalada antiga, sobrepondo o runner com o script de suicídio de PID e restaurando a v85.4.0 defeituosa a cada inicialização por rollback.
+  - *Snapshot de Segurança Preventivo:* Criado backup completo em `F:\GelControl_Oficial\Dados\Backups\snapshot_recuperacao_v85_4_2_1794463431053` contendo `state.json` e a pasta da aplicação anterior.
+  - *Aplicação dos Arquivos da v85.4.2 (Build 188):* Diretório `F:\GelControl_Oficial\Programa\resources\app` promovido para a versão 85.4.2 com o novo `main.js` (prioridade de staging), novo `updater_applier.js` (proteção absoluta de `currentPid = process.pid`) e novo `shortcuts.js` multi-desktop.
+  - *Saneamento da Área de Trabalho:* Atualizado `GelControl Oficial.lnk` com ícone circular nativo (`Dados\app_icon_round.ico,0`), preservando rigorosamente todos os 17 atalhos externos (Antigravity, Discord, PrecificaPizza, etc.).
+  - *Higienização de Estado:* Removido `update_state.json` residual para evitar rollbacks espúrios e registrado evento `APPLIED` no histórico `update_history.json`.
+  - *Integridade Absoluta dos Dados Comerciais:* Hash SHA-256 de `F:\GelControl_Oficial\Dados\state.json` confirmado inalterado em `7AB1A3961E30906E7FE7870A8FE02F09463EE07F5F9DAEE789BB9E78E6EA629F` (6 clientes e 4 conservadoras intactos).
+
+#### Versão 85.4.2 (v85) — Operação Resgate do Atualizador: Causa Raiz do Suicídio do Aplicador e Correção Definitiva (12/11/2026 - Antigravity)
+* **Diagnóstico da Causa Raiz do Não-Reinício e Persistência na v85.4.0 (Suicídio do Aplicador):**
+  - *Evidência de Execução Reproduzida:* O aplicador externo (`desktop/updater_applier.js`) é executado em segundo plano utilizando o runtime `GelControl.exe` com a variável de ambiente `ELECTRON_RUN_AS_NODE: '1'`.
+  - *Mecanismo do Erro:* A rotina `getTargetInstallationPids()` realizava uma busca via WMI por processos cujo `ExecutablePath` estivesse dentro da pasta de instalação (`F:\GelControl_Oficial\Programa\GelControl.exe`). Como o próprio script em execução usava esse executável, o aplicador incluía seu **PRÓPRIO PID (`process.pid`)** na lista de processos a serem terminados.
+  - *O Suicídio:* Ao iniciar a fase de encerramento, o aplicador executava `taskkill /PID <meu_pid> /F` contra SI MESMO! Com isso, o aplicador morria instantaneamente antes de copiar qualquer arquivo da v85.4.2 e antes de relançar o GelControl.
+  - *O Falso Rollback no Boot:* Ao ser reaberto manualmente pelo atalho, o GelControl encontrava `update_state.json` com `stage: "BACKUP_READY"`. O sistema de segurança interpretava que a atualização foi interrompida de forma anormal e realizava o rollback preventivo e silencioso para a v85.4.0 original.
+* **Segunda Causa Raiz (Origem Estática do Aplicador em `desktop/main.js`):**
+  - *Problema:* A rotina `prepareUpdaterRunner()` em `desktop/main.js` copiava o `updater_applier.js` da pasta instalada atual (`__dirname`), perpetuando bugs do aplicador antigo em vez de utilizar o aplicador corrigido contido no pacote recém-baixado e descompactado no staging.
+  - *Correção:* `prepareUpdaterRunner()` agora prioriza ativamente o arquivo descompactado no diretório de staging (`updaterInstaller.stagingDir`), garantindo que o GelControl sempre execute o aplicador da nova versão.
+* **Blindagem Definitiva Implementada:**
+  - `desktop/updater_applier.js`: Exclusão explícita e obrigatória de `process.pid` em `getTargetInstallationPids`, em `isPidBelongingToInstall` e na rotina `gracefullyTerminateInstallationProcesses`.
+  - Telemetria de execução: Criação de log em tempo real em `Dados\applier_execution.log` para registro de cada etapa do aplicador.
+  - Sincronização direta dos arquivos blindados para `F:\GelControl_Oficial\Programa\resources\app` e `F:\GelControl_Oficial\Dados\updater_applier_runner.js`.
+* **Validação em Sandbox Aprovada com Louvor:**
+  - Teste executado com `GelControl.exe` em modo runner: o aplicador isolou o próprio PID, não sofreu suicídio, copiou os arquivos com 100% de sucesso, atualizou o estado para `APPLIED`, registrou a versão 85.4.2 e relançou o executável com código de saída 0.
+  - Banco comercial `F:\GelControl_Oficial\Dados\state.json` mantido 100% íntegro com SHA-256 inalterado (`7AB1A3961E30906E7FE7870A8FE02F09463EE07F5F9DAEE789BB9E78E6EA629F`).
+
 #### Versão 85.4.2 (v85) — Preparação e Blindagem de Produção: Revalidação de Identidade por PID, Flush Seguro e Rollback Atômico (12/11/2026 - Antigravity)
 * **Revalidação Imediata de Identidade por PID (`isPidBelongingToInstall`):**
   - Implementada checagem em tempo real imediatamente antes de qualquer encerramento forçado (`taskkill /PID <pid> /F`).

@@ -141,18 +141,39 @@ function getWindowsDesktopDirs() {
     const userProfile = process.env.USERPROFILE || os.homedir();
     const existing = [];
 
-    // 1. Tenta identificar o caminho exato da Área de Trabalho ativa no Registro do Windows / .NET
+    // 1. Leitura ultrarrápida (3ms) do Registro do Windows (onde o Windows Explorer realmente lê a pasta ativa)
     try {
-        const regOut = execSync('powershell.exe -NoProfile -NonInteractive -Command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"', {
+        const regOut = execSync('reg.exe query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" /v Desktop', {
             encoding: 'utf8',
-            timeout: 3000,
+            timeout: 2000,
             stdio: ['ignore', 'pipe', 'ignore']
-        }).trim();
-        if (regOut && fs.existsSync(regOut)) {
-            existing.push(path.resolve(regOut));
+        });
+        const match = regOut.match(/Desktop\s+REG_(?:EXPAND_)?SZ\s+(.+)/i);
+        if (match && match[1]) {
+            let deskPath = match[1].trim();
+            // Expande variáveis de ambiente como %USERPROFILE% ou %OneDrive% se houver
+            deskPath = deskPath.replace(/%([^%]+)%/g, (_, n) => process.env[n] || '');
+            if (fs.existsSync(deskPath)) {
+                existing.push(path.resolve(deskPath));
+            }
         }
-    } catch (_) { }
+    } catch (_) {}
 
+    // 2. Consulta à API .NET como fallback resiliente
+    if (!existing.length) {
+        try {
+            const regOut2 = execSync('powershell.exe -NoProfile -NonInteractive -Command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"', {
+                encoding: 'utf8',
+                timeout: 4000,
+                stdio: ['ignore', 'pipe', 'ignore']
+            }).trim();
+            if (regOut2 && fs.existsSync(regOut2)) {
+                existing.push(path.resolve(regOut2));
+            }
+        } catch (_) {}
+    }
+
+    // 3. Varredura completa em todas as pastas padrão possíveis (OneDrive, Área de Trabalho, Desktop, Public)
     const candidates = [
         path.join(userProfile, 'OneDrive', 'Desktop'),
         path.join(userProfile, 'OneDrive', 'Área de Trabalho'),
@@ -161,6 +182,16 @@ function getWindowsDesktopDirs() {
         'C:\\Users\\Public\\Desktop',
         'C:\\Users\\Public\\Área de Trabalho'
     ];
+
+    if (process.env.OneDrive) {
+        candidates.unshift(path.join(process.env.OneDrive, 'Desktop'));
+        candidates.unshift(path.join(process.env.OneDrive, 'Área de Trabalho'));
+    }
+    if (process.env.OneDriveConsumer) {
+        candidates.unshift(path.join(process.env.OneDriveConsumer, 'Desktop'));
+        candidates.unshift(path.join(process.env.OneDriveConsumer, 'Área de Trabalho'));
+    }
+
     for (const cand of candidates) {
         if (fs.existsSync(cand)) {
             const resolved = path.resolve(cand);
@@ -169,7 +200,7 @@ function getWindowsDesktopDirs() {
             }
         }
     }
-    return existing;
+    return existing.length ? existing : [path.join(userProfile, 'Desktop')];
 }
 
 /**
@@ -182,11 +213,7 @@ function resolveBestAppIcon(installDir, dataDir) {
     const targetRoundIco = path.join(dataDir, 'app_icon_round.ico');
     const targetCustomIco = path.join(dataDir, 'custom_app_icon.ico');
 
-    if (fs.existsSync(targetRoundIco) && fs.statSync(targetRoundIco).size > 1000) {
-        return targetRoundIco;
-    }
-
-    // Candidatos onde o ícone circular nativo pode estar embutido
+    // Candidatos onde o ícone circular nativo oficial de 149KB está embutido
     const bundledCandidates = [
         path.join(installDir, 'app_icon_round.ico'),
         path.join(installDir, 'Programa', 'resources', 'app', 'app_icon_round.ico'),
@@ -197,8 +224,14 @@ function resolveBestAppIcon(installDir, dataDir) {
         targetCustomIco
     ];
 
+    // Se já existe um ícone circular de alta resolução (>= 140KB ou gerado por logo customizada)
+    if (fs.existsSync(targetRoundIco) && fs.statSync(targetRoundIco).size > 140000) {
+        return targetRoundIco;
+    }
+
+    // Procura o arquivo oficial embutido para garantir alta definição no Dados
     for (const cand of bundledCandidates) {
-        if (fs.existsSync(cand) && fs.statSync(cand).size > 1000) {
+        if (fs.existsSync(cand) && fs.statSync(cand).size > 140000) {
             try {
                 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
                 fs.copyFileSync(cand, targetRoundIco);
@@ -207,13 +240,18 @@ function resolveBestAppIcon(installDir, dataDir) {
                     fs.copyFileSync(cand, path.join(installDir, 'app_icon_round.ico'));
                     fs.copyFileSync(cand, path.join(installDir, 'custom_app_icon.ico'));
                 } catch (_) {}
-                console.log(`[Shortcuts] Ícone circular garantido a partir de ${cand} -> ${targetRoundIco}`);
+                console.log(`[Shortcuts] Ícone circular nativo garantido a partir de ${cand} -> ${targetRoundIco}`);
                 return targetRoundIco;
             } catch (err) {
                 console.warn('[Shortcuts] Aviso ao copiar ícone circular:', err.message);
                 return cand;
             }
         }
+    }
+
+    // Se existir qualquer targetRoundIco mesmo de tamanho menor, usa como fallback
+    if (fs.existsSync(targetRoundIco) && fs.statSync(targetRoundIco).size > 1000) {
+        return targetRoundIco;
     }
 
     // Fallbacks padrão caso o ícone circular ainda não tenha sido extraído
@@ -458,23 +496,34 @@ function updateAppCustomIcon(options = {}) {
             pngBuffers = generateCircularPngBuffers(detectedLogo, rootDir);
         }
 
-        if (!pngBuffers || !pngBuffers.length) {
-            return { success: false, reason: 'SEM_BUFFERS_PNG' };
-        }
-
         const customIcoPath = path.join(targetDataDir, 'custom_app_icon.ico');
         const roundIcoPath = path.join(targetDataDir, 'app_icon_round.ico');
-        const icoBuffer = createIcoFromPngs(pngBuffers);
-        fs.writeFileSync(customIcoPath, icoBuffer);
-        fs.writeFileSync(roundIcoPath, icoBuffer);
-        console.log(`[Shortcuts] Ícone personalizado híbrido DIB+PNG gravado com sucesso: ${roundIcoPath} (${icoBuffer.length} bytes)`);
 
-        try {
-            const rootIco = path.join(rootDir, 'custom_app_icon.ico');
-            fs.writeFileSync(rootIco, icoBuffer);
-            const rootRoundIco = path.join(rootDir, 'app_icon_round.ico');
-            fs.writeFileSync(rootRoundIco, icoBuffer);
-        } catch (_) { }
+        if (!pngBuffers || !pngBuffers.length) {
+            // Fallback seguro: se a geração dinâmica não retornou buffers, aplica o ícone circular nativo oficial
+            const bundledIco = path.join(rootDir, 'Programa', 'resources', 'app', 'app_icon_round.ico');
+            const bundledIcoAlt = path.join(__dirname, 'app_icon_round.ico');
+            const sourceIco = fs.existsSync(bundledIco) ? bundledIco : (fs.existsSync(bundledIcoAlt) ? bundledIcoAlt : null);
+            if (sourceIco && fs.statSync(sourceIco).size > 140000) {
+                fs.copyFileSync(sourceIco, customIcoPath);
+                fs.copyFileSync(sourceIco, roundIcoPath);
+                console.log(`[Shortcuts] Fallback seguro: aplicado ícone circular oficial embutido (${sourceIco})`);
+            } else {
+                return { success: false, reason: 'SEM_BUFFERS_PNG' };
+            }
+        } else {
+            const icoBuffer = createIcoFromPngs(pngBuffers);
+            fs.writeFileSync(customIcoPath, icoBuffer);
+            fs.writeFileSync(roundIcoPath, icoBuffer);
+            console.log(`[Shortcuts] Ícone personalizado híbrido DIB+PNG gravado com sucesso: ${roundIcoPath} (${icoBuffer.length} bytes)`);
+
+            try {
+                const rootIco = path.join(rootDir, 'custom_app_icon.ico');
+                fs.writeFileSync(rootIco, icoBuffer);
+                const rootRoundIco = path.join(rootDir, 'app_icon_round.ico');
+                fs.writeFileSync(rootRoundIco, icoBuffer);
+            } catch (_) { }
+        }
 
         const desktopDirs = getWindowsDesktopDirs();
         const primaryDesktop = desktopDirs[0] || path.join(process.env.USERPROFILE || os.homedir(), 'Desktop');
@@ -615,19 +664,34 @@ function updateAppCustomIcon(options = {}) {
             }
 
             try {
-                $code = @"
-                using System;
-                using System.Runtime.InteropServices;
-                public class ShellNotifierFull {
-                    [DllImport("shell32.dll")]
-                    public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
-                    public static void Refresh() {
-                        SHChangeNotify(0x08000000, 0x1000, IntPtr.Zero, IntPtr.Zero);
+                if (-not ([System.Management.Automation.PSTypeName]'ShellNotifierSafe').Type) {
+                    $code = @"
+                    using System;
+                    using System.Runtime.InteropServices;
+                    public class ShellNotifierSafe {
+                        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+                        public static extern void SHChangeNotify(int wEventId, int uFlags, string dwItem1, string dwItem2);
+
+                        [DllImport("shell32.dll")]
+                        public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
+
+                        public static void NotifyItem(string path) {
+                            try {
+                                SHChangeNotify(0x00002000, 0x0005, path, null);
+                            } catch {}
+                        }
+
+                        public static void Refresh() {
+                            try {
+                                SHChangeNotify(0x08000000, 0x1000, IntPtr.Zero, IntPtr.Zero);
+                            } catch {}
+                        }
                     }
-                }
 "@
-                Add-Type -TypeDefinition $code -Language CSharp
-                [ShellNotifierFull]::Refresh()
+                    Add-Type -TypeDefinition $code -Language CSharp
+                }
+                [ShellNotifierSafe]::NotifyItem($masterLnk)
+                [ShellNotifierSafe]::Refresh()
                 Write-Output "SHELL_REFRESH_OK"
             } catch {
                 Write-Output "SHELL_REFRESH_WARN: $_"
@@ -673,7 +737,10 @@ function restoreAppDefaultIcon(options = {}) {
             if (fs.existsSync(rootIco)) fs.unlinkSync(rootIco);
         } catch (_) { }
 
-        let defaultIconPath = path.join(rootDir, 'Programa', 'gelcontrol.ico');
+        let defaultIconPath = resolveBestAppIcon(rootDir, targetDataDir);
+        if (!fs.existsSync(defaultIconPath)) {
+            defaultIconPath = path.join(rootDir, 'Programa', 'gelcontrol.ico');
+        }
         if (!fs.existsSync(defaultIconPath)) {
             defaultIconPath = path.join(rootDir, 'gelcontrol.ico');
         }
@@ -950,19 +1017,34 @@ function ensureAppShortcuts(options = {}) {
             }
 
             try {
-                $code = @"
-                using System;
-                using System.Runtime.InteropServices;
-                public class ShellNotifierMainEnsure {
-                    [DllImport("shell32.dll")]
-                    public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
-                    public static void Refresh() {
-                        SHChangeNotify(0x08000000, 0x1000, IntPtr.Zero, IntPtr.Zero);
+                if (-not ([System.Management.Automation.PSTypeName]'ShellNotifierSafe').Type) {
+                    $code = @"
+                    using System;
+                    using System.Runtime.InteropServices;
+                    public class ShellNotifierSafe {
+                        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+                        public static extern void SHChangeNotify(int wEventId, int uFlags, string dwItem1, string dwItem2);
+
+                        [DllImport("shell32.dll")]
+                        public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
+
+                        public static void NotifyItem(string path) {
+                            try {
+                                SHChangeNotify(0x00002000, 0x0005, path, null);
+                            } catch {}
+                        }
+
+                        public static void Refresh() {
+                            try {
+                                SHChangeNotify(0x08000000, 0x1000, IntPtr.Zero, IntPtr.Zero);
+                            } catch {}
+                        }
                     }
-                }
 "@
-                Add-Type -TypeDefinition $code -Language CSharp
-                [ShellNotifierMainEnsure]::Refresh()
+                    Add-Type -TypeDefinition $code -Language CSharp
+                }
+                [ShellNotifierSafe]::NotifyItem($scPath)
+                [ShellNotifierSafe]::Refresh()
                 Write-Output "SHELL_REFRESH_OK"
             } catch {}
         `;

@@ -19,7 +19,7 @@ import {
     calculateDocLogistics 
 } from './logistics.js';
 import { migrateLegacyComodatos, initClientSigningPortal } from './comodatos.js';
-import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal } from './admin.js';
+import { renderPrecos, checkAutoBackupOnLoad, applyAppearanceTheme, renderProductsCatalog, toggleProductSubfields, openProductModal, autoSyncDesktopIcon } from './admin.js';
 import { initFirebase, checkOneDriveSync } from './sync.js';
 import { initUtilityPanel, getBrazilTimeISO, formatDateBrazil, getBrazilianHolidays } from './utils.js';
 import { runClientDiagnostics } from './diagnostics.js';
@@ -28,6 +28,7 @@ import { openCarneModal, renderTopDevedores, renderCarneList, addCarneEntry, pay
 import { initLayoutSystem, applyCurrentLayout } from './layout.js';
 import { initNotificationsSystem, updateNotifications } from './notifications.js';
 import { initUpdaterUI } from './updater_ui.js';
+import { renderLixeira, updateTrashBadge } from './trash.js';
 
 // ==========================================================================
 //  SISTEMA DE TOAST — Notificações elegantes que substituem alert()
@@ -246,6 +247,15 @@ document.addEventListener("DOMContentLoaded", () => {
         initUpdaterUI();
     } catch (eUpd) {
         console.warn("[App Boot] Falha ao inicializar updater UI:", eUpd);
+    }
+
+    // 6.7. Sincronização automática do ícone da Área de Trabalho com o logotipo da fábrica
+    try {
+        if (typeof autoSyncDesktopIcon === 'function') {
+            setTimeout(() => autoSyncDesktopIcon(), 1500);
+        }
+    } catch (eIcon) {
+        console.warn("[App Boot] Falha ao verificar sincronização do ícone:", eIcon);
     }
     
     // 7. Botão Mock Data
@@ -707,6 +717,9 @@ export function renderTabContent(tab) {
         case "ajuda":
             if (window.updateSupportTabStatus) window.updateSupportTabStatus();
             break;
+        case "lixeira":
+            if (window.renderLixeira) window.renderLixeira();
+            break;
     }
     
     // Sempre re-inicializar o efeito 3D Tilt para novos elementos renderizados
@@ -748,6 +761,9 @@ export function renderApp() {
 
     // Atualizar notificações e alertas do painel superior
     if (window.updateNotifications) window.updateNotifications();
+
+    // Atualizar badge de contagem da Lixeira Inteligente
+    if (window.updateTrashBadge) window.updateTrashBadge();
 }
 
 // --- PEDIDOS E SUAS VISITAS SUGERIDAS ---

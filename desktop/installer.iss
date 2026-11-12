@@ -5,7 +5,7 @@
 ; ============================================================================
 
 #define MyAppName "GelControl"
-#define MyAppVersion "85.0.0"
+#define MyAppVersion "85.4.0"
 #define MyAppPublisher "Gelo do Vale"
 #define MyAppURL "https://gelodovale.com.br"
 #define MyAppOnlineURL "https://gelodovale.github.io/gelodovale-app/"
@@ -28,7 +28,7 @@ DisableProgramGroupPage=yes
 ; Privilégios administrativos para criar atalhos globais e configurar permissões
 PrivilegesRequired=admin
 OutputDir=Output
-OutputBaseFilename=Instalador_GelControl_v85_Homologacao
+OutputBaseFilename=Instalador_GelControl_v85.4.0_Oficial
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

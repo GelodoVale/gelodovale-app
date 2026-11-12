@@ -41,7 +41,7 @@ export function getDeviceId() {
     return deviceId;
 }
 
-// ─── GERADOR DE UUID V4 (RFC 4122) ──────────────────────────────────────────
+// ─── GERADOR DE UUID V4 (RFC 4122) E IDS ESTÁVEIS ──────────────────────────
 export function generateUUID() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         try {
@@ -55,6 +55,23 @@ export function generateUUID() {
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
+}
+
+/**
+ * Gera um ID único e estável com prefixo (ex: cli_k8s2_9a1f), imutável e seguro
+ * contra colisões mesmo entre computadores offline operando simultaneamente.
+ */
+export function generateStableId(prefix = 'rec') {
+    const ts = Date.now().toString(36);
+    let rand = '';
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const bytes = new Uint8Array(4);
+        crypto.getRandomValues(bytes);
+        rand = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+        rand = Math.random().toString(36).substring(2, 10);
+    }
+    return `${prefix}_${ts}_${rand}`;
 }
 
 // ─── CLASSE DE OPERAÇÃO DO OUTBOX ───────────────────────────────────────────
@@ -96,8 +113,9 @@ export class OutboxOperation {
 
 // ─── MOTOR DE FILA (OUTBOX ENGINE) ──────────────────────────────────────────
 export class OutboxEngine {
-    constructor(customStorage = null) {
+    constructor(customStorage = null, deviceId = null) {
         this.storage = customStorage || getStorage();
+        this.deviceId = deviceId || getDeviceId();
         this.isProcessing = false;
         this.syncHandler = null;
         this.listeners = new Set();
@@ -214,6 +232,7 @@ export class OutboxEngine {
             action,
             entityId,
             payload,
+            deviceId: options.deviceId || this.deviceId,
             ...options
         });
 
@@ -252,6 +271,10 @@ export class OutboxEngine {
         return queue
             .filter(op => op.status === 'pending' || op.status === 'failed')
             .sort((a, b) => a.timestamp - b.timestamp);
+    }
+
+    getPendingCount() {
+        return this.getPendingOperations().length;
     }
 
     getAllOperations() {
@@ -453,7 +476,7 @@ export class OutboxEngine {
             this.listeners.add(listener);
             return () => this.listeners.delete(listener);
         }
-        return () => {};
+        return () => { };
     }
 
     _notifyListeners(event, data) {

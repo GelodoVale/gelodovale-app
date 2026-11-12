@@ -100,7 +100,7 @@ export class GranularSyncAdapter {
         } else if (action === 'UPDATE') {
             result = await this._handleUpdate(db, entity, entityId, payload, timestamp, deviceId, opId);
         } else if (action === 'DELETE') {
-            result = await this._handleDelete(db, entity, entityId, opId);
+            result = await this._handleDelete(db, entity, entityId, opId, timestamp, deviceId);
         } else if (action === 'TRANSACTION') {
             result = await this._handleTransaction(db, entity, entityId, payload, opId);
         } else {
@@ -149,6 +149,16 @@ export class GranularSyncAdapter {
             return await this._handleCreate(db, entity, entityId, payload, timestamp, deviceId, opId);
         }
 
+        // Se o registro remoto já foi marcado como apagado (tombstone) e o payload não é uma restauração explícita:
+        if (remoteData._deleted && !payload._restore) {
+            return {
+                status: 'skipped_tombstone',
+                entity,
+                entityId,
+                message: 'Registro já excluído logicamente no servidor central. Não será recriado.'
+            };
+        }
+
         // Detecção de conflito: se foi alterado por outro dispositivo e possui rev mais nova
         const localRev = (payload && payload._rev) || 1;
         const remoteRev = remoteData._rev || 1;
@@ -157,11 +167,32 @@ export class GranularSyncAdapter {
 
         let mergedData = null;
         let conflictDetected = false;
+        let conflictDetails = null;
 
         if (remoteRev > localRev && remoteDevice !== currentDevice) {
             conflictDetected = true;
-            // Resolver conflito usando a estratégia configurada
-            mergedData = this.resolveConflict(remoteData, payload, this.conflictStrategy);
+            // Resolver conflito usando a estratégia configurada e registrar auditoria
+            const res = this.resolveConflictWithAudit(remoteData, payload, this.conflictStrategy, {
+                entity,
+                entityId,
+                currentDevice,
+                timestamp: timestamp || Date.now()
+            });
+            mergedData = res.merged;
+            conflictDetails = res.conflicts;
+
+            // Se houve conflito no mesmo campo, registrar no log auditável remoto
+            if (conflictDetails && conflictDetails.length > 0) {
+                await this.recordConflictLog(db, {
+                    opId,
+                    entity,
+                    entityId,
+                    conflictDetails,
+                    localDevice: currentDevice,
+                    remoteDevice,
+                    timestamp: timestamp || Date.now()
+                });
+            }
         } else {
             // Atualização limpa: mescla os campos alterados sobre o registro remoto
             mergedData = {
@@ -175,6 +206,10 @@ export class GranularSyncAdapter {
         mergedData._updatedAt = timestamp || Date.now();
         mergedData._updatedBy = currentDevice;
         mergedData._opId = opId;
+        if (entity === 'payments' || entity === 'carnet') {
+            mergedData._syncStatus = 'confirmed';
+            mergedData._confirmedAt = Date.now();
+        }
 
         await ref.update(mergedData);
         return {
@@ -182,15 +217,31 @@ export class GranularSyncAdapter {
             entity,
             entityId,
             conflictDetected,
+            conflictDetails,
             record: mergedData
         };
     }
 
-    // ── Exclusão Granular ──
-    async _handleDelete(db, entity, entityId, opId) {
+    // ── Exclusão Granular com Marcador Lógico (Tombstone) ──
+    async _handleDelete(db, entity, entityId, opId, timestamp = Date.now(), deviceId = null) {
         const path = this.getEntityPath(entity, entityId);
-        await db.ref(path).remove();
-        return { status: 'deleted', entity, entityId, opId };
+        const ref = db.ref(path);
+        const snap = await ref.once('value');
+        const currentData = (snap && snap.exists && snap.exists()) ? snap.val() : {};
+        const nextRev = ((currentData && currentData._rev) || 0) + 1;
+
+        const tombstone = {
+            id: entityId,
+            _deleted: true,
+            _deletedAt: timestamp || Date.now(),
+            _deletedBy: deviceId || this.deviceId,
+            _rev: nextRev,
+            _opId: opId
+        };
+
+        // Grava marcador lógico de exclusão para que outros computadores não recriem o registro
+        await ref.set(tombstone);
+        return { status: 'deleted', entity, entityId, opId, tombstone };
     }
 
     // ── Transação Atômica com Idempotência Interna (Blindagem contra Race Condition) ──
@@ -274,44 +325,76 @@ export class GranularSyncAdapter {
         };
     }
 
-    // ── Motor de Resolução de Conflitos (3-Way Field-Level Merge) ──
-    resolveConflict(remoteRecord, localRecord, strategy = 'field_merge') {
+    // ── Registro de Conflito em Log Remoto de Auditoria ──
+    async recordConflictLog(db, details) {
+        if (!db || !details) return;
+        try {
+            const conflictId = `conf_${details.opId || Date.now()}`;
+            const path = `${this.getFactoryRootPath()}/_conflicts/${conflictId}`;
+            await db.ref(path).set({
+                id: conflictId,
+                entity: details.entity,
+                entityId: details.entityId,
+                localDevice: details.localDevice,
+                remoteDevice: details.remoteDevice,
+                timestamp: details.timestamp,
+                status: 'auto_merged_audited',
+                conflicts: details.conflictDetails
+            });
+        } catch (e) {
+            console.warn('[GranularSync] Falha ao registrar log de conflito:', e);
+        }
+    }
+
+    // ── Resolução de Conflitos com Auditoria de Campos Colidentes ──
+    resolveConflictWithAudit(remoteRecord, localRecord, strategy = 'field_merge', meta = {}) {
+        const conflicts = [];
         if (strategy === 'remote_wins') {
-            return { ...remoteRecord };
+            return { merged: { ...remoteRecord }, conflicts: [] };
         }
         if (strategy === 'local_wins') {
-            return { ...localRecord };
+            return { merged: { ...localRecord }, conflicts: [] };
         }
 
-        // Estratégia 'field_merge': preserva alterações de campos não colidentes
-        // Exemplo: Dispositivo A atualizou 'phone'; Dispositivo B atualizou 'address'.
-        // O merge mescla ambos os campos sem descartar nenhum!
         const merged = { ...remoteRecord };
 
         Object.keys(localRecord).forEach(field => {
-            if (field.startsWith('_')) return; // Metadados controlados internamente
+            if (field.startsWith('_')) return; // Metadados de controle
 
             const localVal = localRecord[field];
             const remoteVal = remoteRecord[field];
 
-            // Se o campo não existe no remoto, adota o local
             if (remoteVal === undefined) {
                 merged[field] = localVal;
             } else if (JSON.stringify(remoteVal) !== JSON.stringify(localVal)) {
-                // Em caso de colisão no MESMO campo específico:
-                // Se for objeto aninhado (ex: capacities ou stock), mescla no nível profundo
+                // Registrar a divergência no campo para histórico de auditoria
+                conflicts.push({
+                    field,
+                    localValue: localVal,
+                    remoteValue: remoteVal,
+                    entity: meta.entity,
+                    entityId: meta.entityId,
+                    localDevice: meta.currentDevice,
+                    remoteDevice: remoteRecord._updatedBy,
+                    timestamp: meta.timestamp
+                });
+
                 if (typeof localVal === 'object' && localVal !== null &&
                     typeof remoteVal === 'object' && remoteVal !== null &&
                     !Array.isArray(localVal)) {
                     merged[field] = { ...remoteVal, ...localVal };
                 } else {
-                    // Para valores primitivos conflitantes, o carimbo local mais recente ganha no campo
                     merged[field] = localVal;
                 }
             }
         });
 
-        return merged;
+        return { merged, conflicts };
+    }
+
+    // ── Motor de Resolução de Conflitos (3-Way Field-Level Merge) ──
+    resolveConflict(remoteRecord, localRecord, strategy = 'field_merge') {
+        return this.resolveConflictWithAudit(remoteRecord, localRecord, strategy).merged;
     }
 
     // ── Hidratação / Normalização para o Estado do GelControl v80 ──
@@ -324,16 +407,17 @@ export class GranularSyncAdapter {
 
         const hydratedState = {};
 
-        // Normalização das coleções para arrays (ex: clients, orders, freezers)
+        // Normalização das coleções para arrays (filtrando soft-deletes)
         GRANULAR_COLLECTIONS.forEach(col => {
             const rawCol = rawRemoteData[col];
             if (!rawCol) {
                 hydratedState[col] = [];
             } else if (Array.isArray(rawCol)) {
-                hydratedState[col] = rawCol.filter(Boolean);
+                hydratedState[col] = rawCol.filter(item => item && !item._deleted);
             } else if (typeof rawCol === 'object') {
                 hydratedState[col] = Object.entries(rawCol).map(([key, item]) => {
                     if (item && typeof item === 'object') {
+                        if (item._deleted === true) return null; // Filtra registros excluídos logicamente
                         if (!item.id) item.id = key;
                         return item;
                     }
