@@ -46,27 +46,53 @@ function safeRmSync(targetPath, maxRetries = 25, initialDelayMs = 100) {
     }
 }
 
-function safeCpSync(srcDir, destDir, maxRetries = 25, initialDelayMs = 100) {
+function copySingleFileWithRetry(srcFile, destFile, maxRetries = 20, initialDelayMs = 100) {
     let delay = initialDelayMs;
+    const parentDir = path.dirname(destFile);
+    if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
+    }
     for (let i = 0; i < maxRetries; i++) {
         try {
-            fs.cpSync(srcDir, destDir, { recursive: true, force: true });
+            fs.copyFileSync(srcFile, destFile);
             return;
         } catch (err) {
             if (i === maxRetries - 1) {
                 try {
-                    if (process.platform === 'win32') {
-                        if (fs.existsSync(destDir)) {
-                            execSync(`attrib -r -s -h /s /d "${destDir}\\*"`, { stdio: 'ignore', timeout: 5000 });
-                        }
-                        fs.cpSync(srcDir, destDir, { recursive: true, force: true });
+                    if (process.platform === 'win32' && fs.existsSync(destFile)) {
+                        execSync(`attrib -r -s -h "${destFile}"`, { stdio: 'ignore', timeout: 3000 });
+                        fs.copyFileSync(srcFile, destFile);
                         return;
                     }
                 } catch (_) {}
                 throw err;
             }
             sleepSync(delay);
-            delay = Math.min(delay + 50, 400);
+            delay = Math.min(delay + 50, 350);
+        }
+    }
+}
+
+function safeCpSync(srcDir, destDir, maxRetries = 25, initialDelayMs = 100) {
+    if (!fs.existsSync(srcDir)) return;
+    const stat = fs.statSync(srcDir);
+    if (!stat.isDirectory()) {
+        copySingleFileWithRetry(srcDir, destDir, maxRetries, initialDelayMs);
+        return;
+    }
+
+    if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+    }
+
+    const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+    for (const entry of entries) {
+        const sPath = path.join(srcDir, entry.name);
+        const dPath = path.join(destDir, entry.name);
+        if (entry.isDirectory()) {
+            safeCpSync(sPath, dPath, maxRetries, initialDelayMs);
+        } else if (entry.isFile()) {
+            copySingleFileWithRetry(sPath, dPath, maxRetries, initialDelayMs);
         }
     }
 }
@@ -653,8 +679,8 @@ class UpdaterInstaller {
 
         try {
             if (fs.existsSync(this.backupDir)) {
-                // Restaura os arquivos do backup para a pasta da aplicação
-                fs.cpSync(this.backupDir, this.appDir, { recursive: true, force: true });
+                // Restaura os arquivos do backup para a pasta da aplicação com tolerância arquivo-por-arquivo
+                safeCpSync(this.backupDir, this.appDir);
                 console.log('[UpdaterInstaller] Versão anterior restaurada com sucesso.');
             } else {
                 console.error('[UpdaterInstaller] ERRO CRÍTICO: Pasta de backup não encontrada para rollback!');

@@ -21,6 +21,46 @@ function isProcessAlive(pid) {
     }
 }
 
+async function copyFileResilient(srcFile, destFile, maxAttempts = 15) {
+    const parent = path.dirname(destFile);
+    if (!fs.existsSync(parent)) {
+        fs.mkdirSync(parent, { recursive: true });
+    }
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            fs.copyFileSync(srcFile, destFile);
+            return;
+        } catch (err) {
+            lastErr = err;
+            if (attempt >= 5 && process.platform === 'win32' && fs.existsSync(destFile)) {
+                try {
+                    execSync(`attrib -r -s -h "${destFile}"`, { stdio: 'ignore', timeout: 3000 });
+                } catch (_) {}
+            }
+            await sleep(250);
+        }
+    }
+    throw lastErr || new Error(`Falha ao copiar arquivo: ${destFile}`);
+}
+
+async function copyDirectoryResilient(srcDir, destDir) {
+    if (!fs.existsSync(srcDir)) return;
+    if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+    }
+    const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+    for (const entry of entries) {
+        const sPath = path.join(srcDir, entry.name);
+        const dPath = path.join(destDir, entry.name);
+        if (entry.isDirectory()) {
+            await copyDirectoryResilient(sPath, dPath);
+        } else if (entry.isFile()) {
+            await copyFileResilient(sPath, dPath, 15);
+        }
+    }
+}
+
 function removeObsoleteEntries(targetDir, sourceDir) {
     if (!fs.existsSync(targetDir) || !fs.existsSync(sourceDir)) return;
     const entries = fs.readdirSync(targetDir);
@@ -255,6 +295,11 @@ async function main() {
         fs.appendFileSync(executionLog, `[${new Date().toISOString()}] INICIADO: PID=${process.pid} | targetPid=${targetPid} | targetVer=${targetVersion}\n`, 'utf8');
     } catch (_) {}
 
+    // 0. Aguarda encerramento gracioso agendado pelo processo principal (app.quit em 1.2s)
+    if (targetPid && targetPid > 0 && isProcessAlive(targetPid)) {
+        await sleep(1600);
+    }
+
     // 1. Identificação cirúrgica e encerramento ordenado e seguro apenas dos processos desta instalação
     const targetPids = getTargetInstallationPids(installRoot, targetPid);
     const safeToProceed = await gracefullyTerminateInstallationProcesses(targetPids, installRoot);
@@ -265,6 +310,20 @@ async function main() {
         state.abortedAt = new Date().toISOString();
         state.abortReason = 'Processos da instalação permaneceram em uso pelo Windows. Nenhuma alteração foi realizada.';
         fs.writeFileSync(stateFilePath, JSON.stringify(state, null, 2), 'utf8');
+        try {
+            fs.appendFileSync(executionLog, `[${new Date().toISOString()}] ABORTADO_PREVENTIVAMENTE: Processos em uso\n`, 'utf8');
+            const lockFile = path.join(path.dirname(stateFilePath), 'update_in_progress.lock');
+            if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+        } catch (_) {}
+        if (execPathToRelaunch && fs.existsSync(execPathToRelaunch)) {
+            try {
+                const cleanEnv = { ...process.env };
+                delete cleanEnv.ELECTRON_RUN_AS_NODE;
+                const installDirArg = `--install-dir=${path.resolve(path.dirname(execPathToRelaunch), '..')}`;
+                const child = spawn(execPathToRelaunch, [installDirArg], { detached: true, stdio: 'ignore', env: cleanEnv });
+                child.unref();
+            } catch (_) {}
+        }
         process.exit(1);
     }
 
@@ -282,23 +341,8 @@ async function main() {
         // 1. Remove recursivamente arquivos que não existem mais na nova versão (limpeza de obsoletos)
         removeObsoleteEntries(appDir, stagingDir);
 
-        // 2. Cópia recursiva segura de staging para o diretório do app com tolerância ativa a locks transitórios
-        let copied = false;
-        let lastCpErr = null;
-        for (let attempt = 1; attempt <= 10; attempt++) {
-            try {
-                fs.cpSync(stagingDir, appDir, { recursive: true, force: true });
-                copied = true;
-                break;
-            } catch (cpErr) {
-                lastCpErr = cpErr;
-                console.warn(`[UpdaterApplier] Tentativa ${attempt}/10 de cópia bloqueada (${cpErr.message}). Aguardando liberação do Windows...`);
-                await sleep(350);
-            }
-        }
-        if (!copied) {
-            throw lastCpErr || new Error('Falha ao copiar arquivos para app após múltiplas tentativas.');
-        }
+        // 2. Cópia recursiva segura arquivo-por-arquivo de staging para app com tolerância individual anti-antivírus
+        await copyDirectoryResilient(stagingDir, appDir);
 
         // Validação imediata pós-cópia
         const newVerFile = path.join(appDir, 'version.json');
@@ -381,7 +425,7 @@ async function main() {
         console.warn('[UpdaterApplier] Executando rollback de emergência devido à falha na substituição...');
         try {
             if (fs.existsSync(backupDir)) {
-                fs.cpSync(backupDir, appDir, { recursive: true, force: true });
+                await copyDirectoryResilient(backupDir, appDir);
                 console.log('[UpdaterApplier] Rollback concluído com sucesso.');
             }
         } catch (rollErr) {

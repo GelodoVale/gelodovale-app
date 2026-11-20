@@ -1365,9 +1365,11 @@ export async function autoSyncDesktopIcon(force = false) {
         ? state.factorySettings.logo 
         : "logo_vertical.png";
 
-    const logoFingerprint = (typeof logoSrc === 'string') 
+    const buildTag = (state && state.codeBuild) ? state.codeBuild : 'v85.4.4';
+    const rawFp = (typeof logoSrc === 'string') 
         ? (logoSrc.startsWith('data:') ? `${logoSrc.length}_${logoSrc.slice(-32)}` : logoSrc)
         : 'default_vertical';
+    const logoFingerprint = `${buildTag}::${rawFp}`;
 
     const lastSynced = localStorage.getItem('gelcontrol_last_synced_icon_fp');
     if (!force && lastSynced === logoFingerprint) {

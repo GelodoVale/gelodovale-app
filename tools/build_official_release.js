@@ -12,7 +12,7 @@ const { getCanonicalManifestBuffer, verifyEd25519Signature, compareSemVer } = re
 const { PRODUCAO_PUBLIC_KEY_PEM } = require('../desktop/updater_config');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
-const TARGET_VERSION = '85.4.2';
+const TARGET_VERSION = '85.4.4';
 const MIN_APP_VERSION = '80.0.0'; // Permite atualização direta de qualquer versão a partir da v80
 const CANAL = 'producao';
 
@@ -119,7 +119,7 @@ fs.mkdirSync(desktopStaging, { recursive: true });
 // Metadados Canônicos de Versão
 const versionInfo = {
     programVersion: TARGET_VERSION,
-    buildNumber: 188,
+    buildNumber: 190,
     buildDate: new Date().toISOString().split('T')[0],
     channel: CANAL,
     dataSchemaVersion: "2.5",

@@ -6,7 +6,38 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const { execSync } = require('child_process');
+
+/**
+ * Gera/sincroniza o arquivo .ico com sufixo de hash curto (cache-buster físico para o Windows Explorer)
+ * Força o Windows Explorer (iconcache_*.db) a sofrer cache-miss imediato e carregar o novo ícone circular
+ */
+function ensureVersionedIconFile(dataDir, baseIcoPath) {
+    try {
+        if (!baseIcoPath || !fs.existsSync(baseIcoPath)) return baseIcoPath;
+        const buf = fs.readFileSync(baseIcoPath);
+        if (!buf || buf.length < 1000) return baseIcoPath;
+        const hash8 = crypto.createHash('sha256').update(buf).digest('hex').slice(0, 8);
+        const versionedName = `app_icon_round_${hash8}.ico`;
+        const versionedPath = path.join(dataDir, versionedName);
+        if (!fs.existsSync(versionedPath) || fs.statSync(versionedPath).size !== buf.length) {
+            fs.writeFileSync(versionedPath, buf);
+        }
+        // Limpa ícones versionados antigos para não acumular arquivos em Dados/
+        try {
+            const entries = fs.readdirSync(dataDir);
+            for (const ent of entries) {
+                if (/^app_icon_round_[a-f0-9]{8}\.ico$/i.test(ent) && ent.toLowerCase() !== versionedName.toLowerCase()) {
+                    try { fs.unlinkSync(path.join(dataDir, ent)); } catch (_) {}
+                }
+            }
+        } catch (_) {}
+        return versionedPath;
+    } catch (_) {
+        return baseIcoPath;
+    }
+}
 
 /**
  * Cria uma entrada DIB padrão Windows (BITMAPINFOHEADER + BGRA bottom-up + AND mask bottom-up)
@@ -226,7 +257,7 @@ function resolveBestAppIcon(installDir, dataDir) {
 
     // Se já existe um ícone circular de alta resolução (>= 140KB ou gerado por logo customizada)
     if (fs.existsSync(targetRoundIco) && fs.statSync(targetRoundIco).size > 140000) {
-        return targetRoundIco;
+        return ensureVersionedIconFile(dataDir, targetRoundIco);
     }
 
     // Procura o arquivo oficial embutido para garantir alta definição no Dados
@@ -241,7 +272,7 @@ function resolveBestAppIcon(installDir, dataDir) {
                     fs.copyFileSync(cand, path.join(installDir, 'custom_app_icon.ico'));
                 } catch (_) {}
                 console.log(`[Shortcuts] Ícone circular nativo garantido a partir de ${cand} -> ${targetRoundIco}`);
-                return targetRoundIco;
+                return ensureVersionedIconFile(dataDir, targetRoundIco);
             } catch (err) {
                 console.warn('[Shortcuts] Aviso ao copiar ícone circular:', err.message);
                 return cand;
@@ -251,7 +282,7 @@ function resolveBestAppIcon(installDir, dataDir) {
 
     // Se existir qualquer targetRoundIco mesmo de tamanho menor, usa como fallback
     if (fs.existsSync(targetRoundIco) && fs.statSync(targetRoundIco).size > 1000) {
-        return targetRoundIco;
+        return ensureVersionedIconFile(dataDir, targetRoundIco);
     }
 
     // Fallbacks padrão caso o ícone circular ainda não tenha sido extraído
@@ -525,6 +556,8 @@ function updateAppCustomIcon(options = {}) {
             } catch (_) { }
         }
 
+        const activeVersionedIco = ensureVersionedIconFile(targetDataDir, roundIcoPath);
+
         const desktopDirs = getWindowsDesktopDirs();
         const primaryDesktop = desktopDirs[0] || path.join(process.env.USERPROFILE || os.homedir(), 'Desktop');
         const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
@@ -543,7 +576,7 @@ function updateAppCustomIcon(options = {}) {
 
         const psScript = `
             $ws = New-Object -ComObject WScript.Shell
-            $roundIco = "${roundIcoPath.replace(/\\/g, '\\\\')}"
+            $roundIco = "${activeVersionedIco.replace(/\\/g, '\\\\')}"
             $targetExec = "${officialExec.replace(/\\/g, '\\\\')}"
             $workDir = "${workingDir.replace(/\\/g, '\\\\')}"
             $masterLnk = "${masterShortcutPath.replace(/\\/g, '\\\\')}"
@@ -553,6 +586,7 @@ function updateAppCustomIcon(options = {}) {
             $officialTargetCanon = [System.IO.Path]::GetFullPath($targetExec).TrimEnd('\\').ToLower()
             $auditLog = Join-Path $quarantine "audit_atalhos.log"
             $restoreBat = Join-Path $quarantine "restaurar_atalhos.bat"
+            $updatedLnks = @()
 
             if (-not (Test-Path $quarantine)) {
                 New-Item -ItemType Directory -Path $quarantine -Force | Out-Null
@@ -569,6 +603,7 @@ function updateAppCustomIcon(options = {}) {
             $mainLnk.Description = "GelControl - Sistema Oficial da Fábrica de Gelo"
             $mainLnk.Save()
             (Get-Item $masterLnk).LastWriteTime = Get-Date
+            $updatedLnks += $masterLnk
             Write-Output "MASTER_DESKTOP_SAVED: $masterLnk"
 
             # 2. Higienização seletiva estrita com quarentena e garantia do ícone circular
@@ -581,30 +616,31 @@ function updateAppCustomIcon(options = {}) {
                         $itemCanon = [System.IO.Path]::GetFullPath($_.FullName).TrimEnd('\\').ToLower()
                         try {
                             $candidate = $ws.CreateShortcut($_.FullName)
-                            if ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
+                            if ($_.Name.ToLower() -eq $officialLnkName) {
+                                # Sempre atualiza o ícone do atalho com o nome oficial em qualquer pasta de Desktop
+                                if ((-not $candidate.TargetPath) -or (-not (Test-Path $candidate.TargetPath)) -or ([System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower() -eq $officialTargetCanon)) {
+                                    $candidate.TargetPath = $targetExec
+                                    $candidate.WorkingDirectory = $workDir
+                                    $candidate.IconLocation = "$roundIco,0"
+                                    $candidate.Save()
+                                    (Get-Item $_.FullName).LastWriteTime = Get-Date
+                                    $updatedLnks += $_.FullName
+                                    Write-Output "OFFICIAL_DESKTOP_ICON_UPDATED: $($_.FullName)"
+                                }
+                            } elseif ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
                                 $candTargetCanon = [System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower()
-                                
-                                if ($candTargetCanon -eq $officialTargetCanon) {
-                                    # Se for o próprio atalho oficial legítimo em qualquer pasta de desktop, atualiza o ícone circular
-                                    if ($_.Name.ToLower() -eq $officialLnkName) {
-                                        $candidate.IconLocation = "$roundIco,0"
-                                        $candidate.WorkingDirectory = $workDir
-                                        $candidate.Save()
-                                        (Get-Item $_.FullName).LastWriteTime = Get-Date
-                                        Write-Output "OFFICIAL_DESKTOP_ICON_UPDATED: $($_.FullName)"
-                                    } elseif ($itemCanon -ne $canonMaster) {
-                                        # Atalho concorrente antigo com nome diferente (ex: v85.3.0, GelControl.lnk): Quarentena segura
-                                        $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
-                                        $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
-                                        $backupName = $safeBase + '_' + $ts + '.lnk'
-                                        $backupPath = Join-Path $quarantine $backupName
+                                if ($candTargetCanon -eq $officialTargetCanon -and $itemCanon -ne $canonMaster) {
+                                    # Atalho concorrente antigo com nome diferente apontando para esta instalação: Quarentena segura
+                                    $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                                    $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                                    $backupName = $safeBase + '_' + $ts + '.lnk'
+                                    $backupPath = Join-Path $quarantine $backupName
 
-                                        Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
-                                        $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
-                                        Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
-                                        Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
-                                        Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
-                                    }
+                                    Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                                    $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
+                                    Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
+                                    Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                                    Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
                                 } else {
                                     Write-Output "PRESERVED_EXTERNAL_SHORTCUT: $($_.FullName) -> $($candidate.TargetPath)"
                                 }
@@ -690,7 +726,9 @@ function updateAppCustomIcon(options = {}) {
 "@
                     Add-Type -TypeDefinition $code -Language CSharp
                 }
-                [ShellNotifierSafe]::NotifyItem($masterLnk)
+                foreach ($uLnk in ($updatedLnks | Select-Object -Unique)) {
+                    [ShellNotifierSafe]::NotifyItem($uLnk)
+                }
                 [ShellNotifierSafe]::Refresh()
                 Write-Output "SHELL_REFRESH_OK"
             } catch {
@@ -913,6 +951,7 @@ function ensureAppShortcuts(options = {}) {
             $officialTargetCanon = [System.IO.Path]::GetFullPath($target).TrimEnd('\\').ToLower()
             $auditLog = Join-Path $quarantine "audit_atalhos.log"
             $restoreBat = Join-Path $quarantine "restaurar_atalhos.bat"
+            $updatedLnks = @()
 
             if (-not (Test-Path $quarantine)) {
                 New-Item -ItemType Directory -Path $quarantine -Force | Out-Null
@@ -929,6 +968,7 @@ function ensureAppShortcuts(options = {}) {
             $s.Description = $desc
             $s.Save()
             (Get-Item $scPath).LastWriteTime = Get-Date
+            $updatedLnks += $scPath
             Write-Output "ENSURED_MAIN: $scPath"
 
             # 2. Higienização seletiva estrita com quarentena e garantia do ícone circular
@@ -941,30 +981,30 @@ function ensureAppShortcuts(options = {}) {
                         $itemCanon = [System.IO.Path]::GetFullPath($_.FullName).TrimEnd('\\').ToLower()
                         try {
                             $candidate = $ws.CreateShortcut($_.FullName)
-                            if ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
+                            if ($_.Name.ToLower() -eq $officialLnkName) {
+                                if ((-not $candidate.TargetPath) -or (-not (Test-Path $candidate.TargetPath)) -or ([System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower() -eq $officialTargetCanon)) {
+                                    $candidate.TargetPath = $target
+                                    $candidate.IconLocation = "$icon,0"
+                                    $candidate.WorkingDirectory = $workDir
+                                    $candidate.Save()
+                                    (Get-Item $_.FullName).LastWriteTime = Get-Date
+                                    $updatedLnks += $_.FullName
+                                    Write-Output "OFFICIAL_DESKTOP_ICON_UPDATED: $($_.FullName)"
+                                }
+                            } elseif ($candidate.TargetPath -and (-not [string]::IsNullOrWhiteSpace($candidate.TargetPath))) {
                                 $candTargetCanon = [System.IO.Path]::GetFullPath($candidate.TargetPath).TrimEnd('\\').ToLower()
-                                
-                                if ($candTargetCanon -eq $officialTargetCanon) {
-                                    # Se for o próprio atalho oficial legítimo em qualquer pasta de desktop, atualiza o ícone circular
-                                    if ($_.Name.ToLower() -eq $officialLnkName) {
-                                        $candidate.IconLocation = "$icon,0"
-                                        $candidate.WorkingDirectory = $workDir
-                                        $candidate.Save()
-                                        (Get-Item $_.FullName).LastWriteTime = Get-Date
-                                        Write-Output "OFFICIAL_DESKTOP_ICON_UPDATED: $($_.FullName)"
-                                    } elseif ($itemCanon -ne $canonMaster) {
-                                        # Atalho concorrente antigo com nome diferente (ex: v85.3.0, GelControl.lnk): Quarentena segura
-                                        $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
-                                        $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
-                                        $backupName = $safeBase + '_' + $ts + '.lnk'
-                                        $backupPath = Join-Path $quarantine $backupName
+                                if ($candTargetCanon -eq $officialTargetCanon -and $itemCanon -ne $canonMaster) {
+                                    # Atalho concorrente antigo com nome diferente (ex: v85.3.0, GelControl.lnk): Quarentena segura
+                                    $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
+                                    $safeBase = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+                                    $backupName = $safeBase + '_' + $ts + '.lnk'
+                                    $backupPath = Join-Path $quarantine $backupName
 
-                                        Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
-                                        $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
-                                        Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
-                                        Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
-                                        Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
-                                    }
+                                    Move-Item -LiteralPath $_.FullName -Destination $backupPath -Force
+                                    $logEntry = "[$ts] QUARENTENA: '$($_.FullName)' -> '$backupPath' | Target='$($candidate.TargetPath)'"
+                                    Add-Content -Path $auditLog -Value $logEntry -Encoding utf8
+                                    Add-Content -Path $restoreBat -Value ('copy /y "' + $backupPath + '" "' + $_.FullName + '"') -Encoding utf8
+                                    Write-Output "DUPLICATE_QUARANTINED: $($_.FullName) -> $backupPath"
                                 } else {
                                     Write-Output "PRESERVED_EXTERNAL_SHORTCUT: $($_.FullName) -> $($candidate.TargetPath)"
                                 }
@@ -1043,7 +1083,9 @@ function ensureAppShortcuts(options = {}) {
 "@
                     Add-Type -TypeDefinition $code -Language CSharp
                 }
-                [ShellNotifierSafe]::NotifyItem($scPath)
+                foreach ($uLnk in ($updatedLnks | Select-Object -Unique)) {
+                    [ShellNotifierSafe]::NotifyItem($uLnk)
+                }
                 [ShellNotifierSafe]::Refresh()
                 Write-Output "SHELL_REFRESH_OK"
             } catch {}

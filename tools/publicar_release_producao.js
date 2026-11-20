@@ -107,7 +107,7 @@ function publicHttpsDownload(url, maxRedirects = 5) {
 
 async function publicarReleaseProducao() {
     console.log('================================================================');
-    console.log('   GELCONTROL — PUBLICAÇÃO OFICIAL NO CANAL DE PRODUÇÃO (v85.4.3)');
+    console.log('   GELCONTROL — PUBLICAÇÃO OFICIAL NO CANAL DE PRODUÇÃO (v85.4.4)');
     console.log('================================================================\n');
 
     const token = getGitHubToken();
@@ -259,10 +259,10 @@ async function publicarReleaseProducao() {
     }
     console.log('   ✅ Integridade SHA-256 do pacote baixado pela internet comprovada!');
 
-    // 7. Simulação Real de Consulta via UpdaterCore (Estação v85.4.2 detectando v85.4.3)
-    console.log('\n7. Simulando consulta de atualização da estação v85.4.2 contra o endpoint online real:');
+    // 7. Simulação Real de Consulta via UpdaterCore (Estação v85.4.3 detectando v85.4.4)
+    console.log('\n7. Simulando consulta de atualização da estação v85.4.3 contra o endpoint online real:');
     const updaterSimulado = new UpdaterCore({
-        installedVersion: '85.4.2',
+        installedVersion: '85.4.3',
         channel: 'producao',
         producaoPublicKey: PRODUCAO_PUBLIC_KEY_PEM,
         producaoManifestUrl: PERMANENT_PRODUCAO_MANIFEST_URL

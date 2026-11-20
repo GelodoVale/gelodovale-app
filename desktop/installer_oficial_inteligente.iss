@@ -12,7 +12,7 @@
 ; ============================================================================
 
 #define MyAppName "GelControl Oficial"
-#define MyAppVersion "85.4.1"
+#define MyAppVersion "85.4.4"
 #define MyAppPublisher "Gelo do Vale"
 #define MyAppURL "https://gelodovale.com.br"
 #define MyAppExeName "GelControl.exe"
@@ -36,8 +36,8 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 UsePreviousAppDir=yes
 OutputDir=..\dist\Instalador_Oficial
-OutputBaseFilename=Instalador_GelControl_v85.4.0_Oficial
-SetupIconFile=..\gelcontrol.ico
+OutputBaseFilename=Instalador_GelControl_v85.4.4_Oficial
+SetupIconFile=..\app_icon_round.ico
 
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -62,8 +62,8 @@ Name: "{app}\Seguranca\Tools"; Flags: uninsneveruninstall
 ; 1. Runtime do Electron e DLLs (excluindo resources\app, logs e temporários)
 Source: "F:\GelControl_Oficial\Programa\*"; DestDir: "{app}\Programa"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "resources\app\*,*.log,*.tmp,*.bak"
 
-; 2. Aplicação Oficial Completa v85.4.0 (index.html, trash.js, shortcuts.js, updater_installer.js, etc.)
-Source: "F:\GelControl_Oficial\Programa\resources\app\*"; DestDir: "{app}\Programa\resources\app"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.log,*.tmp,*.bak,*-DESKTOP-*"
+; 2. Aplicação Oficial Completa v85.4.4 (a partir do staging limpo e auditado da release)
+Source: "..\dist\instalador_oficial_v85.4.4\app\*"; DestDir: "{app}\Programa\resources\app"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.log,*.tmp,*.bak,*-DESKTOP-*"
 
 ; 3. Ícones Oficiais do Programa (Quadrado clássico e Circular nativo para Dados e raiz)
 Source: "..\gelcontrol.ico"; DestDir: "{app}\Programa"; Flags: ignoreversion
@@ -352,6 +352,10 @@ begin
   if CurStep = ssPostInstall then
   begin
     InstallCompletedSuccessfully := True;
+
+    // Limpa estado residual de transações de atualização interrompidas em versões anteriores
+    DeleteFile(ExpandConstant('{app}\Dados\update_state.json'));
+    DeleteFile(ExpandConstant('{app}\Dados\update_in_progress.lock'));
 
     LogPath := ExpandConstant('{app}\Dados\instalador_v{#MyAppVersion}.log');
     SetArrayLength(LogLines, 10);

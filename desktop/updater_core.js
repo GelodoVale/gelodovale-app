@@ -11,8 +11,14 @@ const https = require('https');
 
 // Limites rígidos de segurança
 const MAX_PACKAGE_SIZE = 150 * 1024 * 1024; // 150 MB máximo
-const DEFAULT_TIMEOUT_MS = 30000;          // 30 segundos de timeout
-const MAX_REDIRECTS = 3;
+const DEFAULT_TIMEOUT_MS = 45000;          // 45 segundos de timeout
+const MAX_REDIRECTS = 8;
+const MAX_NETWORK_RETRIES = 3;
+const RETRY_DELAY_MS = 1500;
+
+function sleepMs(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Comparador semântico de versões (SemVer: major.minor.patch)
@@ -257,7 +263,25 @@ class UpdaterCore {
         this.lastValidationStatus.error = null;
 
         try {
-            const rawBody = await this._httpFetchWithTimeout(manifestUrl, DEFAULT_TIMEOUT_MS);
+            let rawBody = null;
+            let lastFetchErr = null;
+            for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
+                try {
+                    rawBody = await this._httpFetchWithTimeout(manifestUrl, DEFAULT_TIMEOUT_MS);
+                    break;
+                } catch (eAttempt) {
+                    lastFetchErr = eAttempt;
+                    if (eAttempt.message.includes('MANIFESTO_NAO_ENCONTRADO_404') || eAttempt.message.includes('ORIGEM_NAO_AUTORIZADA')) {
+                        throw eAttempt;
+                    }
+                    if (attempt < MAX_NETWORK_RETRIES) {
+                        await sleepMs(RETRY_DELAY_MS);
+                    }
+                }
+            }
+            if (rawBody === null) {
+                throw lastFetchErr || new Error('FALHA_CONSULTA_MANIFESTO');
+            }
             let manifest = null;
             try {
                 manifest = JSON.parse(rawBody);
@@ -349,41 +373,52 @@ class UpdaterCore {
             fs.mkdirSync(this.tempDir, { recursive: true });
         }
 
-        const tempFileName = `pkg_${manifest.channel}_v${manifest.latestVersion}_${Date.now()}.tmp`;
-        const tempFilePath = path.join(this.tempDir, tempFileName);
+        let lastErr = null;
+        for (let attempt = 1; attempt <= MAX_NETWORK_RETRIES; attempt++) {
+            const tempFileName = `pkg_${manifest.channel}_v${manifest.latestVersion}_${Date.now()}_try${attempt}.tmp`;
+            const tempFilePath = path.join(this.tempDir, tempFileName);
 
-        try {
-            const downloadResult = await this._downloadToFile({
-                url: manifest.packageUrl,
-                destPath: tempFilePath,
-                expectedSize: manifest.packageSize,
-                expectedSha256: manifest.sha256,
-                timeoutMs: DEFAULT_TIMEOUT_MS
-            });
+            try {
+                const downloadResult = await this._downloadToFile({
+                    url: manifest.packageUrl,
+                    destPath: tempFilePath,
+                    expectedSize: manifest.packageSize,
+                    expectedSha256: manifest.sha256,
+                    timeoutMs: DEFAULT_TIMEOUT_MS
+                });
 
-            this.lastValidationStatus.status = 'validated';
-            this.lastValidationStatus.downloadedPath = tempFilePath;
+                this.lastValidationStatus.status = 'validated';
+                this.lastValidationStatus.downloadedPath = tempFilePath;
 
-            return {
-                success: true,
-                status: 'validated',
-                version: manifest.latestVersion,
-                fileSize: downloadResult.bytesReceived,
-                sha256: downloadResult.computedSha256,
-                message: 'Pacote baixado e validado com sucesso na área temporária. Pronto para futura aplicação.'
-            };
-
-        } catch (errDl) {
-            // Em caso de qualquer falha, remove imediatamente o arquivo temporário
-            try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch (_) { }
-            this.lastValidationStatus.status = 'error';
-            this.lastValidationStatus.error = errDl.message;
-            return {
-                success: false,
-                status: 'error',
-                error: errDl.message
-            };
+                return {
+                    success: true,
+                    status: 'validated',
+                    version: manifest.latestVersion,
+                    fileSize: downloadResult.bytesReceived,
+                    packageSize: downloadResult.bytesReceived,
+                    sha256: downloadResult.computedSha256,
+                    message: 'Pacote baixado e validado com sucesso na área temporária. Pronto para futura aplicação.'
+                };
+            } catch (errDl) {
+                lastErr = errDl;
+                try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch (_) { }
+                if (errDl.message.includes('ORIGEM_NAO_AUTORIZADA') || errDl.message.includes('TAMANHO_EXCEDIDO')) {
+                    break;
+                }
+                if (attempt < MAX_NETWORK_RETRIES) {
+                    await sleepMs(RETRY_DELAY_MS);
+                }
+            }
         }
+
+        const errMessage = lastErr ? lastErr.message : 'FALHA_DOWNLOAD_PACOTE';
+        this.lastValidationStatus.status = 'error';
+        this.lastValidationStatus.error = errMessage;
+        return {
+            success: false,
+            status: 'error',
+            error: errMessage
+        };
     }
 
     // ── MÉTODOS AUXILIARES DE REDE E STREAM ────────────────────────────────────
@@ -473,6 +508,14 @@ class UpdaterCore {
             const hash = crypto.createHash('sha256');
             let bytesReceived = 0;
             let redirectCount = 0;
+            let settled = false;
+
+            const safeReject = (err) => {
+                if (settled) return;
+                settled = true;
+                try { fileStream.destroy(); } catch (_) {}
+                reject(err);
+            };
 
             const executeGet = (requestUrl) => {
                 const req = client.get(requestUrl, { timeout: timeoutMs, headers: { 'User-Agent': 'GelControl-Updater/85.0' } }, (res) => {
@@ -480,13 +523,13 @@ class UpdaterCore {
                     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                         redirectCount++;
                         if (redirectCount > MAX_REDIRECTS) {
-                            fileStream.close();
-                            return reject(new Error('EXCESSO_REDIRECIONAMENTOS'));
+                            res.resume();
+                            return safeReject(new Error('EXCESSO_REDIRECIONAMENTOS'));
                         }
                         const redirectedUrl = new URL(res.headers.location, requestUrl).href;
                         if (!this.isAllowedOrigin(redirectedUrl)) {
-                            fileStream.close();
-                            return reject(new Error(`ORIGEM_REDIRECIONAMENTO_NAO_AUTORIZADA: ${redirectedUrl}`));
+                            res.resume();
+                            return safeReject(new Error(`ORIGEM_REDIRECIONAMENTO_NAO_AUTORIZADA: ${redirectedUrl}`));
                         }
                         res.resume();
                         return executeGet(redirectedUrl);
@@ -494,60 +537,58 @@ class UpdaterCore {
 
                     if (res.statusCode !== 200) {
                         res.resume();
-                        fileStream.close();
-                        return reject(new Error(`FALHA_HTTP_DOWNLOAD_${res.statusCode}`));
+                        return safeReject(new Error(`FALHA_HTTP_DOWNLOAD_${res.statusCode}`));
                     }
 
                     res.on('data', (chunk) => {
+                        if (settled) return;
                         bytesReceived += chunk.length;
                         if (bytesReceived > MAX_PACKAGE_SIZE || bytesReceived > expectedSize) {
                             req.destroy();
-                            fileStream.close();
-                            return reject(new Error('TAMANHO_EXCEDIDO'));
+                            return safeReject(new Error('TAMANHO_EXCEDIDO'));
                         }
                         hash.update(chunk);
                         fileStream.write(chunk);
                     });
 
                     res.on('end', () => {
-                        fileStream.end();
+                        if (!settled) fileStream.end();
                     });
 
                     res.on('error', (err) => {
-                        fileStream.close();
-                        reject(new Error(`ERRO_STREAM_DOWNLOAD: ${err.message}`));
+                        safeReject(new Error(`ERRO_STREAM_DOWNLOAD: ${err.message}`));
                     });
                 });
 
                 req.on('timeout', () => {
                     req.destroy();
-                    fileStream.close();
-                    reject(new Error('TIMEOUT_DOWNLOAD'));
+                    safeReject(new Error('TIMEOUT_DOWNLOAD'));
                 });
 
                 req.on('error', (err) => {
-                    fileStream.close();
-                    reject(new Error(`ERRO_CONEXAO_DOWNLOAD: ${err.message}`));
+                    safeReject(new Error(`ERRO_CONEXAO_DOWNLOAD: ${err.message}`));
                 });
             };
 
             fileStream.on('finish', () => {
+                if (settled) return;
                 // Verificação de tamanho exato
                 if (bytesReceived !== expectedSize) {
-                    return reject(new Error(`DOWNLOAD_INCOMPLETO: recebidos ${bytesReceived} bytes, esperado ${expectedSize}`));
+                    return safeReject(new Error(`DOWNLOAD_INCOMPLETO: recebidos ${bytesReceived} bytes, esperado ${expectedSize}`));
                 }
 
                 // Verificação de hash SHA-256
                 const computedSha256 = hash.digest('hex').toLowerCase();
                 if (computedSha256 !== String(expectedSha256).toLowerCase().trim()) {
-                    return reject(new Error(`HASH_SHA256_DIVERGENTE: esperado ${expectedSha256}, obtido ${computedSha256}`));
+                    return safeReject(new Error(`HASH_SHA256_DIVERGENTE: esperado ${expectedSha256}, obtido ${computedSha256}`));
                 }
 
+                settled = true;
                 resolve({ bytesReceived, computedSha256 });
             });
 
             fileStream.on('error', (err) => {
-                reject(new Error(`ERRO_GRAVACAO_ARQUIVO: ${err.message}`));
+                safeReject(new Error(`ERRO_GRAVACAO_ARQUIVO: ${err.message}`));
             });
 
             executeGet(url);
